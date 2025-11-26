@@ -289,7 +289,7 @@ export default function Dashboard() {
                                 Monthly sales performance
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-hidden">
                             <ChartContainer
                                 config={{
                                     value: {
@@ -297,7 +297,7 @@ export default function Dashboard() {
                                         color: 'hsl(var(--chart-1))',
                                     },
                                 }}
-                                className="h-[300px]"
+                                className="h-[300px] w-full"
                             >
                                 <BarChart data={salesData}>
                                     <CartesianGrid strokeDasharray="3 3" />
@@ -318,7 +318,7 @@ export default function Dashboard() {
                                 Revenue vs expenses comparison
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-hidden">
                             <ChartContainer
                                 config={{
                                     revenue: {
@@ -330,7 +330,7 @@ export default function Dashboard() {
                                         color: 'hsl(var(--chart-2))',
                                     },
                                 }}
-                                className="h-[300px]"
+                                className="h-[300px] w-full"
                             >
                                 <AreaChart data={revenueData}>
                                     <CartesianGrid strokeDasharray="3 3" />
@@ -365,7 +365,7 @@ export default function Dashboard() {
                             User growth over the last 7 months
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="overflow-hidden">
                         <ChartContainer
                             config={{
                                 users: {
@@ -373,7 +373,7 @@ export default function Dashboard() {
                                     color: 'hsl(var(--chart-3))',
                                 },
                             }}
-                            className="h-[300px]"
+                            className="h-[300px] w-full"
                         >
                             <LineChart data={salesData}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -778,101 +778,101 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-md border">
-                            <table className="w-full">
-                                <thead>
-                                    {table.getHeaderGroups().map((headerGroup) => (
-                                        <tr key={headerGroup.id} className="border-b">
-                                            {headerGroup.headers.map((header) => (
-                                                <th
-                                                    key={header.id}
-                                                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
-                                                >
-                                                    {header.isPlaceholder ? null : (
-                                                        <div
-                                                            className={`flex items-center gap-2 ${
-                                                                header.column.getCanSort()
-                                                                    ? 'cursor-pointer select-none hover:text-foreground'
-                                                                    : ''
-                                                            }`}
-                                                            onClick={header.column.getToggleSortingHandler()}
-                                                        >
-                                                            {flexRender(
-                                                                header.column.columnDef.header,
-                                                                header.getContext()
-                                                            )}
-                                                            {header.column.getCanSort() && (
-                                                                <ArrowUpDown className="h-4 w-4 opacity-50" />
-                                                            )}
-                                                            {(() => {
-                                                                const sorted = header.column.getIsSorted();
-                                                                if (sorted === 'asc') return <ArrowUpRight className="h-4 w-4" />;
-                                                                if (sorted === 'desc') return <ArrowDownRight className="h-4 w-4" />;
-                                                                return null;
-                                                            })()}
-                                                        </div>
-                                                    )}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </thead>
-                                <tbody>
-                                    {table.getRowModel().rows.map((row) => (
-                                        <tr key={row.id} className="border-b transition-colors hover:bg-muted/50">
-                                            {row.getVisibleCells().map((cell) => (
-                                                <td key={cell.id} className="p-4 align-middle">
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="rounded-md border overflow-x-auto">
+                            <table className="w-full min-w-[640px]">
+                                    <thead>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <tr key={headerGroup.id} className="border-b">
+                                                {headerGroup.headers.map((header) => (
+                                                    <th
+                                                        key={header.id}
+                                                        className="h-12 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap"
+                                                    >
+                                                        {header.isPlaceholder ? null : (
+                                                            <div
+                                                                className={`flex items-center gap-2 ${
+                                                                    header.column.getCanSort()
+                                                                        ? 'cursor-pointer select-none hover:text-foreground'
+                                                                        : ''
+                                                                }`}
+                                                                onClick={header.column.getToggleSortingHandler()}
+                                                            >
+                                                                {flexRender(
+                                                                    header.column.columnDef.header,
+                                                                    header.getContext()
+                                                                )}
+                                                                {header.column.getCanSort() && (
+                                                                    <ArrowUpDown className="h-4 w-4 opacity-50" />
+                                                                )}
+                                                                {(() => {
+                                                                    const sorted = header.column.getIsSorted();
+                                                                    if (sorted === 'asc') return <ArrowUpRight className="h-4 w-4" />;
+                                                                    if (sorted === 'desc') return <ArrowDownRight className="h-4 w-4" />;
+                                                                    return null;
+                                                                })()}
+                                                            </div>
+                                                        )}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </thead>
+                                    <tbody>
+                                        {table.getRowModel().rows.map((row) => (
+                                            <tr key={row.id} className="border-b transition-colors hover:bg-muted/50">
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <td key={cell.id} className="p-4 align-middle whitespace-nowrap">
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                         </div>
 
                         {/* Pagination Controls */}
-                        <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-4 mt-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <button
                                     onClick={() => table.firstPage()}
                                     disabled={!table.getCanPreviousPage()}
-                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
+                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent whitespace-nowrap"
                                 >
                                     First
                                 </button>
                                 <button
                                     onClick={() => table.previousPage()}
                                     disabled={!table.getCanPreviousPage()}
-                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
+                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent whitespace-nowrap"
                                 >
                                     Previous
                                 </button>
                                 <button
                                     onClick={() => table.nextPage()}
                                     disabled={!table.getCanNextPage()}
-                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
+                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent whitespace-nowrap"
                                 >
                                     Next
                                 </button>
                                 <button
                                     onClick={() => table.lastPage()}
                                     disabled={!table.getCanNextPage()}
-                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
+                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent whitespace-nowrap"
                                 >
                                     Last
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-muted-foreground">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
                                     Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                                 </span>
                                 <div className="relative">
                                     <select
                                         value={table.getState().pagination.pageSize}
                                         onChange={(e) => table.setPageSize(Number(e.target.value))}
-                                        className="px-3 py-1 pr-8 text-sm border rounded-md bg-background cursor-pointer"
+                                        className="px-3 py-1 pr-8 text-sm border rounded-md bg-background cursor-pointer w-full sm:w-auto"
                                     >
                                         {[10, 20, 30, 50].map((pageSize) => (
                                             <option key={pageSize} value={pageSize}>
@@ -881,7 +881,7 @@ export default function Dashboard() {
                                         ))}
                                     </select>
                                 </div>
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
                                     Showing {table.getRowModel().rows.length} of {table.getRowCount()} rows
                                 </span>
                             </div>

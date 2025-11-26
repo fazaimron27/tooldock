@@ -25,7 +25,7 @@ export default function Navbar({ header }) {
     const appName = import.meta.env.VITE_APP_NAME || 'Mosaic';
 
     return (
-        <header className="flex h-16 shrink-0 items-center gap-4 border-b px-4 bg-background">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <SidebarTrigger className="-ml-1" />
 
             <div className="flex flex-1 items-center gap-4 min-w-0">
