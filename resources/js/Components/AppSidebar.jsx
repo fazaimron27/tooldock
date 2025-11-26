@@ -1,4 +1,4 @@
-import { getIcon } from '@/lib/iconResolver';
+import { getIcon } from '@/Utils/iconResolver';
 import { Link, router, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronRight, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
