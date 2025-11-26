@@ -13,10 +13,10 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@/Components",
-    "utils": "@/lib/utils",
+    "utils": "@/Utils/utils",
     "ui": "@/Components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "lib": "@/Utils",
+    "hooks": "@/Hooks"
   },
   "registries": {
     "@acme": "https://acme.com/r/{name}.json"
