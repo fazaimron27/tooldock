@@ -1,3 +1,5 @@
+import { Button } from '@/Components/ui/button';
+
 export default function Index() {
     return (
         <div className="min-h-screen bg-gray-100 py-12">
@@ -10,6 +12,12 @@ export default function Index() {
                         <p className="mt-4 text-gray-600">
                             This page is loaded from the Blog module using Inertia.js
                         </p>
+                        <div className="mt-6 flex gap-4">
+                            <Button>Default Button</Button>
+                            <Button variant="outline">Outline Button</Button>
+                            <Button variant="secondary">Secondary Button</Button>
+                            <Button variant="destructive">Destructive Button</Button>
+                        </div>
                     </div>
                 </div>
             </div>
