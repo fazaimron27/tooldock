@@ -1,5 +1,5 @@
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/Hooks/useIsMobile';
+import { cn } from '@/Utils/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { PanelLeft } from 'lucide-react';

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@/Utils/utils';
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import * as React from 'react';
 
