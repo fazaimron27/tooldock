@@ -2,6 +2,7 @@
 
 namespace Modules\Blog\Providers;
 
+use App\Services\MenuRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -27,6 +28,14 @@ class BlogServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+
+        app(MenuRegistry::class)->registerItem(
+            group: 'Content',
+            label: 'Blog',
+            route: 'blog.index',
+            icon: 'FileText',
+            order: 10
+        );
     }
 
     /**
