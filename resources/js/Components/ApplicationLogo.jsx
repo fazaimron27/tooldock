@@ -1,10 +1,9 @@
-import { LayoutGrid } from 'lucide-react';
-
 export default function ApplicationLogo({ className = '', ...props }) {
+    const appName = import.meta.env.VITE_APP_NAME || 'Mosaic';
+
     return (
-        <LayoutGrid
-            className={`h-9 w-auto ${className}`}
-            {...props}
-        />
+        <span className={`font-semibold text-xl text-center w-full block ${className}`} {...props}>
+            {appName}
+        </span>
     );
 }
