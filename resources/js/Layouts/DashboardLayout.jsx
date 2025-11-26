@@ -11,7 +11,7 @@ export default function DashboardLayout({ header, children }) {
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset>
+            <SidebarInset className="flex h-screen flex-col overflow-y-auto">
                 <Navbar header={header} />
                 <main className="flex flex-1 flex-col gap-4 p-4">
                     {children}
