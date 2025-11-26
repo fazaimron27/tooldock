@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import PageShell from '@/Components/Layouts/PageShell';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
@@ -9,19 +9,19 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 export default function Edit({ mustVerifyEmail, status }) {
   return (
     <DashboardLayout header="Profile">
-      <Head title="Profile" />
+      <PageShell title="Profile">
+        <div className="space-y-6">
+          <UpdateProfileInformationForm
+            mustVerifyEmail={mustVerifyEmail}
+            status={status}
+            className="max-w-2xl"
+          />
 
-      <div className="space-y-6">
-        <UpdateProfileInformationForm
-          mustVerifyEmail={mustVerifyEmail}
-          status={status}
-          className="max-w-2xl"
-        />
+          <UpdatePasswordForm className="max-w-2xl" />
 
-        <UpdatePasswordForm className="max-w-2xl" />
-
-        <DeleteUserForm className="max-w-2xl" />
-      </div>
+          <DeleteUserForm className="max-w-2xl" />
+        </div>
+      </PageShell>
     </DashboardLayout>
   );
 }

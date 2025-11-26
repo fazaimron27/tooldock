@@ -1,4 +1,4 @@
-import { useFlashNotifications } from '@/hooks/useFlashNotifications';
+import { useFlashNotifications } from '@/Hooks/useFlashNotifications';
 
 import AppSidebar from '@/Components/AppSidebar';
 import Footer from '@/Components/Footer';
