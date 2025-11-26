@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\MenuRegistry;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MenuRegistry::class);
     }
 
     /**
@@ -21,5 +22,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Register default dashboard menu item
+        app(MenuRegistry::class)->registerItem(
+            group: 'Main',
+            label: 'Dashboard',
+            route: 'dashboard',
+            icon: 'Home',
+            order: 1
+        );
     }
 }
