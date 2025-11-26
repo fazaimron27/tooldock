@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\MenuRegistry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -33,6 +34,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'menus' => app(MenuRegistry::class)->getMenus(),
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
             ],
         ];
     }

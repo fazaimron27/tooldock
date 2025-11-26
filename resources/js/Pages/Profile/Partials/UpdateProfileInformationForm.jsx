@@ -1,9 +1,9 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import { Button } from '@/Components/ui/button';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { cn } from '@/lib/utils';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -25,89 +25,76 @@ export default function UpdateProfileInformation({
     };
 
     return (
-        <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Profile Information
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-600">
+        <Card className={className}>
+            <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>
                     Update your account's profile information and email address.
-                </p>
-            </header>
-
-            <form onSubmit={submit} className="mt-6 space-y-6">
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
-                        id="name"
-                        className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                        isFocused
-                        autoComplete="name"
-                    />
-
-                    <InputError className="mt-2" message={errors.name} />
-                </div>
-
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        className="mt-1 block w-full"
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                        autoComplete="username"
-                    />
-
-                    <InputError className="mt-2" message={errors.email} />
-                </div>
-
-                {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-gray-800">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
-                        {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={submit} className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                            id="name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            required
+                            autoComplete="name"
+                            className={cn(errors.name && 'border-destructive')}
+                        />
+                        {errors.name && (
+                            <p className="text-sm text-destructive">{errors.name}</p>
                         )}
                     </div>
-                )}
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoComplete="username"
+                            className={cn(errors.email && 'border-destructive')}
+                        />
+                        {errors.email && (
+                            <p className="text-sm text-destructive">{errors.email}</p>
+                        )}
+                    </div>
 
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
-        </section>
+                    {mustVerifyEmail && user.email_verified_at === null && (
+                        <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                Your email address is unverified.{' '}
+                                <Link
+                                    href={route('verification.send')}
+                                    method="post"
+                                    as="button"
+                                    className="font-medium underline hover:no-underline"
+                                >
+                                    Click here to re-send the verification email.
+                                </Link>
+                            </p>
+
+                            {status === 'verification-link-sent' && (
+                                <div className="mt-2 flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    A new verification link has been sent to your email address.
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-4">
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Saving...' : 'Save'}
+                        </Button>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
     );
 }
