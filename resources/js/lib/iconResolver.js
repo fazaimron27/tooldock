@@ -1,4 +1,4 @@
-import * as LucideIcons from "lucide-react";
+import * as LucideIcons from 'lucide-react';
 
 /**
  * Resolve icon name string to Lucide React component
@@ -14,7 +14,7 @@ export function getIcon(iconName) {
   const normalizedName = iconName
     .split(/[-_\s]/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join("");
+    .join('');
 
   // Try to find the icon
   const IconComponent = LucideIcons[normalizedName] || LucideIcons[iconName];
