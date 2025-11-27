@@ -79,12 +79,14 @@ class ModuleManageCommand extends Command
         $withSeed = $this->option('seed');
 
         $this->info("Installing module: {$moduleName}...");
-        if ($withSeed) {
-            $this->info('  Running seeders (demo data will be created)');
-        }
 
         $this->lifecycleService->install($moduleName, $withSeed);
-        $this->info("Module '{$moduleName}' installed successfully!");
+
+        if ($withSeed) {
+            $this->info("Module '{$moduleName}' installed successfully with demo data!");
+        } else {
+            $this->info("Module '{$moduleName}' installed successfully!");
+        }
     }
 
     private function handleUninstall(string $moduleName): void
