@@ -1,7 +1,15 @@
 /**
- * Top navigation bar component with breadcrumbs, search, theme toggle, and notifications
- * Includes sidebar trigger for mobile navigation
+ * Top navigation bar component with dynamic backdrop blur effect
+ *
+ * Displays breadcrumbs, search, theme toggle, and notifications. The navbar
+ * features a dynamic blur effect that intensifies when the page is scrolled,
+ * creating a glassmorphism effect. The navbar is absolutely positioned to
+ * overlay the scroll container, allowing content to scroll behind it.
+ *
+ * @param {string} header - Optional header text to display in breadcrumbs
+ * @param {React.RefObject} scrollContainerRef - Ref to the scrollable container
  */
+import { useScrollBlur } from '@/Hooks/useScrollBlur';
 import { Link } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
 
@@ -25,11 +33,19 @@ import {
 import { Input } from '@/Components/ui/input';
 import { SidebarTrigger } from '@/Components/ui/sidebar';
 
-export default function Navbar({ header }) {
+export default function Navbar({ header, scrollContainerRef }) {
   const appName = import.meta.env.VITE_APP_NAME || 'Mosaic';
+  const isScrolled = useScrollBlur(scrollContainerRef);
+
+  // Apply stronger blur and lower opacity when scrolled for glassmorphism effect
+  const blurClasses = isScrolled
+    ? 'bg-background/40 backdrop-blur-xl'
+    : 'bg-background/95 backdrop-blur-sm';
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={`absolute top-0 left-0 right-0 z-50 flex h-16 shrink-0 items-center gap-4 border-b px-4 transition-all duration-200 ${blurClasses}`}
+    >
       <SidebarTrigger className="-ml-1" />
 
       <div className="flex flex-1 items-center gap-4 min-w-0">
