@@ -1,3 +1,7 @@
+/**
+ * Dashboard page component displaying overview statistics, charts, and data tables
+ * Includes various dashboard widgets, dialogs, and interactive elements
+ */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { STATUS_COLORS } from '@/Utils/constants';

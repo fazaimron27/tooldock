@@ -1,3 +1,6 @@
+/**
+ * Checkbox input component with consistent styling
+ */
 export default function Checkbox({ className = '', ...props }) {
   return (
     <input

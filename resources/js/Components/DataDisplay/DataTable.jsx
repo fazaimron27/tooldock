@@ -1,3 +1,8 @@
+/**
+ * Data table component with search, sorting, and pagination
+ * Handles interactive element clicks within cells to prevent row click conflicts
+ * Supports both client-side and server-side operations via TanStack Table
+ */
 import { cn } from '@/Utils/utils';
 import { flexRender } from '@tanstack/react-table';
 import { ArrowDownRight, ArrowUpDown, ArrowUpRight, Search } from 'lucide-react';
@@ -6,26 +11,8 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 
-/**
- * Smart DataTable component that wraps TanStack Table with built-in UI
- * @param {object} props
- * @param {object} props.table - TanStack Table instance
- * @param {array} props.data - Table data
- * @param {array} props.columns - Column definitions
- * @param {boolean} props.searchable - Show search input (default: true)
- * @param {boolean} props.pagination - Show pagination controls (default: true)
- * @param {boolean} props.sorting - Enable sorting (default: true)
- * @param {function} props.onRowClick - Callback when row is clicked
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.title - Table title (optional)
- * @param {string} props.description - Table description (optional)
- * @param {array} props.pageSizeOptions - Page size options (default: [10, 20, 30, 50])
- * @param {boolean} props.showCard - Wrap table in Card component (default: true)
- */
 export default function DataTable({
   table,
-  data: _data = [],
-  columns: _columns = [],
   searchable = true,
   pagination = true,
   sorting = true,
@@ -37,8 +24,7 @@ export default function DataTable({
   showCard = true,
 }) {
   const tableContent = (
-    <div className={cn('space-y-4', className)}>
-      {/* Search Input */}
+    <div className={cn('space-y-4 w-full', className)}>
       {searchable && (
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -52,8 +38,7 @@ export default function DataTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
+      <div className="rounded-md border overflow-x-auto overflow-y-visible">
         <table className="w-full min-w-[640px]">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -77,16 +62,12 @@ export default function DataTable({
                         {sorting && header.column.getCanSort() && (
                           <>
                             <ArrowUpDown className="h-4 w-4 opacity-50" />
-                            {(() => {
-                              const sorted = header.column.getIsSorted();
-                              if (sorted === 'asc') {
-                                return <ArrowUpRight className="h-4 w-4" />;
-                              }
-                              if (sorted === 'desc') {
-                                return <ArrowDownRight className="h-4 w-4" />;
-                              }
-                              return null;
-                            })()}
+                            {header.column.getIsSorted() === 'asc' && (
+                              <ArrowUpRight className="h-4 w-4" />
+                            )}
+                            {header.column.getIsSorted() === 'desc' && (
+                              <ArrowDownRight className="h-4 w-4" />
+                            )}
                           </>
                         )}
                       </div>
@@ -110,14 +91,23 @@ export default function DataTable({
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className={cn(
-                    'border-b transition-colors hover:bg-muted/50',
-                    onRowClick && 'cursor-pointer'
-                  )}
+                  className={cn('border-b', onRowClick && 'cursor-pointer hover:bg-muted/50')}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-4 align-middle whitespace-nowrap">
+                    <td
+                      key={cell.id}
+                      className="p-4 align-middle whitespace-nowrap"
+                      onClick={(e) => {
+                        // Prevents row click when interacting with buttons, links, or form elements
+                        // Ensures action buttons work independently without triggering row navigation
+                        const interactiveElements =
+                          'button, a, input, select, textarea, [role="button"], [role="link"], [role="menuitem"]';
+                        if (e.target.closest(interactiveElements)) {
+                          e.stopPropagation();
+                        }
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -128,7 +118,6 @@ export default function DataTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {pagination && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 flex-wrap">

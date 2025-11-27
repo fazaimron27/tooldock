@@ -1,3 +1,7 @@
+/**
+ * Page shell component providing consistent page layout structure
+ * Includes page title, breadcrumbs, action buttons area, and content area
+ */
 import { cn } from '@/Utils/utils';
 import { Head } from '@inertiajs/react';
 
@@ -10,15 +14,6 @@ import {
   BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
 
-/**
- * Layout wrapper component for pages with title, breadcrumbs, and action buttons
- * @param {object} props
- * @param {string} props.title - Page title (also used for Head title)
- * @param {array} props.breadcrumbs - Breadcrumb items: [{ label, href? }]
- * @param {React.ReactNode} props.actions - Action buttons area (right-aligned)
- * @param {React.ReactNode} props.children - Page content
- * @param {string} props.className - Additional CSS classes
- */
 export default function PageShell({
   title,
   breadcrumbs = [],
@@ -30,7 +25,6 @@ export default function PageShell({
     <>
       {title && <Head title={title} />}
       <div className={cn('space-y-6', className)}>
-        {/* Header Section */}
         {(title || breadcrumbs.length > 0 || actions) && (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
@@ -63,7 +57,6 @@ export default function PageShell({
           </div>
         )}
 
-        {/* Content */}
         {children}
       </div>
     </>

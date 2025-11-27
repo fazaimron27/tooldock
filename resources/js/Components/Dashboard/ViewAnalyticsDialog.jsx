@@ -1,15 +1,12 @@
+/**
+ * Dialog component for viewing detailed analytics and insights
+ * Displays analytics metrics and provides export functionality
+ */
 import { toast } from 'sonner';
 
 import SimpleDialog from '@/Components/Common/SimpleDialog';
 import { Button } from '@/Components/ui/button';
 
-/**
- * Dialog for viewing analytics
- * @param {object} props
- * @param {boolean} props.open - Whether dialog is open
- * @param {function} props.onOpenChange - Callback when open state changes
- * @param {React.ReactNode} props.trigger - Trigger button/element
- */
 export default function ViewAnalyticsDialog({ open, onOpenChange, trigger }) {
   const handleExport = () => {
     onOpenChange?.(false);

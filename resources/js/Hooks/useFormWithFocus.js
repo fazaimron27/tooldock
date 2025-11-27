@@ -1,19 +1,10 @@
+/**
+ * Form handler hook with automatic focus management on validation errors
+ * Automatically focuses the first field with an error after form submission fails
+ */
 import { useForm } from '@inertiajs/react';
 import { useCallback, useMemo, useRef } from 'react';
 
-/**
- * Form handler with automatic focus management on errors
- * @param {object} initialData - Initial form data
- * @param {object} options - Form options
- * @param {string|function} options.route - Route name or function that returns route
- * @param {string} options.method - HTTP method: 'post', 'put', 'patch', 'delete' (default: 'post')
- * @param {boolean} options.preserveScroll - Preserve scroll position (default: true)
- * @param {array|object} options.focusFields - Array of field names ['field1', 'field2'] or object map { fieldName: ref } (for backward compatibility)
- * @param {function} options.onSuccess - Success callback
- * @param {function} options.onError - Error callback
- * @param {function} options.onFinish - Finish callback
- * @returns {object} Form handler with submit function, form state, and field refs
- */
 export function useFormWithFocus(initialData, options = {}) {
   const {
     route: routeName,

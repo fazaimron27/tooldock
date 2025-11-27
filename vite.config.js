@@ -1,7 +1,10 @@
 import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -14,11 +17,52 @@ export default defineConfig({
       ],
     }),
     react(),
+    {
+      // Custom plugin to handle module page resolution for Inertia.js
+      // Module pages use virtual path syntax (Modules::Blog/Pages/Index) which
+      // are resolved at runtime by Inertia, not during Vite build
+      name: 'module-page-resolver',
+      enforce: 'pre',
+      configureServer(server) {
+        // Intercept dev server requests for module pages to prevent 404 errors
+        // Return empty JS module to satisfy browser MIME type requirements
+        server.middlewares.use((req, res, next) => {
+          if (req.url && req.url.includes('Modules::')) {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/javascript');
+            res.end('// Module page handled by Inertia resolver');
+            return;
+          }
+          next();
+        });
+      },
+      resolveId(id) {
+        // Mark module page imports as external to exclude from Vite bundle
+        // These are resolved dynamically by Inertia's page resolver
+        if (id.includes('Modules::')) {
+          return { id: id, external: true };
+        }
+        return null;
+      },
+      handleHotUpdate({ file }) {
+        // Skip HMR for virtual module paths to prevent unnecessary reloads
+        if (file.includes('Modules::')) {
+          return [];
+        }
+        return null;
+      },
+    },
   ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './resources/js'),
       '@modules': path.resolve(__dirname, 'Modules'),
+    },
+  },
+  server: {
+    fs: {
+      // Allow Vite to access files outside project root for module support
+      allow: ['..'],
     },
   },
 });

@@ -1,3 +1,7 @@
+/**
+ * Modal dialog component with customizable max width and close behavior
+ * Built on Headless UI Dialog with transition animations
+ */
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 
 export default function Modal({

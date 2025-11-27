@@ -1,15 +1,9 @@
+/**
+ * Progress bar component for displaying percentage-based metrics
+ * Supports multiple color variants and displays both label and value
+ */
 import { cn } from '@/Utils/utils';
 
-/**
- * Reusable progress bar component
- * @param {object} props
- * @param {string} props.label - Label text (e.g., "CPU Usage")
- * @param {string|number} props.value - Value to display (e.g., "45%" or 45)
- * @param {number} props.percentage - Percentage value (0-100) for the progress bar
- * @param {string} props.className - Additional CSS classes for the container
- * @param {string} props.barClassName - Additional CSS classes for the progress bar
- * @param {string} props.color - Progress bar color variant (default: "primary")
- */
 export default function ProgressBar({
   label,
   value,

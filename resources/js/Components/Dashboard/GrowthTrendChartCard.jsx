@@ -1,14 +1,12 @@
+/**
+ * Growth trend chart card displaying user growth over time
+ * Uses line chart to visualize growth trends
+ */
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
 import ChartCard from '@/Components/Common/ChartCard';
 import { ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
 
-/**
- * Growth trend chart card component displaying user growth over time
- * @param {object} props
- * @param {array} props.data - Chart data array with { name, value } structure
- * @param {string} props.className - Additional CSS classes
- */
 export default function GrowthTrendChartCard({ data = [], className }) {
   const config = {
     users: {

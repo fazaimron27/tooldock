@@ -1,3 +1,7 @@
+/**
+ * Simple dialog component for displaying content in a modal
+ * Suitable for non-form dialogs with optional custom footer
+ */
 import { cn } from '@/Utils/utils';
 
 import { Button } from '@/Components/ui/button';
@@ -11,18 +15,6 @@ import {
   DialogTrigger,
 } from '@/Components/ui/dialog';
 
-/**
- * Simple dialog component for non-form dialogs
- * @param {object} props
- * @param {boolean} props.open - Whether dialog is open
- * @param {function} props.onOpenChange - Callback when open state changes
- * @param {string} props.title - Dialog title
- * @param {string|React.ReactNode} props.description - Dialog description
- * @param {React.ReactNode} props.children - Dialog content
- * @param {React.ReactNode} props.trigger - Trigger button/element
- * @param {React.ReactNode} props.footer - Custom footer content (optional, defaults to Cancel button)
- * @param {string} props.className - Additional CSS classes
- */
 export default function SimpleDialog({
   open,
   onOpenChange,

@@ -1,17 +1,11 @@
+/**
+ * Enhanced useForm hook with automatic toast notifications
+ * Automatically displays toast messages for success and error states
+ */
 import { useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 
-/**
- * Enhanced useForm hook with automatic toast notifications
- * @param {object} initialData - Initial form data
- * @param {object} options - Additional options
- * @param {object} options.toast - Toast configuration
- * @param {string|function} options.toast.success - Success message or function that returns message
- * @param {string|function} options.toast.error - Error message or function that returns message
- * @param {boolean} options.toast.enabled - Enable/disable auto toasts (default: true)
- * @returns {object} Enhanced useForm with auto-toast handling
- */
 export function useSmartForm(initialData, options = {}) {
   const { flash } = usePage().props;
   const toastConfig = useMemo(() => options.toast || {}, [options.toast]);

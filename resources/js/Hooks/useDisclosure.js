@@ -1,10 +1,9 @@
-import { useState } from 'react';
-
 /**
  * Hook for managing boolean disclosure states (modals, dialogs, sheets, etc.)
- * @param {boolean} initialState - Initial open state (default: false)
- * @returns {object} { isOpen, onOpen, onClose, onToggle }
+ * Provides simple state management for open/close functionality
  */
+import { useState } from 'react';
+
 export function useDisclosure(initialState = false) {
   const [isOpen, setIsOpen] = useState(initialState);
 

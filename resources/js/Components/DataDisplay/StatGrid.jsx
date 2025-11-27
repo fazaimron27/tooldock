@@ -1,16 +1,11 @@
+/**
+ * Grid layout component for displaying multiple stat cards
+ * Supports responsive column layouts and custom card components
+ */
 import { cn } from '@/Utils/utils';
 
 import StatCard from './StatCard';
 
-/**
- * Grid layout component for multiple StatCard components
- * Can also be used with MetricCard or any other card component
- * @param {object} props
- * @param {array} props.stats - Array of stat objects with title, value, change, trend, icon
- * @param {number} props.columns - Number of columns on large screens (default: 4)
- * @param {string} props.className - Additional CSS classes
- * @param {React.ComponentType} props.cardComponent - Custom card component to use (default: StatCard)
- */
 export default function StatGrid({
   stats = [],
   columns = 4,

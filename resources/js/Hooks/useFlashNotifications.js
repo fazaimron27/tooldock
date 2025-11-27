@@ -1,3 +1,7 @@
+/**
+ * Hook for displaying flash notifications from server-side flash messages
+ * Automatically shows toast notifications for success, error, and warning messages
+ */
 import { usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';

@@ -1,3 +1,7 @@
+/**
+ * Dialog component for creating new orders
+ * Includes form fields for customer name, product, and quantity
+ */
 import { useFormWithDialog } from '@/Hooks/useFormWithDialog';
 import { toast } from 'sonner';
 
@@ -5,11 +9,6 @@ import FormDialog from '@/Components/Common/FormDialog';
 import FormField from '@/Components/Common/FormField';
 import { Button } from '@/Components/ui/button';
 
-/**
- * Dialog for creating a new order
- * @param {object} props
- * @param {React.ReactNode} props.trigger - Trigger button/element
- */
 export default function CreateOrderDialog({ trigger }) {
   const { data, setData, errors, processing, submit, dialog, handleDialogChange } =
     useFormWithDialog(

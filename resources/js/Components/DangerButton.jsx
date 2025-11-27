@@ -1,3 +1,7 @@
+/**
+ * Danger button component for destructive actions
+ * Styled with red color scheme to indicate potentially dangerous operations
+ */
 export default function DangerButton({ className = '', disabled, children, ...props }) {
   return (
     <button

@@ -1,3 +1,7 @@
+/**
+ * Secondary button component for less prominent actions
+ * Styled with white background and gray border
+ */
 export default function SecondaryButton({
   type = 'button',
   className = '',

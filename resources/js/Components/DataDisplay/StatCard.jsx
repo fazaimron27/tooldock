@@ -1,19 +1,12 @@
+/**
+ * Stat card component for displaying statistics with trend indicators
+ * Shows value, change percentage, and trend direction (up/down)
+ */
 import { cn } from '@/Utils/utils';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 import MetricCard from './MetricCard';
 
-/**
- * Specialized card component for displaying statistics/metrics
- * Built on top of the generic MetricCard component
- * @param {object} props
- * @param {string} props.title - Card title
- * @param {string|number} props.value - Display value
- * @param {string} props.change - Change indicator (e.g., "+20.1%")
- * @param {string} props.trend - Trend direction: 'up' or 'down'
- * @param {React.ComponentType} props.icon - Icon component from lucide-react
- * @param {string} props.className - Additional CSS classes
- */
 export default function StatCard({ title, value, change, trend, icon: Icon, className }) {
   const TrendIcon = trend === 'up' ? ArrowUpRight : ArrowDownRight;
 

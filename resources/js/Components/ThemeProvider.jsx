@@ -1,3 +1,7 @@
+/**
+ * Theme provider component for managing application theme (light/dark/system)
+ * Persists theme preference in localStorage and applies it to the document root
+ */
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const initialState = {

@@ -1,10 +1,9 @@
+/**
+ * Icon resolver utility for converting icon name strings to Lucide React components
+ * Handles name normalization and provides fallback icon if not found
+ */
 import * as LucideIcons from 'lucide-react';
 
-/**
- * Resolve icon name string to Lucide React component
- * @param {string} iconName - Name of the icon (e.g., "Home", "FileText")
- * @returns {React.ComponentType} - The icon component or a fallback
- */
 export function getIcon(iconName) {
   if (!iconName) {
     return LucideIcons.Circle;

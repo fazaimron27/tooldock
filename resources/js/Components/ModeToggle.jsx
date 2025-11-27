@@ -1,3 +1,7 @@
+/**
+ * Theme mode toggle component for switching between light, dark, and system themes
+ * Displays sun/moon icons that transition based on current theme
+ */
 import { Moon, Sun } from 'lucide-react';
 
 import { useTheme } from '@/Components/ThemeProvider';

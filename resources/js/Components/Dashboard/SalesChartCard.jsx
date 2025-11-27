@@ -1,14 +1,12 @@
+/**
+ * Sales chart card displaying monthly sales performance
+ * Uses bar chart to visualize sales data
+ */
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import ChartCard from '@/Components/Common/ChartCard';
 import { ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
 
-/**
- * Sales chart card component displaying monthly sales performance
- * @param {object} props
- * @param {array} props.data - Chart data array with { name, value } structure
- * @param {string} props.className - Additional CSS classes
- */
 export default function SalesChartCard({ data = [], className }) {
   const config = {
     value: {
