@@ -2,8 +2,8 @@
 
 namespace Modules\Newsletter\Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
+use Modules\Core\App\Models\User;
 use Modules\Newsletter\Models\Campaign;
 
 class NewsletterDatabaseSeeder extends Seeder
