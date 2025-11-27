@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Modules\DatabaseActivator;
 use Nwidart\Modules\Activators\FileActivator;
 use Nwidart\Modules\Providers\ConsoleServiceProvider;
 
@@ -292,7 +293,10 @@ return [
             'class' => FileActivator::class,
             'statuses-file' => base_path('modules_statuses.json'),
         ],
+        'database' => [
+            'class' => DatabaseActivator::class,
+        ],
     ],
 
-    'activator' => 'file',
+    'activator' => 'database',
 ];
