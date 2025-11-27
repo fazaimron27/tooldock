@@ -18,10 +18,12 @@ class CampaignController extends Controller
 {
     /**
      * Display paginated listing of campaigns with server-side search, sorting, and pagination.
+     * Only displays campaigns belonging to the logged-in user.
      */
     public function index(DatatableQueryService $datatableService): Response
     {
-        $query = Campaign::query();
+        $query = Campaign::query()
+            ->where('user_id', request()->user()->id);
 
         $defaultPerPage = 10;
 
@@ -53,6 +55,7 @@ class CampaignController extends Controller
     /**
      * Get published blog posts safely.
      * Returns empty collection if Blog module is unavailable.
+     * Only returns posts belonging to the logged-in user.
      */
     private function getPublishedPosts(int $limit = 20)
     {
@@ -63,6 +66,7 @@ class CampaignController extends Controller
         try {
             return \Modules\Blog\Models\Post::query()
                 ->select('id', 'title', 'published_at')
+                ->where('user_id', request()->user()->id)
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', now())
                 ->latest()
@@ -97,6 +101,7 @@ class CampaignController extends Controller
     public function store(StoreCampaignRequest $request): RedirectResponse
     {
         Campaign::create([
+            'user_id' => $request->user()->id,
             'subject' => $request->subject,
             'status' => 'draft',
             'content' => $request->content,
@@ -111,8 +116,13 @@ class CampaignController extends Controller
     /**
      * Display the specified campaign with associated blog posts.
      */
-    public function show(Campaign $newsletter): Response
+    public function show(Campaign $newsletter): Response|RedirectResponse
     {
+        if ($newsletter->user_id !== request()->user()->id) {
+            return redirect()->route('newsletter.index')
+                ->with('error', 'You do not have permission to view this campaign.');
+        }
+
         $selectedPosts = collect([]);
 
         if (! empty($newsletter->selected_posts) && $this->isBlogModuleAvailable()) {
@@ -141,6 +151,11 @@ class CampaignController extends Controller
      */
     public function edit(Campaign $newsletter): Response|RedirectResponse
     {
+        if ($newsletter->user_id !== request()->user()->id) {
+            return redirect()->route('newsletter.index')
+                ->with('error', 'You do not have permission to edit this campaign.');
+        }
+
         if ($newsletter->status === 'sent') {
             return redirect()->route('newsletter.show', $newsletter)
                 ->with('error', 'Cannot edit a campaign that has already been sent.');
@@ -160,6 +175,11 @@ class CampaignController extends Controller
      */
     public function update(UpdateCampaignRequest $request, Campaign $newsletter): RedirectResponse
     {
+        if ($newsletter->user_id !== $request->user()->id) {
+            return redirect()->route('newsletter.index')
+                ->with('error', 'You do not have permission to update this campaign.');
+        }
+
         if ($newsletter->status === 'sent') {
             return redirect()->route('newsletter.show', $newsletter)
                 ->with('error', 'Cannot update a campaign that has already been sent.');
@@ -187,6 +207,11 @@ class CampaignController extends Controller
      */
     public function destroy(Campaign $newsletter): RedirectResponse
     {
+        if ($newsletter->user_id !== request()->user()->id) {
+            return redirect()->route('newsletter.index')
+                ->with('error', 'You do not have permission to delete this campaign.');
+        }
+
         if ($newsletter->status === 'sending') {
             return redirect()->route('newsletter.index')
                 ->with('error', 'Cannot delete a campaign that is currently being sent.');
@@ -204,6 +229,11 @@ class CampaignController extends Controller
      */
     public function send(Campaign $newsletter): RedirectResponse
     {
+        if ($newsletter->user_id !== request()->user()->id) {
+            return redirect()->route('newsletter.index')
+                ->with('error', 'You do not have permission to send this campaign.');
+        }
+
         if ($newsletter->status !== 'draft') {
             return redirect()->route('newsletter.show', $newsletter)
                 ->with('error', 'Only draft campaigns can be sent.');
