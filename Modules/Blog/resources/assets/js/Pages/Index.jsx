@@ -17,7 +17,7 @@ import { Button } from '@/Components/ui/button';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-export default function Index({ posts }) {
+export default function Index({ posts, defaultPerPage = 20 }) {
   const deleteDialog = useDisclosure();
   const [postToDelete, setPostToDelete] = useState(null);
 
@@ -198,7 +198,7 @@ export default function Index({ posts }) {
     columns,
     route: route('blog.index'),
     serverSide: true,
-    pageSize: posts.per_page || 10,
+    pageSize: posts.per_page || defaultPerPage,
     initialSorting: [{ id: 'created_at', desc: true }],
     pageCount: pageCount,
     only: ['posts'],
@@ -211,7 +211,7 @@ export default function Index({ posts }) {
 
     const currentPageIndex = posts.current_page - 1;
     const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = posts.per_page || 10;
+    const serverPageSize = posts.per_page || defaultPerPage;
 
     if (
       currentPagination.pageIndex !== currentPageIndex ||
@@ -224,7 +224,7 @@ export default function Index({ posts }) {
         });
       });
     }
-  }, [tableProps.table, posts.current_page, posts.per_page]);
+  }, [tableProps.table, posts.current_page, posts.per_page, defaultPerPage]);
 
   return (
     <DashboardLayout header="Blog">
