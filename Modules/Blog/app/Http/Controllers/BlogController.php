@@ -66,8 +66,13 @@ class BlogController extends Controller
     /**
      * Show the specified resource.
      */
-    public function show(Post $blog): Response
+    public function show(Post $blog): Response|RedirectResponse
     {
+        if ($blog->user_id !== request()->user()->id) {
+            return redirect()->route('blog.index')
+                ->with('error', 'You do not have permission to view this post.');
+        }
+
         $blog->load('user');
 
         return Inertia::render('Modules::Blog/Show', [
@@ -78,8 +83,13 @@ class BlogController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Post $blog): Response
+    public function edit(Post $blog): Response|RedirectResponse
     {
+        if ($blog->user_id !== request()->user()->id) {
+            return redirect()->route('blog.index')
+                ->with('error', 'You do not have permission to edit this post.');
+        }
+
         return Inertia::render('Modules::Blog/Edit', [
             'post' => $blog,
         ]);
@@ -90,6 +100,11 @@ class BlogController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $blog): RedirectResponse
     {
+        if ($blog->user_id !== $request->user()->id) {
+            return redirect()->route('blog.index')
+                ->with('error', 'You do not have permission to update this post.');
+        }
+
         $blog->update($request->validated());
 
         return redirect()->route('blog.index')
@@ -101,6 +116,11 @@ class BlogController extends Controller
      */
     public function destroy(Post $blog): RedirectResponse
     {
+        if ($blog->user_id !== request()->user()->id) {
+            return redirect()->route('blog.index')
+                ->with('error', 'You do not have permission to delete this post.');
+        }
+
         $blog->delete();
 
         return redirect()->route('blog.index')
