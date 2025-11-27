@@ -1,14 +1,8 @@
 /**
  * Centralized data formatting utilities
+ * Provides functions for formatting currency, dates, numbers, and extracting name initials
  */
 
-/**
- * Format a number as currency
- * @param {number|string} value - The value to format
- * @param {string} currency - Currency code (default: 'IDR')
- * @param {string} locale - Locale string (default: 'id-ID' for IDR, 'en-US' otherwise)
- * @returns {string} Formatted currency string
- */
 export function formatCurrency(value, currency = 'IDR', locale = null) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
@@ -32,13 +26,6 @@ export function formatCurrency(value, currency = 'IDR', locale = null) {
   }
 }
 
-/**
- * Format a date according to the specified format
- * @param {Date|string|number} date - The date to format
- * @param {string} format - Format type: 'short', 'long', 'datetime', or 'relative'
- * @param {string} locale - Locale string (default: 'en-US')
- * @returns {string} Formatted date string
- */
 export function formatDate(date, format = 'short', locale = 'en-US') {
   if (!date) {
     return '';
@@ -69,11 +56,6 @@ export function formatDate(date, format = 'short', locale = 'en-US') {
   }
 }
 
-/**
- * Format a date as relative time (e.g., "2 hours ago", "in 3 days")
- * @param {Date} date - The date to format
- * @returns {string} Relative time string
- */
 function formatRelativeDate(date) {
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
@@ -104,12 +86,6 @@ function formatRelativeDate(date) {
   return 'just now';
 }
 
-/**
- * Format a number with locale-specific formatting
- * @param {number|string} value - The number to format
- * @param {string} locale - Locale string (default: 'en-US')
- * @returns {string} Formatted number string
- */
 export function formatNumber(value, locale = 'en-US') {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
@@ -124,11 +100,6 @@ export function formatNumber(value, locale = 'en-US') {
   }
 }
 
-/**
- * Extract initials from a name
- * @param {string} name - Full name (e.g., "John Doe")
- * @returns {string} Initials (e.g., "JD")
- */
 export function getInitials(name) {
   if (!name || typeof name !== 'string') {
     return '';

@@ -1,5 +1,6 @@
 /**
  * Application constants and configuration values
+ * Contains status color mappings, pagination settings, and date format configurations
  */
 
 export const STATUS_COLORS = {
