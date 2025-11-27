@@ -2,8 +2,10 @@
 
 namespace Modules\Newsletter\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Campaign model representing an email newsletter campaign.
@@ -21,6 +23,7 @@ class Campaign extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'user_id',
         'subject',
         'status',
         'content',
@@ -39,5 +42,13 @@ class Campaign extends Model
             'selected_posts' => 'array',
             'scheduled_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the user that owns the campaign.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
