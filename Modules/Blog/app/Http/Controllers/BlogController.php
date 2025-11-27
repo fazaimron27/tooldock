@@ -3,6 +3,7 @@
 namespace Modules\Blog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,47 +14,30 @@ use Modules\Blog\Models\Post;
 class BlogController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a paginated listing of posts for the authenticated user.
+     *
+     * Supports server-side search, sorting, and pagination. Only displays
+     * posts belonging to the logged-in user.
      */
-    public function index(): Response
+    public function index(DatatableQueryService $datatableService): Response
     {
-        $query = Post::with('user');
+        $query = Post::with('user')
+            ->where('user_id', request()->user()->id);
 
-        // Search
-        if (request()->has('search') && request()->search) {
-            $search = request()->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('excerpt', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
-            });
-        }
+        $defaultPerPage = 10;
 
-        // Sorting
-        $sort = request()->get('sort', 'created_at');
-        $direction = request()->get('direction', 'desc');
-
-        // Validate sort column
-        $allowedSorts = ['title', 'created_at', 'published_at', 'updated_at'];
-        if (! in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
-        }
-
-        // Validate direction
-        if (! in_array($direction, ['asc', 'desc'])) {
-            $direction = 'desc';
-        }
-
-        $query->orderBy($sort, $direction);
-
-        // Pagination
-        $perPage = request()->get('per_page', 10);
-        $perPage = in_array($perPage, [10, 20, 30, 50]) ? $perPage : 10;
-
-        $posts = $query->paginate($perPage);
+        $posts = $datatableService->build($query, [
+            'searchFields' => ['title', 'excerpt', 'content'],
+            'allowedSorts' => ['title', 'created_at', 'published_at', 'updated_at'],
+            'defaultSort' => 'created_at',
+            'defaultDirection' => 'desc',
+            'allowedPerPage' => [10, 20, 30, 50],
+            'defaultPerPage' => $defaultPerPage,
+        ]);
 
         return Inertia::render('Modules::Blog/Index', [
             'posts' => $posts,
+            'defaultPerPage' => $defaultPerPage,
         ]);
     }
 
