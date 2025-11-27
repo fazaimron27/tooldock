@@ -2,12 +2,12 @@
 
 namespace Modules\Blog\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Modules\Blog\Database\Factories\PostFactory;
+use Modules\Core\App\Models\User;
 
 class Post extends Model
 {
