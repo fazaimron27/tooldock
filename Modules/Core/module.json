@@ -1,0 +1,15 @@
+{
+  "name": "Core",
+  "alias": "core",
+  "version": "1.0.0",
+  "description": "Core ERP module handling Users, Authentication, and Permissions",
+  "keywords": ["core", "users", "auth", "permissions"],
+  "priority": -999,
+  "protected": true,
+  "active": 1,
+  "providers": ["Modules\\Core\\Providers\\CoreServiceProvider"],
+  "files": [],
+  "requires": [],
+  "icon": "Shield",
+  "author": "Odooist Team"
+}
