@@ -224,7 +224,7 @@ export default function Index({ posts, defaultPerPage = 20 }) {
         });
       });
     }
-  }, [tableProps.table, posts.current_page, posts.per_page]);
+  }, [tableProps.table, posts.current_page, posts.per_page, defaultPerPage]);
 
   return (
     <DashboardLayout header="Blog">
