@@ -6,6 +6,12 @@ use App\Exceptions\MissingDependencyException;
 use App\Services\Modules\ModuleLifecycleService;
 use Illuminate\Console\Command;
 
+/**
+ * Artisan command to manage module lifecycle operations
+ *
+ * Provides CLI interface for installing, uninstalling, enabling, and disabling modules.
+ * Handles dependency validation and provides user-friendly error messages.
+ */
 class ModuleManageCommand extends Command
 {
     /**
@@ -29,7 +35,12 @@ class ModuleManageCommand extends Command
     }
 
     /**
-     * Execute the console command.
+     * Execute the console command
+     *
+     * Validates action parameter and delegates to appropriate handler method.
+     * Catches and displays user-friendly error messages for common exceptions.
+     *
+     * @return int Command exit code (SUCCESS or FAILURE)
      */
     public function handle(): int
     {
@@ -74,6 +85,11 @@ class ModuleManageCommand extends Command
         }
     }
 
+    /**
+     * Handle module installation
+     *
+     * @param  string  $moduleName  The name of the module to install
+     */
     private function handleInstall(string $moduleName): void
     {
         $withSeed = $this->option('seed');
@@ -89,6 +105,11 @@ class ModuleManageCommand extends Command
         }
     }
 
+    /**
+     * Handle module uninstallation
+     *
+     * @param  string  $moduleName  The name of the module to uninstall
+     */
     private function handleUninstall(string $moduleName): void
     {
         $this->info("Uninstalling module: {$moduleName}...");
@@ -96,6 +117,11 @@ class ModuleManageCommand extends Command
         $this->info("Module '{$moduleName}' uninstalled successfully!");
     }
 
+    /**
+     * Handle module enabling
+     *
+     * @param  string  $moduleName  The name of the module to enable
+     */
     private function handleEnable(string $moduleName): void
     {
         $this->info("Enabling module: {$moduleName}...");
@@ -103,6 +129,11 @@ class ModuleManageCommand extends Command
         $this->info("Module '{$moduleName}' enabled successfully!");
     }
 
+    /**
+     * Handle module disabling
+     *
+     * @param  string  $moduleName  The name of the module to disable
+     */
     private function handleDisable(string $moduleName): void
     {
         $this->info("Disabling module: {$moduleName}...");

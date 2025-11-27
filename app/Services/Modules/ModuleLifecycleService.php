@@ -38,11 +38,9 @@ class ModuleLifecycleService
             return;
         }
 
-        // Determine operation name for error messages
         $operation = $checkEnabled ? 'enable' : 'install';
 
         foreach ($requires as $requiredModuleName) {
-            // Check if the required module exists
             if (! ModuleFacade::has($requiredModuleName)) {
                 throw new MissingDependencyException(
                     "Cannot {$operation} '{$module->getName()}' because the required dependency '{$requiredModuleName}' is missing.\n".
@@ -50,7 +48,6 @@ class ModuleLifecycleService
                 );
             }
 
-            // Check if the required module is installed in the database
             $isInstalled = DB::table('modules_statuses')
                 ->where('name', $requiredModuleName)
                 ->where('is_installed', true)
@@ -64,7 +61,6 @@ class ModuleLifecycleService
                 );
             }
 
-            // Check if the required module is enabled (only when checkEnabled is true)
             if ($checkEnabled && ! ModuleFacade::isEnabled($requiredModuleName)) {
                 throw new MissingDependencyException(
                     "Cannot {$operation} '{$module->getName()}' because the required dependency '{$requiredModuleName}' is not enabled.\n".
@@ -73,20 +69,6 @@ class ModuleLifecycleService
                 );
             }
         }
-    }
-
-    /**
-     * Get module metadata for frontend display
-     *
-     * @return array{icon: string|null, version: string|null, description: string|null}
-     */
-    public function getMetadata(Module $module): array
-    {
-        return [
-            'icon' => $module->get('icon'),
-            'version' => $module->get('version'),
-            'description' => $module->get('description'),
-        ];
     }
 
     /**
@@ -109,10 +91,8 @@ class ModuleLifecycleService
     {
         $module = $this->moduleRepository->findOrFail($moduleName);
 
-        // Check dependencies are installed (but not necessarily enabled)
         $this->checkDependencies($module);
 
-        // Update database with installed status
         // Note: is_active is NOT set here - that's done by enable() at the end
         DB::table('modules_statuses')->updateOrInsert(
             ['name' => $moduleName],
@@ -124,23 +104,18 @@ class ModuleLifecycleService
             ]
         );
 
-        // Enable module temporarily (required for migrations to be discovered by Laravel)
+        // Temporarily enable module so migrations can be discovered
         // The nwidart/laravel-modules package only discovers migrations for enabled modules
         $this->activator->enable($module);
 
-        // Run migrations using module:migrate command
-        // Use --force flag to run in non-interactive mode
-        // Note: $migrateResult is not used - we check Artisan output instead to detect if migrations actually ran
         Artisan::call('module:migrate', [
             'module' => $moduleName,
             '--force' => true,
         ]);
 
-        // Check if migrations actually ran by checking the output
-        // Some edge cases require checking output rather than return code
+        // Fallback: if module:migrate didn't run migrations, try direct path
         $output = Artisan::output();
         if (str_contains($output, 'Nothing to migrate') && ! str_contains($output, 'Migrated:')) {
-            // If nothing migrated, try running migrations directly
             $migrationPath = $module->getPath().'/database/migrations';
             if (is_dir($migrationPath)) {
                 Artisan::call('migrate', [
@@ -150,7 +125,6 @@ class ModuleLifecycleService
             }
         }
 
-        // Run seeders only if --seed flag is provided
         if ($withSeed) {
             $seedResult = Artisan::call('module:seed', [
                 'module' => $moduleName,
@@ -166,7 +140,6 @@ class ModuleLifecycleService
         }
 
         // Enable module (sets is_active and performs cleanup)
-        // This delegates to enable() which handles activation and finalization
         $this->enable($moduleName);
     }
 
@@ -189,21 +162,23 @@ class ModuleLifecycleService
     {
         $module = $this->moduleRepository->findOrFail($moduleName);
 
-        // Check reverse dependencies (checks installed modules)
-        // Prevents uninstalling modules that other installed modules depend on
+        if ($module->get('protected') === true) {
+            throw new \RuntimeException(
+                "Cannot uninstall '{$moduleName}' because it is a protected module.\n".
+                    'Protected modules are essential to the system and cannot be removed.'
+            );
+        }
+
         $this->checkReverseDependencies($moduleName);
 
         // Disable module first (so routes are deactivated before rollback)
-        // This delegates to disable() which handles deactivation and finalization
         $this->disable($moduleName);
 
-        // Rollback migrations
         Artisan::call('module:migrate-rollback', [
             'module' => $moduleName,
             '--force' => true,
         ]);
 
-        // Update database to mark as uninstalled
         DB::table('modules_statuses')
             ->where('name', $moduleName)
             ->update([
@@ -233,7 +208,6 @@ class ModuleLifecycleService
     {
         $module = $this->moduleRepository->findOrFail($moduleName);
 
-        // Check if module is installed (must be installed before it can be enabled)
         $isInstalled = DB::table('modules_statuses')
             ->where('name', $moduleName)
             ->where('is_installed', true)
@@ -247,10 +221,8 @@ class ModuleLifecycleService
             );
         }
 
-        // Check dependencies are installed AND enabled (stricter check than install)
         $this->checkDependencies($module, checkEnabled: true);
 
-        // Update database with active status
         DB::table('modules_statuses')->updateOrInsert(
             ['name' => $moduleName],
             [
@@ -259,11 +231,10 @@ class ModuleLifecycleService
             ]
         );
 
-        // Enable via activator (this updates the nwidart/laravel-modules internal cache)
-        // This makes the module discoverable by ModuleFacade::isEnabled() and loads its routes/providers
+        // Enable via activator (updates nwidart/laravel-modules cache)
+        // Makes module discoverable by ModuleFacade::isEnabled() and loads routes/providers
         $this->activator->enable($module);
 
-        // Finalize operation (reload statuses, refresh registry, clear caches, generate routes)
         $this->finalizeModuleOperation();
     }
 
@@ -286,11 +257,15 @@ class ModuleLifecycleService
     {
         $module = $this->moduleRepository->findOrFail($moduleName);
 
-        // Check reverse dependencies - prevent disabling if active modules depend on this module
-        // This ensures we don't break dependent modules by disabling their dependencies
+        if ($module->get('protected') === true) {
+            throw new \RuntimeException(
+                "Cannot disable '{$moduleName}' because it is a protected module.\n".
+                    'Protected modules are essential to the system and must remain enabled.'
+            );
+        }
+
         $this->checkReverseDependenciesForDisable($moduleName);
 
-        // Update database with inactive status
         DB::table('modules_statuses')
             ->where('name', $moduleName)
             ->update([
@@ -298,11 +273,10 @@ class ModuleLifecycleService
                 'updated_at' => now(),
             ]);
 
-        // Disable via activator (this updates the nwidart/laravel-modules internal cache)
-        // This makes the module undiscoverable and unloads its routes/providers
+        // Disable via activator (updates nwidart/laravel-modules cache)
+        // Makes module undiscoverable and unloads routes/providers
         $this->activator->disable($module);
 
-        // Finalize operation (reload statuses, refresh registry, clear caches, generate routes)
         $this->finalizeModuleOperation();
     }
 
@@ -320,16 +294,13 @@ class ModuleLifecycleService
     {
         $dependents = [];
 
-        // Check only enabled modules (active modules need their dependencies to be active)
         foreach (ModuleFacade::allEnabled() as $activeModule) {
             $activeModuleName = $activeModule->getName();
 
-            // Skip self
             if ($activeModuleName === $moduleName) {
                 continue;
             }
 
-            // Check if this active module requires the module we're trying to disable
             $requires = $activeModule->get('requires', []);
 
             if (in_array($moduleName, $requires, true)) {
@@ -360,10 +331,9 @@ class ModuleLifecycleService
      */
     private function checkReverseDependencies(string $moduleName): void
     {
-        // Get all installed modules from database (facade doesn't track installed status)
-        // We check installed modules, not just enabled ones, because:
-        // - A disabled module might be re-enabled later and need its dependencies
-        // - Uninstalling a dependency would break the dependent module permanently
+        // Check all installed modules (not just enabled) because:
+        // - Disabled modules may be re-enabled later and need their dependencies
+        // - Uninstalling a dependency would permanently break dependent modules
         $installedModules = DB::table('modules_statuses')
             ->where('is_installed', true)
             ->pluck('name')
@@ -372,20 +342,17 @@ class ModuleLifecycleService
         $dependents = [];
 
         foreach ($installedModules as $installedModuleName) {
-            // Skip self
             if ($installedModuleName === $moduleName) {
                 continue;
             }
 
-            // Find the module object to check its requirements
             $installedModule = ModuleFacade::find($installedModuleName);
 
-            // Module might not exist in filesystem (orphaned database record)
+            // Skip orphaned database records (module files deleted)
             if ($installedModule === null) {
                 continue;
             }
 
-            // Check if this installed module requires the module we're trying to uninstall
             $requires = $installedModule->get('requires', []);
 
             if (in_array($moduleName, $requires, true)) {
@@ -491,18 +458,15 @@ class ModuleLifecycleService
      */
     public function discoverAndRegisterAll(): array
     {
-        // Scan for all modules in the filesystem
         ModuleFacade::scan();
 
-        // Get all available modules
         $allModules = ModuleFacade::all();
         $discoveredModules = [];
 
         foreach ($allModules as $module) {
             $moduleName = $module->getName();
 
-            // Register module in database (only if not already registered)
-            // This preserves existing installation status if module was already registered
+            // Preserve existing installation status if module already registered
             $exists = DB::table('modules_statuses')
                 ->where('name', $moduleName)
                 ->exists();
@@ -518,7 +482,7 @@ class ModuleLifecycleService
                     'updated_at' => now(),
                 ]);
             } else {
-                // Update version if module already exists but version changed
+                // Update version if changed
                 DB::table('modules_statuses')
                     ->where('name', $moduleName)
                     ->update([
@@ -530,9 +494,84 @@ class ModuleLifecycleService
             $discoveredModules[] = $moduleName;
         }
 
-        // Reload statuses if using DatabaseActivator
         $this->reloadStatusesIfNeeded();
 
         return $discoveredModules;
+    }
+
+    /**
+     * Discover and install all protected modules automatically.
+     *
+     * This method is called after migrations complete on a fresh database
+     * to automatically install essential protected modules (like Core).
+     * Only modules marked as "protected": true in their module.json are installed.
+     *
+     * Modules are installed in dependency order (modules with no dependencies first).
+     *
+     * @return array<string> Array of installed module names
+     */
+    public function installProtectedModules(): array
+    {
+        $this->discoverAndRegisterAll();
+
+        $allModules = ModuleFacade::all();
+        $protectedModules = [];
+
+        foreach ($allModules as $module) {
+            if ($module->get('protected') === true) {
+                $protectedModules[] = $module;
+            }
+        }
+
+        if (empty($protectedModules)) {
+            return [];
+        }
+
+        // Sort by dependencies (modules with no dependencies first)
+        usort($protectedModules, function (Module $a, Module $b) {
+            $aRequires = $a->get('requires', []);
+            $bRequires = $b->get('requires', []);
+
+            if (in_array($b->getName(), $aRequires, true)) {
+                return 1;
+            }
+
+            if (in_array($a->getName(), $bRequires, true)) {
+                return -1;
+            }
+
+            return 0;
+        });
+
+        $installedModules = [];
+
+        foreach ($protectedModules as $module) {
+            $moduleName = $module->getName();
+
+            $isInstalled = DB::table('modules_statuses')
+                ->where('name', $moduleName)
+                ->where('is_installed', true)
+                ->exists();
+
+            if ($isInstalled) {
+                continue;
+            }
+
+            try {
+                $this->install($moduleName, withSeed: false);
+                $installedModules[] = $moduleName;
+            } catch (\Exception $e) {
+                // Continue with other modules even if one fails
+                \Illuminate\Support\Facades\Log::error(
+                    "Failed to auto-install protected module '{$moduleName}'",
+                    [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]
+                );
+            }
+        }
+
+        return $installedModules;
     }
 }

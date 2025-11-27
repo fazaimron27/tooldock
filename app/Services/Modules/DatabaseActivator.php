@@ -32,7 +32,6 @@ class DatabaseActivator implements ActivatorInterface
 
     public function __construct(Container $app)
     {
-        // Load all module statuses into memory cache on construction
         $this->loadStatuses();
     }
 
@@ -50,7 +49,6 @@ class DatabaseActivator implements ActivatorInterface
             return;
         }
 
-        // Load all module activation statuses into memory
         $statuses = DB::table('modules_statuses')
             ->pluck('is_active', 'name')
             ->map(fn ($value) => (bool) $value)
@@ -90,13 +88,11 @@ class DatabaseActivator implements ActivatorInterface
             return;
         }
 
-        // Update or insert the module's activation status
         DB::table('modules_statuses')->updateOrInsert(
             ['name' => $name],
             ['is_active' => $status, 'updated_at' => now()]
         );
 
-        // Update in-memory cache to keep it in sync
         $this->modulesStatuses[$name] = $status;
     }
 
@@ -117,7 +113,6 @@ class DatabaseActivator implements ActivatorInterface
      * {@inheritDoc}
      *
      * Enable a module (set is_active = true).
-     * Used by ModuleLifecycleService and nwidart/laravel-modules package.
      */
     public function enable(Module $module): void
     {
@@ -128,7 +123,6 @@ class DatabaseActivator implements ActivatorInterface
      * {@inheritDoc}
      *
      * Disable a module (set is_active = false).
-     * Used by ModuleLifecycleService and nwidart/laravel-modules package.
      */
     public function disable(Module $module): void
     {
@@ -140,7 +134,6 @@ class DatabaseActivator implements ActivatorInterface
      *
      * Check if a module has a specific activation status.
      * Used by nwidart/laravel-modules package internally (e.g., ModuleFacade::isEnabled()).
-     * Not directly used by ModuleLifecycleService, but required by ActivatorInterface.
      */
     public function hasStatus(Module|string $module, bool $status): bool
     {
@@ -158,7 +151,6 @@ class DatabaseActivator implements ActivatorInterface
      *
      * Set module activation status using Module object.
      * Wrapper around setActiveByName() for convenience.
-     * Not directly used by ModuleLifecycleService, but required by ActivatorInterface.
      */
     public function setActive(Module $module, bool $active): void
     {
@@ -182,8 +174,6 @@ class DatabaseActivator implements ActivatorInterface
      *
      * Delete a module's activation record from database.
      * Used when a module is completely removed from the system.
-     * Not directly used by ModuleLifecycleService (which uses uninstall instead),
-     * but required by ActivatorInterface for module deletion scenarios.
      */
     public function delete(Module $module): void
     {
@@ -203,7 +193,6 @@ class DatabaseActivator implements ActivatorInterface
      *
      * Reset all module activation statuses (truncate table).
      * Useful for testing or complete system reset.
-     * Not directly used by ModuleLifecycleService, but required by ActivatorInterface.
      */
     public function reset(): void
     {
