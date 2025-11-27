@@ -7,6 +7,7 @@ import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormField from '@/Components/Common/FormField';
+import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
@@ -19,7 +20,9 @@ export default function Edit({ post }) {
       title: post.title || '',
       excerpt: post.excerpt || '',
       content: post.content || '',
-      published_at: post.published_at ? new Date(post.published_at).toISOString().slice(0, 16) : '',
+      published_at: post.published_at
+        ? new Date(post.published_at).toISOString().split('T')[0]
+        : '',
     },
     {
       route: () => route('blog.update', { blog: post.id }),
@@ -66,12 +69,12 @@ export default function Edit({ post }) {
                 {errors.content && <p className="text-sm text-destructive">{errors.content}</p>}
               </div>
 
-              <FormField
-                name="published_at"
+              <DatePicker
                 label="Publish Date"
-                type="datetime-local"
                 value={data.published_at}
-                onChange={(e) => setData('published_at', e.target.value)}
+                onChange={(date) =>
+                  setData('published_at', date ? date.toISOString().split('T')[0] : '')
+                }
                 error={errors.published_at}
                 placeholder="Leave empty for draft"
               />

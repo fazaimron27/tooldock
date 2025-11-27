@@ -6,7 +6,7 @@ import { useFormWithDialog } from '@/Hooks/useFormWithDialog';
 import { toast } from 'sonner';
 
 import FormDialog from '@/Components/Common/FormDialog';
-import FormField from '@/Components/Common/FormField';
+import DatePicker from '@/Components/Form/DatePicker';
 import { Label } from '@/Components/ui/label';
 
 export default function GenerateReportDialog({ trigger }) {
@@ -58,21 +58,17 @@ export default function GenerateReportDialog({ trigger }) {
           {errors.report_type && <p className="text-sm text-destructive">{errors.report_type}</p>}
         </div>
 
-        <FormField
-          name="start_date"
+        <DatePicker
           label="Start Date"
-          type="date"
           value={data.start_date}
-          onChange={(e) => setData('start_date', e.target.value)}
+          onChange={(date) => setData('start_date', date ? date.toISOString().split('T')[0] : '')}
           error={errors.start_date}
         />
 
-        <FormField
-          name="end_date"
+        <DatePicker
           label="End Date"
-          type="date"
           value={data.end_date}
-          onChange={(e) => setData('end_date', e.target.value)}
+          onChange={(date) => setData('end_date', date ? date.toISOString().split('T')[0] : '')}
           error={errors.end_date}
         />
       </form>

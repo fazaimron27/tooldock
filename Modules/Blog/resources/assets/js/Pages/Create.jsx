@@ -7,6 +7,7 @@ import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormField from '@/Components/Common/FormField';
+import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
@@ -66,12 +67,12 @@ export default function Create() {
                 {errors.content && <p className="text-sm text-destructive">{errors.content}</p>}
               </div>
 
-              <FormField
-                name="published_at"
+              <DatePicker
                 label="Publish Date"
-                type="datetime-local"
                 value={data.published_at}
-                onChange={(e) => setData('published_at', e.target.value)}
+                onChange={(date) =>
+                  setData('published_at', date ? date.toISOString().split('T')[0] : '')
+                }
                 error={errors.published_at}
                 placeholder="Leave empty for draft"
               />
