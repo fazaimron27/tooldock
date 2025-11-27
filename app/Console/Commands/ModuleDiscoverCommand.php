@@ -5,6 +5,12 @@ namespace App\Console\Commands;
 use App\Services\Modules\ModuleLifecycleService;
 use Illuminate\Console\Command;
 
+/**
+ * Artisan command to discover and register modules
+ *
+ * Scans the Modules directory and registers all found modules in the database.
+ * Optionally installs all discovered modules with the --install flag.
+ */
 class ModuleDiscoverCommand extends Command
 {
     /**
@@ -28,7 +34,12 @@ class ModuleDiscoverCommand extends Command
     }
 
     /**
-     * Execute the console command.
+     * Execute the console command
+     *
+     * Discovers modules, registers them in the database, and optionally installs them.
+     * Continues installing remaining modules even if one fails.
+     *
+     * @return int Command exit code (SUCCESS or FAILURE)
      */
     public function handle(): int
     {

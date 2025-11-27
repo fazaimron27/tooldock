@@ -2,10 +2,10 @@
 
 namespace Modules\Blog\Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Modules\Blog\Models\Post;
+use Modules\Core\App\Models\User;
 
 class BlogDatabaseSeeder extends Seeder
 {
@@ -14,6 +14,9 @@ class BlogDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed blog permissions first
+        $this->call(BlogPermissionSeeder::class);
+
         // Get or create a user for blog posts
         $user = User::firstOrCreate(
             ['email' => 'author@example.com'],
