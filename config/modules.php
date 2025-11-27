@@ -1,7 +1,6 @@
 <?php
 
 use App\Services\Modules\DatabaseActivator;
-use Nwidart\Modules\Activators\FileActivator;
 use Nwidart\Modules\Providers\ConsoleServiceProvider;
 
 return [
@@ -286,13 +285,9 @@ return [
     |
     | You can define new types of activators here, file, database, etc. The only
     | required parameter is 'class'.
-    | The file activator will store the activation status in storage/installed_modules
+    | The database activator stores the activation status in the modules_statuses table.
     */
     'activators' => [
-        'file' => [
-            'class' => FileActivator::class,
-            'statuses-file' => base_path('modules_statuses.json'),
-        ],
         'database' => [
             'class' => DatabaseActivator::class,
         ],
