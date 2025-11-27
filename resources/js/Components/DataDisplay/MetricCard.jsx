@@ -1,3 +1,7 @@
+/**
+ * Generic metric card component for displaying stats, info, or any content
+ * Supports custom header, footer, and icon with flexible content area
+ */
 import { cn } from '@/Utils/utils';
 
 import {
@@ -9,19 +13,6 @@ import {
   CardTitle,
 } from '@/Components/ui/card';
 
-/**
- * Generic metric/info card component that can be used for stats, info, or any content
- * @param {object} props
- * @param {string} props.title - Card title
- * @param {string} props.description - Optional description text
- * @param {React.ReactNode} props.children - Main content area
- * @param {React.ReactNode} props.header - Custom header content (overrides title/description)
- * @param {React.ReactNode} props.footer - Footer content
- * @param {React.ComponentType} props.icon - Optional icon component from lucide-react
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.headerClassName - Additional CSS classes for header
- * @param {string} props.contentClassName - Additional CSS classes for content
- */
 export default function MetricCard({
   title,
   description,

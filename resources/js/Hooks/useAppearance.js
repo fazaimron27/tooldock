@@ -1,11 +1,10 @@
+/**
+ * Hook for managing appearance and formatting logic based on user locale
+ * Provides formatting functions for currency, dates, numbers, and name initials
+ */
 import { formatCurrency, formatDate, formatNumber, getInitials } from '@/Utils/format';
 import { useMemo } from 'react';
 
-/**
- * Hook for managing appearance and formatting logic based on user locale
- * @param {string} locale - User locale (default: 'en-US')
- * @returns {object} Formatting functions
- */
 export function useAppearance(locale = 'en-US') {
   return useMemo(
     () => ({

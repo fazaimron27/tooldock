@@ -1,14 +1,12 @@
+/**
+ * System status card component displaying system health metrics
+ * Shows multiple progress bars for different system metrics
+ */
 import { cn } from '@/Utils/utils';
 
 import ProgressBar from '@/Components/Common/ProgressBar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 
-/**
- * System status card component for dashboard
- * @param {object} props
- * @param {array} props.metrics - Array of metric objects with { label, value, percentage, color? }
- * @param {string} props.className - Additional CSS classes
- */
 export default function SystemStatusCard({ metrics = [], className }) {
   if (!metrics || metrics.length === 0) {
     return null;

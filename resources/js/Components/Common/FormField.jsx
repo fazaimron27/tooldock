@@ -1,25 +1,12 @@
+/**
+ * Form field component combining label, input, and error display
+ * Provides consistent styling and error handling for form inputs
+ */
 import { cn } from '@/Utils/utils';
 
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 
-/**
- * Reusable form field component with label, input, and error handling
- * @param {object} props
- * @param {string} props.name - Field name (used for id and htmlFor)
- * @param {string} props.label - Label text
- * @param {string} props.type - Input type (default: 'text')
- * @param {string|number} props.value - Input value
- * @param {function} props.onChange - Change handler
- * @param {string} props.error - Error message to display
- * @param {boolean} props.required - Whether field is required
- * @param {string} props.autoComplete - Autocomplete attribute
- * @param {string} props.placeholder - Placeholder text
- * @param {string} props.className - Additional CSS classes for wrapper
- * @param {string} props.inputClassName - Additional CSS classes for input
- * @param {React.Ref} props.inputRef - Ref for the input element
- * @param {object} props.inputProps - Additional props to pass to Input component
- */
 export default function FormField({
   name,
   label,

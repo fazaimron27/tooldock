@@ -1,23 +1,12 @@
+/**
+ * Form handler hook integrated with dialog state management
+ * Combines form handling with dialog open/close state and automatic focus management
+ */
 import { useForm } from '@inertiajs/react';
 import { useCallback, useMemo, useRef } from 'react';
 
 import { useDisclosure } from './useDisclosure';
 
-/**
- * Form handler integrated with dialog state management
- * @param {object} initialData - Initial form data
- * @param {object} options - Form options
- * @param {string|function} options.route - Route name or function that returns route
- * @param {string} options.method - HTTP method: 'post', 'put', 'patch', 'delete' (default: 'post')
- * @param {boolean} options.preserveScroll - Preserve scroll position (default: true)
- * @param {boolean} options.closeOnSuccess - Close dialog on success (default: true)
- * @param {boolean} options.resetOnClose - Reset form when dialog closes (default: true)
- * @param {array|object} options.focusFields - Array of field names ['field1', 'field2'] or object map { fieldName: ref } (for backward compatibility)
- * @param {function} options.onSuccess - Success callback
- * @param {function} options.onError - Error callback
- * @param {function} options.onFinish - Finish callback
- * @returns {object} Form handler with submit function, dialog state, form state, and field refs
- */
 export function useFormWithDialog(initialData, options = {}) {
   const {
     route: routeName,

@@ -1,3 +1,7 @@
+/**
+ * Responsive navigation link component optimized for mobile navigation
+ * Features left border indicator for active state
+ */
 import { Link } from '@inertiajs/react';
 
 export default function ResponsiveNavLink({ active = false, className = '', children, ...props }) {

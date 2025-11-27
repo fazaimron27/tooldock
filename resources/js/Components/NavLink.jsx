@@ -1,3 +1,7 @@
+/**
+ * Navigation link component with active state styling
+ * Highlights the link when the current route matches
+ */
 import { Link } from '@inertiajs/react';
 
 export default function NavLink({ active = false, className = '', children, ...props }) {

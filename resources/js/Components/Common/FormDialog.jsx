@@ -1,3 +1,7 @@
+/**
+ * Form dialog component for displaying forms in a modal dialog
+ * Integrates with form submission and provides processing state feedback
+ */
 import { cn } from '@/Utils/utils';
 
 import {
@@ -12,23 +16,6 @@ import {
 } from '@/Components/ui/alert-dialog';
 import { Button } from '@/Components/ui/button';
 
-/**
- * Reusable dialog component for forms with confirmation
- * @param {object} props
- * @param {boolean} props.open - Whether dialog is open
- * @param {function} props.onOpenChange - Callback when open state changes
- * @param {string} props.title - Dialog title
- * @param {string|React.ReactNode} props.description - Dialog description
- * @param {React.ReactNode} props.children - Form content (should include a form element)
- * @param {React.ReactNode} props.trigger - Trigger button/element
- * @param {string} props.confirmLabel - Confirm button label (default: "Confirm")
- * @param {string} props.cancelLabel - Cancel button label (default: "Cancel")
- * @param {string} props.variant - Button variant: "default" or "destructive" (default: "default")
- * @param {boolean} props.processing - Whether form is processing
- * @param {string} props.processingLabel - Label when processing (default: "Processing...")
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.formId - Form ID for submit button (default: "form-dialog-form")
- */
 export default function FormDialog({
   open,
   onOpenChange,

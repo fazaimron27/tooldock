@@ -1,3 +1,7 @@
+/**
+ * Dialog component for adding new users to the system
+ * Includes form fields for name, email, and role selection
+ */
 import { useFormWithDialog } from '@/Hooks/useFormWithDialog';
 import { toast } from 'sonner';
 
@@ -5,11 +9,6 @@ import FormDialog from '@/Components/Common/FormDialog';
 import FormField from '@/Components/Common/FormField';
 import { Label } from '@/Components/ui/label';
 
-/**
- * Dialog for adding a new user
- * @param {object} props
- * @param {React.ReactNode} props.trigger - Trigger button/element
- */
 export default function AddUserDialog({ trigger }) {
   const { data, setData, errors, processing, submit, dialog, handleDialogChange } =
     useFormWithDialog(

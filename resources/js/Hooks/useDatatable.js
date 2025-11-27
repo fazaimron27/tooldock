@@ -1,3 +1,8 @@
+/**
+ * Hook for managing datatable state with optimized server-side operations
+ * Prevents duplicate requests, debounces search/filter inputs, and handles
+ * pagination/sorting state synchronization between client and server
+ */
 import { DEFAULT_PAGE_SIZE, PAGINATION_LIMITS } from '@/Utils/constants';
 import { router } from '@inertiajs/react';
 import {
@@ -7,23 +12,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-/**
- * Hook for managing datatable state with server-side pagination, filtering, and sorting
- * @param {object} options - Configuration options
- * @param {array} options.data - Table data array
- * @param {array} options.columns - Column definitions
- * @param {array} options.initialSorting - Initial sorting state (default: [])
- * @param {number} options.pageSize - Initial page size (default: DEFAULT_PAGE_SIZE)
- * @param {string} options.route - Route name or URL for server-side requests (optional)
- * @param {function} options.onPaginationChange - Callback when pagination changes (optional)
- * @param {function} options.onSortChange - Callback when sorting changes (optional)
- * @param {function} options.onFilterChange - Callback when filter changes (optional)
- * @param {boolean} options.serverSide - Enable server-side pagination/filtering (default: true if route provided)
- * @param {object} options.initialFilters - Initial filter values (optional)
- * @returns {object} Table props and handlers
- */
 export function useDatatable({
   data = [],
   columns = [],
@@ -35,11 +25,11 @@ export function useDatatable({
   onFilterChange = null,
   serverSide = null,
   initialFilters = {},
+  pageCount = undefined,
+  only = null,
 }) {
-  // Determine if server-side is enabled
   const isServerSide = serverSide !== null ? serverSide : !!route;
 
-  // State management
   const [sorting, setSorting] = useState(initialSorting);
   const [globalFilter, setGlobalFilter] = useState('');
   const [pagination, setPagination] = useState({
@@ -49,45 +39,86 @@ export function useDatatable({
   const [rowSelection, setRowSelection] = useState({});
   const [filters, setFilters] = useState(initialFilters);
 
-  // Handle server-side pagination/filtering/sorting
+  const previousParamsRef = useRef(null);
+  const isInitialMount = useRef(true);
+  const searchTimeoutRef = useRef(null);
+
   useEffect(() => {
+    // Prevents unnecessary requests on initial mount when data already exists
+    // and deduplicates requests with identical parameters to avoid flickering
     if (!isServerSide || !route) {
       return;
     }
+
+    if (isInitialMount.current && data.length > 0) {
+      isInitialMount.current = false;
+      return;
+    }
+    isInitialMount.current = false;
 
     const params = {
       page: pagination.pageIndex + 1,
       per_page: pagination.pageSize,
     };
 
-    // Add sorting
     if (sorting.length > 0) {
       const sort = sorting[0];
       params.sort = sort.id;
       params.direction = sort.desc ? 'desc' : 'asc';
     }
 
-    // Add global filter
     if (globalFilter) {
       params.search = globalFilter;
     }
 
-    // Add custom filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         params[key] = value;
       }
     });
 
-    // Make Inertia request
-    router.get(route, params, {
-      preserveState: true,
-      preserveScroll: true,
-      only: ['data'], // Only reload data prop
-    });
-  }, [pagination, sorting, globalFilter, filters, isServerSide, route]);
+    const paramsString = JSON.stringify(params);
+    if (previousParamsRef.current === paramsString) {
+      return;
+    }
+    previousParamsRef.current = paramsString;
 
-  // Handle sorting change
+    // Debounce search/filter to reduce server load while typing
+    // Pagination/sorting are immediate for better UX
+    const shouldDebounce = globalFilter || Object.keys(filters).length > 0;
+
+    const makeRequest = () => {
+      const options = {
+        preserveState: true,
+        preserveScroll: true,
+      };
+
+      if (only !== null && Array.isArray(only) && only.length > 0) {
+        options.only = only;
+      }
+
+      router.get(route, params, options);
+    };
+
+    if (shouldDebounce) {
+      if (searchTimeoutRef.current) {
+        window.clearTimeout(searchTimeoutRef.current);
+      }
+
+      searchTimeoutRef.current = window.setTimeout(() => {
+        makeRequest();
+      }, 300);
+    } else {
+      makeRequest();
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        window.clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [pagination, sorting, globalFilter, filters, isServerSide, route, only, data.length]);
+
   const handleSortingChange = useCallback(
     (updater) => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
@@ -97,7 +128,6 @@ export function useDatatable({
     [sorting, onSortChange]
   );
 
-  // Handle pagination change
   const handlePaginationChange = useCallback(
     (updater) => {
       const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
@@ -107,18 +137,16 @@ export function useDatatable({
     [pagination, onPaginationChange]
   );
 
-  // Handle filter change
   const handleFilterChange = useCallback(
     (newFilters) => {
       setFilters((prev) => ({ ...prev, ...newFilters }));
       onFilterChange?.(newFilters);
-      // Reset to first page when filters change
+      // Reset to first page when filters change since results are different
       setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     },
     [onFilterChange]
   );
 
-  // Create table instance
   const table = useReactTable({
     data,
     columns,
@@ -141,38 +169,31 @@ export function useDatatable({
     manualPagination: isServerSide,
     manualSorting: isServerSide,
     manualFiltering: isServerSide,
+    pageCount: isServerSide && pageCount !== undefined ? pageCount : undefined,
   });
 
-  // Return props compatible with DataTable component
   return useMemo(
     () => ({
-      // Table instance
       table,
-      // Data and columns
       data,
       columns,
-      // State
       sorting,
       pagination,
       globalFilter,
       filters,
       rowSelection,
-      // Handlers
       setSorting: handleSortingChange,
       setPagination: handlePaginationChange,
       setGlobalFilter,
       setFilters: handleFilterChange,
       setRowSelection,
-      // Computed values
       selectedRows: table.getSelectedRowModel().rows.map((row) => row.original),
       selectedRowIds: Object.keys(rowSelection),
-      // Pagination helpers
       pageSize: pagination.pageSize,
       pageIndex: pagination.pageIndex,
       pageCount: table.getPageCount(),
       canPreviousPage: table.getCanPreviousPage(),
       canNextPage: table.getCanNextPage(),
-      // Table props (for direct spread into DataTable)
       tableProps: {
         table,
         data,

@@ -1,3 +1,7 @@
+/**
+ * Top navigation bar component with breadcrumbs, search, theme toggle, and notifications
+ * Includes sidebar trigger for mobile navigation
+ */
 import { Link } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
 

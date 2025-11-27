@@ -1,3 +1,7 @@
+/**
+ * Primary button component for main actions
+ * Styled with dark background and uppercase text
+ */
 export default function PrimaryButton({ className = '', disabled, children, ...props }) {
   return (
     <button

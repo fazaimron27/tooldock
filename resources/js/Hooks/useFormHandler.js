@@ -1,18 +1,10 @@
+/**
+ * Generic form handler hook that wraps useForm with common submission patterns
+ * Provides simplified form submission with route-based handling
+ */
 import { useForm } from '@inertiajs/react';
 import { useCallback } from 'react';
 
-/**
- * Generic form handler hook that wraps useForm with common submission patterns
- * @param {object} initialData - Initial form data
- * @param {object} options - Form options
- * @param {string|function} options.route - Route name or function that returns route
- * @param {string} options.method - HTTP method: 'post', 'put', 'patch', 'delete' (default: 'post')
- * @param {boolean} options.preserveScroll - Preserve scroll position (default: true)
- * @param {function} options.onSuccess - Success callback
- * @param {function} options.onError - Error callback
- * @param {function} options.onFinish - Finish callback (runs after success/error)
- * @returns {object} Form handler with submit function and form state
- */
 export function useFormHandler(initialData, options = {}) {
   const {
     route: routeName,

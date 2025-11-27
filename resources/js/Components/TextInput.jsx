@@ -1,3 +1,7 @@
+/**
+ * Text input component with focus management
+ * Supports imperative focus control via ref and automatic focus on mount
+ */
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 export default forwardRef(function TextInput(

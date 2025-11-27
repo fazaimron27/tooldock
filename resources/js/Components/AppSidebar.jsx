@@ -1,3 +1,8 @@
+/**
+ * Main application sidebar component with collapsible menu groups
+ * Displays user profile, navigation menus, and logout functionality
+ * Supports grouped menu items with expand/collapse functionality
+ */
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, router, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronRight, LogOut, User } from 'lucide-react';

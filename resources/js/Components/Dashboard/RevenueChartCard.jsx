@@ -1,14 +1,12 @@
+/**
+ * Revenue chart card displaying revenue vs expenses comparison over time
+ * Uses area chart to visualize financial trends
+ */
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import ChartCard from '@/Components/Common/ChartCard';
 import { ChartTooltip, ChartTooltipContent } from '@/Components/ui/chart';
 
-/**
- * Revenue chart card component displaying revenue vs expenses comparison
- * @param {object} props
- * @param {array} props.data - Chart data array with { month, revenue, expenses } structure
- * @param {string} props.className - Additional CSS classes
- */
 export default function RevenueChartCard({ data = [], className }) {
   const config = {
     revenue: {

@@ -1,3 +1,7 @@
+/**
+ * Dialog component for generating reports
+ * Includes form fields for report type selection and date range
+ */
 import { useFormWithDialog } from '@/Hooks/useFormWithDialog';
 import { toast } from 'sonner';
 
@@ -5,11 +9,6 @@ import FormDialog from '@/Components/Common/FormDialog';
 import FormField from '@/Components/Common/FormField';
 import { Label } from '@/Components/ui/label';
 
-/**
- * Dialog for generating reports
- * @param {object} props
- * @param {React.ReactNode} props.trigger - Trigger button/element
- */
 export default function GenerateReportDialog({ trigger }) {
   const { data, setData, errors, processing, submit, dialog, handleDialogChange } =
     useFormWithDialog(

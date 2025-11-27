@@ -1,3 +1,7 @@
+/**
+ * Dropdown menu component with context-based state management
+ * Provides trigger, content, and link subcomponents for building dropdown menus
+ */
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
 import { createContext, useContext, useState } from 'react';

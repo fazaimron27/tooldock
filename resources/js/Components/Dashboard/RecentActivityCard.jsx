@@ -1,14 +1,12 @@
+/**
+ * Recent activity card component displaying a list of recent system activities
+ * Renders activity items in a card layout
+ */
 import { cn } from '@/Utils/utils';
 
 import ActivityListItem from '@/Components/Common/ActivityListItem';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 
-/**
- * Recent activity card component for dashboard
- * @param {object} props
- * @param {array} props.activities - Array of activity objects with { title, timestamp, icon?, iconColor? }
- * @param {string} props.className - Additional CSS classes
- */
 export default function RecentActivityCard({ activities = [], className }) {
   if (!activities || activities.length === 0) {
     return null;
