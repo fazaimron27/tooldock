@@ -35,7 +35,7 @@ export default function Edit({ post }) {
       <PageShell title="Edit Post">
         <div className="space-y-6">
           <FormCard title="Edit Post" description="Update your blog post" className="max-w-3xl">
-            <form onSubmit={submit} className="space-y-6">
+            <form onSubmit={submit} className="space-y-6" noValidate>
               <FormField
                 name="title"
                 label="Title"

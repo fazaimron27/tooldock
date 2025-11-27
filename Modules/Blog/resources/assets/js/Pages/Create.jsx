@@ -33,7 +33,7 @@ export default function Create() {
       <PageShell title="Create Post">
         <div className="space-y-6">
           <FormCard title="New Post" description="Create a new blog post" className="max-w-3xl">
-            <form onSubmit={submit} className="space-y-6">
+            <form onSubmit={submit} className="space-y-6" noValidate>
               <FormField
                 name="title"
                 label="Title"
