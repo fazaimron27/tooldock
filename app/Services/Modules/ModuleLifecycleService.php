@@ -476,4 +476,63 @@ class ModuleLifecycleService
     {
         Artisan::call('ziggy:generate');
     }
+
+    /**
+     * Discover and register all available modules in the database
+     *
+     * Scans the Modules directory for all available modules and registers them
+     * in the modules_statuses table. This is useful after a fresh database migration
+     * to ensure all modules are tracked in the database.
+     *
+     * Modules are registered with is_installed=false and is_active=false by default.
+     * They must be explicitly installed using install() or module:manage command.
+     *
+     * @return array<string> Array of discovered module names
+     */
+    public function discoverAndRegisterAll(): array
+    {
+        // Scan for all modules in the filesystem
+        ModuleFacade::scan();
+
+        // Get all available modules
+        $allModules = ModuleFacade::all();
+        $discoveredModules = [];
+
+        foreach ($allModules as $module) {
+            $moduleName = $module->getName();
+
+            // Register module in database (only if not already registered)
+            // This preserves existing installation status if module was already registered
+            $exists = DB::table('modules_statuses')
+                ->where('name', $moduleName)
+                ->exists();
+
+            if (! $exists) {
+                DB::table('modules_statuses')->insert([
+                    'name' => $moduleName,
+                    'is_active' => false,
+                    'is_installed' => false,
+                    'version' => $module->get('version'),
+                    'installed_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                // Update version if module already exists but version changed
+                DB::table('modules_statuses')
+                    ->where('name', $moduleName)
+                    ->update([
+                        'version' => $module->get('version'),
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            $discoveredModules[] = $moduleName;
+        }
+
+        // Reload statuses if using DatabaseActivator
+        $this->reloadStatusesIfNeeded();
+
+        return $discoveredModules;
+    }
 }

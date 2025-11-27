@@ -3,6 +3,7 @@
 namespace Modules\Newsletter\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCampaignRequest extends FormRequest
 {
@@ -17,7 +18,10 @@ class StoreCampaignRequest extends FormRequest
             'subject' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
             'selected_posts' => ['required', 'array', 'min:1'],
-            'selected_posts.*' => ['required', 'exists:posts,id'],
+            'selected_posts.*' => [
+                'required',
+                Rule::exists('posts', 'id')->where('user_id', $this->user()->id),
+            ],
             'scheduled_at' => ['nullable', 'date'],
         ];
     }

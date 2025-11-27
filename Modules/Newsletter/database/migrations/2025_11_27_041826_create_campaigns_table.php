@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('campaigns', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('subject');
             $table->enum('status', ['draft', 'sending', 'sent'])->default('draft');
             $table->longText('content');

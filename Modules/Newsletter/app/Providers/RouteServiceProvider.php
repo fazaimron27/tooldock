@@ -4,6 +4,7 @@ namespace Modules\Newsletter\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Modules\Newsletter\Models\Campaign;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -17,6 +18,13 @@ class RouteServiceProvider extends ServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        Route::bind('newsletter', function ($value) {
+            return Campaign::query()
+                ->where('id', $value)
+                ->where('user_id', request()->user()?->id)
+                ->firstOrFail();
+        });
     }
 
     /**
