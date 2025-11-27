@@ -18,13 +18,14 @@ export default defineConfig({
     }),
     react(),
     {
-      // Prevents Vite from trying to resolve module page paths as actual files
-      // Module pages are handled by Inertia's resolver in app.jsx, not Vite
+      // Custom plugin to handle module page resolution for Inertia.js
+      // Module pages use virtual path syntax (Modules::Blog/Pages/Index) which
+      // are resolved at runtime by Inertia, not during Vite build
       name: 'module-page-resolver',
       enforce: 'pre',
       configureServer(server) {
-        // Intercepts browser requests for module pages and returns empty JS
-        // This satisfies browser MIME type checks without Vite processing the path
+        // Intercept dev server requests for module pages to prevent 404 errors
+        // Return empty JS module to satisfy browser MIME type requirements
         server.middlewares.use((req, res, next) => {
           if (req.url && req.url.includes('Modules::')) {
             res.statusCode = 200;
@@ -36,14 +37,15 @@ export default defineConfig({
         });
       },
       resolveId(id) {
-        // Marks module page IDs as external to prevent Vite from bundling them
+        // Mark module page imports as external to exclude from Vite bundle
+        // These are resolved dynamically by Inertia's page resolver
         if (id.includes('Modules::')) {
           return { id: id, external: true };
         }
         return null;
       },
       handleHotUpdate({ file }) {
-        // Prevents HMR from reloading module pages with virtual path syntax
+        // Skip HMR for virtual module paths to prevent unnecessary reloads
         if (file.includes('Modules::')) {
           return [];
         }
@@ -59,6 +61,7 @@ export default defineConfig({
   },
   server: {
     fs: {
+      // Allow Vite to access files outside project root for module support
       allow: ['..'],
     },
   },
