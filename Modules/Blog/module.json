@@ -1,9 +1,14 @@
 {
   "name": "Blog",
   "alias": "blog",
-  "description": "",
-  "keywords": [],
-  "priority": 0,
+  "version": "1.0.0",
+  "description": "Content Management System for managing posts and articles.",
+  "keywords": ["cms", "posts"],
+  "priority": 10,
+  "active": 1,
   "providers": ["Modules\\Blog\\Providers\\BlogServiceProvider"],
-  "files": []
+  "files": [],
+  "requires": [],
+  "icon": "BookOpen",
+  "author": "Odooist Team"
 }
