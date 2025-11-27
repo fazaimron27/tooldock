@@ -61,14 +61,14 @@ export default function GenerateReportDialog({ trigger }) {
         <DatePicker
           label="Start Date"
           value={data.start_date}
-          onChange={(date) => setData('start_date', date ? date.toISOString().split('T')[0] : '')}
+          onChange={(date) => setData('start_date', date || '')}
           error={errors.start_date}
         />
 
         <DatePicker
           label="End Date"
           value={data.end_date}
-          onChange={(date) => setData('end_date', date ? date.toISOString().split('T')[0] : '')}
+          onChange={(date) => setData('end_date', date || '')}
           error={errors.end_date}
         />
       </form>
