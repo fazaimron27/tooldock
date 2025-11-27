@@ -7,10 +7,10 @@ import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormField from '@/Components/Common/FormField';
+import FormTextarea from '@/Components/Common/FormTextarea';
 import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
-import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
@@ -55,26 +55,21 @@ export default function Edit({ post }) {
                 placeholder="Brief summary of the post (optional)"
               />
 
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={data.content}
-                  onChange={(e) => setData('content', e.target.value)}
-                  rows={10}
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  required
-                />
-                {errors.content && <p className="text-sm text-destructive">{errors.content}</p>}
-              </div>
+              <FormTextarea
+                name="content"
+                label="Content"
+                value={data.content}
+                onChange={(e) => setData('content', e.target.value)}
+                error={errors.content}
+                required
+                rows={10}
+                placeholder="Enter post content"
+              />
 
               <DatePicker
                 label="Publish Date"
                 value={data.published_at}
-                onChange={(date) =>
-                  setData('published_at', date ? date.toISOString().split('T')[0] : '')
-                }
+                onChange={(date) => setData('published_at', date || '')}
                 error={errors.published_at}
                 placeholder="Leave empty for draft"
               />
