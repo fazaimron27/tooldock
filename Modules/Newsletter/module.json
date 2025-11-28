@@ -8,7 +8,7 @@
   "active": 1,
   "providers": ["Modules\\Newsletter\\Providers\\NewsletterServiceProvider"],
   "files": [],
-  "requires": ["Blog"],
+  "requires": ["Core", "Blog"],
   "icon": "Send",
   "author": "Odooist Team"
 }
