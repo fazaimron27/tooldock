@@ -6,6 +6,9 @@ use App\Services\MenuRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\User;
+use Modules\Core\App\Observers\UserObserver;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -35,7 +38,8 @@ class CoreServiceProvider extends ServiceProvider
             label: 'Users',
             route: 'core.users.index',
             icon: 'Users',
-            order: 10
+            order: 10,
+            permission: 'view users'
         );
 
         app(MenuRegistry::class)->registerItem(
@@ -43,17 +47,19 @@ class CoreServiceProvider extends ServiceProvider
             label: 'Roles',
             route: 'core.roles.index',
             icon: 'Shield',
-            order: 20
+            order: 20,
+            permission: 'manage roles'
         );
 
-        // Register Gate::before() for Super Admin wildcard permissions
         Gate::before(function ($user, $ability) {
             if ($user && method_exists($user, 'hasRole')) {
-                return $user->hasRole('Super Admin') ? true : null;
+                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
             }
 
             return null;
         });
+
+        User::observe(UserObserver::class);
     }
 
     /**
@@ -68,21 +74,12 @@ class CoreServiceProvider extends ServiceProvider
     /**
      * Register commands in the format of Command::class
      */
-    protected function registerCommands(): void
-    {
-        // $this->commands([]);
-    }
+    protected function registerCommands(): void {}
 
     /**
      * Register command Schedules.
      */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
@@ -116,7 +113,6 @@ class CoreServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -126,7 +122,6 @@ class CoreServiceProvider extends ServiceProvider
 
                     $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
 
-                    // Special handling for permission.php - merge as 'permission' not 'core.permission'
                     if ($config === 'permission.php') {
                         $key = 'permission';
                     }
