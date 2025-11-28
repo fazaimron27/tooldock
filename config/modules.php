@@ -294,4 +294,21 @@ return [
     ],
 
     'activator' => 'database',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Module Dependency Validation
+    |--------------------------------------------------------------------------
+    |
+    | When set to true, skips the automatic validation of cross-module
+    | dependencies during installation and enabling. This can be useful for:
+    | - CI/CD pipelines where dependencies are already verified
+    | - Trusted modules that have been manually verified
+    | - Performance optimization in development environments
+    |
+    | You can also skip validation per-module by passing $skipValidation=true
+    | to the install() or enable() methods.
+    |
+    */
+    'skip_dependency_validation' => env('MODULES_SKIP_DEPENDENCY_VALIDATION', false),
 ];

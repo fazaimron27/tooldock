@@ -3,6 +3,7 @@
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
@@ -13,7 +14,9 @@ class UpdateRoleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $role = $this->route('role');
+
+        return Gate::allows('update', $role);
     }
 
     /**

@@ -72,10 +72,12 @@ class ModuleManageCommand extends Command
             return Command::SUCCESS;
         } catch (MissingDependencyException $e) {
             $this->error($e->getMessage());
+            $this->addCliHelp($e->getMessage(), $action);
 
             return Command::FAILURE;
         } catch (\RuntimeException $e) {
             $this->error($e->getMessage());
+            $this->addCliHelp($e->getMessage(), $action);
 
             return Command::FAILURE;
         } catch (\Exception $e) {
@@ -139,5 +141,29 @@ class ModuleManageCommand extends Command
         $this->info("Disabling module: {$moduleName}...");
         $this->lifecycleService->disable($moduleName);
         $this->info("Module '{$moduleName}' disabled successfully!");
+    }
+
+    /**
+     * Add CLI-specific help text to error messages
+     *
+     * Enhances generic error messages from the service layer with CLI-specific instructions.
+     *
+     * @param  string  $message  The error message from the service
+     * @param  string  $action  The action that was attempted
+     */
+    private function addCliHelp(string $message, string $action): void
+    {
+        if (preg_match("/Please (install|enable|disable|uninstall) '([^']+)'/", $message, $matches)) {
+            $suggestedAction = $matches[1];
+            $suggestedModule = $matches[2];
+
+            $this->newLine();
+            $this->comment("To {$suggestedAction} '{$suggestedModule}', run:");
+            $this->line("  php artisan module:manage {$suggestedModule} --action={$suggestedAction}");
+        } elseif (preg_match('/Please (install|enable|disable|uninstall) the (dependent|following) modules/', $message, $matches)) {
+            $this->newLine();
+            $this->comment('Use the following command for each dependent module:');
+            $this->line('  php artisan module:manage {module} --action={action}');
+        }
     }
 }

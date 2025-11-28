@@ -17,23 +17,24 @@ class UserController extends Controller
 {
     /**
      * Display a paginated listing of users.
-     *
-     * Supports server-side search, sorting, and pagination.
      */
     public function index(DatatableQueryService $datatableService): Response
     {
-        $query = User::with('roles');
+        $this->authorize('viewAny', User::class);
 
         $defaultPerPage = 20;
 
-        $users = $datatableService->build($query, [
-            'searchFields' => ['name', 'email'],
-            'allowedSorts' => ['name', 'email', 'created_at', 'updated_at'],
-            'defaultSort' => 'created_at',
-            'defaultDirection' => 'desc',
-            'allowedPerPage' => [10, 20, 30, 50],
-            'defaultPerPage' => $defaultPerPage,
-        ]);
+        $users = $datatableService->build(
+            User::with('roles'),
+            [
+                'searchFields' => ['name', 'email'],
+                'allowedSorts' => ['name', 'email', 'created_at', 'updated_at'],
+                'defaultSort' => 'created_at',
+                'defaultDirection' => 'desc',
+                'allowedPerPage' => [10, 20, 30, 50],
+                'defaultPerPage' => $defaultPerPage,
+            ]
+        );
 
         return Inertia::render('Modules::Core/Users/Index', [
             'users' => $users,
@@ -46,6 +47,8 @@ class UserController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', User::class);
+
         $roles = Role::all();
 
         return Inertia::render('Modules::Core/Users/Create', [
@@ -58,6 +61,8 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        $this->authorize('create', User::class);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -77,6 +82,8 @@ class UserController extends Controller
      */
     public function edit(User $user): Response
     {
+        $this->authorize('update', $user);
+
         $user->load('roles');
         $roles = Role::all();
 
@@ -91,6 +98,8 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        $this->authorize('update', $user);
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
@@ -115,7 +124,8 @@ class UserController extends Controller
      */
     public function destroy(User $user): RedirectResponse
     {
-        // Prevent deleting yourself
+        $this->authorize('delete', $user);
+
         if ($user->id === request()->user()->id) {
             return redirect()->route('core.users.index')
                 ->with('error', 'You cannot delete your own account.');

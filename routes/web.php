@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Core\Http\Controllers\ProfileController;
@@ -15,6 +16,8 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    Gate::authorize('view dashboard');
+
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 

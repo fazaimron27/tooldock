@@ -7,7 +7,7 @@
   "priority": -999,
   "protected": true,
   "active": 1,
-  "providers": ["Modules\\Core\\Providers\\CoreServiceProvider"],
+  "providers": ["Modules\\Core\\Providers\\CoreServiceProvider", "Modules\\Core\\Providers\\AuthServiceProvider"],
   "files": [],
   "requires": [],
   "icon": "Shield",

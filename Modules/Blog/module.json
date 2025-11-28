@@ -8,7 +8,7 @@
   "active": 1,
   "providers": ["Modules\\Blog\\Providers\\BlogServiceProvider"],
   "files": [],
-  "requires": [],
+  "requires": ["Core"],
   "icon": "BookOpen",
   "author": "Odooist Team"
 }

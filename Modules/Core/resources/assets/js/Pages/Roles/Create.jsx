@@ -1,0 +1,219 @@
+/**
+ * Create role page with form for creating new roles
+ * Includes permission matrix grouped by resource/module
+ */
+import { useSmartForm } from '@/Hooks/useSmartForm';
+import { Link } from '@inertiajs/react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import FormCard from '@/Components/Common/FormCard';
+import FormField from '@/Components/Common/FormField';
+import PageShell from '@/Components/Layouts/PageShell';
+import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
+import { Label } from '@/Components/ui/label';
+
+import DashboardLayout from '@/Layouts/DashboardLayout';
+
+export default function Create({ groupedPermissions = {} }) {
+  const form = useSmartForm(
+    {
+      name: '',
+      permissions: [],
+    },
+    {
+      toast: {
+        success: 'Role created successfully!',
+        error: 'Failed to create role. Please check the form for errors.',
+      },
+    }
+  );
+
+  const [openGroups, setOpenGroups] = useState({});
+
+  const toggleGroup = (group) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [group]: !prev[group],
+    }));
+  };
+
+  const handlePermissionToggle = (permissionId) => {
+    const currentPermissions = form.data.permissions || [];
+    if (currentPermissions.includes(permissionId)) {
+      form.setData(
+        'permissions',
+        currentPermissions.filter((id) => id !== permissionId)
+      );
+    } else {
+      form.setData('permissions', [...currentPermissions, permissionId]);
+    }
+  };
+
+  const handleSelectAllInGroup = (group) => {
+    const groupPermissions = groupedPermissions[group] || [];
+    const currentPermissions = form.data.permissions || [];
+    const groupPermissionIds = groupPermissions.map((p) => p.id);
+
+    const allSelected = groupPermissionIds.every((id) => currentPermissions.includes(id));
+
+    if (allSelected) {
+      form.setData(
+        'permissions',
+        currentPermissions.filter((id) => !groupPermissionIds.includes(id))
+      );
+    } else {
+      const newPermissions = [...new Set([...currentPermissions, ...groupPermissionIds])];
+      form.setData('permissions', newPermissions);
+    }
+  };
+
+  const formatPermissionName = (name) => {
+    return name
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const formatGroupName = (group) => {
+    return group.charAt(0).toUpperCase() + group.slice(1);
+  };
+
+  const groupKeys = useMemo(() => {
+    return Object.keys(groupedPermissions).sort();
+  }, [groupedPermissions]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    form.post(route('core.roles.store'));
+  };
+
+  return (
+    <DashboardLayout header="Core">
+      <PageShell title="Create Role">
+        <div className="space-y-6">
+          <FormCard
+            title="New Role"
+            description="Create a new role and assign permissions"
+            className="max-w-4xl"
+          >
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <FormField
+                name="name"
+                label="Role Name"
+                value={form.data.name}
+                onChange={(e) => form.setData('name', e.target.value)}
+                error={form.errors.name}
+                required
+                placeholder="Enter role name (e.g., Editor, Manager)"
+              />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Permissions</Label>
+                  <span className="text-sm text-muted-foreground">
+                    {form.data.permissions?.length || 0} selected
+                  </span>
+                </div>
+
+                {groupKeys.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No permissions available</p>
+                ) : (
+                  <div className="space-y-2 rounded-md border p-4">
+                    {groupKeys.map((group) => {
+                      const groupPermissions = groupedPermissions[group] || [];
+                      const isOpen = openGroups[group] ?? true;
+                      const groupPermissionIds = groupPermissions.map((p) => p.id);
+                      const selectedCount = (form.data.permissions || []).filter((id) =>
+                        groupPermissionIds.includes(id)
+                      ).length;
+                      const allSelected =
+                        groupPermissions.length > 0 && selectedCount === groupPermissions.length;
+
+                      return (
+                        <Collapsible
+                          key={group}
+                          open={isOpen}
+                          onOpenChange={() => toggleGroup(group)}
+                        >
+                          <div className="flex items-center gap-2 border-b pb-2">
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                {isOpen ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </CollapsibleTrigger>
+                            <div className="flex flex-1 items-center justify-between">
+                              <Label
+                                className="text-sm font-medium cursor-pointer"
+                                onClick={() => toggleGroup(group)}
+                              >
+                                {formatGroupName(group)} ({selectedCount}/{groupPermissions.length})
+                              </Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleSelectAllInGroup(group);
+                                }}
+                              >
+                                {allSelected ? 'Deselect All' : 'Select All'}
+                              </Button>
+                            </div>
+                          </div>
+                          <CollapsibleContent className="pt-2">
+                            <div className="space-y-2 pl-6">
+                              {groupPermissions.map((permission) => (
+                                <div key={permission.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`permission-${permission.id}`}
+                                    checked={
+                                      form.data.permissions?.includes(permission.id) || false
+                                    }
+                                    onCheckedChange={() => handlePermissionToggle(permission.id)}
+                                  />
+                                  <Label
+                                    htmlFor={`permission-${permission.id}`}
+                                    className="text-sm font-normal cursor-pointer"
+                                  >
+                                    {formatPermissionName(permission.name)}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
+                )}
+                {form.errors.permissions && (
+                  <p className="text-sm text-destructive">{form.errors.permissions}</p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button type="submit" disabled={form.processing}>
+                  {form.processing ? 'Creating...' : 'Create Role'}
+                </Button>
+                <Link href={route('core.roles.index')}>
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
+                </Link>
+              </div>
+            </form>
+          </FormCard>
+        </div>
+      </PageShell>
+    </DashboardLayout>
+  );
+}

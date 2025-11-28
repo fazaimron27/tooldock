@@ -3,6 +3,8 @@
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use Spatie\Permission\Models\Role;
 
 class StoreRoleRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class StoreRoleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('create', Role::class);
     }
 
     /**
