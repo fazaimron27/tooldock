@@ -3,8 +3,7 @@
 namespace Modules\Blog\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Modules\Core\App\Services\PermissionRegistry;
 
 class BlogPermissionSeeder extends Seeder
 {
@@ -13,26 +12,15 @@ class BlogPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create blog permissions
-        $permissions = [
-            'view posts',
-            'create posts',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
-        }
-
-        // Find existing Administrator role and give it all blog permissions
-        $administratorRole = Role::where('name', 'Administrator')->first();
-        if ($administratorRole) {
-            $administratorRole->givePermissionTo(['view posts', 'create posts']);
-        }
-
-        // Find existing Staff role and give it only create posts
-        $staffRole = Role::where('name', 'Staff')->first();
-        if ($staffRole) {
-            $staffRole->givePermissionTo('create posts');
-        }
+        app(PermissionRegistry::class)->register('blog', [
+            'posts.view',
+            'posts.create',
+            'posts.edit',
+            'posts.delete',
+            'posts.publish',
+        ], [
+            'Administrator' => ['posts.*'],
+            'Staff' => ['posts.view', 'posts.create'],
+        ]);
     }
 }
