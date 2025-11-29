@@ -14,35 +14,45 @@ use Spatie\Permission\Models\Permission;
 class PermissionService
 {
     /**
-     * Group permissions by their prefix (resource name).
+     * Group permissions by module, then by resource.
      *
-     * Permissions follow pattern: {action} {resource}
-     * Example: 'view users' -> group: 'users'
-     *          'create posts' -> group: 'posts'
+     * Permissions follow pattern: {module}.{resource}.{action}
+     * Example: 'blog.posts.view' -> module: 'blog', resource: 'posts'
+     *          'core.users.edit' -> module: 'core', resource: 'users'
      *
      * @param  Collection<int, Permission>  $permissions
-     * @return array<string, array<int, array{id: int, name: string}>>
+     * @return array<string, array<string, array<int, array{id: int, name: string, action: string}>>>
      */
-    public function groupByPrefix(Collection $permissions): array
+    public function groupByModule(Collection $permissions): array
     {
         $grouped = [];
 
         foreach ($permissions as $permission) {
-            $parts = explode(' ', $permission->name, 2);
-            $group = count($parts) > 1 ? $parts[1] : 'other';
+            $parts = explode('.', $permission->name);
+            $module = $parts[0] ?? 'other';
+            $resource = $parts[1] ?? 'other';
+            $action = $parts[2] ?? 'other';
 
-            if (! isset($grouped[$group])) {
-                $grouped[$group] = [];
+            if (! isset($grouped[$module])) {
+                $grouped[$module] = [];
             }
 
-            $grouped[$group][] = [
+            if (! isset($grouped[$module][$resource])) {
+                $grouped[$module][$resource] = [];
+            }
+
+            $grouped[$module][$resource][] = [
                 'id' => $permission->id,
                 'name' => $permission->name,
+                'action' => $action,
             ];
         }
 
-        // Sort groups alphabetically
+        // Sort modules and resources alphabetically
         ksort($grouped);
+        foreach ($grouped as $module => $resources) {
+            ksort($grouped[$module]);
+        }
 
         return $grouped;
     }

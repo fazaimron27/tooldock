@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Core\App\Models\User;
+use Modules\Newsletter\Database\Factories\CampaignFactory;
 
 /**
  * Campaign model representing an email newsletter campaign.
@@ -16,6 +17,16 @@ use Modules\Core\App\Models\User;
 class Campaign extends Model
 {
     use HasFactory;
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory<static>
+     */
+    protected static function newFactory(): CampaignFactory
+    {
+        return CampaignFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.

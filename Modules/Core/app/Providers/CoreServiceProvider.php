@@ -39,7 +39,7 @@ class CoreServiceProvider extends ServiceProvider
             route: 'core.users.index',
             icon: 'Users',
             order: 10,
-            permission: 'view users'
+            permission: 'core.users.view'
         );
 
         app(MenuRegistry::class)->registerItem(
@@ -48,7 +48,7 @@ class CoreServiceProvider extends ServiceProvider
             route: 'core.roles.index',
             icon: 'Shield',
             order: 20,
-            permission: 'manage roles'
+            permission: 'core.roles.manage'
         );
 
         Gate::before(function ($user, $ability) {

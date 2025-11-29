@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\App\Services\PermissionCacheService;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Contracts\RepositoryInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Nwidart\Modules\Module;
+use Spatie\Permission\Models\Permission;
 
 class ModuleLifecycleService
 {
@@ -292,15 +294,12 @@ class ModuleLifecycleService
         for ($i = 0; $i < $tokenCount; $i++) {
             $token = $tokens[$i];
 
-            // Skip non-array tokens (operators, punctuation)
             if (! is_array($token)) {
-                // End of use statement
                 if ($token === ';' && $inUseStatement) {
                     $this->processUseStatement($useNamespace, $currentModuleName, $dependencies);
                     $inUseStatement = false;
                     $useNamespace = '';
                 } elseif ($token === ',' && $inUseStatement) {
-                    // Multiple classes in one use statement: use A\B, C\D;
                     $this->processUseStatement($useNamespace, $currentModuleName, $dependencies);
                     $useNamespace = '';
                 }
@@ -577,9 +576,16 @@ class ModuleLifecycleService
      */
     public function install(string $moduleName, bool $withSeed = false, bool $skipValidation = false): void
     {
+        Log::info("ModuleLifecycleService: Starting install for module '{$moduleName}'");
+
         $module = $this->moduleRepository->findOrFail($moduleName);
+        Log::info("ModuleLifecycleService: Found module '{$moduleName}'", [
+            'path' => $module->getPath(),
+            'version' => $module->get('version'),
+        ]);
 
         $this->checkDependencies($module, checkEnabled: false, skipValidation: $skipValidation);
+        Log::info("ModuleLifecycleService: Dependencies checked for '{$moduleName}'");
 
         DB::table('modules_statuses')->updateOrInsert(
             ['name' => $moduleName],
@@ -590,39 +596,56 @@ class ModuleLifecycleService
                 'updated_at' => now(),
             ]
         );
+        Log::info("ModuleLifecycleService: Updated modules_statuses for '{$moduleName}'");
 
         $this->activator->enable($module);
+        Log::info("ModuleLifecycleService: Enabled module '{$moduleName}' via activator");
 
         $migrationPath = $module->getPath().'/database/migrations';
         if (is_dir($migrationPath) && ! empty(glob($migrationPath.'/*.php'))) {
+            Log::info("ModuleLifecycleService: Found migrations for '{$moduleName}'", [
+                'path' => $migrationPath,
+            ]);
             try {
                 Artisan::call('module:migrate', [
                     'module' => $moduleName,
                     '--force' => true,
                 ]);
+                Log::info("ModuleLifecycleService: Ran module:migrate for '{$moduleName}'");
             } catch (\Exception $e) {
+                Log::warning("ModuleLifecycleService: module:migrate failed for '{$moduleName}'", [
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             Artisan::call('migrate', [
                 '--path' => 'Modules/'.$moduleName.'/database/migrations',
                 '--force' => true,
             ]);
+            Log::info("ModuleLifecycleService: Ran migrate for '{$moduleName}'");
+        } else {
+            Log::info("ModuleLifecycleService: No migrations found for '{$moduleName}'");
         }
 
+        $this->runPermissionSeeder($moduleName);
+
         if ($withSeed) {
+            Log::info("ModuleLifecycleService: Running database seeders for '{$moduleName}'");
             $seedResult = Artisan::call('module:seed', [
                 'module' => $moduleName,
                 '--force' => true,
             ]);
             if ($seedResult !== 0) {
-                throw new \RuntimeException(
-                    "Failed to run seeders for module '{$moduleName}'.\n".
-                        'You can try installing without seeders.'
-                );
+                Log::warning("ModuleLifecycleService: Database seeder failed for '{$moduleName}'", [
+                    'error' => 'This is optional and only creates sample data.',
+                ]);
+            } else {
+                Log::info("ModuleLifecycleService: Database seeders completed for '{$moduleName}'");
             }
         }
 
-        $this->enable($moduleName);
+        $this->enable($moduleName, skipValidation: $skipValidation);
+        Log::info("ModuleLifecycleService: Installation complete for '{$moduleName}'");
     }
 
     /**
@@ -654,6 +677,8 @@ class ModuleLifecycleService
         $this->checkReverseDependencies($moduleName);
 
         $this->disable($moduleName);
+
+        $this->cleanupModulePermissions($moduleName);
 
         Artisan::call('module:migrate-rollback', [
             'module' => $moduleName,
@@ -981,21 +1006,35 @@ class ModuleLifecycleService
      */
     public function installProtectedModules(): array
     {
+        Log::info('ModuleLifecycleService: Starting installProtectedModules');
+
         $this->discoverAndRegisterAll();
 
         $allModules = ModuleFacade::all();
+        Log::info('ModuleLifecycleService: Discovered modules', [
+            'count' => count($allModules),
+            'names' => array_map(fn ($m) => $m->getName(), $allModules),
+        ]);
+
         $protectedModules = [];
 
         foreach ($allModules as $module) {
             if ($module->get('protected') === true) {
                 $protectedModules[] = $module;
+                Log::info('ModuleLifecycleService: Found protected module', [
+                    'name' => $module->getName(),
+                    'version' => $module->get('version'),
+                ]);
             }
         }
 
         if (empty($protectedModules)) {
+            Log::warning('ModuleLifecycleService: No protected modules found');
+
             return [];
         }
 
+        Log::info('ModuleLifecycleService: Sorting protected modules by dependencies');
         usort($protectedModules, function (Module $a, Module $b) {
             $aRequires = $a->get('requires', []);
             $bRequires = $b->get('requires', []);
@@ -1016,20 +1055,30 @@ class ModuleLifecycleService
         foreach ($protectedModules as $module) {
             $moduleName = $module->getName();
 
+            Log::info("ModuleLifecycleService: Processing module '{$moduleName}'");
+
             $isInstalled = DB::table('modules_statuses')
                 ->where('name', $moduleName)
                 ->where('is_installed', true)
                 ->exists();
 
+            Log::info("ModuleLifecycleService: Module '{$moduleName}' installation status", [
+                'isInstalled' => $isInstalled,
+            ]);
+
             if ($isInstalled) {
+                Log::info("ModuleLifecycleService: Skipping '{$moduleName}' - already installed");
+
                 continue;
             }
 
             try {
-                $this->install($moduleName, withSeed: false);
+                Log::info("ModuleLifecycleService: Installing module '{$moduleName}'");
+                $this->install($moduleName, withSeed: false, skipValidation: true);
                 $installedModules[] = $moduleName;
+                Log::info("ModuleLifecycleService: Successfully installed module '{$moduleName}'");
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error(
+                Log::error(
                     "Failed to auto-install protected module '{$moduleName}'",
                     [
                         'error' => $e->getMessage(),
@@ -1039,6 +1088,118 @@ class ModuleLifecycleService
             }
         }
 
+        Log::info('ModuleLifecycleService: installProtectedModules complete', [
+            'installed' => $installedModules,
+            'count' => count($installedModules),
+        ]);
+
         return $installedModules;
+    }
+
+    /**
+     * Run permission seeder for a module if it exists.
+     *
+     * Permission seeders are required for module functionality and should
+     * always run during installation, even without the --seed flag.
+     *
+     * @param  string  $moduleName  The name of the module
+     */
+    private function runPermissionSeeder(string $moduleName): void
+    {
+        $module = $this->moduleRepository->findOrFail($moduleName);
+        $seederPath = $module->getPath().'/database/seeders';
+        $permissionSeederClass = "Modules\\{$moduleName}\\Database\\Seeders\\{$moduleName}PermissionSeeder";
+
+        $permissionSeederFile = $seederPath."/{$moduleName}PermissionSeeder.php";
+        if (! file_exists($permissionSeederFile)) {
+            Log::info("ModuleLifecycleService: No permission seeder found for '{$moduleName}'");
+
+            return;
+        }
+
+        if (! class_exists($permissionSeederClass)) {
+            Log::warning("ModuleLifecycleService: Permission seeder class not found: {$permissionSeederClass}");
+
+            return;
+        }
+
+        try {
+            Log::info("ModuleLifecycleService: Running permission seeder for '{$moduleName}'");
+            $seeder = app($permissionSeederClass);
+            $seeder->run();
+            Log::info("ModuleLifecycleService: Permission seeder completed for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::error("ModuleLifecycleService: Failed to run permission seeder for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+    /**
+     * Clean up module permissions when uninstalling a module.
+     *
+     * Removes all permissions that start with the module prefix (e.g., "blog.*", "newsletter.*")
+     * and cleans up related pivot table entries.
+     *
+     * @param  string  $moduleName  The name of the module being uninstalled
+     */
+    private function cleanupModulePermissions(string $moduleName): void
+    {
+        $modulePrefix = strtolower($moduleName).'.';
+
+        try {
+            Log::info("ModuleLifecycleService: Cleaning up permissions for '{$moduleName}'", [
+                'prefix' => $modulePrefix,
+            ]);
+
+            $permissions = Permission::where('name', 'like', $modulePrefix.'%')->get();
+
+            if ($permissions->isEmpty()) {
+                Log::info("ModuleLifecycleService: No permissions found for '{$moduleName}'");
+                app(PermissionCacheService::class)->clear();
+
+                return;
+            }
+
+            $permissionIds = $permissions->pluck('id')->toArray();
+            $permissionNames = $permissions->pluck('name')->toArray();
+
+            Log::info('ModuleLifecycleService: Found permissions to remove', [
+                'count' => count($permissionIds),
+                'permissions' => $permissionNames,
+            ]);
+
+            $rolePermissionsDeleted = DB::table('role_has_permissions')
+                ->whereIn('permission_id', $permissionIds)
+                ->delete();
+
+            Log::info('ModuleLifecycleService: Removed permissions from roles', [
+                'count' => $rolePermissionsDeleted,
+            ]);
+
+            $modelPermissionsDeleted = DB::table('model_has_permissions')
+                ->whereIn('permission_id', $permissionIds)
+                ->delete();
+
+            Log::info('ModuleLifecycleService: Removed permissions from models', [
+                'count' => $modelPermissionsDeleted,
+            ]);
+
+            $permissionsDeleted = Permission::whereIn('id', $permissionIds)->delete();
+
+            Log::info('ModuleLifecycleService: Deleted permissions', [
+                'count' => $permissionsDeleted,
+            ]);
+
+            app(PermissionCacheService::class)->clear();
+
+            Log::info("ModuleLifecycleService: Permission cleanup completed for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::error("ModuleLifecycleService: Failed to cleanup permissions for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

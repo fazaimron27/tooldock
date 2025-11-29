@@ -10,6 +10,9 @@ class NewsletterDatabaseSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Note: NewsletterPermissionSeeder is automatically run during module installation.
+     * This seeder only creates sample data for development/testing.
      */
     public function run(): void
     {

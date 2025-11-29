@@ -6,9 +6,9 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Modules\Core\App\Constants\Roles as RoleConstants;
 use Modules\Core\App\Models\User;
+use Modules\Core\App\Services\PermissionCacheService;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class CoreRoleSeeder extends Seeder
 {
@@ -17,49 +17,45 @@ class CoreRoleSeeder extends Seeder
      */
     public function run(): void
     {
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
         $permissions = [
-            'view dashboard',
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            'manage roles',
-            'manage settings',
+            'core.dashboard.view',
+            'core.users.view',
+            'core.users.create',
+            'core.users.edit',
+            'core.users.delete',
+            'core.roles.manage',
+            'core.settings.manage',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
         $superAdminRole = Role::firstOrCreate(['name' => RoleConstants::SUPER_ADMIN]);
 
         $administratorRole = Role::firstOrCreate(['name' => RoleConstants::ADMINISTRATOR]);
         $administratorRole->syncPermissions([
-            'view dashboard',
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            'manage roles',
+            'core.dashboard.view',
+            'core.users.view',
+            'core.users.create',
+            'core.users.edit',
+            'core.users.delete',
+            'core.roles.manage',
         ]);
 
         $managerRole = Role::firstOrCreate(['name' => RoleConstants::MANAGER]);
         $managerRole->syncPermissions([
-            'view dashboard',
-            'view users',
+            'core.dashboard.view',
+            'core.users.view',
         ]);
 
         $staffRole = Role::firstOrCreate(['name' => RoleConstants::STAFF]);
-        $staffRole->syncPermissions(['view dashboard']);
+        $staffRole->syncPermissions(['core.dashboard.view']);
 
         $auditorRole = Role::firstOrCreate(['name' => RoleConstants::AUDITOR]);
         $auditorRole->syncPermissions([
-            'view dashboard',
-            'view users',
+            'core.dashboard.view',
+            'core.users.view',
         ]);
 
         $adminEmail = env('ADMIN_EMAIL', 'admin@example.com');
@@ -79,5 +75,7 @@ class CoreRoleSeeder extends Seeder
                 $adminUser->assignRole(RoleConstants::SUPER_ADMIN);
             }
         }
+
+        app(PermissionCacheService::class)->clear();
     }
 }

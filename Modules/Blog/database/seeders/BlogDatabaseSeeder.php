@@ -11,12 +11,12 @@ class BlogDatabaseSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Note: BlogPermissionSeeder is automatically run during module installation.
+     * This seeder only creates sample data for development/testing.
      */
     public function run(): void
     {
-        // Seed blog permissions first
-        $this->call(BlogPermissionSeeder::class);
-
         // Get or create a user for blog posts
         $user = User::firstOrCreate(
             ['email' => 'author@example.com'],

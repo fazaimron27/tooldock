@@ -30,21 +30,44 @@ class AutoInstallProtectedModules
      */
     public function handle(MigrationsEnded $event): void
     {
+        Log::info('AutoInstallProtectedModules: Event received', [
+            'direction' => $event->method,
+            'path' => $event->path ?? 'all',
+        ]);
+
         if (! $this->tableExists('modules_statuses')) {
+            Log::warning('AutoInstallProtectedModules: modules_statuses table does not exist, skipping');
+
             return;
         }
+
+        Log::info('AutoInstallProtectedModules: modules_statuses table exists');
 
         // Only auto-install on fresh databases (no installed modules yet)
         $hasInstalledModules = DB::table('modules_statuses')
             ->where('is_installed', true)
             ->exists();
 
+        $allModuleStatuses = DB::table('modules_statuses')->get(['name', 'is_installed', 'is_active']);
+
+        Log::info('AutoInstallProtectedModules: Check result', [
+            'hasInstalledModules' => $hasInstalledModules,
+            'moduleStatuses' => $allModuleStatuses->toArray(),
+        ]);
+
         if ($hasInstalledModules) {
+            Log::info('AutoInstallProtectedModules: Skipping - modules already installed');
+
             return;
         }
 
         try {
-            $this->lifecycleService->installProtectedModules();
+            Log::info('AutoInstallProtectedModules: Starting installation of protected modules');
+            $installed = $this->lifecycleService->installProtectedModules();
+            Log::info('AutoInstallProtectedModules: Installation complete', [
+                'installed_modules' => $installed,
+                'count' => count($installed),
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to auto-install protected modules', [
                 'error' => $e->getMessage(),

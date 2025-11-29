@@ -1,12 +1,10 @@
 <?php
 
-namespace Modules\Core\Providers;
+namespace Modules\Blog\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Policies\RolePolicy;
-use Modules\Core\App\Policies\UserPolicy;
-use Spatie\Permission\Models\Role;
+use Modules\Blog\App\Policies\PostPolicy;
+use Modules\Blog\Models\Post;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -16,8 +14,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        User::class => UserPolicy::class,
-        Role::class => RolePolicy::class,
+        Post::class => PostPolicy::class,
     ];
 
     /**

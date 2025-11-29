@@ -14,15 +14,15 @@ use Modules\Blog\Models\Post;
 class BlogController extends Controller
 {
     /**
-     * Display a paginated listing of posts for the authenticated user.
+     * Display a paginated listing of posts.
      *
-     * Supports server-side search, sorting, and pagination. Only displays
-     * posts belonging to the logged-in user.
+     * Supports server-side search, sorting, and pagination.
      */
     public function index(DatatableQueryService $datatableService): Response
     {
-        $query = Post::with('user')
-            ->where('user_id', request()->user()->id);
+        $this->authorize('viewAny', Post::class);
+
+        $query = Post::with('user');
 
         $defaultPerPage = 10;
 
@@ -46,6 +46,8 @@ class BlogController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', Post::class);
+
         return Inertia::render('Modules::Blog/Create');
     }
 
@@ -54,6 +56,8 @@ class BlogController extends Controller
      */
     public function store(StorePostRequest $request): RedirectResponse
     {
+        $this->authorize('create', Post::class);
+
         $post = Post::create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
@@ -68,10 +72,7 @@ class BlogController extends Controller
      */
     public function show(Post $blog): Response|RedirectResponse
     {
-        if ($blog->user_id !== request()->user()->id) {
-            return redirect()->route('blog.index')
-                ->with('error', 'You do not have permission to view this post.');
-        }
+        $this->authorize('view', $blog);
 
         $blog->load('user');
 
@@ -85,10 +86,7 @@ class BlogController extends Controller
      */
     public function edit(Post $blog): Response|RedirectResponse
     {
-        if ($blog->user_id !== request()->user()->id) {
-            return redirect()->route('blog.index')
-                ->with('error', 'You do not have permission to edit this post.');
-        }
+        $this->authorize('update', $blog);
 
         return Inertia::render('Modules::Blog/Edit', [
             'post' => $blog,
@@ -100,10 +98,7 @@ class BlogController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $blog): RedirectResponse
     {
-        if ($blog->user_id !== $request->user()->id) {
-            return redirect()->route('blog.index')
-                ->with('error', 'You do not have permission to update this post.');
-        }
+        $this->authorize('update', $blog);
 
         $blog->update($request->validated());
 
@@ -116,10 +111,7 @@ class BlogController extends Controller
      */
     public function destroy(Post $blog): RedirectResponse
     {
-        if ($blog->user_id !== request()->user()->id) {
-            return redirect()->route('blog.index')
-                ->with('error', 'You do not have permission to delete this post.');
-        }
+        $this->authorize('delete', $blog);
 
         $blog->delete();
 
