@@ -8,6 +8,7 @@ use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Nwidart\Modules\Facades\Module;
 
 /**
  * Application service provider
@@ -36,6 +37,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Discover modules and load migrations for protected modules
+        // This ensures protected module migrations are available during migrate:fresh
+        // even before modules are enabled/installed
+        Module::scan();
+        $allModules = Module::all();
+
+        foreach ($allModules as $module) {
+            if ($module->get('protected') === true) {
+                $migrationPath = $module->getPath().'/database/migrations';
+                if (is_dir($migrationPath)) {
+                    $this->loadMigrationsFrom($migrationPath);
+                }
+            }
+        }
 
         app(MenuRegistry::class)->registerItem(
             group: 'Main',
