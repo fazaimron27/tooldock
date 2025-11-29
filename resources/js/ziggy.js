@@ -143,6 +143,56 @@ const Ziggy = {
       wheres: { path: '.*' },
       parameters: ['path'],
     },
+    'api.newsletter.index': { uri: 'api\/v1\/newsletters', methods: ['GET', 'HEAD'] },
+    'api.newsletter.store': { uri: 'api\/v1\/newsletters', methods: ['POST'] },
+    'api.newsletter.show': {
+      uri: 'api\/v1\/newsletters\/{newsletter}',
+      methods: ['GET', 'HEAD'],
+      parameters: ['newsletter'],
+    },
+    'api.newsletter.update': {
+      uri: 'api\/v1\/newsletters\/{newsletter}',
+      methods: ['PUT', 'PATCH'],
+      parameters: ['newsletter'],
+    },
+    'api.newsletter.destroy': {
+      uri: 'api\/v1\/newsletters\/{newsletter}',
+      methods: ['DELETE'],
+      parameters: ['newsletter'],
+    },
+    'newsletter.index': { uri: 'newsletter', methods: ['GET', 'HEAD'] },
+    'newsletter.create': { uri: 'newsletter\/create', methods: ['GET', 'HEAD'] },
+    'newsletter.store': { uri: 'newsletter', methods: ['POST'] },
+    'newsletter.show': {
+      uri: 'newsletter\/{newsletter}',
+      methods: ['GET', 'HEAD'],
+      parameters: ['newsletter'],
+      bindings: { newsletter: 'id' },
+    },
+    'newsletter.edit': {
+      uri: 'newsletter\/{newsletter}\/edit',
+      methods: ['GET', 'HEAD'],
+      parameters: ['newsletter'],
+      bindings: { newsletter: 'id' },
+    },
+    'newsletter.update': {
+      uri: 'newsletter\/{newsletter}',
+      methods: ['PUT', 'PATCH'],
+      parameters: ['newsletter'],
+      bindings: { newsletter: 'id' },
+    },
+    'newsletter.destroy': {
+      uri: 'newsletter\/{newsletter}',
+      methods: ['DELETE'],
+      parameters: ['newsletter'],
+      bindings: { newsletter: 'id' },
+    },
+    'newsletter.send': {
+      uri: 'newsletter\/{newsletter}\/send',
+      methods: ['POST'],
+      parameters: ['newsletter'],
+      bindings: { newsletter: 'id' },
+    },
   },
 };
 if (typeof window !== 'undefined' && typeof window.Ziggy !== 'undefined') {
