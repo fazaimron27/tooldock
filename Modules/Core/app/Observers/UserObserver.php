@@ -5,8 +5,8 @@ namespace Modules\Core\App\Observers;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
+use Modules\Core\App\Services\PermissionCacheService;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Observer for User model events.
@@ -31,8 +31,10 @@ class UserObserver
 
                 if ($defaultRole) {
                     $user->assignRole($defaultRole);
-                    $user->load('roles', 'permissions');
-                    app(PermissionRegistrar::class)->forgetCachedPermissions();
+                    // Clear permission cache
+                    app(PermissionCacheService::class)->clear();
+                    // Reload user relationships to ensure fresh permission data
+                    $user->load('roles.permissions');
                 }
             } catch (\Exception $e) {
                 Log::warning('Failed to assign default role to user: '.$e->getMessage(), [

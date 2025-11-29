@@ -55,7 +55,7 @@ class RoleController extends Controller
         $this->authorize('create', Role::class);
 
         $permissions = Permission::all();
-        $groupedPermissions = $this->permissionService->groupByPrefix($permissions);
+        $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Core/Roles/Create', [
             'groupedPermissions' => $groupedPermissions,
@@ -95,7 +95,7 @@ class RoleController extends Controller
 
         $role->load('permissions');
         $permissions = Permission::all();
-        $groupedPermissions = $this->permissionService->groupByPrefix($permissions);
+        $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Core/Roles/Edit', [
             'role' => $role,
