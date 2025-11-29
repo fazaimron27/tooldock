@@ -6,7 +6,7 @@
   "keywords": ["email", "campaign", "newsletter"],
   "priority": 20,
   "active": 1,
-  "providers": ["Modules\\Newsletter\\Providers\\NewsletterServiceProvider"],
+  "providers": ["Modules\\Newsletter\\Providers\\NewsletterServiceProvider", "Modules\\Newsletter\\Providers\\AuthServiceProvider"],
   "files": [],
   "requires": ["Core", "Blog"],
   "icon": "Send",
