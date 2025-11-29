@@ -18,12 +18,12 @@ class CampaignController extends Controller
 {
     /**
      * Display paginated listing of campaigns with server-side search, sorting, and pagination.
-     * Only displays campaigns belonging to the logged-in user.
      */
     public function index(DatatableQueryService $datatableService): Response
     {
-        $query = Campaign::query()
-            ->where('user_id', request()->user()->id);
+        $this->authorize('viewAny', Campaign::class);
+
+        $query = Campaign::query();
 
         $defaultPerPage = 10;
 
@@ -42,9 +42,6 @@ class CampaignController extends Controller
         ]);
     }
 
-    /**
-     * Check if Blog module is active and Post model is available.
-     */
     private function isBlogModuleAvailable(): bool
     {
         return Module::has('Blog')
@@ -52,11 +49,6 @@ class CampaignController extends Controller
             && class_exists(\Modules\Blog\Models\Post::class);
     }
 
-    /**
-     * Get published blog posts safely.
-     * Returns empty collection if Blog module is unavailable.
-     * Only returns posts belonging to the logged-in user.
-     */
     private function getPublishedPosts(int $limit = 20)
     {
         if (! $this->isBlogModuleAvailable()) {
@@ -81,12 +73,10 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new campaign.
-     * Fetches published blog posts for selection.
-     */
     public function create(): Response
     {
+        $this->authorize('create', Campaign::class);
+
         $posts = $this->getPublishedPosts();
 
         return Inertia::render('Modules::Newsletter/Create', [
@@ -94,12 +84,10 @@ class CampaignController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created campaign in storage.
-     * Campaigns are created with 'draft' status by default.
-     */
     public function store(StoreCampaignRequest $request): RedirectResponse
     {
+        $this->authorize('create', Campaign::class);
+
         Campaign::create([
             'user_id' => $request->user()->id,
             'subject' => $request->subject,
@@ -113,15 +101,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign created successfully.');
     }
 
-    /**
-     * Display the specified campaign with associated blog posts.
-     */
     public function show(Campaign $newsletter): Response|RedirectResponse
     {
-        if ($newsletter->user_id !== request()->user()->id) {
-            return redirect()->route('newsletter.index')
-                ->with('error', 'You do not have permission to view this campaign.');
-        }
+        $this->authorize('view', $newsletter);
 
         $selectedPosts = collect([]);
 
@@ -145,16 +127,9 @@ class CampaignController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified campaign.
-     * Prevents editing campaigns that have already been sent.
-     */
     public function edit(Campaign $newsletter): Response|RedirectResponse
     {
-        if ($newsletter->user_id !== request()->user()->id) {
-            return redirect()->route('newsletter.index')
-                ->with('error', 'You do not have permission to edit this campaign.');
-        }
+        $this->authorize('update', $newsletter);
 
         if ($newsletter->status === 'sent') {
             return redirect()->route('newsletter.show', $newsletter)
@@ -169,16 +144,9 @@ class CampaignController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified campaign in storage.
-     * Prevents updating campaigns that are sent or currently being sent.
-     */
     public function update(UpdateCampaignRequest $request, Campaign $newsletter): RedirectResponse
     {
-        if ($newsletter->user_id !== $request->user()->id) {
-            return redirect()->route('newsletter.index')
-                ->with('error', 'You do not have permission to update this campaign.');
-        }
+        $this->authorize('update', $newsletter);
 
         if ($newsletter->status === 'sent') {
             return redirect()->route('newsletter.show', $newsletter)
@@ -201,16 +169,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign updated successfully.');
     }
 
-    /**
-     * Remove the specified campaign from storage.
-     * Prevents deleting campaigns that are currently being sent.
-     */
     public function destroy(Campaign $newsletter): RedirectResponse
     {
-        if ($newsletter->user_id !== request()->user()->id) {
-            return redirect()->route('newsletter.index')
-                ->with('error', 'You do not have permission to delete this campaign.');
-        }
+        $this->authorize('delete', $newsletter);
 
         if ($newsletter->status === 'sending') {
             return redirect()->route('newsletter.index')
@@ -223,16 +184,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign deleted successfully.');
     }
 
-    /**
-     * Send a campaign by dispatching SendCampaignJob.
-     * Only draft campaigns can be sent. The job will update status to 'sending' then 'sent'.
-     */
     public function send(Campaign $newsletter): RedirectResponse
     {
-        if ($newsletter->user_id !== request()->user()->id) {
-            return redirect()->route('newsletter.index')
-                ->with('error', 'You do not have permission to send this campaign.');
-        }
+        $this->authorize('send', $newsletter);
 
         if ($newsletter->status !== 'draft') {
             return redirect()->route('newsletter.show', $newsletter)
