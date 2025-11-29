@@ -16,7 +16,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    Gate::authorize('view dashboard');
+    Gate::authorize('core.dashboard.view');
 
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
