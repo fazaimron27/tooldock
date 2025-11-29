@@ -31,12 +31,21 @@ export default function Create({ groupedPermissions = {} }) {
     }
   );
 
-  const [openGroups, setOpenGroups] = useState({});
+  const [openModules, setOpenModules] = useState({});
+  const [openResources, setOpenResources] = useState({});
 
-  const toggleGroup = (group) => {
-    setOpenGroups((prev) => ({
+  const toggleModule = (module) => {
+    setOpenModules((prev) => ({
       ...prev,
-      [group]: !prev[group],
+      [module]: !prev[module],
+    }));
+  };
+
+  const toggleResource = (module, resource) => {
+    const key = `${module}.${resource}`;
+    setOpenResources((prev) => ({
+      ...prev,
+      [key]: !prev[key],
     }));
   };
 
@@ -52,36 +61,47 @@ export default function Create({ groupedPermissions = {} }) {
     }
   };
 
-  const handleSelectAllInGroup = (group) => {
-    const groupPermissions = groupedPermissions[group] || [];
+  const handleSelectAllInResource = (module, resource) => {
+    const resourcePermissions = groupedPermissions[module]?.[resource] || [];
     const currentPermissions = form.data.permissions || [];
-    const groupPermissionIds = groupPermissions.map((p) => p.id);
+    const resourcePermissionIds = resourcePermissions.map((p) => p.id);
 
-    const allSelected = groupPermissionIds.every((id) => currentPermissions.includes(id));
+    const allSelected = resourcePermissionIds.every((id) => currentPermissions.includes(id));
 
     if (allSelected) {
       form.setData(
         'permissions',
-        currentPermissions.filter((id) => !groupPermissionIds.includes(id))
+        currentPermissions.filter((id) => !resourcePermissionIds.includes(id))
       );
     } else {
-      const newPermissions = [...new Set([...currentPermissions, ...groupPermissionIds])];
+      const newPermissions = [...new Set([...currentPermissions, ...resourcePermissionIds])];
       form.setData('permissions', newPermissions);
     }
   };
 
   const formatPermissionName = (name) => {
+    // Handle new format: module.resource.action -> show "Action"
+    if (name.includes('.')) {
+      const parts = name.split('.');
+      const action = parts[parts.length - 1];
+      return action.charAt(0).toUpperCase() + action.slice(1);
+    }
+    // Handle old format: "action resource" -> show as is
     return name
       .split(' ')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  const formatGroupName = (group) => {
-    return group.charAt(0).toUpperCase() + group.slice(1);
+  const formatModuleName = (module) => {
+    return module.charAt(0).toUpperCase() + module.slice(1);
   };
 
-  const groupKeys = useMemo(() => {
+  const formatResourceName = (resource) => {
+    return resource.charAt(0).toUpperCase() + resource.slice(1);
+  };
+
+  const moduleKeys = useMemo(() => {
     return Object.keys(groupedPermissions).sort();
   }, [groupedPermissions]);
 
@@ -118,30 +138,34 @@ export default function Create({ groupedPermissions = {} }) {
                   </span>
                 </div>
 
-                {groupKeys.length === 0 ? (
+                {moduleKeys.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No permissions available</p>
                 ) : (
                   <div className="space-y-2 rounded-md border p-4">
-                    {groupKeys.map((group) => {
-                      const groupPermissions = groupedPermissions[group] || [];
-                      const isOpen = openGroups[group] ?? true;
-                      const groupPermissionIds = groupPermissions.map((p) => p.id);
-                      const selectedCount = (form.data.permissions || []).filter((id) =>
-                        groupPermissionIds.includes(id)
+                    {moduleKeys.map((module) => {
+                      const moduleResources = groupedPermissions[module] || {};
+                      const resourceKeys = Object.keys(moduleResources).sort();
+                      const isModuleOpen = openModules[module] ?? true;
+
+                      // Calculate total permissions for module
+                      const allModulePermissions = resourceKeys.flatMap(
+                        (resource) => moduleResources[resource] || []
+                      );
+                      const modulePermissionIds = allModulePermissions.map((p) => p.id);
+                      const moduleSelectedCount = (form.data.permissions || []).filter((id) =>
+                        modulePermissionIds.includes(id)
                       ).length;
-                      const allSelected =
-                        groupPermissions.length > 0 && selectedCount === groupPermissions.length;
 
                       return (
                         <Collapsible
-                          key={group}
-                          open={isOpen}
-                          onOpenChange={() => toggleGroup(group)}
+                          key={module}
+                          open={isModuleOpen}
+                          onOpenChange={() => toggleModule(module)}
                         >
                           <div className="flex items-center gap-2 border-b pb-2">
                             <CollapsibleTrigger asChild>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                {isOpen ? (
+                                {isModuleOpen ? (
                                   <ChevronDown className="h-4 w-4" />
                                 ) : (
                                   <ChevronRight className="h-4 w-4" />
@@ -150,44 +174,96 @@ export default function Create({ groupedPermissions = {} }) {
                             </CollapsibleTrigger>
                             <div className="flex flex-1 items-center justify-between">
                               <Label
-                                className="text-sm font-medium cursor-pointer"
-                                onClick={() => toggleGroup(group)}
+                                className="text-sm font-semibold cursor-pointer"
+                                onClick={() => toggleModule(module)}
                               >
-                                {formatGroupName(group)} ({selectedCount}/{groupPermissions.length})
+                                {formatModuleName(module)} ({moduleSelectedCount}/
+                                {allModulePermissions.length})
                               </Label>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleSelectAllInGroup(group);
-                                }}
-                              >
-                                {allSelected ? 'Deselect All' : 'Select All'}
-                              </Button>
                             </div>
                           </div>
                           <CollapsibleContent className="pt-2">
                             <div className="space-y-2 pl-6">
-                              {groupPermissions.map((permission) => (
-                                <div key={permission.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`permission-${permission.id}`}
-                                    checked={
-                                      form.data.permissions?.includes(permission.id) || false
-                                    }
-                                    onCheckedChange={() => handlePermissionToggle(permission.id)}
-                                  />
-                                  <Label
-                                    htmlFor={`permission-${permission.id}`}
-                                    className="text-sm font-normal cursor-pointer"
+                              {resourceKeys.map((resource) => {
+                                const resourcePermissions = moduleResources[resource] || [];
+                                const resourceKey = `${module}.${resource}`;
+                                const isResourceOpen = openResources[resourceKey] ?? true;
+                                const resourcePermissionIds = resourcePermissions.map((p) => p.id);
+                                const resourceSelectedCount = (form.data.permissions || []).filter(
+                                  (id) => resourcePermissionIds.includes(id)
+                                ).length;
+                                const allResourceSelected =
+                                  resourcePermissions.length > 0 &&
+                                  resourceSelectedCount === resourcePermissions.length;
+
+                                return (
+                                  <Collapsible
+                                    key={resourceKey}
+                                    open={isResourceOpen}
+                                    onOpenChange={() => toggleResource(module, resource)}
                                   >
-                                    {formatPermissionName(permission.name)}
-                                  </Label>
-                                </div>
-                              ))}
+                                    <div className="flex items-center gap-2 border-b pb-2">
+                                      <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                          {isResourceOpen ? (
+                                            <ChevronDown className="h-3 w-3" />
+                                          ) : (
+                                            <ChevronRight className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </CollapsibleTrigger>
+                                      <div className="flex flex-1 items-center justify-between">
+                                        <Label
+                                          className="text-sm font-medium cursor-pointer"
+                                          onClick={() => toggleResource(module, resource)}
+                                        >
+                                          {formatResourceName(resource)} ({resourceSelectedCount}/
+                                          {resourcePermissions.length})
+                                        </Label>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 text-xs"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            handleSelectAllInResource(module, resource);
+                                          }}
+                                        >
+                                          {allResourceSelected ? 'Deselect All' : 'Select All'}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <CollapsibleContent className="pt-2">
+                                      <div className="space-y-2 pl-6">
+                                        {resourcePermissions.map((permission) => (
+                                          <div
+                                            key={permission.id}
+                                            className="flex items-center space-x-2"
+                                          >
+                                            <Checkbox
+                                              id={`permission-${permission.id}`}
+                                              checked={
+                                                form.data.permissions?.includes(permission.id) ||
+                                                false
+                                              }
+                                              onCheckedChange={() =>
+                                                handlePermissionToggle(permission.id)
+                                              }
+                                            />
+                                            <Label
+                                              htmlFor={`permission-${permission.id}`}
+                                              className="text-sm font-normal cursor-pointer"
+                                            >
+                                              {formatPermissionName(permission.name)}
+                                            </Label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </CollapsibleContent>
+                                  </Collapsible>
+                                );
+                              })}
                             </div>
                           </CollapsibleContent>
                         </Collapsible>
