@@ -26,13 +26,15 @@ class CampaignController extends Controller
 
         $query = Campaign::query()->forUser();
 
-        $defaultPerPage = 10;
+        $defaultPerPage = (int) settings('campaigns_per_page', 10);
+        $defaultSort = settings('newsletter_default_sort', 'created_at');
+        $defaultDirection = settings('newsletter_default_sort_direction', 'desc');
 
         $campaigns = $datatableService->build($query, [
             'searchFields' => ['subject', 'content'],
             'allowedSorts' => ['subject', 'status', 'created_at', 'updated_at', 'scheduled_at'],
-            'defaultSort' => 'created_at',
-            'defaultDirection' => 'desc',
+            'defaultSort' => $defaultSort,
+            'defaultDirection' => $defaultDirection,
             'allowedPerPage' => [10, 20, 30, 50],
             'defaultPerPage' => $defaultPerPage,
         ]);
@@ -58,11 +60,12 @@ class CampaignController extends Controller
     /**
      * Get published blog posts for the current user.
      *
-     * @param  int  $limit  Maximum number of posts to retrieve
+     * @param  int|null  $limit  Maximum number of posts to retrieve (defaults to setting)
      * @return \Illuminate\Support\Collection<int, Post>
      */
-    private function getPublishedPosts(int $limit = 20)
+    private function getPublishedPosts(?int $limit = null)
     {
+        $limit = $limit ?? (int) settings('max_posts_per_campaign', 20);
         if (! $this->isBlogModuleAvailable()) {
             return collect([]);
         }
