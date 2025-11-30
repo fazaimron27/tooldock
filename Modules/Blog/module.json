@@ -6,7 +6,10 @@
   "keywords": ["cms", "posts"],
   "priority": 10,
   "active": 1,
-  "providers": ["Modules\\Blog\\Providers\\BlogServiceProvider", "Modules\\Blog\\Providers\\AuthServiceProvider"],
+  "providers": [
+    "Modules\\Blog\\Providers\\BlogServiceProvider",
+    "Modules\\Blog\\Providers\\AuthServiceProvider"
+  ],
   "files": [],
   "requires": ["Core"],
   "icon": "BookOpen",

@@ -21,10 +21,14 @@ class PostPolicy
 
     /**
      * Determine whether the user can view the model.
+     *
+     * Super Admins bypass this check via HasSuperAdminBypass trait.
+     * Regular users can only view their own posts.
      */
     public function view(User $user, Post $post): bool
     {
-        return $user->hasPermissionTo('blog.posts.view');
+        return $user->hasPermissionTo('blog.posts.view')
+            && $user->id === $post->user_id;
     }
 
     /**
@@ -37,25 +41,46 @@ class PostPolicy
 
     /**
      * Determine whether the user can update the model.
+     *
+     * Super Admins bypass this check via HasSuperAdminBypass trait.
+     * Regular users can only update their own posts.
      */
     public function update(User $user, Post $post): bool
     {
-        return $user->hasPermissionTo('blog.posts.edit');
+        return $user->hasPermissionTo('blog.posts.edit')
+            && $user->id === $post->user_id;
     }
 
     /**
      * Determine whether the user can delete the model.
+     *
+     * Super Admins bypass this check via HasSuperAdminBypass trait.
+     * Regular users can only delete their own posts.
+     * Prevents deletion if post is used in active campaigns (sending or sent).
      */
     public function delete(User $user, Post $post): bool
     {
-        return $user->hasPermissionTo('blog.posts.delete');
+        if (! $user->hasPermissionTo('blog.posts.delete') || $user->id !== $post->user_id) {
+            return false;
+        }
+
+        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
+        if (class_exists($campaignClass) && $post->isUsedInSentCampaigns()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Determine whether the user can publish the model.
+     *
+     * Super Admins bypass this check via HasSuperAdminBypass trait.
+     * Regular users can only publish their own posts.
      */
     public function publish(User $user, Post $post): bool
     {
-        return $user->hasPermissionTo('blog.posts.publish');
+        return $user->hasPermissionTo('blog.posts.publish')
+            && $user->id === $post->user_id;
     }
 }

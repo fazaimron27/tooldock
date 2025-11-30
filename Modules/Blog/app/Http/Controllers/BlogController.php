@@ -5,6 +5,7 @@ namespace Modules\Blog\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Blog\Http\Requests\StorePostRequest;
@@ -22,7 +23,7 @@ class BlogController extends Controller
     {
         $this->authorize('viewAny', Post::class);
 
-        $query = Post::with('user');
+        $query = Post::with('user')->forUser();
 
         $defaultPerPage = 10;
 
@@ -108,12 +109,41 @@ class BlogController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     *
+     * The Policy prevents deletion if the post is used in active campaigns (sending or sent).
+     * This method provides a user-friendly error message and handles cleanup
+     * of draft campaigns before deletion.
      */
     public function destroy(Post $blog): RedirectResponse
     {
+        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
+        if (class_exists($campaignClass) && $blog->isUsedInSentCampaigns()) {
+            return redirect()->route('blog.index')
+                ->with('error', 'Cannot delete post. It is used in one or more active campaigns (sending or sent).');
+        }
+
         $this->authorize('delete', $blog);
 
-        $blog->delete();
+        if (class_exists($campaignClass)) {
+            DB::transaction(function () use ($blog, $campaignClass): void {
+                $draftCampaigns = $campaignClass::query()
+                    ->where('status', 'draft')
+                    ->whereJsonContains('selected_posts', $blog->id)
+                    ->get();
+
+                foreach ($draftCampaigns as $campaign) {
+                    $posts = collect($campaign->selected_posts)
+                        ->reject(fn ($id) => $id === $blog->id)
+                        ->values()
+                        ->toArray();
+                    $campaign->update(['selected_posts' => $posts]);
+                }
+
+                $blog->delete();
+            });
+        } else {
+            $blog->delete();
+        }
 
         return redirect()->route('blog.index')
             ->with('success', 'Post deleted successfully.');
