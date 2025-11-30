@@ -3,6 +3,7 @@
 namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
@@ -20,6 +21,7 @@ class ModuleLifecycleService
      * @param  ModuleDiscoveryService  $discoveryService
      * @param  ModuleMigrationService  $migrationService
      * @param  ModuleStatusService  $statusService
+     * @param  SettingsService  $settingsService
      *
      * Note: Sets lifecycle service in discovery service to break circular dependency
      */
@@ -32,7 +34,8 @@ class ModuleLifecycleService
         private ModuleRegistryHelper $registryHelper,
         private ModuleDiscoveryService $discoveryService,
         private ModuleMigrationService $migrationService,
-        private ModuleStatusService $statusService
+        private ModuleStatusService $statusService,
+        private SettingsService $settingsService
     ) {
         $this->discoveryService->setLifecycleService($this);
     }
@@ -93,6 +96,16 @@ class ModuleLifecycleService
         }
 
         $this->enable($moduleName, skipValidation: $skipValidation);
+
+        try {
+            $this->settingsService->sync();
+            Log::info("ModuleLifecycleService: Synced settings after installing '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Settings sync skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         Log::info("ModuleLifecycleService: Installation complete for '{$moduleName}'");
     }
 
@@ -127,6 +140,8 @@ class ModuleLifecycleService
         $this->disable($moduleName);
 
         $this->permissionManager->cleanup($moduleName);
+
+        $this->settingsService->cleanup($moduleName);
 
         $this->migrationService->rollbackMigrations($moduleName);
 
@@ -167,6 +182,15 @@ class ModuleLifecycleService
         $this->statusService->setActive($moduleName, true);
 
         $this->activator->enable($module);
+
+        try {
+            $this->settingsService->sync();
+            Log::info("ModuleLifecycleService: Synced settings after enabling '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Settings sync skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $this->registryHelper->finalize();
     }

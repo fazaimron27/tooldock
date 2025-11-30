@@ -29,7 +29,7 @@ class BlogController extends Controller
 
         $query = Post::with('user')->forUser();
 
-        $defaultPerPage = 10;
+        $defaultPerPage = (int) settings('posts_per_page', 10);
 
         $posts = $datatableService->build($query, [
             'searchFields' => ['title', 'excerpt', 'content'],

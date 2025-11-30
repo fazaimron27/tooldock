@@ -3,8 +3,10 @@
 namespace Modules\Blog\Providers;
 
 use App\Services\MenuRegistry;
+use App\Services\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -37,6 +39,8 @@ class BlogServiceProvider extends ServiceProvider
             order: 10,
             permission: 'blog.posts.view'
         );
+
+        $this->registerSettings();
     }
 
     /**
@@ -144,5 +148,46 @@ class BlogServiceProvider extends ServiceProvider
         }
 
         return $paths;
+    }
+
+    /**
+     * Register blog module settings.
+     *
+     * Example of how modules can register their own settings.
+     * Group name should be lowercase module name for consistency.
+     */
+    private function registerSettings(): void
+    {
+        $registry = app(SettingsRegistry::class);
+
+        $registry->register(
+            module: 'Blog',
+            group: 'blog',
+            key: 'posts_per_page',
+            value: '10',
+            type: SettingType::Integer,
+            label: 'Posts Per Page',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'Blog',
+            group: 'blog',
+            key: 'enable_comments',
+            value: '1',
+            type: SettingType::Boolean,
+            label: 'Enable Comments',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'Blog',
+            group: 'blog',
+            key: 'default_category',
+            value: null,
+            type: SettingType::Text,
+            label: 'Default Category',
+            isSystem: false
+        );
     }
 }
