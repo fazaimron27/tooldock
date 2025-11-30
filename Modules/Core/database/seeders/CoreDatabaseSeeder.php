@@ -11,6 +11,6 @@ class CoreDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(CoreRoleSeeder::class);
+        $this->call(CorePermissionSeeder::class);
     }
 }
