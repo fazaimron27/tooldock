@@ -35,6 +35,5 @@ class PermissionCacheService
     public function clearForUser(int $userId): void
     {
         $this->clear();
-        // User permissions are automatically refreshed on next access
     }
 }

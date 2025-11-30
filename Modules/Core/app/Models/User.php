@@ -5,6 +5,7 @@ namespace Modules\Core\App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Modules\Core\Database\Factories\UserFactory;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -49,10 +50,10 @@ class User extends Authenticatable
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory<static>
+     * @return UserFactory
      */
-    protected static function newFactory()
+    protected static function newFactory(): UserFactory
     {
-        return \Modules\Core\Database\Factories\UserFactory::new();
+        return UserFactory::new();
     }
 }

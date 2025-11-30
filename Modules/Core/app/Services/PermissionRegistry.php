@@ -28,7 +28,6 @@ class PermissionRegistry
     {
         $module = strtolower($module);
 
-        // Validate inputs
         if (empty($permissions)) {
             Log::warning('PermissionRegistry: Empty permissions array provided', [
                 'module' => $module,
@@ -37,7 +36,6 @@ class PermissionRegistry
             return;
         }
 
-        // Validate permission names are non-empty strings
         $permissions = array_filter($permissions, function ($permission) {
             return is_string($permission) && trim($permission) !== '';
         });
@@ -67,12 +65,10 @@ class PermissionRegistry
             }
         }
 
-        // Assign permissions to default roles
         if (! empty($defaultRoleAssignments)) {
             $this->assignToDefaultRoles($createdPermissions, $defaultRoleAssignments, $module);
         }
 
-        // Clear cache after all operations to ensure fresh permission data
         app(PermissionCacheService::class)->clear();
     }
 

@@ -31,9 +31,7 @@ class UserObserver
 
                 if ($defaultRole) {
                     $user->assignRole($defaultRole);
-                    // Clear permission cache
                     app(PermissionCacheService::class)->clear();
-                    // Reload user relationships to ensure fresh permission data
                     $user->load('roles.permissions');
                 }
             } catch (\Exception $e) {

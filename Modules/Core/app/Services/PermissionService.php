@@ -48,7 +48,6 @@ class PermissionService
             ];
         }
 
-        // Sort modules and resources alphabetically
         ksort($grouped);
         foreach ($grouped as $module => $resources) {
             ksort($grouped[$module]);
