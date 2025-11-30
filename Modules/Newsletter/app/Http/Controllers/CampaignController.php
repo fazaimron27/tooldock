@@ -45,6 +45,8 @@ class CampaignController extends Controller
 
     /**
      * Check if the Blog module is available and enabled.
+     *
+     * @return bool
      */
     private function isBlogModuleAvailable(): bool
     {
@@ -56,8 +58,8 @@ class CampaignController extends Controller
     /**
      * Get published blog posts for the current user.
      *
-     * @param  int  $limit
-     * @return \Illuminate\Support\Collection
+     * @param  int  $limit  Maximum number of posts to retrieve
+     * @return \Illuminate\Support\Collection<int, Post>
      */
     private function getPublishedPosts(int $limit = 20)
     {
@@ -84,7 +86,7 @@ class CampaignController extends Controller
     }
 
     /**
-     * Show the form for creating a new campaign.
+     * Display the form for creating a new campaign.
      */
     public function create(): Response
     {
@@ -99,6 +101,8 @@ class CampaignController extends Controller
 
     /**
      * Store a newly created campaign in storage.
+     *
+     * Campaigns are created with 'draft' status by default.
      */
     public function store(StoreCampaignRequest $request): RedirectResponse
     {
@@ -118,7 +122,7 @@ class CampaignController extends Controller
     }
 
     /**
-     * Display the specified campaign.
+     * Display the specified campaign with its selected blog posts.
      */
     public function show(Campaign $newsletter): Response|RedirectResponse
     {
@@ -147,7 +151,9 @@ class CampaignController extends Controller
     }
 
     /**
-     * Show the form for editing the specified campaign.
+     * Display the form for editing the specified campaign.
+     *
+     * Sent campaigns cannot be edited.
      */
     public function edit(Campaign $newsletter): Response|RedirectResponse
     {
@@ -168,6 +174,8 @@ class CampaignController extends Controller
 
     /**
      * Update the specified campaign in storage.
+     *
+     * Sent or sending campaigns cannot be updated.
      */
     public function update(UpdateCampaignRequest $request, Campaign $newsletter): RedirectResponse
     {
@@ -195,7 +203,9 @@ class CampaignController extends Controller
     }
 
     /**
-     * Remove the specified campaign from storage.
+     * Delete the specified campaign.
+     *
+     * Sending campaigns cannot be deleted.
      */
     public function destroy(Campaign $newsletter): RedirectResponse
     {
@@ -213,7 +223,9 @@ class CampaignController extends Controller
     }
 
     /**
-     * Send the specified campaign.
+     * Queue the specified campaign for sending.
+     *
+     * Only draft campaigns can be sent. The campaign must have a subject and content.
      */
     public function send(Campaign $newsletter): RedirectResponse
     {
