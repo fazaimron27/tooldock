@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\AutoInstallProtectedModules;
 use App\Services\AppConfigService;
+use App\Services\ExceptionResponseService;
 use App\Services\InertiaSharedDataService;
 use App\Services\MediaConfigService;
 use App\Services\MenuRegistry;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(InertiaSharedDataService::class);
         $this->app->singleton(StorageLinkService::class);
         $this->app->singleton(ProtectedModuleMigrationService::class);
+        $this->app->singleton(ExceptionResponseService::class);
     }
 
     /**
