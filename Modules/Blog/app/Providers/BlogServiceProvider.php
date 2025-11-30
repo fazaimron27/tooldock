@@ -153,7 +153,6 @@ class BlogServiceProvider extends ServiceProvider
     /**
      * Register blog module settings.
      *
-     * Example of how modules can register their own settings.
      * Group name should be lowercase module name for consistency.
      */
     private function registerSettings(): void
@@ -173,20 +172,20 @@ class BlogServiceProvider extends ServiceProvider
         $registry->register(
             module: 'Blog',
             group: 'blog',
-            key: 'enable_comments',
-            value: '1',
-            type: SettingType::Boolean,
-            label: 'Enable Comments',
+            key: 'blog_default_sort',
+            value: 'created_at',
+            type: SettingType::Text,
+            label: 'Default Sort Column',
             isSystem: false
         );
 
         $registry->register(
             module: 'Blog',
             group: 'blog',
-            key: 'default_category',
-            value: null,
+            key: 'blog_default_sort_direction',
+            value: 'desc',
             type: SettingType::Text,
-            label: 'Default Category',
+            label: 'Default Sort Direction',
             isSystem: false
         );
     }
