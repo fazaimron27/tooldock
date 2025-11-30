@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->pull('error'),
                 'warning' => $request->session()->pull('warning'),
             ],
+            'app_name' => settings('app_name', config('app.name', 'Laravel')),
         ];
     }
 }

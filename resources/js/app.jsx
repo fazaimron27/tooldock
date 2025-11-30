@@ -6,19 +6,25 @@ import '../css/app.css';
 import { ThemeProvider } from './Components/ThemeProvider';
 import './bootstrap';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
-// Lazy-loads module pages to reduce initial bundle size
-// Pages are only loaded when navigated to, improving performance
 const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/**/*.jsx', {
   eager: false,
 });
 
 createInertiaApp({
-  title: (title) => `${title} - ${appName}`,
+  title: (title) => {
+    try {
+      const appElement = document.getElementById('app');
+      if (appElement?.dataset?.page) {
+        const parsed = JSON.parse(appElement.dataset.page);
+        const appName = parsed?.props?.app_name || 'Laravel';
+        return `${title} - ${appName}`;
+      }
+    } catch {
+      // Fallback to default title if parsing fails
+    }
+    return `${title} - Laravel`;
+  },
   resolve: (name) => {
-    // Resolves module pages using "Modules::ModuleName/PagePath" syntax
-    // Converts module notation to file system paths and handles lazy loading
     if (name.startsWith('Modules::')) {
       const parts = name.replace('Modules::', '').split('/');
       const moduleName = parts[0];

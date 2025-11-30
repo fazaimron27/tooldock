@@ -10,7 +10,7 @@
  * @param {React.RefObject} scrollContainerRef - Ref to the scrollable container
  */
 import { useScrollBlur } from '@/Hooks/useScrollBlur';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
 
 import { ModeToggle } from '@/Components/ModeToggle';
@@ -34,10 +34,10 @@ import { Input } from '@/Components/ui/input';
 import { SidebarTrigger } from '@/Components/ui/sidebar';
 
 export default function Navbar({ header, scrollContainerRef }) {
-  const appName = import.meta.env.VITE_APP_NAME || 'Mosaic';
+  const { app_name } = usePage().props;
+  const appName = app_name || 'Mosaic';
   const isScrolled = useScrollBlur(scrollContainerRef);
 
-  // Apply stronger blur and lower opacity when scrolled for glassmorphism effect
   const blurClasses = isScrolled
     ? 'bg-background/40 backdrop-blur-xl'
     : 'bg-background/95 backdrop-blur-sm';
