@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Settings\Http\Requests\UpdateSettingsRequest;
 use Modules\Settings\Models\Setting;
+use Nwidart\Modules\Facades\Module;
 
 class SettingsController extends Controller
 {
@@ -21,15 +22,45 @@ class SettingsController extends Controller
      * Display all settings grouped by their 'group' column.
      *
      * Returns grouped settings for the UI to display in tabs.
+     * Separates Application Settings (from Settings module) from Modules Settings.
      */
     public function index(): Response
     {
         $this->authorize('viewAny', Setting::class);
 
-        $settings = $this->settingsService->all();
+        $allSettings = $this->settingsService->all();
+
+        $protectedModules = [];
+        $allModules = Module::all();
+        foreach ($allModules as $module) {
+            if ($module->get('protected') === true) {
+                $protectedModules[] = $module->getName();
+            }
+        }
+
+        $applicationSettings = [];
+        $modulesSettings = [];
+
+        foreach ($allSettings as $group => $settings) {
+            $isApplicationSetting = false;
+
+            foreach ($settings as $setting) {
+                if ($setting->module === 'Settings' || in_array($setting->module, $protectedModules, true)) {
+                    $isApplicationSetting = true;
+                    break;
+                }
+            }
+
+            if ($isApplicationSetting) {
+                $applicationSettings[$group] = $settings;
+            } else {
+                $modulesSettings[$group] = $settings;
+            }
+        }
 
         return Inertia::render('Modules::Settings/Index', [
-            'settings' => $settings,
+            'applicationSettings' => $applicationSettings,
+            'modulesSettings' => $modulesSettings,
         ]);
     }
 
@@ -62,20 +93,30 @@ class SettingsController extends Controller
             }
         }
 
-        $tab = null;
+        $appTab = null;
+        $moduleTab = null;
         if ($request->headers->has('referer')) {
             $referer = parse_url($request->headers->get('referer'));
             if (isset($referer['query'])) {
                 parse_str($referer['query'], $queryParams);
-                $tab = $queryParams['tab'] ?? null;
+                $appTab = $queryParams['appTab'] ?? null;
+                $moduleTab = $queryParams['moduleTab'] ?? null;
             }
         }
 
-        $tab = $tab ?? $request->get('tab');
+        $appTab = $appTab ?? $request->get('appTab');
+        $moduleTab = $moduleTab ?? $request->get('moduleTab');
 
         $redirectUrl = route('settings.index');
-        if ($tab) {
-            $redirectUrl .= '?tab='.urlencode($tab);
+        $queryParams = [];
+        if ($appTab) {
+            $queryParams[] = 'appTab='.urlencode($appTab);
+        }
+        if ($moduleTab) {
+            $queryParams[] = 'moduleTab='.urlencode($moduleTab);
+        }
+        if (! empty($queryParams)) {
+            $redirectUrl .= '?'.implode('&', $queryParams);
         }
 
         if (! empty($errors)) {

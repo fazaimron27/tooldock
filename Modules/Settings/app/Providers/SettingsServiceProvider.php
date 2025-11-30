@@ -56,21 +56,12 @@ class SettingsServiceProvider extends ServiceProvider
     /**
      * Register commands in the format of Command::class
      */
-    protected function registerCommands(): void
-    {
-        // $this->commands([]);
-    }
+    protected function registerCommands(): void {}
 
     /**
      * Register command Schedules.
      */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
@@ -216,10 +207,10 @@ class SettingsServiceProvider extends ServiceProvider
         $registry->register(
             module: 'Settings',
             group: 'system',
-            key: 'maintenance_mode',
+            key: 'app_debug',
             value: '0',
             type: SettingType::Boolean,
-            label: 'Maintenance Mode',
+            label: 'Application Debug Mode',
             isSystem: true
         );
     }

@@ -18,9 +18,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-export default function Index({ settings = {} }) {
+export default function Index({ applicationSettings = {}, modulesSettings = {} }) {
   const { url } = usePage();
-  const groups = Object.keys(settings);
+  const appGroups = Object.keys(applicationSettings);
+  const moduleGroups = Object.keys(modulesSettings);
 
   const urlParts = url.split('?');
   const queryString = urlParts[1] || '';
@@ -34,17 +35,20 @@ export default function Index({ settings = {} }) {
     }
     return null;
   };
-  const activeTab = getQueryParam('tab') || groups[0] || '';
+
+  const activeAppTab = getQueryParam('appTab') || appGroups[0] || '';
+  const activeModuleTab = getQueryParam('moduleTab') || moduleGroups[0] || '';
 
   const initialData = useMemo(() => {
     const data = {};
-    Object.keys(settings).forEach((group) => {
-      settings[group].forEach((setting) => {
+    [...Object.keys(applicationSettings), ...Object.keys(modulesSettings)].forEach((group) => {
+      const settings = applicationSettings[group] || modulesSettings[group] || [];
+      settings.forEach((setting) => {
         data[setting.key] = setting.value ?? '';
       });
     });
     return data;
-  }, [settings]);
+  }, [applicationSettings, modulesSettings]);
 
   const form = useSmartForm(initialData, {
     toast: {
@@ -53,25 +57,43 @@ export default function Index({ settings = {} }) {
     },
   });
 
-  const handleTabChange = (value) => {
+  const handleAppTabChange = (value) => {
     const baseUrl = urlParts[0];
-    router.get(
-      baseUrl,
-      { tab: value },
-      {
-        preserveState: true,
-        preserveScroll: true,
-        only: [],
-      }
-    );
+    const queryParams = { appTab: value };
+    if (activeModuleTab) {
+      queryParams.moduleTab = activeModuleTab;
+    }
+    router.get(baseUrl, queryParams, {
+      preserveState: true,
+      preserveScroll: true,
+      only: [],
+    });
+  };
+
+  const handleModuleTabChange = (value) => {
+    const baseUrl = urlParts[0];
+    const queryParams = { moduleTab: value };
+    if (activeAppTab) {
+      queryParams.appTab = activeAppTab;
+    }
+    router.get(baseUrl, queryParams, {
+      preserveState: true,
+      preserveScroll: true,
+      only: [],
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const updateUrl = activeTab
-      ? `${route('settings.update')}?tab=${encodeURIComponent(activeTab)}`
-      : route('settings.update');
+    const queryParams = [];
+    if (activeAppTab) queryParams.push(`appTab=${encodeURIComponent(activeAppTab)}`);
+    if (activeModuleTab) queryParams.push(`moduleTab=${encodeURIComponent(activeModuleTab)}`);
+
+    const updateUrl =
+      queryParams.length > 0
+        ? `${route('settings.update')}?${queryParams.join('&')}`
+        : route('settings.update');
     form.patch(updateUrl, { silent: true });
   };
 
@@ -133,56 +155,125 @@ export default function Index({ settings = {} }) {
     }
   };
 
+  const getGridColsClass = (count) => {
+    const gridColsMap = {
+      1: 'grid-cols-1',
+      2: 'grid-cols-2',
+      3: 'grid-cols-3',
+      4: 'grid-cols-4',
+      5: 'grid-cols-5',
+      6: 'grid-cols-6',
+      7: 'grid-cols-7',
+      8: 'grid-cols-8',
+      9: 'grid-cols-9',
+      10: 'grid-cols-10',
+      11: 'grid-cols-11',
+      12: 'grid-cols-12',
+    };
+    if (count > 12) {
+      return 'grid-cols-6';
+    }
+    return gridColsMap[count] || 'grid-cols-5';
+  };
+
   return (
     <DashboardLayout header="Settings">
       <PageShell title="Application Settings">
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList
-              className={`grid w-full ${
-                groups.length === 1
-                  ? 'grid-cols-1'
-                  : groups.length === 2
-                    ? 'grid-cols-2'
-                    : groups.length === 3
-                      ? 'grid-cols-3'
-                      : groups.length === 4
-                        ? 'grid-cols-4'
-                        : 'grid-cols-5'
-              }`}
-            >
-              {groups.map((group) => (
-                <TabsTrigger key={group} value={group} className="capitalize">
-                  {group}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+          {/* Application Settings Section */}
+          {appGroups.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold">Application Settings</h2>
+              <Tabs value={activeAppTab} onValueChange={handleAppTabChange} className="w-full">
+                <div className={appGroups.length > 12 ? 'overflow-x-auto' : ''}>
+                  <TabsList className={`grid w-full ${getGridColsClass(appGroups.length)}`}>
+                    {appGroups.map((group) => (
+                      <TabsTrigger key={group} value={group} className="capitalize">
+                        {group}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
-            {groups.map((group) => {
-              const modules = [...new Set(settings[group]?.map((s) => s.module).filter(Boolean))];
-              const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
+                {appGroups.map((group) => {
+                  const groupSettings = applicationSettings[group] || [];
+                  const modules = [...new Set(groupSettings.map((s) => s.module).filter(Boolean))];
+                  const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
 
-              return (
-                <TabsContent key={group} value={group} className="space-y-6">
-                  <FormCard
-                    title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
-                    description={
-                      moduleLabel
-                        ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
-                        : `Manage ${group} related settings`
-                    }
-                    className="max-w-4xl"
-                  >
-                    <div className="space-y-6">
-                      {settings[group]?.map((setting) => (
-                        <div key={setting.key}>{renderField(setting)}</div>
-                      ))}
-                    </div>
-                  </FormCard>
-                </TabsContent>
-              );
-            })}
-          </Tabs>
+                  return (
+                    <TabsContent key={group} value={group} className="space-y-6">
+                      <FormCard
+                        title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
+                        description={
+                          moduleLabel
+                            ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
+                            : `Manage ${group} related settings`
+                        }
+                        className="max-w-4xl"
+                      >
+                        <div className="space-y-6">
+                          {groupSettings.map((setting) => (
+                            <div key={setting.key}>{renderField(setting)}</div>
+                          ))}
+                        </div>
+                      </FormCard>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
+          )}
+
+          {/* Divider */}
+          {appGroups.length > 0 && moduleGroups.length > 0 && <div className="border-t pt-8" />}
+
+          {/* Modules Settings Section */}
+          {moduleGroups.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold">Modules Settings</h2>
+              <Tabs
+                value={activeModuleTab}
+                onValueChange={handleModuleTabChange}
+                className="w-full"
+              >
+                <div className={moduleGroups.length > 12 ? 'overflow-x-auto' : ''}>
+                  <TabsList className={`grid w-full ${getGridColsClass(moduleGroups.length)}`}>
+                    {moduleGroups.map((group) => (
+                      <TabsTrigger key={group} value={group} className="capitalize">
+                        {group}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+
+                {moduleGroups.map((group) => {
+                  const groupSettings = modulesSettings[group] || [];
+                  const modules = [...new Set(groupSettings.map((s) => s.module).filter(Boolean))];
+                  const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
+
+                  return (
+                    <TabsContent key={group} value={group} className="space-y-6">
+                      <FormCard
+                        title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
+                        description={
+                          moduleLabel
+                            ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
+                            : `Manage ${group} related settings`
+                        }
+                        className="max-w-4xl"
+                      >
+                        <div className="space-y-6">
+                          {groupSettings.map((setting) => (
+                            <div key={setting.key}>{renderField(setting)}</div>
+                          ))}
+                        </div>
+                      </FormCard>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             <Button type="submit" disabled={form.processing}>
