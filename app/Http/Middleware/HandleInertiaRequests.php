@@ -2,26 +2,15 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\MenuRegistry;
+use App\Services\InertiaSharedDataService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
-    protected $rootView = 'app';
-
-    /**
-     * Determine the current asset version.
-     */
-    public function version(Request $request): ?string
-    {
-        return parent::version($request);
-    }
+    public function __construct(
+        private InertiaSharedDataService $sharedDataService
+    ) {}
 
     /**
      * Define the props that are shared by default.
@@ -30,18 +19,9 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
-            'auth' => [
-                'user' => $request->user(),
-            ],
-            'menus' => app(MenuRegistry::class)->getMenus($request->user()),
-            'flash' => [
-                'success' => $request->session()->pull('success'),
-                'error' => $request->session()->pull('error'),
-                'warning' => $request->session()->pull('warning'),
-            ],
-            'app_name' => settings('app_name', config('app.name', 'Laravel')),
-        ];
+        return array_merge(
+            parent::share($request),
+            $this->sharedDataService->getSharedData($request)
+        );
     }
 }
