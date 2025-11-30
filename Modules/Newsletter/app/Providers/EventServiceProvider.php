@@ -3,6 +3,12 @@
 namespace Modules\Newsletter\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Blog\Events\PostDeleted;
+use Modules\Blog\Events\PostDeleting;
+use Modules\Blog\Events\PostUpdating;
+use Modules\Newsletter\Listeners\CleanupDraftCampaignsOnPostDeletion;
+use Modules\Newsletter\Listeners\PreventPostDeletionIfUsedInCampaigns;
+use Modules\Newsletter\Listeners\PreventPostUpdateIfUsedInSendingCampaigns;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -11,7 +17,17 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<string, array<int, string>>
      */
-    protected $listen = [];
+    protected $listen = [
+        PostDeleting::class => [
+            PreventPostDeletionIfUsedInCampaigns::class,
+        ],
+        PostDeleted::class => [
+            CleanupDraftCampaignsOnPostDeletion::class,
+        ],
+        PostUpdating::class => [
+            PreventPostUpdateIfUsedInSendingCampaigns::class,
+        ],
+    ];
 
     /**
      * Indicates if events should be discovered.

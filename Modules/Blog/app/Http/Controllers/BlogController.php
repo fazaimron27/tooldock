@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Services\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Blog\Events\PostDeleted;
+use Modules\Blog\Events\PostDeleting;
+use Modules\Blog\Events\PostUpdating;
 use Modules\Blog\Http\Requests\StorePostRequest;
 use Modules\Blog\Http\Requests\UpdatePostRequest;
 use Modules\Blog\Models\Post;
@@ -43,7 +47,7 @@ class BlogController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display the form for creating a new post.
      */
     public function create(): Response
     {
@@ -53,7 +57,7 @@ class BlogController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created post in storage.
      */
     public function store(StorePostRequest $request): RedirectResponse
     {
@@ -69,7 +73,7 @@ class BlogController extends Controller
     }
 
     /**
-     * Show the specified resource.
+     * Display the specified post.
      */
     public function show(Post $blog): Response|RedirectResponse
     {
@@ -83,7 +87,7 @@ class BlogController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Display the form for editing the specified post.
      */
     public function edit(Post $blog): Response|RedirectResponse
     {
@@ -95,11 +99,21 @@ class BlogController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified post in storage.
+     *
+     * Fires PostUpdating event to allow listeners to prevent updates (e.g., if used in sending campaigns).
      */
     public function update(UpdatePostRequest $request, Post $blog): RedirectResponse
     {
         $this->authorize('update', $blog);
+
+        $event = new PostUpdating($blog);
+        Event::dispatch($event);
+
+        if ($event->preventUpdate) {
+            return redirect()->route('blog.index')
+                ->with('error', $event->preventionReason ?? 'Cannot update post. It is currently being used in one or more campaigns that are being sent.');
+        }
 
         $blog->update($request->validated());
 
@@ -108,42 +122,31 @@ class BlogController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete the specified post.
      *
-     * The Policy prevents deletion if the post is used in active campaigns (sending or sent).
-     * This method provides a user-friendly error message and handles cleanup
-     * of draft campaigns before deletion.
+     * Fires PostDeleting event to allow listeners to prevent deletion (e.g., if used in campaigns).
+     * If deletion is allowed, fires PostDeleted event for cleanup operations.
      */
     public function destroy(Post $blog): RedirectResponse
     {
-        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
-        if (class_exists($campaignClass) && $blog->isUsedInSentCampaigns()) {
-            return redirect()->route('blog.index')
-                ->with('error', 'Cannot delete post. It is used in one or more active campaigns (sending or sent).');
-        }
-
         $this->authorize('delete', $blog);
 
-        if (class_exists($campaignClass)) {
-            DB::transaction(function () use ($blog, $campaignClass): void {
-                $draftCampaigns = $campaignClass::query()
-                    ->where('status', 'draft')
-                    ->whereJsonContains('selected_posts', $blog->id)
-                    ->get();
+        $event = new PostDeleting($blog);
+        Event::dispatch($event);
 
-                foreach ($draftCampaigns as $campaign) {
-                    $posts = collect($campaign->selected_posts)
-                        ->reject(fn ($id) => $id === $blog->id)
-                        ->values()
-                        ->toArray();
-                    $campaign->update(['selected_posts' => $posts]);
-                }
-
-                $blog->delete();
-            });
-        } else {
-            $blog->delete();
+        if ($event->preventDeletion) {
+            return redirect()->route('blog.index')
+                ->with('error', $event->preventionReason ?? 'Cannot delete post. It is used in one or more active campaigns (sending or sent).');
         }
+
+        DB::transaction(function () use ($blog): void {
+            $postData = $blog->only(['id', 'title', 'slug']);
+            $postId = $blog->id;
+
+            $blog->delete();
+
+            Event::dispatch(new PostDeleted($postId, $postData));
+        });
 
         return redirect()->route('blog.index')
             ->with('success', 'Post deleted successfully.');
