@@ -79,40 +79,6 @@ class Post extends Model
     }
 
     /**
-     * Check if the post is used in any campaigns.
-     */
-    public function isUsedInCampaigns(): bool
-    {
-        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
-        if (! class_exists($campaignClass)) {
-            return false;
-        }
-
-        return $campaignClass::query()
-            ->whereJsonContains('selected_posts', $this->id)
-            ->exists();
-    }
-
-    /**
-     * Check if the post is used in active campaigns (sending or sent).
-     *
-     * Prevents deletion of posts that are currently being sent or have been sent,
-     * as these campaigns are considered immutable for data integrity.
-     */
-    public function isUsedInSentCampaigns(): bool
-    {
-        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
-        if (! class_exists($campaignClass)) {
-            return false;
-        }
-
-        return $campaignClass::query()
-            ->whereIn('status', ['sent', 'sending'])
-            ->whereJsonContains('selected_posts', $this->id)
-            ->exists();
-    }
-
-    /**
      * Create a new factory instance for the model.
      *
      * @return PostFactory
