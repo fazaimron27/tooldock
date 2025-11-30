@@ -56,20 +56,14 @@ class PostPolicy
      *
      * Super Admins bypass this check via HasSuperAdminBypass trait.
      * Regular users can only delete their own posts.
-     * Prevents deletion if post is used in active campaigns (sending or sent).
+     *
+     * Note: Business logic checks (e.g., preventing deletion if used in campaigns)
+     * are handled via events in the controller.
      */
     public function delete(User $user, Post $post): bool
     {
-        if (! $user->hasPermissionTo('blog.posts.delete') || $user->id !== $post->user_id) {
-            return false;
-        }
-
-        $campaignClass = 'Modules\\Newsletter\\Models\\Campaign';
-        if (class_exists($campaignClass) && $post->isUsedInSentCampaigns()) {
-            return false;
-        }
-
-        return true;
+        return $user->hasPermissionTo('blog.posts.delete')
+            && $user->id === $post->user_id;
     }
 
     /**
