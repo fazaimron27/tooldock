@@ -34,6 +34,8 @@ export default [
         process: 'readonly',
         localStorage: 'readonly',
         route: 'readonly',
+        FormData: 'readonly',
+        fetch: 'readonly',
       },
     },
     settings: {
