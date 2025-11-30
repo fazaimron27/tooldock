@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Core\App\Models\User;
+use Modules\Core\App\Traits\HasUserOwnership;
 use Modules\Newsletter\Database\Factories\CampaignFactory;
 
 /**
@@ -16,7 +17,7 @@ use Modules\Newsletter\Database\Factories\CampaignFactory;
  */
 class Campaign extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUserOwnership;
 
     /**
      * Create a new factory instance for the model.

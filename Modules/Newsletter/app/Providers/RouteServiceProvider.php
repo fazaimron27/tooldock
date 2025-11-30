@@ -22,7 +22,7 @@ class RouteServiceProvider extends ServiceProvider
         Route::bind('newsletter', function ($value) {
             return Campaign::query()
                 ->where('id', $value)
-                ->where('user_id', request()->user()?->id)
+                ->forUser()
                 ->firstOrFail();
         });
     }

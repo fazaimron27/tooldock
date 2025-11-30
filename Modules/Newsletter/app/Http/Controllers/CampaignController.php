@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Blog\Models\Post;
 use Modules\Newsletter\Http\Requests\StoreCampaignRequest;
 use Modules\Newsletter\Http\Requests\UpdateCampaignRequest;
 use Modules\Newsletter\Jobs\SendCampaignJob;
@@ -23,7 +24,7 @@ class CampaignController extends Controller
     {
         $this->authorize('viewAny', Campaign::class);
 
-        $query = Campaign::query();
+        $query = Campaign::query()->forUser();
 
         $defaultPerPage = 10;
 
@@ -42,13 +43,22 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * Check if the Blog module is available and enabled.
+     */
     private function isBlogModuleAvailable(): bool
     {
         return Module::has('Blog')
             && Module::isEnabled('Blog')
-            && class_exists(\Modules\Blog\Models\Post::class);
+            && class_exists(Post::class);
     }
 
+    /**
+     * Get published blog posts for the current user.
+     *
+     * @param  int  $limit
+     * @return \Illuminate\Support\Collection
+     */
     private function getPublishedPosts(int $limit = 20)
     {
         if (! $this->isBlogModuleAvailable()) {
@@ -56,11 +66,11 @@ class CampaignController extends Controller
         }
 
         try {
-            return \Modules\Blog\Models\Post::query()
+            return Post::query()
                 ->select('id', 'title', 'published_at')
-                ->where('user_id', request()->user()->id)
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', now())
+                ->forUser()
                 ->latest()
                 ->limit($limit)
                 ->get();
@@ -73,6 +83,9 @@ class CampaignController extends Controller
         }
     }
 
+    /**
+     * Show the form for creating a new campaign.
+     */
     public function create(): Response
     {
         $this->authorize('create', Campaign::class);
@@ -84,6 +97,9 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created campaign in storage.
+     */
     public function store(StoreCampaignRequest $request): RedirectResponse
     {
         $this->authorize('create', Campaign::class);
@@ -101,6 +117,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign created successfully.');
     }
 
+    /**
+     * Display the specified campaign.
+     */
     public function show(Campaign $newsletter): Response|RedirectResponse
     {
         $this->authorize('view', $newsletter);
@@ -109,7 +128,7 @@ class CampaignController extends Controller
 
         if (! empty($newsletter->selected_posts) && $this->isBlogModuleAvailable()) {
             try {
-                $selectedPosts = \Modules\Blog\Models\Post::query()
+                $selectedPosts = Post::query()
                     ->whereIn('id', $newsletter->selected_posts)
                     ->select('id', 'title', 'published_at')
                     ->get();
@@ -127,6 +146,9 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for editing the specified campaign.
+     */
     public function edit(Campaign $newsletter): Response|RedirectResponse
     {
         $this->authorize('update', $newsletter);
@@ -144,6 +166,9 @@ class CampaignController extends Controller
         ]);
     }
 
+    /**
+     * Update the specified campaign in storage.
+     */
     public function update(UpdateCampaignRequest $request, Campaign $newsletter): RedirectResponse
     {
         $this->authorize('update', $newsletter);
@@ -169,6 +194,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign updated successfully.');
     }
 
+    /**
+     * Remove the specified campaign from storage.
+     */
     public function destroy(Campaign $newsletter): RedirectResponse
     {
         $this->authorize('delete', $newsletter);
@@ -184,6 +212,9 @@ class CampaignController extends Controller
             ->with('success', 'Campaign deleted successfully.');
     }
 
+    /**
+     * Send the specified campaign.
+     */
     public function send(Campaign $newsletter): RedirectResponse
     {
         $this->authorize('send', $newsletter);

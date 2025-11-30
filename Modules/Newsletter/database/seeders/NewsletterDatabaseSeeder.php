@@ -3,8 +3,11 @@
 namespace Modules\Newsletter\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Modules\Blog\Models\Post;
+use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
 use Modules\Newsletter\Models\Campaign;
+use Nwidart\Modules\Facades\Module;
 
 class NewsletterDatabaseSeeder extends Seeder
 {
@@ -16,32 +19,39 @@ class NewsletterDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get or create a user for the campaign
-        $user = User::first();
-        if (! $user) {
-            $user = User::factory()->create([
-                'name' => 'Newsletter User',
-                'email' => 'newsletter@example.com',
-            ]);
+        $user = User::withoutEvents(function () {
+            return User::firstOrCreate(
+                ['email' => 'newsletter@example.com'],
+                array_merge(
+                    User::factory()->make()->getAttributes(),
+                    [
+                        'name' => 'Newsletter',
+                        'email' => 'newsletter@example.com',
+                        'password' => 'password',
+                        'email_verified_at' => now(),
+                    ]
+                )
+            );
+        });
+
+        if (! $user->roles()->exists()) {
+            $user->assignRole(Roles::STAFF);
         }
 
-        // Get some published post IDs from Blog module if available
         $postIds = [];
-        if (class_exists(\Modules\Blog\Models\Post::class)) {
-            $postIds = \Modules\Blog\Models\Post::query()
-                ->whereNotNull('published_at')
-                ->where('published_at', '<=', now())
-                ->limit(3)
-                ->pluck('id')
-                ->toArray();
+        if (Module::has('Blog') && Module::isEnabled('Blog')) {
+            $posts = Post::factory(3)->published()->create([
+                'user_id' => $user->id,
+            ]);
+
+            $postIds = $posts->pluck('id')->toArray();
         }
 
-        // Create a sample draft campaign
         Campaign::create([
             'user_id' => $user->id,
             'subject' => 'Weekly Newsletter - Sample Campaign',
             'status' => 'draft',
-            'content' => 'This is a sample newsletter campaign. You can customize the content and select blog posts to include in your email.',
+            'content' => 'This is a sample newsletter campaign. You can customize the content and select your own blog posts to include in your email.',
             'selected_posts' => $postIds,
             'scheduled_at' => null,
         ]);

@@ -34,8 +34,6 @@ class SendCampaignJob implements ShouldQueue
     {
         $this->campaign->update(['status' => 'sending']);
 
-        // Email sending logic would go here
-
         $this->campaign->update(['status' => 'sent']);
     }
 }
