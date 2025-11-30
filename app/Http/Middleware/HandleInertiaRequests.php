@@ -37,9 +37,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'menus' => app(MenuRegistry::class)->getMenus($request->user()),
             'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
-                'warning' => $request->session()->get('warning'),
+                'success' => $request->session()->pull('success'),
+                'error' => $request->session()->pull('error'),
+                'warning' => $request->session()->pull('warning'),
             ],
         ];
     }
