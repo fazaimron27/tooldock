@@ -127,6 +127,12 @@ class ModuleDependencyValidator
      */
     public function checkInstalled(Module $module, bool $checkEnabled = false, bool $skipValidation = false): void
     {
+        // If skipping validation, don't check if dependencies are installed
+        // This is used during auto-installation when we handle dependencies manually
+        if ($skipValidation) {
+            return;
+        }
+
         $validatedDependencies = $this->validate($module, $skipValidation);
 
         if (empty($validatedDependencies)) {
