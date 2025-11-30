@@ -35,15 +35,20 @@ class SettingsService
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        $settings = $this->loadAllSettings();
+        try {
+            $settings = $this->loadAllSettings();
 
-        $setting = $settings->firstWhere('key', $key);
+            $setting = $settings->firstWhere('key', $key);
 
-        if ($setting === null) {
+            if ($setting === null) {
+                return $default;
+            }
+
+            return $setting->value;
+        } catch (\Throwable $e) {
+            // Return default if settings table doesn't exist (during migrations)
             return $default;
         }
-
-        return $setting->value;
     }
 
     /**
@@ -74,6 +79,11 @@ class SettingsService
         $setting->update(['value' => $value]);
 
         Cache::forget(self::CACHE_KEY);
+
+        // Immediately sync app.debug config if this is the app_debug setting
+        if ($key === 'app_debug') {
+            config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
+        }
     }
 
     /**
@@ -153,11 +163,41 @@ class SettingsService
      */
     private function loadAllSettings(): Collection
     {
-        return Cache::rememberForever(self::CACHE_KEY, function () {
-            $this->syncRegisteredSettings();
-
+        // Skip cache during migrations or when cache table doesn't exist
+        if ($this->shouldSkipCache()) {
             return $this->setting->all();
-        });
+        }
+
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, function () {
+                $this->syncRegisteredSettings();
+
+                return $this->setting->all();
+            });
+        } catch (\Throwable $e) {
+            // Fallback to direct database query if cache fails
+            // This can happen during migrations when cache table doesn't exist
+            return $this->setting->all();
+        }
+    }
+
+    /**
+     * Check if we should skip using cache.
+     *
+     * Returns true during migrations or when running in console without database setup.
+     */
+    private function shouldSkipCache(): bool
+    {
+        // Skip cache during migrations
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            $argv = $_SERVER['argv'] ?? [];
+            $command = $argv[1] ?? '';
+            if (str_contains($command, 'migrate')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -64,5 +64,30 @@ class AppServiceProvider extends ServiceProvider
             MigrationsEnded::class,
             AutoInstallProtectedModules::class
         );
+
+        if (function_exists('settings') && ! $this->isRunningMigrations()) {
+            try {
+                $appName = settings('app_name', config('app.name', 'Laravel'));
+                config(['app.name' => $appName]);
+
+                $appDebug = settings('app_debug', config('app.debug', false));
+                config(['app.debug' => filter_var($appDebug, FILTER_VALIDATE_BOOLEAN)]);
+            } catch (\Throwable $e) {
+            }
+        }
+    }
+
+    /**
+     * Check if we're currently running migrations.
+     */
+    private function isRunningMigrations(): bool
+    {
+        if (! app()->runningInConsole()) {
+            return false;
+        }
+
+        $command = $_SERVER['argv'][1] ?? '';
+
+        return str_contains($command, 'migrate');
     }
 }
