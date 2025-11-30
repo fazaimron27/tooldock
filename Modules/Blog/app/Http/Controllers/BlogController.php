@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Blog\Events\PostDeleted;
 use Modules\Blog\Events\PostDeleting;
+use Modules\Blog\Events\PostUpdating;
 use Modules\Blog\Http\Requests\StorePostRequest;
 use Modules\Blog\Http\Requests\UpdatePostRequest;
 use Modules\Blog\Models\Post;
@@ -99,10 +100,20 @@ class BlogController extends Controller
 
     /**
      * Update the specified post in storage.
+     *
+     * Fires PostUpdating event to allow listeners to prevent updates (e.g., if used in sending campaigns).
      */
     public function update(UpdatePostRequest $request, Post $blog): RedirectResponse
     {
         $this->authorize('update', $blog);
+
+        $event = new PostUpdating($blog);
+        Event::dispatch($event);
+
+        if ($event->preventUpdate) {
+            return redirect()->route('blog.index')
+                ->with('error', $event->preventionReason ?? 'Cannot update post. It is currently being used in one or more campaigns that are being sent.');
+        }
 
         $blog->update($request->validated());
 
