@@ -2,7 +2,7 @@
   "name": "Blog",
   "alias": "blog",
   "version": "1.0.0",
-  "description": "Content Management System for managing posts and articles.",
+  "description": "Content Management System for managing posts.",
   "keywords": ["cms", "posts"],
   "priority": 10,
   "active": 1,
@@ -11,7 +11,7 @@
     "Modules\\Blog\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core"],
+  "requires": ["Core", "Settings"],
   "icon": "BookOpen",
-  "author": "Odooist Team"
+  "author": "Mosaic Team"
 }

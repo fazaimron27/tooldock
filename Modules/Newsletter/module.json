@@ -2,13 +2,16 @@
   "name": "Newsletter",
   "alias": "newsletter",
   "version": "1.0.0",
-  "description": "Email campaign manager utilizing Blog content",
+  "description": "Email campaign manager utilizing Blog content.",
   "keywords": ["email", "campaign", "newsletter"],
   "priority": 20,
   "active": 1,
-  "providers": ["Modules\\Newsletter\\Providers\\NewsletterServiceProvider", "Modules\\Newsletter\\Providers\\AuthServiceProvider"],
+  "providers": [
+    "Modules\\Newsletter\\Providers\\NewsletterServiceProvider",
+    "Modules\\Newsletter\\Providers\\AuthServiceProvider"
+  ],
   "files": [],
   "requires": ["Core", "Blog"],
   "icon": "Send",
-  "author": "Odooist Team"
+  "author": "Mosaic Team"
 }
