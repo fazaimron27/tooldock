@@ -24,4 +24,20 @@ return [
     |
     */
     'default_role' => env('CORE_DEFAULT_ROLE', Roles::STAFF),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Super Admin User Credentials
+    |--------------------------------------------------------------------------
+    |
+    | These values are used to create the initial Super Admin user during
+    | database seeding. The Super Admin user has full system access and
+    | bypasses all permission checks.
+    |
+    | WARNING: The default password is insecure. Always set SUPER_ADMIN_PASSWORD
+    | in your .env file for production environments.
+    |
+    */
+    'super_admin_email' => env('SUPER_ADMIN_EMAIL', 'superadmin@example.com'),
+    'super_admin_password' => env('SUPER_ADMIN_PASSWORD', 'password'),
 ];
