@@ -22,7 +22,7 @@ class SettingsServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -31,7 +31,7 @@ class SettingsServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        app(MenuRegistry::class)->registerItem(
+        $menuRegistry->registerItem(
             group: 'System',
             label: 'Settings',
             route: 'settings.index',
@@ -40,7 +40,7 @@ class SettingsServiceProvider extends ServiceProvider
             permission: 'settings.config.view'
         );
 
-        $this->registerDefaultSettings();
+        $this->registerDefaultSettings($settingsRegistry);
     }
 
     /**
@@ -160,10 +160,8 @@ class SettingsServiceProvider extends ServiceProvider
     /**
      * Register default application settings.
      */
-    private function registerDefaultSettings(): void
+    private function registerDefaultSettings(SettingsRegistry $registry): void
     {
-        $registry = app(SettingsRegistry::class);
-
         $registry->register(
             module: 'Settings',
             group: 'general',
