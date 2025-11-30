@@ -90,6 +90,25 @@ const Ziggy = {
       parameters: ['role'],
       bindings: { role: 'id' },
     },
+    'api.settings.index': { uri: 'api\/v1\/settings', methods: ['GET', 'HEAD'] },
+    'api.settings.store': { uri: 'api\/v1\/settings', methods: ['POST'] },
+    'api.settings.show': {
+      uri: 'api\/v1\/settings\/{setting}',
+      methods: ['GET', 'HEAD'],
+      parameters: ['setting'],
+    },
+    'api.settings.update': {
+      uri: 'api\/v1\/settings\/{setting}',
+      methods: ['PUT', 'PATCH'],
+      parameters: ['setting'],
+    },
+    'api.settings.destroy': {
+      uri: 'api\/v1\/settings\/{setting}',
+      methods: ['DELETE'],
+      parameters: ['setting'],
+    },
+    'settings.index': { uri: 'settings', methods: ['GET', 'HEAD'] },
+    'settings.update': { uri: 'settings', methods: ['PATCH'] },
     'api.blog.index': { uri: 'api\/v1\/blogs', methods: ['GET', 'HEAD'] },
     'api.blog.store': { uri: 'api\/v1\/blogs', methods: ['POST'] },
     'api.blog.show': {

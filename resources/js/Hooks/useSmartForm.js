@@ -1,38 +1,26 @@
 /**
- * Enhanced useForm hook with automatic toast notifications
- * Automatically displays toast messages for success and error states
+ * Enhanced useForm hook with automatic toast notifications.
+ *
+ * Provides a wrapper around Inertia's useForm that automatically displays
+ * toast notifications for form submission success/error states.
+ * Server-side flash messages are handled globally by useFlashNotifications
+ * in DashboardLayout, so this hook only handles client-side toasts.
  */
-import { useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo } from 'react';
+import { useForm } from '@inertiajs/react';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 export function useSmartForm(initialData, options = {}) {
-  const { flash } = usePage().props;
   const toastConfig = useMemo(() => options.toast || {}, [options.toast]);
   const toastEnabled = toastConfig.enabled !== false;
 
   const form = useForm(initialData);
 
-  // Handle flash messages from server
-  useEffect(() => {
-    if (flash?.success && toastEnabled) {
-      const message =
-        typeof toastConfig.success === 'function'
-          ? toastConfig.success(flash.success)
-          : toastConfig.success || flash.success;
-      toast.success(message);
-    }
-
-    if (flash?.error && toastEnabled) {
-      const message =
-        typeof toastConfig.error === 'function'
-          ? toastConfig.error(flash.error)
-          : toastConfig.error || flash.error;
-      toast.error(message);
-    }
-  }, [flash, toastConfig, toastEnabled]);
-
-  // Enhanced submit methods with auto-toast
+  /**
+   * Enhanced form methods that wrap Inertia's submit methods with
+   * automatic toast notifications. Supports silent mode to disable
+   * client-side toasts when relying on server flash messages.
+   */
   const enhancedForm = {
     ...form,
     submit: (method, url, submitOptions = {}) => {

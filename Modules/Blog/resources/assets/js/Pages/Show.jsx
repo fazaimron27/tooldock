@@ -2,9 +2,11 @@
  * Blog post detail page displaying full post content
  * Includes edit and delete actions with post metadata
  */
+import { useDisclosure } from '@/Hooks/useDisclosure';
 import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
+import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -12,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Show({ post }) {
+  const deleteDialog = useDisclosure();
+
   if (!post || !post.id) {
     return (
       <DashboardLayout header="Blog">
@@ -33,10 +37,16 @@ export default function Show({ post }) {
   const editUrl = route('blog.edit', { blog: post.id });
   const deleteUrl = route('blog.destroy', { blog: post.id });
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      router.delete(deleteUrl);
-    }
+  const handleDeleteClick = () => {
+    deleteDialog.onOpen();
+  };
+
+  const handleDeleteConfirm = () => {
+    router.delete(deleteUrl, {
+      onSuccess: () => {
+        deleteDialog.onClose();
+      },
+    });
   };
 
   return (
@@ -57,7 +67,7 @@ export default function Show({ post }) {
                   Edit
                 </Button>
               </Link>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDeleteClick}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
@@ -101,6 +111,23 @@ export default function Show({ post }) {
           </Card>
         </div>
       </PageShell>
+
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          deleteDialog.onClose();
+        }}
+        title="Delete Post"
+        message={
+          post
+            ? `Are you sure you want to delete "${post.title}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this post?'
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </DashboardLayout>
   );
 }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\AutoInstallProtectedModules;
 use App\Services\MenuRegistry;
+use App\Services\SettingsRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(MenuRegistry::class);
+        $this->app->singleton(SettingsRegistry::class);
     }
 
     /**
@@ -38,9 +40,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        // Discover modules and load migrations for protected modules
-        // This ensures protected module migrations are available during migrate:fresh
-        // even before modules are enabled/installed
         Module::scan();
         $allModules = Module::all();
 
@@ -61,10 +60,34 @@ class AppServiceProvider extends ServiceProvider
             order: 1
         );
 
-        // Auto-install protected modules after migrations complete
         Event::listen(
             MigrationsEnded::class,
             AutoInstallProtectedModules::class
         );
+
+        if (function_exists('settings') && ! $this->isRunningMigrations()) {
+            try {
+                $appName = settings('app_name', config('app.name', 'Laravel'));
+                config(['app.name' => $appName]);
+
+                $appDebug = settings('app_debug', config('app.debug', false));
+                config(['app.debug' => filter_var($appDebug, FILTER_VALIDATE_BOOLEAN)]);
+            } catch (\Throwable $e) {
+            }
+        }
+    }
+
+    /**
+     * Check if we're currently running migrations.
+     */
+    private function isRunningMigrations(): bool
+    {
+        if (! app()->runningInConsole()) {
+            return false;
+        }
+
+        $command = $_SERVER['argv'][1] ?? '';
+
+        return str_contains($command, 'migrate');
     }
 }

@@ -29,13 +29,15 @@ class BlogController extends Controller
 
         $query = Post::with('user')->forUser();
 
-        $defaultPerPage = 10;
+        $defaultPerPage = (int) settings('posts_per_page', 10);
+        $defaultSort = settings('blog_default_sort', 'created_at');
+        $defaultDirection = settings('blog_default_sort_direction', 'desc');
 
         $posts = $datatableService->build($query, [
             'searchFields' => ['title', 'excerpt', 'content'],
             'allowedSorts' => ['title', 'created_at', 'published_at', 'updated_at'],
-            'defaultSort' => 'created_at',
-            'defaultDirection' => 'desc',
+            'defaultSort' => $defaultSort,
+            'defaultDirection' => $defaultDirection,
             'allowedPerPage' => [10, 20, 30, 50],
             'defaultPerPage' => $defaultPerPage,
         ]);

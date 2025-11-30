@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Modules\Core\Database\Seeders\CoreDatabaseSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,10 +11,10 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Note: Protected module seeders (CorePermissionSeeder, SettingsPermissionSeeder, etc.)
+     * run automatically during module installation via ModulePermissionManager.
+     * This seeder is only needed for manual seeding or non-protected modules.
      */
-    public function run(): void
-    {
-        // Seed Core module (roles, permissions, admin user)
-        $this->call(CoreDatabaseSeeder::class);
-    }
+    public function run(): void {}
 }

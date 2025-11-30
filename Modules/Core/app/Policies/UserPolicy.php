@@ -3,6 +3,7 @@
 namespace Modules\Core\App\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Traits\HasSuperAdminBypass;
 
@@ -39,6 +40,11 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
+        // Prevent non-Super Admin users from deleting Super Admin users
+        if ($model->hasRole(Roles::SUPER_ADMIN) && ! $user->hasRole(Roles::SUPER_ADMIN)) {
+            return false;
+        }
+
         return $user->hasPermissionTo('core.users.delete');
     }
 }
