@@ -11,7 +11,7 @@
     "Modules\\Newsletter\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core", "Blog", "Settings"],
+  "requires": ["Core", "Blog", "Settings", "AuditLog"],
   "icon": "Send",
   "author": "Mosaic Team"
 }

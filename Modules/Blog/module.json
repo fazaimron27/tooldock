@@ -11,7 +11,7 @@
     "Modules\\Blog\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core", "Settings"],
+  "requires": ["Core", "Settings", "AuditLog"],
   "icon": "BookOpen",
   "author": "Mosaic Team"
 }
