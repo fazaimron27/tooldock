@@ -4,11 +4,12 @@ namespace Modules\Settings\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Settings\Enums\SettingType;
 
 class Setting extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.

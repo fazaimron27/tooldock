@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Blog\Database\Factories\PostFactory;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Traits\HasUserOwnership;
@@ -13,7 +14,7 @@ use Modules\Core\App\Traits\HasUserOwnership;
 class Post extends Model
 {
     /** @use HasFactory<\Modules\Blog\Database\Factories\PostFactory> */
-    use HasFactory, HasUserOwnership;
+    use HasFactory, HasUserOwnership, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
