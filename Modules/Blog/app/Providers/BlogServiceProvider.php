@@ -2,8 +2,8 @@
 
 namespace Modules\Blog\Providers;
 
-use App\Services\MenuRegistry;
-use App\Services\SettingsRegistry;
+use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Settings\Enums\SettingType;

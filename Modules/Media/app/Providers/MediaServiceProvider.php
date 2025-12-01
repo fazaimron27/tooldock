@@ -2,8 +2,8 @@
 
 namespace Modules\Media\Providers;
 
-use App\Services\MenuRegistry;
-use App\Services\SettingsRegistry;
+use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;

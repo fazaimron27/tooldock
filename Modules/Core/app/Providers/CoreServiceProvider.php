@@ -2,7 +2,7 @@
 
 namespace Modules\Core\Providers;
 
-use App\Services\MenuRegistry;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
