@@ -1,0 +1,19 @@
+{
+  "name": "AuditLog",
+  "alias": "auditlog",
+  "version": "1.0.0",
+  "description": "Security and accountability module tracking changes across the system.",
+  "keywords": ["audit", "logging", "security", "accountability"],
+  "priority": -997,
+  "protected": true,
+  "active": 1,
+  "providers": [
+    "Modules\\AuditLog\\Providers\\AuditLogServiceProvider",
+    "Modules\\AuditLog\\Providers\\RouteServiceProvider",
+    "Modules\\AuditLog\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Settings"],
+  "icon": "FileText",
+  "author": "Mosaic Team"
+}
