@@ -9,6 +9,7 @@ use App\Services\Core\InertiaSharedDataService;
 use App\Services\Core\StorageLinkService;
 use App\Services\Media\MediaConfigService;
 use App\Services\Modules\ProtectedModuleMigrationService;
+use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(MenuRegistry::class);
         $this->app->singleton(SettingsRegistry::class);
+        $this->app->singleton(CategoryRegistry::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
         $this->app->singleton(InertiaSharedDataService::class);
