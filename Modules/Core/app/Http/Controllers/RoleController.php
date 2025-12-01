@@ -7,6 +7,7 @@ use App\Services\Data\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles as RoleConstants;
 use Modules\Core\App\Services\PermissionService;
 use Modules\Core\Http\Requests\StoreRoleRequest;
@@ -16,6 +17,8 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    use SyncsRelationshipsWithAuditLog;
+
     public function __construct(
         private PermissionService $permissionService
     ) {}
@@ -79,7 +82,7 @@ class RoleController extends Controller
         ]);
 
         if ($request->has('permissions') && is_array($request->permissions)) {
-            $role->syncPermissions($request->permissions);
+            $this->syncRolePermissions($role, $request->permissions);
         }
 
         return redirect()->route('core.roles.index')
@@ -122,11 +125,11 @@ class RoleController extends Controller
         ]);
 
         if ($originalName !== RoleConstants::SUPER_ADMIN) {
-            if ($request->has('permissions') && is_array($request->permissions)) {
-                $role->syncPermissions($request->permissions);
-            } else {
-                $role->syncPermissions([]);
-            }
+            $permissions = $request->has('permissions') && is_array($request->permissions)
+                ? $request->permissions
+                : [];
+
+            $this->syncRolePermissions($role, $permissions);
         }
 
         return redirect()->route('core.roles.index')
@@ -154,5 +157,23 @@ class RoleController extends Controller
 
         return redirect()->route('core.roles.index')
             ->with('success', 'Role deleted successfully.');
+    }
+
+    /**
+     * Sync permissions for a role and log changes to audit log.
+     *
+     * @param  Role  $role
+     * @param  array<int|string>  $newPermissionIds
+     * @return void
+     */
+    private function syncRolePermissions(Role $role, array $newPermissionIds): void
+    {
+        $this->syncRelationshipWithAuditLog(
+            model: $role,
+            relationshipName: 'permissions',
+            newIds: $newPermissionIds,
+            relatedModelClass: Permission::class,
+            relationshipDisplayName: 'permissions'
+        );
     }
 }

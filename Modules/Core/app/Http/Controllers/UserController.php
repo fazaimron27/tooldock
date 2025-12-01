@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Models\User;
 use Modules\Core\Http\Requests\StoreUserRequest;
 use Modules\Core\Http\Requests\UpdateUserRequest;
@@ -15,6 +16,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    use SyncsRelationshipsWithAuditLog;
+
     /**
      * Display a paginated listing of users.
      */
@@ -70,7 +73,7 @@ class UserController extends Controller
         ]);
 
         if ($request->has('roles') && is_array($request->roles)) {
-            $user->syncRoles($request->roles);
+            $this->syncUserRoles($user, $request->roles);
         }
 
         return redirect()->route('core.users.index')
@@ -112,7 +115,7 @@ class UserController extends Controller
         $user->update($data);
 
         if ($request->has('roles') && is_array($request->roles)) {
-            $user->syncRoles($request->roles);
+            $this->syncUserRoles($user, $request->roles);
         }
 
         return redirect()->route('core.users.index')
@@ -135,5 +138,23 @@ class UserController extends Controller
 
         return redirect()->route('core.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Sync roles for a user and log changes to audit log.
+     *
+     * @param  User  $user
+     * @param  array<int|string>  $newRoleIds
+     * @return void
+     */
+    private function syncUserRoles(User $user, array $newRoleIds): void
+    {
+        $this->syncRelationshipWithAuditLog(
+            model: $user,
+            relationshipName: 'roles',
+            newIds: $newRoleIds,
+            relatedModelClass: Role::class,
+            relationshipDisplayName: 'roles'
+        );
     }
 }
