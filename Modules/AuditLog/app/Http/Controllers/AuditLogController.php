@@ -4,6 +4,7 @@ namespace Modules\AuditLog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -16,33 +17,14 @@ class AuditLogController extends Controller
     /**
      * Display a paginated listing of audit logs.
      *
-     * Supports filtering by user, event type, model type, and date range.
+     * Supports filtering by user, system (user vs system actions), event type, model type, and date range.
      */
     public function index(DatatableQueryService $datatableService, Request $request): Response
     {
         $this->authorize('viewAny', AuditLog::class);
 
-        $query = AuditLog::with(['user', 'auditable']);
-
-        if ($request->has('user_id') && $request->user_id) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        if ($request->has('event') && $request->event) {
-            $query->where('event', $request->event);
-        }
-
-        if ($request->has('auditable_type') && $request->auditable_type) {
-            $query->where('auditable_type', $request->auditable_type);
-        }
-
-        if ($request->has('start_date') && $request->start_date) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-
-        if ($request->has('end_date') && $request->end_date) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
+        $query = AuditLog::with(['user']);
+        $this->applyFilters($query, $request);
 
         $defaultPerPage = 20;
 
@@ -57,6 +39,8 @@ class AuditLogController extends Controller
                 'defaultPerPage' => $defaultPerPage,
             ]
         );
+
+        $this->loadAuditableRelationshipsBatch($auditLogs->items());
 
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
 
@@ -75,17 +59,33 @@ class AuditLogController extends Controller
                 ->toArray();
         });
 
+        $eventTypes = Cache::remember('auditlog.event_types', $cacheTtl, function () {
+            return AuditLog::select('event')
+                ->distinct()
+                ->orderBy('event')
+                ->pluck('event')
+                ->map(function ($event) {
+                    return [
+                        'value' => $event,
+                        'label' => ucfirst($event),
+                    ];
+                })
+                ->toArray();
+        });
+
         return Inertia::render('Modules::AuditLog/Index', [
             'auditLogs' => $auditLogs,
             'users' => $users,
             'modelTypes' => $modelTypes,
+            'eventTypes' => $eventTypes,
             'defaultPerPage' => $defaultPerPage,
             'filters' => [
-                'user_id' => $request->user_id,
-                'event' => $request->event,
-                'auditable_type' => $request->auditable_type,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
+                'user_id' => $request->input('user_id'),
+                'system' => $request->input('system'),
+                'event' => $request->input('event'),
+                'auditable_type' => $request->input('auditable_type'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
             ],
         ]);
     }
@@ -97,7 +97,8 @@ class AuditLogController extends Controller
     {
         $this->authorize('view', $auditLog);
 
-        $auditLog->load(['user', 'auditable']);
+        $auditLog->load(['user']);
+        $this->loadAuditableRelationshipsBatch([$auditLog]);
 
         return Inertia::render('Modules::AuditLog/Show', [
             'auditLog' => $auditLog,
@@ -115,26 +116,7 @@ class AuditLogController extends Controller
         $this->authorize('viewAny', AuditLog::class);
 
         $query = AuditLog::with(['user']);
-
-        if ($request->has('user_id') && $request->user_id) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        if ($request->has('event') && $request->event) {
-            $query->where('event', $request->event);
-        }
-
-        if ($request->has('auditable_type') && $request->auditable_type) {
-            $query->where('auditable_type', $request->auditable_type);
-        }
-
-        if ($request->has('start_date') && $request->start_date) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-
-        if ($request->has('end_date') && $request->end_date) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
+        $this->applyFilters($query, $request);
 
         $filename = 'audit-logs-'.now()->format('Y-m-d-His').'.csv';
 
@@ -153,7 +135,7 @@ class AuditLogController extends Controller
                 'IP Address',
                 'User Agent',
                 'Created At',
-            ]);
+            ], ',', '"', '\\');
 
             $chunkSize = (int) settings('export_chunk_size', 500);
             $query->orderBy('created_at', 'desc')->chunk($chunkSize, function ($auditLogs) use ($file) {
@@ -170,7 +152,7 @@ class AuditLogController extends Controller
                         $log->ip_address ?? '',
                         $log->user_agent ?? '',
                         $log->created_at->format('Y-m-d H:i:s'),
-                    ]);
+                    ], ',', '"', '\\');
                 }
             });
 
@@ -179,5 +161,142 @@ class AuditLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    /**
+     * Efficiently load auditable relationships in batches, grouped by type.
+     *
+     * This method optimizes relationship loading by:
+     * 1. Grouping audit logs by auditable_type
+     * 2. Validating each type once (with caching)
+     * 3. Batch loading all models of the same type in a single query
+     * 4. Mapping relationships back to audit logs
+     *
+     * This reduces N+1 queries to just a few queries per unique model type.
+     *
+     * @param  array<int, AuditLog>  $auditLogs  Array of audit log instances
+     * @return void
+     */
+    private function loadAuditableRelationshipsBatch(array $auditLogs): void
+    {
+        if (empty($auditLogs)) {
+            return;
+        }
+
+        $groupedByType = [];
+        $typeValidityCache = [];
+
+        foreach ($auditLogs as $auditLog) {
+            if (! ($auditLog instanceof AuditLog) || ! $auditLog->auditable_type) {
+                $auditLog->setRelation('auditable', null);
+
+                continue;
+            }
+
+            $type = $auditLog->auditable_type;
+
+            if (! isset($typeValidityCache[$type])) {
+                $typeValidityCache[$type] = AuditLog::isAuditableTypeValid($type);
+            }
+
+            if (! $typeValidityCache[$type]) {
+                $auditLog->setRelation('auditable', null);
+
+                continue;
+            }
+
+            if (! isset($groupedByType[$type])) {
+                $groupedByType[$type] = [];
+            }
+
+            $id = $auditLog->auditable_id;
+            if (! isset($groupedByType[$type][$id])) {
+                $groupedByType[$type][$id] = [];
+            }
+
+            $groupedByType[$type][$id][] = $auditLog;
+        }
+
+        foreach ($groupedByType as $type => $auditLogsByType) {
+            try {
+                $modelInstance = new $type;
+                $primaryKey = $modelInstance->getKeyName();
+                $ids = array_keys($auditLogsByType);
+                $models = $type::whereIn($primaryKey, $ids)->get()->keyBy($primaryKey);
+
+                foreach ($auditLogsByType as $id => $auditLogsForId) {
+                    $model = $models->get($id);
+
+                    foreach ($auditLogsForId as $auditLog) {
+                        $auditLog->setRelation('auditable', $model);
+                    }
+                }
+            } catch (\Exception $e) {
+                foreach ($auditLogsByType as $auditLogsForId) {
+                    foreach ($auditLogsForId as $auditLog) {
+                        $auditLog->setRelation('auditable', null);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply filters to the audit log query.
+     *
+     * Handles filtering by user, system (user vs system actions), event type,
+     * model type, and date range. Ensures user_id and system filters don't conflict.
+     * Validates date range to ensure start_date is before or equal to end_date.
+     * Validates user_id exists in database before applying filter.
+     *
+     * @param  Builder  $query
+     * @param  Request  $request
+     * @return void
+     */
+    private function applyFilters(Builder $query, Request $request): void
+    {
+        $query->when($request->filled('user_id'), function ($q) use ($request) {
+            $userId = $request->input('user_id');
+            if (User::where('id', $userId)->exists()) {
+                $q->where('user_id', $userId);
+            }
+        });
+
+        $query->when(
+            ! $request->filled('user_id') && $request->filled('system'),
+            function ($q) use ($request) {
+                $systemValue = $request->input('system');
+                if (in_array($systemValue, ['user', 'system'], true)) {
+                    if ($systemValue === 'system') {
+                        $q->whereNull('user_id');
+                    } else {
+                        $q->whereNotNull('user_id');
+                    }
+                }
+            }
+        );
+
+        $query->when($request->filled('event'), function ($q) use ($request) {
+            $q->where('event', $request->input('event'));
+        });
+
+        $query->when($request->filled('auditable_type'), function ($q) use ($request) {
+            $q->where('auditable_type', $request->input('auditable_type'));
+        });
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if ($startDate && $endDate && $startDate > $endDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } else {
+            $query->when($startDate, function ($q) use ($startDate) {
+                $q->whereDate('created_at', '>=', $startDate);
+            });
+
+            $query->when($endDate, function ($q) use ($endDate) {
+                $q->whereDate('created_at', '<=', $endDate);
+            });
+        }
     }
 }
