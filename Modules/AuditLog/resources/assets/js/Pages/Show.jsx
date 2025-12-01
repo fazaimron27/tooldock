@@ -7,7 +7,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
 import PageShell from '@/Components/Layouts/PageShell';
-import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -38,19 +38,19 @@ export default function Show({ auditLog }) {
       created: {
         variant: 'default',
         className:
-          'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/50 dark:hover:text-green-300',
+          'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/60 dark:hover:text-green-200',
         label: 'Created',
       },
       updated: {
         variant: 'default',
         className:
-          'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/50 dark:hover:text-blue-300',
+          'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/60 dark:hover:text-blue-200',
         label: 'Updated',
       },
       deleted: {
         variant: 'default',
         className:
-          'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-800/50 dark:hover:text-red-300',
+          'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-800/60 dark:hover:text-red-200',
         label: 'Deleted',
       },
     };
@@ -137,7 +137,9 @@ export default function Show({ auditLog }) {
       );
     }
 
-    // Updated event - show diff
+    /**
+     * Updated event - show diff between old and new values.
+     */
     const oldValues = auditLog.old_values || {};
     const newValues = auditLog.new_values || {};
     const allKeys = new Set([...Object.keys(oldValues), ...Object.keys(newValues)]);
@@ -219,6 +221,9 @@ export default function Show({ auditLog }) {
                     {auditLog.user ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
+                          {auditLog.user.avatar?.url ? (
+                            <AvatarImage src={auditLog.user.avatar.url} alt={auditLog.user.name} />
+                          ) : null}
                           <AvatarFallback className="text-xs">
                             {getInitials(auditLog.user.name)}
                           </AvatarFallback>
