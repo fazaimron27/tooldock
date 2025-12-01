@@ -28,7 +28,6 @@ class CorePermissionSeeder extends Seeder
             'users.edit',
             'users.delete',
             'roles.manage',
-            'settings.manage',
         ], [
             RoleConstants::ADMINISTRATOR => [
                 'dashboard.view',
