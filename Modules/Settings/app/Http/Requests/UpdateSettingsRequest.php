@@ -2,7 +2,7 @@
 
 namespace Modules\Settings\Http\Requests;
 
-use App\Services\SettingsService;
+use App\Services\Registry\SettingsService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSettingsRequest extends FormRequest

@@ -3,7 +3,7 @@
 namespace Modules\Newsletter\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DatatableQueryService;
+use App\Services\Data\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;

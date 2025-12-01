@@ -3,7 +3,7 @@
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DatatableQueryService;
+use App\Services\Data\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
