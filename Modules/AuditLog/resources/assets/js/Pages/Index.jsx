@@ -22,29 +22,33 @@ export default function Index({
   auditLogs,
   users,
   modelTypes = [],
+  eventTypes = [],
   defaultPerPage = 20,
   filters = {},
 }) {
   const [showFilters, setShowFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
     user_id: filters.user_id || '',
+    system: filters.system || '',
     event: filters.event || '',
     auditable_type: filters.auditable_type || '',
     start_date: filters.start_date || '',
     end_date: filters.end_date || '',
   });
 
-  const handleFilterChange = useCallback(
-    (key, value) => {
-      const newFilters = { ...localFilters, [key]: value };
-      setLocalFilters(newFilters);
+  const handleFilterChange = useCallback((key, value) => {
+    setLocalFilters((prev) => {
+      const newFilters = { ...prev, [key]: value };
+
+      if (key === 'user_id' && value) {
+        newFilters.system = '';
+      }
 
       const params = {
         ...newFilters,
         page: 1,
       };
 
-      // Remove empty filters
       Object.keys(params).forEach((k) => {
         if (params[k] === '' || params[k] === null || params[k] === undefined) {
           delete params[k];
@@ -55,13 +59,15 @@ export default function Index({
         preserveState: true,
         preserveScroll: true,
       });
-    },
-    [localFilters]
-  );
+
+      return newFilters;
+    });
+  }, []);
 
   const clearFilters = useCallback(() => {
     setLocalFilters({
       user_id: '',
+      system: '',
       event: '',
       auditable_type: '',
       start_date: '',
@@ -113,7 +119,6 @@ export default function Index({
       return 'N/A';
     }
 
-    // Extract class name from full namespace
     const className = auditableType.split('\\').pop();
 
     return `${className} #${auditableId}`;
@@ -235,6 +240,14 @@ export default function Index({
     return Object.values(localFilters).some((value) => value !== '' && value !== null);
   }, [localFilters]);
 
+  const hasInvalidDateRange = useMemo(() => {
+    return (
+      localFilters.start_date &&
+      localFilters.end_date &&
+      localFilters.start_date > localFilters.end_date
+    );
+  }, [localFilters.start_date, localFilters.end_date]);
+
   return (
     <DashboardLayout header="AuditLog">
       <PageShell
@@ -279,7 +292,7 @@ export default function Index({
                 </Button>
               )}
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
               <div className="space-y-2">
                 <Label htmlFor="user_id">User</Label>
                 <select
@@ -298,6 +311,29 @@ export default function Index({
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="system">System</Label>
+                <select
+                  id="system"
+                  value={localFilters.system}
+                  onChange={(e) => handleFilterChange('system', e.target.value)}
+                  disabled={!!localFilters.user_id}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  title={
+                    localFilters.user_id
+                      ? 'System filter is disabled when a specific user is selected'
+                      : ''
+                  }
+                >
+                  <option value="">All Actions</option>
+                  <option value="user">User Actions</option>
+                  <option value="system">System Actions</option>
+                </select>
+                {localFilters.user_id && (
+                  <p className="text-xs text-muted-foreground">Disabled when filtering by user</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="event">Event Type</Label>
                 <select
                   id="event"
@@ -306,9 +342,11 @@ export default function Index({
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All Events</option>
-                  <option value="created">Created</option>
-                  <option value="updated">Updated</option>
-                  <option value="deleted">Deleted</option>
+                  {eventTypes.map((eventType) => (
+                    <option key={eventType.value} value={eventType.value}>
+                      {eventType.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -336,6 +374,9 @@ export default function Index({
                   onChange={(date) => handleFilterChange('start_date', date || '')}
                   placeholder="Pick start date"
                 />
+                {hasInvalidDateRange && (
+                  <p className="text-xs text-destructive">Start date must be before end date</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -345,6 +386,9 @@ export default function Index({
                   onChange={(date) => handleFilterChange('end_date', date || '')}
                   placeholder="Pick end date"
                 />
+                {hasInvalidDateRange && (
+                  <p className="text-xs text-destructive">End date must be after start date</p>
+                )}
               </div>
             </div>
           </div>
