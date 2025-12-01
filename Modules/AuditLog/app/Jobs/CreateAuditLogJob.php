@@ -17,18 +17,51 @@ class CreateAuditLogJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * The model's class name (captured before serialization).
+     */
+    public string $auditableType;
+
+    /**
+     * The model's ID (captured before serialization).
+     */
+    public ?int $auditableId;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(
         public string $event,
-        public Model $model,
+        public ?Model $model,
         public ?array $oldValues,
         public ?array $newValues,
         public ?int $userId,
         public ?string $url,
         public ?string $ipAddress,
         public ?string $userAgent
-    ) {}
+    ) {
+        /**
+         * Capture model information before serialization.
+         * This is critical for deleted models which may not be accessible after deserialization.
+         */
+        if ($model !== null) {
+            $this->auditableType = get_class($model);
+            $this->auditableId = $model->getKey();
+
+            /**
+             * For deleted events, set model to null to prevent serialization issues.
+             * We've already captured all necessary information above.
+             */
+            if ($this->event === 'deleted') {
+                $this->model = null;
+            }
+        } else {
+            /**
+             * Fallback if model is already null (shouldn't happen, but be safe).
+             */
+            $this->auditableType = 'unknown';
+            $this->auditableId = null;
+        }
+    }
 
     /**
      * Execute the job.
@@ -40,20 +73,30 @@ class CreateAuditLogJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $modelExists = $this->model->exists ?? false;
+            /**
+             * Use captured values instead of accessing the model.
+             * The model may not exist or be accessible after deletion.
+             */
+            $auditableType = $this->auditableType;
+            $auditableId = $this->auditableId;
 
-            if (! $modelExists && $this->event !== 'deleted') {
-                Log::warning('AuditLog: Model no longer exists for non-deleted event', [
-                    'event' => $this->event,
-                    'auditable_type' => get_class($this->model),
-                    'auditable_id' => $this->model->getKey(),
-                ]);
+            /**
+             * For deleted events, we don't need to check if model exists.
+             * For other events, verify the model still exists.
+             */
+            if ($this->event !== 'deleted' && $this->model !== null) {
+                $modelExists = $this->model->exists ?? false;
 
-                return;
+                if (! $modelExists) {
+                    Log::warning('AuditLog: Model no longer exists for non-deleted event', [
+                        'event' => $this->event,
+                        'auditable_type' => $auditableType,
+                        'auditable_id' => $auditableId,
+                    ]);
+
+                    return;
+                }
             }
-
-            $auditableType = get_class($this->model);
-            $auditableId = $this->model->getKey();
 
             if (! class_exists($auditableType)) {
                 Log::warning('AuditLog: Model class no longer exists', [
@@ -79,8 +122,8 @@ class CreateAuditLogJob implements ShouldQueue
         } catch (Throwable $e) {
             Log::error('AuditLog: Failed to create audit log entry', [
                 'event' => $this->event,
-                'auditable_type' => get_class($this->model),
-                'auditable_id' => $this->model->getKey() ?? null,
+                'auditable_type' => $this->auditableType ?? ($this->model ? get_class($this->model) : 'unknown'),
+                'auditable_id' => $this->auditableId ?? ($this->model?->getKey() ?? null),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -96,8 +139,8 @@ class CreateAuditLogJob implements ShouldQueue
     {
         Log::error('AuditLog: Job failed after all retry attempts', [
             'event' => $this->event,
-            'auditable_type' => get_class($this->model),
-            'auditable_id' => $this->model->getKey() ?? null,
+            'auditable_type' => $this->auditableType ?? 'unknown',
+            'auditable_id' => $this->auditableId ?? null,
             'exception' => $exception?->getMessage(),
         ]);
     }

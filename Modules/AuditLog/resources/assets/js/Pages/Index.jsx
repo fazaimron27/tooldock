@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import DataTable from '@/Components/DataDisplay/DataTable';
 import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
-import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
@@ -88,19 +88,19 @@ export default function Index({
       created: {
         variant: 'default',
         className:
-          'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/50 dark:hover:text-green-300',
+          'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/60 dark:hover:text-green-200',
         label: 'Created',
       },
       updated: {
         variant: 'default',
         className:
-          'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/50 dark:hover:text-blue-300',
+          'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/60 dark:hover:text-blue-200',
         label: 'Updated',
       },
       deleted: {
         variant: 'default',
         className:
-          'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-800/50 dark:hover:text-red-300',
+          'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-800/60 dark:hover:text-red-200',
         label: 'Deleted',
       },
     };
@@ -149,6 +149,7 @@ export default function Index({
           return (
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
+                {user.avatar?.url ? <AvatarImage src={user.avatar.url} alt={user.name} /> : null}
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
               <span className="font-medium">{user.name}</span>

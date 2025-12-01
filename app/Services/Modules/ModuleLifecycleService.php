@@ -3,6 +3,7 @@
 namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
+use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\SettingsService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -22,8 +23,9 @@ class ModuleLifecycleService
      * @param  ModuleMigrationService  $migrationService
      * @param  ModuleStatusService  $statusService
      * @param  SettingsService  $settingsService
+     * @param  CategoryRegistry  $categoryRegistry
      *
-     * Note: Sets lifecycle service in discovery service to break circular dependency
+     * Note: Sets lifecycle service in discovery service to break circular dependency.
      */
     public function __construct(
         private RepositoryInterface $moduleRepository,
@@ -35,7 +37,8 @@ class ModuleLifecycleService
         private ModuleDiscoveryService $discoveryService,
         private ModuleMigrationService $migrationService,
         private ModuleStatusService $statusService,
-        private SettingsService $settingsService
+        private SettingsService $settingsService,
+        private CategoryRegistry $categoryRegistry
     ) {
         $this->discoveryService->setLifecycleService($this);
     }
@@ -106,6 +109,15 @@ class ModuleLifecycleService
             ]);
         }
 
+        try {
+            $this->categoryRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded categories after installing '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Category seeding skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         Log::info("ModuleLifecycleService: Installation complete for '{$moduleName}'");
     }
 
@@ -141,7 +153,28 @@ class ModuleLifecycleService
 
         $this->permissionManager->cleanup($moduleName);
 
-        $this->settingsService->cleanup($moduleName);
+        try {
+            $stats = $this->settingsService->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up settings for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+            ]);
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Settings cleanup skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            $stats = $this->categoryRegistry->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up categories for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+                'orphaned' => $stats['orphaned'],
+            ]);
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Category cleanup skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $this->migrationService->rollbackMigrations($moduleName);
 
@@ -188,6 +221,15 @@ class ModuleLifecycleService
             Log::info("ModuleLifecycleService: Synced settings after enabling '{$moduleName}'");
         } catch (\Exception $e) {
             Log::debug("ModuleLifecycleService: Settings sync skipped for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            $this->categoryRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded categories after enabling '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::debug("ModuleLifecycleService: Category seeding skipped for '{$moduleName}'", [
                 'error' => $e->getMessage(),
             ]);
         }

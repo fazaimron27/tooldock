@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Models\AuditLog;
@@ -23,7 +22,7 @@ class AuditLogController extends Controller
     {
         $this->authorize('viewAny', AuditLog::class);
 
-        $query = AuditLog::with(['user']);
+        $query = AuditLog::with(['user.avatar']);
         $this->applyFilters($query, $request);
 
         $defaultPerPage = 20;
@@ -44,34 +43,51 @@ class AuditLogController extends Controller
 
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
 
-        $cacheTtl = (int) settings('model_types_cache_ttl', 3600);
-        $modelTypes = Cache::remember('auditlog.model_types', $cacheTtl, function () {
-            return AuditLog::select('auditable_type')
-                ->distinct()
-                ->orderBy('auditable_type')
-                ->pluck('auditable_type')
-                ->map(function ($type) {
-                    return [
-                        'value' => $type,
-                        'label' => class_basename($type),
-                    ];
-                })
-                ->toArray();
-        });
+        /**
+         * Get event types dynamically from filtered query (excluding event filter itself).
+         * This ensures event types reflect what's available in the current filtered results.
+         *
+         * TODO: Consider adding caching with dynamic cache keys if performance becomes an issue.
+         * Cache key should include all filter parameters (except event) to maintain accuracy.
+         * Suggested TTL: 5-15 minutes for balance between performance and freshness.
+         */
+        $eventTypesQuery = AuditLog::query();
+        $this->applyFiltersForOptions($eventTypesQuery, $request, excludeEvent: true);
+        $eventTypes = $eventTypesQuery
+            ->select('event')
+            ->distinct()
+            ->orderBy('event')
+            ->pluck('event')
+            ->map(function ($event) {
+                return [
+                    'value' => $event,
+                    'label' => ucfirst($event),
+                ];
+            })
+            ->toArray();
 
-        $eventTypes = Cache::remember('auditlog.event_types', $cacheTtl, function () {
-            return AuditLog::select('event')
-                ->distinct()
-                ->orderBy('event')
-                ->pluck('event')
-                ->map(function ($event) {
-                    return [
-                        'value' => $event,
-                        'label' => ucfirst($event),
-                    ];
-                })
-                ->toArray();
-        });
+        /**
+         * Get model types dynamically from filtered query (excluding auditable_type filter itself).
+         * This ensures model types reflect what's available in the current filtered results.
+         *
+         * TODO: Consider adding caching with dynamic cache keys if performance becomes an issue.
+         * Cache key should include all filter parameters (except auditable_type) to maintain accuracy.
+         * Suggested TTL: 5-15 minutes for balance between performance and freshness.
+         */
+        $modelTypesQuery = AuditLog::query();
+        $this->applyFiltersForOptions($modelTypesQuery, $request, excludeAuditableType: true);
+        $modelTypes = $modelTypesQuery
+            ->select('auditable_type')
+            ->distinct()
+            ->orderBy('auditable_type')
+            ->pluck('auditable_type')
+            ->map(function ($type) {
+                return [
+                    'value' => $type,
+                    'label' => class_basename($type),
+                ];
+            })
+            ->toArray();
 
         return Inertia::render('Modules::AuditLog/Index', [
             'auditLogs' => $auditLogs,
@@ -97,7 +113,7 @@ class AuditLogController extends Controller
     {
         $this->authorize('view', $auditLog);
 
-        $auditLog->load(['user']);
+        $auditLog->load(['user.avatar']);
         $this->loadAuditableRelationshipsBatch([$auditLog]);
 
         return Inertia::render('Modules::AuditLog/Show', [
@@ -115,7 +131,7 @@ class AuditLogController extends Controller
     {
         $this->authorize('viewAny', AuditLog::class);
 
-        $query = AuditLog::with(['user']);
+        $query = AuditLog::with(['user.avatar']);
         $this->applyFilters($query, $request);
 
         $filename = 'audit-logs-'.now()->format('Y-m-d-His').'.csv';
@@ -255,6 +271,28 @@ class AuditLogController extends Controller
      */
     private function applyFilters(Builder $query, Request $request): void
     {
+        $this->applyFiltersForOptions($query, $request);
+    }
+
+    /**
+     * Apply filters to the audit log query for getting filter options.
+     *
+     * This method is used to get dynamic filter options (event types, model types)
+     * based on the current filters. It can exclude specific filters to get
+     * all available options for that filter type.
+     *
+     * @param  Builder  $query
+     * @param  Request  $request
+     * @param  bool  $excludeEvent  If true, excludes the event filter
+     * @param  bool  $excludeAuditableType  If true, excludes the auditable_type filter
+     * @return void
+     */
+    private function applyFiltersForOptions(
+        Builder $query,
+        Request $request,
+        bool $excludeEvent = false,
+        bool $excludeAuditableType = false
+    ): void {
         $query->when($request->filled('user_id'), function ($q) use ($request) {
             $userId = $request->input('user_id');
             if (User::where('id', $userId)->exists()) {
@@ -276,13 +314,17 @@ class AuditLogController extends Controller
             }
         );
 
-        $query->when($request->filled('event'), function ($q) use ($request) {
-            $q->where('event', $request->input('event'));
-        });
+        if (! $excludeEvent) {
+            $query->when($request->filled('event'), function ($q) use ($request) {
+                $q->where('event', $request->input('event'));
+            });
+        }
 
-        $query->when($request->filled('auditable_type'), function ($q) use ($request) {
-            $q->where('auditable_type', $request->input('auditable_type'));
-        });
+        if (! $excludeAuditableType) {
+            $query->when($request->filled('auditable_type'), function ($q) use ($request) {
+                $q->where('auditable_type', $request->input('auditable_type'));
+            });
+        }
 
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');

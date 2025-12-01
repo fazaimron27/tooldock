@@ -4,6 +4,7 @@ namespace App\Services\Registry;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Settings\Models\Setting;
 
@@ -46,7 +47,6 @@ class SettingsService
 
             return $setting->value;
         } catch (\Throwable $e) {
-            // Return default if settings table doesn't exist (during migrations)
             return $default;
         }
     }
@@ -80,7 +80,6 @@ class SettingsService
 
         Cache::forget(self::CACHE_KEY);
 
-        // Immediately sync app.debug config if this is the app_debug setting
         if ($key === 'app_debug') {
             config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
         }
@@ -125,30 +124,41 @@ class SettingsService
      * Removes all settings that belong to the specified module.
      * Clears the cache after deletion to ensure changes are reflected immediately.
      *
+     * Wrapped in a database transaction to ensure atomicity.
+     *
      * @param  string  $moduleName  The module name (e.g., 'Blog', 'Newsletter')
+     * @return array{deleted: int} Statistics about the cleanup operation
      */
-    public function cleanup(string $moduleName): void
+    public function cleanup(string $moduleName): array
     {
-        $settingKeys = $this->setting->where('module', $moduleName)
-            ->pluck('key')
-            ->toArray();
+        return DB::transaction(function () use ($moduleName) {
+            $settingKeys = $this->setting->where('module', $moduleName)
+                ->pluck('key')
+                ->toArray();
 
-        if (empty($settingKeys)) {
-            Log::info("SettingsService: No settings found for module '{$moduleName}'");
+            if (empty($settingKeys)) {
+                Log::info("SettingsService: No settings found for module '{$moduleName}'");
 
-            return;
-        }
+                return [
+                    'deleted' => 0,
+                ];
+            }
 
-        $deleted = $this->setting->where('module', $moduleName)->delete();
+            $deleted = $this->setting->where('module', $moduleName)->delete();
 
-        Log::info("SettingsService: Cleaned up settings for module '{$moduleName}'", [
-            'count' => $deleted,
-            'keys' => $settingKeys,
-        ]);
+            Log::info("SettingsService: Cleaned up settings for module '{$moduleName}'", [
+                'count' => $deleted,
+                'keys' => $settingKeys,
+            ]);
 
-        if ($deleted > 0) {
-            Cache::forget(self::CACHE_KEY);
-        }
+            if ($deleted > 0) {
+                Cache::forget(self::CACHE_KEY);
+            }
+
+            return [
+                'deleted' => $deleted,
+            ];
+        });
     }
 
     /**
@@ -208,6 +218,8 @@ class SettingsService
      * to preserve user-modified values. New settings are created with default values.
      * Only called when cache is empty (cache miss scenario).
      *
+     * Wrapped in a database transaction to ensure atomicity.
+     *
      * @return void
      */
     private function syncRegisteredSettings(): void
@@ -219,44 +231,54 @@ class SettingsService
             return;
         }
 
-        $registeredKeys = array_column($registeredSettings, 'key');
-        $existingSettings = $this->setting->whereIn('key', $registeredKeys)
-            ->get()
-            ->keyBy('key');
+        DB::transaction(function () use ($registeredSettings) {
+            $registeredKeys = array_column($registeredSettings, 'key');
+            $existingSettings = $this->setting->whereIn('key', $registeredKeys)
+                ->get()
+                ->keyBy('key');
 
-        foreach ($registeredSettings as $setting) {
-            $existing = $existingSettings->get($setting['key']);
+            foreach ($registeredSettings as $setting) {
+                try {
+                    $existing = $existingSettings->get($setting['key']);
 
-            if ($existing) {
-                $typeChanged = $existing->type !== $setting['type'];
-                $updateData = [
-                    'module' => $setting['module'],
-                    'group' => $setting['group'],
-                    'type' => $setting['type'],
-                    'label' => $setting['label'],
-                    'is_system' => $setting['is_system'],
-                ];
+                    if ($existing) {
+                        $typeChanged = $existing->type !== $setting['type'];
+                        $updateData = [
+                            'module' => $setting['module'],
+                            'group' => $setting['group'],
+                            'type' => $setting['type'],
+                            'label' => $setting['label'],
+                            'is_system' => $setting['is_system'],
+                        ];
 
-                if ($typeChanged) {
-                    $updateData['value'] = $setting['value'];
-                    Log::info("SettingsService: Type changed for setting '{$setting['key']}', resetting to default value", [
-                        'old_type' => $existing->type->value,
-                        'new_type' => $setting['type']->value,
+                        if ($typeChanged) {
+                            $updateData['value'] = $setting['value'];
+                            Log::info("SettingsService: Type changed for setting '{$setting['key']}', resetting to default value", [
+                                'old_type' => $existing->type->value,
+                                'new_type' => $setting['type']->value,
+                            ]);
+                        }
+
+                        $existing->update($updateData);
+                    } else {
+                        $this->setting->create([
+                            'module' => $setting['module'],
+                            'group' => $setting['group'],
+                            'key' => $setting['key'],
+                            'value' => $setting['value'],
+                            'type' => $setting['type'],
+                            'label' => $setting['label'],
+                            'is_system' => $setting['is_system'],
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('SettingsService: Failed to sync setting', [
+                        'module' => $setting['module'],
+                        'key' => $setting['key'],
+                        'error' => $e->getMessage(),
                     ]);
                 }
-
-                $existing->update($updateData);
-            } else {
-                $this->setting->create([
-                    'module' => $setting['module'],
-                    'group' => $setting['group'],
-                    'key' => $setting['key'],
-                    'value' => $setting['value'],
-                    'type' => $setting['type'],
-                    'label' => $setting['label'],
-                    'is_system' => $setting['is_system'],
-                ]);
             }
-        }
+        });
     }
 }
