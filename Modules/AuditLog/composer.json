@@ -1,0 +1,29 @@
+{
+  "name": "fazaimron27/auditlog",
+  "description": "",
+  "authors": [
+    {
+      "name": "Faza Iman Imron",
+      "email": "fazaimanimron@gmail.com"
+    }
+  ],
+  "extra": {
+    "laravel": {
+      "providers": [],
+      "aliases": {}
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\AuditLog\\App\\": "app/",
+      "Modules\\AuditLog\\": "app/",
+      "Modules\\AuditLog\\Database\\Factories\\": "database/factories/",
+      "Modules\\AuditLog\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Modules\\AuditLog\\Tests\\": "tests/"
+    }
+  }
+}

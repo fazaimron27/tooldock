@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
+use Modules\AuditLog\App\Traits\LogsActivity;
 
 class MediaFile extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'disk',
         'path',
@@ -48,7 +51,10 @@ class MediaFile extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($this->disk);
+
+        return $disk->url($this->path);
     }
 
     /**

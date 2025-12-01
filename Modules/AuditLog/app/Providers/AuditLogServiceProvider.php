@@ -1,34 +1,29 @@
 <?php
 
-namespace Modules\Core\Providers;
+namespace Modules\AuditLog\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Observers\PermissionObserver;
-use Modules\Core\App\Observers\RoleObserver;
-use Modules\Core\App\Observers\UserObserver;
+use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
-class CoreServiceProvider extends ServiceProvider
+class AuditLogServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
-    protected string $name = 'Core';
+    protected string $name = 'AuditLog';
 
-    protected string $nameLower = 'core';
+    protected string $nameLower = 'auditlog';
 
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -39,33 +34,14 @@ class CoreServiceProvider extends ServiceProvider
 
         $menuRegistry->registerItem(
             group: 'System',
-            label: 'Users',
-            route: 'core.users.index',
-            icon: 'Users',
-            order: 10,
-            permission: 'core.users.view'
+            label: 'Audit Logs',
+            route: 'auditlog.index',
+            icon: 'FileText',
+            order: 30,
+            permission: 'auditlog.view'
         );
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Roles',
-            route: 'core.roles.index',
-            icon: 'Shield',
-            order: 20,
-            permission: 'core.roles.manage'
-        );
-
-        Gate::before(function ($user, $ability) {
-            if ($user && method_exists($user, 'hasRole')) {
-                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
-            }
-
-            return null;
-        });
-
-        User::observe(UserObserver::class);
-        Role::observe(RoleObserver::class);
-        Permission::observe(PermissionObserver::class);
+        $this->registerSettings($settingsRegistry);
     }
 
     /**
@@ -75,17 +51,43 @@ class CoreServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**
      * Register commands in the format of Command::class
      */
-    protected function registerCommands(): void {}
+    protected function registerCommands(): void
+    {
+        $this->commands([
+            \Modules\AuditLog\App\Console\Commands\CleanupAuditLogsCommand::class,
+        ]);
+    }
 
     /**
      * Register command Schedules.
      */
-    protected function registerCommandSchedules(): void {}
+    protected function registerCommandSchedules(): void
+    {
+        $this->app->booted(function () {
+            $scheduledCleanupEnabled = filter_var(settings('scheduled_cleanup_enabled', true), FILTER_VALIDATE_BOOLEAN);
+
+            if ($scheduledCleanupEnabled) {
+                $retentionDays = (int) settings('retention_days', 90);
+                $scheduleTime = settings('cleanup_schedule_time', '02:00');
+
+                if (! preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $scheduleTime)) {
+                    $scheduleTime = '02:00';
+                }
+
+                Schedule::command('auditlog:cleanup', ['--days' => $retentionDays])
+                    ->daily()
+                    ->at($scheduleTime)
+                    ->withoutOverlapping()
+                    ->runInBackground();
+            }
+        });
+    }
 
     /**
      * Register translations.
@@ -127,10 +129,6 @@ class CoreServiceProvider extends ServiceProvider
                     }
 
                     $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
-
-                    if ($config === 'permission.php') {
-                        $key = 'permission';
-                    }
 
                     $this->publishes([$file->getPathname() => config_path($config)], 'config');
                     $this->merge_config_from($file->getPathname(), $key);
@@ -183,5 +181,61 @@ class CoreServiceProvider extends ServiceProvider
         }
 
         return $paths;
+    }
+
+    /**
+     * Register default settings for the AuditLog module.
+     */
+    private function registerSettings(SettingsRegistry $registry): void
+    {
+        $registry->register(
+            module: 'AuditLog',
+            group: 'auditlog',
+            key: 'retention_days',
+            value: '90',
+            type: SettingType::Integer,
+            label: 'Audit Log Retention (Days)',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'AuditLog',
+            group: 'auditlog',
+            key: 'scheduled_cleanup_enabled',
+            value: '1',
+            type: SettingType::Boolean,
+            label: 'Enable Scheduled Cleanup',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'AuditLog',
+            group: 'auditlog',
+            key: 'model_types_cache_ttl',
+            value: '3600',
+            type: SettingType::Integer,
+            label: 'Model Types Cache TTL (Seconds)',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'AuditLog',
+            group: 'auditlog',
+            key: 'export_chunk_size',
+            value: '500',
+            type: SettingType::Integer,
+            label: 'Export Chunk Size',
+            isSystem: false
+        );
+
+        $registry->register(
+            module: 'AuditLog',
+            group: 'auditlog',
+            key: 'cleanup_schedule_time',
+            value: '02:00',
+            type: SettingType::Text,
+            label: 'Cleanup Schedule Time (HH:MM)',
+            isSystem: false
+        );
     }
 }

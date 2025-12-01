@@ -58,29 +58,28 @@ export function formatDate(date, format = 'short', locale = 'en-US') {
 
 function formatRelativeDate(date) {
   const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(Math.abs(diffMs) / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  const isPast = diffMs < 0;
-  const absDiff = Math.abs;
+  const isPast = diffMs > 0;
 
-  if (absDiff(diffDay) > 7) {
+  if (diffDay > 7) {
     return formatDate(date, 'short');
   }
 
-  if (absDiff(diffDay) > 0) {
-    return `${isPast ? '' : 'in '}${absDiff(diffDay)} ${absDiff(diffDay) === 1 ? 'day' : 'days'}${isPast ? ' ago' : ''}`;
+  if (diffDay > 0) {
+    return `${isPast ? '' : 'in '}${diffDay} ${diffDay === 1 ? 'day' : 'days'}${isPast ? ' ago' : ''}`;
   }
 
-  if (absDiff(diffHour) > 0) {
-    return `${isPast ? '' : 'in '}${absDiff(diffHour)} ${absDiff(diffHour) === 1 ? 'hour' : 'hours'}${isPast ? ' ago' : ''}`;
+  if (diffHour > 0) {
+    return `${isPast ? '' : 'in '}${diffHour} ${diffHour === 1 ? 'hour' : 'hours'}${isPast ? ' ago' : ''}`;
   }
 
-  if (absDiff(diffMin) > 0) {
-    return `${isPast ? '' : 'in '}${absDiff(diffMin)} ${absDiff(diffMin) === 1 ? 'minute' : 'minutes'}${isPast ? ' ago' : ''}`;
+  if (diffMin > 0) {
+    return `${isPast ? '' : 'in '}${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'}${isPast ? ' ago' : ''}`;
   }
 
   return 'just now';
