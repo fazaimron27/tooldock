@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Registry;
 
 use Modules\Settings\Enums\SettingType;
 use Modules\Settings\Models\Setting;

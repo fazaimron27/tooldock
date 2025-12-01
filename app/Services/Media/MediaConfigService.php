@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Media;
 
 /**
  * Service for managing media configuration, particularly file size limits.

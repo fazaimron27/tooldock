@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Core;
 
+use App\Services\Media\MediaConfigService;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\Request;
 
 /**

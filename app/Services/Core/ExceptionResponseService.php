@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Core;
 
+use App\Services\Media\MediaConfigService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 

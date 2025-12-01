@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Core;
 
 /**
  * Service for synchronizing application configuration from settings.
