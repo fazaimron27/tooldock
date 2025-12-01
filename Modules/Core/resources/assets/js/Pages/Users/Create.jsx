@@ -49,7 +49,7 @@ export default function Create({ roles = [] }) {
   };
 
   return (
-    <DashboardLayout header="Core">
+    <DashboardLayout header="Users">
       <PageShell title="Create User">
         <div className="space-y-6">
           <FormCard title="New User" description="Create a new user account" className="max-w-3xl">

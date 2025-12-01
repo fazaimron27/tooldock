@@ -167,7 +167,7 @@ export default function Index({ roles, defaultPerPage = 20 }) {
   }, [tableProps.table, roles.current_page, roles.per_page, defaultPerPage]);
 
   return (
-    <DashboardLayout header="Core">
+    <DashboardLayout header="Roles">
       <PageShell
         title="Roles"
         actions={

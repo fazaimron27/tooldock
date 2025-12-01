@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
 import PageShell from '@/Components/Layouts/PageShell';
-import { Avatar, AvatarFallback } from '@/Components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 
@@ -56,6 +56,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
           return (
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
+                {user.avatar?.url ? <AvatarImage src={user.avatar.url} alt={user.name} /> : null}
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
               <span className="font-medium">{user.name}</span>
@@ -166,7 +167,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
   }, [tableProps.table, users.current_page, users.per_page, defaultPerPage]);
 
   return (
-    <DashboardLayout header="Core">
+    <DashboardLayout header="Users">
       <PageShell
         title="Users"
         actions={

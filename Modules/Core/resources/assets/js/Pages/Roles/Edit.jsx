@@ -83,14 +83,16 @@ export default function Edit({ role, groupedPermissions = {} }) {
     }
   };
 
+  /**
+   * Format permission name for display.
+   * Handles both new format (module.resource.action) and old format (action resource).
+   */
   const formatPermissionName = (name) => {
-    // Handle new format: module.resource.action -> show "Action"
     if (name.includes('.')) {
       const parts = name.split('.');
       const action = parts[parts.length - 1];
       return action.charAt(0).toUpperCase() + action.slice(1);
     }
-    // Handle old format: "action resource" -> show as is
     return name
       .split(' ')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -115,7 +117,7 @@ export default function Edit({ role, groupedPermissions = {} }) {
   };
 
   return (
-    <DashboardLayout header="Core">
+    <DashboardLayout header="Roles">
       <PageShell title="Edit Role">
         <div className="space-y-6">
           <FormCard

@@ -49,7 +49,7 @@ export default function Edit({ user, roles = [] }) {
   };
 
   return (
-    <DashboardLayout header="Core">
+    <DashboardLayout header="Users">
       <PageShell title="Edit User">
         <div className="space-y-6">
           <FormCard title="Edit User" description="Update user information" className="max-w-3xl">
