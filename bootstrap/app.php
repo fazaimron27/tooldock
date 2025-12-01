@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\ExceptionResponseService;
+use App\Services\Core\ExceptionResponseService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

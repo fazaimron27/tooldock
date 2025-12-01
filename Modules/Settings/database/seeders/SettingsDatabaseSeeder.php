@@ -2,7 +2,7 @@
 
 namespace Modules\Settings\Database\Seeders;
 
-use App\Services\SettingsRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Seeder;
 
 class SettingsDatabaseSeeder extends Seeder

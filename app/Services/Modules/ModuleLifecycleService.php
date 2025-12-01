@@ -3,7 +3,7 @@
 namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
-use App\Services\SettingsService;
+use App\Services\Registry\SettingsService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
