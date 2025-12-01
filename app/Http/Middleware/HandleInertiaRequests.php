@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\InertiaSharedDataService;
+use App\Services\Core\InertiaSharedDataService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 

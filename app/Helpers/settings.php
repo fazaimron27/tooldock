@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\SettingsService;
+use App\Services\Registry\SettingsService;
 
 if (! function_exists('settings')) {
     /**
@@ -13,7 +13,7 @@ if (! function_exists('settings')) {
      *
      * @param  string|null  $key  The setting key
      * @param  mixed  $default  Default value if key not found
-     * @return mixed|\App\Services\SettingsService
+     * @return mixed|\App\Services\Registry\SettingsService
      */
     function settings(?string $key = null, mixed $default = null): mixed
     {

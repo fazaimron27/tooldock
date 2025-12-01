@@ -3,14 +3,14 @@
 namespace App\Providers;
 
 use App\Listeners\AutoInstallProtectedModules;
-use App\Services\AppConfigService;
-use App\Services\ExceptionResponseService;
-use App\Services\InertiaSharedDataService;
-use App\Services\MediaConfigService;
-use App\Services\MenuRegistry;
-use App\Services\ProtectedModuleMigrationService;
-use App\Services\SettingsRegistry;
-use App\Services\StorageLinkService;
+use App\Services\Core\AppConfigService;
+use App\Services\Core\ExceptionResponseService;
+use App\Services\Core\InertiaSharedDataService;
+use App\Services\Core\StorageLinkService;
+use App\Services\Media\MediaConfigService;
+use App\Services\Modules\ProtectedModuleMigrationService;
+use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
