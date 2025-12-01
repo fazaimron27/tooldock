@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Centralized file upload and media management module.",
   "keywords": ["media", "files", "uploads", "storage"],
-  "priority": -997,
+  "priority": -996,
   "protected": true,
   "active": 1,
   "providers": [
