@@ -24,7 +24,7 @@ class CoreServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(): void
+    public function boot(MenuRegistry $menuRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -33,7 +33,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        app(MenuRegistry::class)->registerItem(
+        $menuRegistry->registerItem(
             group: 'System',
             label: 'Users',
             route: 'core.users.index',
@@ -42,7 +42,7 @@ class CoreServiceProvider extends ServiceProvider
             permission: 'core.users.view'
         );
 
-        app(MenuRegistry::class)->registerItem(
+        $menuRegistry->registerItem(
             group: 'System',
             label: 'Roles',
             route: 'core.roles.index',

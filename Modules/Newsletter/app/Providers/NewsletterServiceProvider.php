@@ -22,7 +22,7 @@ class NewsletterServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -31,7 +31,7 @@ class NewsletterServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        app(MenuRegistry::class)->registerItem(
+        $menuRegistry->registerItem(
             group: 'Content',
             label: 'Newsletter',
             route: 'newsletter.index',
@@ -40,7 +40,7 @@ class NewsletterServiceProvider extends ServiceProvider
             permission: 'newsletter.campaigns.view'
         );
 
-        $this->registerSettings();
+        $this->registerSettings($settingsRegistry);
     }
 
     /**
@@ -155,10 +155,8 @@ class NewsletterServiceProvider extends ServiceProvider
      *
      * Group name should be lowercase module name for consistency.
      */
-    private function registerSettings(): void
+    private function registerSettings(SettingsRegistry $registry): void
     {
-        $registry = app(SettingsRegistry::class);
-
         $registry->register(
             module: 'Newsletter',
             group: 'newsletter',

@@ -3,9 +3,11 @@
 namespace Modules\Core\App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Modules\Core\Database\Factories\UserFactory;
+use Modules\Media\Models\MediaFile;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -55,5 +57,13 @@ class User extends Authenticatable
     protected static function newFactory(): UserFactory
     {
         return UserFactory::new();
+    }
+
+    /**
+     * Get the user's avatar.
+     */
+    public function avatar(): MorphOne
+    {
+        return $this->morphOne(MediaFile::class, 'model');
     }
 }

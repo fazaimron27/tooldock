@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\ExceptionResponseService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,9 +20,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->respond(function (Response $response, Throwable $_exception, Request $request) {
-            if ($response->getStatusCode() === 403 && $request->header('X-Inertia')) {
-                return back()->with('error', 'This action is unauthorized.');
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+            $exceptionService = app(ExceptionResponseService::class);
+
+            // Handle Inertia 403 responses
+            if ($inertiaResponse = $exceptionService->handleInertiaForbidden($response, $request)) {
+                return $inertiaResponse;
+            }
+
+            // Handle API responses
+            if ($apiResponse = $exceptionService->handleApiResponse($response, $request)) {
+                return $apiResponse;
             }
 
             return $response;

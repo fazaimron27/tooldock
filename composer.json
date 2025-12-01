@@ -11,6 +11,7 @@
   "require": {
     "php": "^8.2",
     "inertiajs/inertia-laravel": "^2.0",
+    "intervention/image": "^3.11",
     "laravel/framework": "^12.0",
     "laravel/sanctum": "^4.0",
     "laravel/tinker": "^2.10.1",
@@ -36,7 +37,9 @@
       "Database\\Seeders\\": "database/seeders/"
     },
     "files": [
-      "app/Helpers/settings.php"
+      "app/Helpers/settings.php",
+      "app/Helpers/file_size.php",
+      "app/Helpers/migrations.php"
     ]
   },
   "autoload-dev": {
@@ -50,6 +53,7 @@
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
       "@php artisan key:generate",
       "@php artisan migrate --force",
+      "@php artisan storage:link",
       "npm install",
       "npm run build"
     ],

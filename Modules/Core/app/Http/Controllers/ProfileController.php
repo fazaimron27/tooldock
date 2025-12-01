@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
+use Modules\Media\Models\MediaFile;
 
 class ProfileController extends Controller
 {
@@ -19,9 +20,16 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        $user->load('avatar');
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'avatar' => $user->avatar ? [
+                'id' => $user->avatar->id,
+                'url' => $user->avatar->url,
+            ] : null,
         ]);
     }
 
@@ -30,13 +38,38 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        if ($request->has('avatar_id')) {
+            $avatarId = $request->input('avatar_id');
+
+            $user->load('avatar');
+
+            if ($user->avatar) {
+                $oldAvatarId = $user->avatar->id;
+                if ($avatarId != $oldAvatarId || ! $avatarId) {
+                    $user->avatar->delete();
+                }
+            }
+
+            if ($avatarId) {
+                $avatar = MediaFile::find($avatarId);
+                if ($avatar) {
+                    $avatar->update([
+                        'model_type' => $user::class,
+                        'model_id' => $user->id,
+                        'is_temporary' => false,
+                    ]);
+                }
+            }
+        }
 
         return Redirect::route('profile.edit')->with('success', 'Profile updated successfully.');
     }

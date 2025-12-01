@@ -119,47 +119,103 @@ class ModuleDiscoveryService
                 return -1;
             }
 
+            if (count($aRequires) > count($bRequires)) {
+                return 1;
+            }
+
+            if (count($bRequires) > count($aRequires)) {
+                return -1;
+            }
+
             return 0;
         });
 
         $installedModules = [];
 
-        foreach ($protectedModules as $module) {
-            $moduleName = $module->getName();
+        $maxAttempts = count($protectedModules) * 2;
+        $attempt = 0;
 
-            Log::info("ModuleDiscoveryService: Processing module '{$moduleName}'");
+        while (count($installedModules) < count($protectedModules) && $attempt < $maxAttempts) {
+            $attempt++;
+            $progressMade = false;
 
-            $isInstalled = $this->statusService->isInstalled($moduleName);
+            $this->statusService->reloadCache();
 
-            Log::info("ModuleDiscoveryService: Module '{$moduleName}' installation status", [
-                'isInstalled' => $isInstalled,
-            ]);
+            foreach ($protectedModules as $module) {
+                $moduleName = $module->getName();
 
-            if ($isInstalled) {
-                Log::info("ModuleDiscoveryService: Skipping '{$moduleName}' - already installed");
+                if (in_array($moduleName, $installedModules, true)) {
+                    continue;
+                }
 
-                continue;
+                Log::info("ModuleDiscoveryService: Processing module '{$moduleName}'");
+
+                $isInstalled = $this->statusService->isInstalled($moduleName);
+
+                Log::info("ModuleDiscoveryService: Module '{$moduleName}' installation status", [
+                    'isInstalled' => $isInstalled,
+                ]);
+
+                if ($isInstalled) {
+                    Log::info("ModuleDiscoveryService: Skipping '{$moduleName}' - already installed");
+                    $installedModules[] = $moduleName;
+                    $progressMade = true;
+
+                    continue;
+                }
+
+                $requires = $module->get('requires', []);
+                $allDependenciesInstalled = true;
+                $missingDependencies = [];
+
+                foreach ($requires as $dependency) {
+                    if (! $this->statusService->isInstalled($dependency)) {
+                        $allDependenciesInstalled = false;
+                        $missingDependencies[] = $dependency;
+                    }
+                }
+
+                if (! $allDependenciesInstalled) {
+                    Log::info("ModuleDiscoveryService: Module '{$moduleName}' waiting for dependencies: ".implode(', ', $missingDependencies));
+
+                    continue;
+                }
+
+                if ($this->lifecycleService === null) {
+                    Log::error("ModuleDiscoveryService: Cannot install module '{$moduleName}' - lifecycle service not set");
+
+                    continue;
+                }
+
+                try {
+                    Log::info("ModuleDiscoveryService: Installing module '{$moduleName}'");
+                    $this->lifecycleService->install($moduleName, withSeed: false, skipValidation: true);
+                    $installedModules[] = $moduleName;
+                    $progressMade = true;
+                    $this->statusService->reloadCache();
+                    Log::info("ModuleDiscoveryService: Successfully installed module '{$moduleName}'");
+                } catch (\Exception $e) {
+                    Log::error(
+                        "Failed to auto-install protected module '{$moduleName}'",
+                        [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString(),
+                        ]
+                    );
+                    $this->statusService->reloadCache();
+                }
             }
 
-            if ($this->lifecycleService === null) {
-                Log::error("ModuleDiscoveryService: Cannot install module '{$moduleName}' - lifecycle service not set");
-
-                continue;
-            }
-
-            try {
-                Log::info("ModuleDiscoveryService: Installing module '{$moduleName}'");
-                $this->lifecycleService->install($moduleName, withSeed: false, skipValidation: true);
-                $installedModules[] = $moduleName;
-                Log::info("ModuleDiscoveryService: Successfully installed module '{$moduleName}'");
-            } catch (\Exception $e) {
-                Log::error(
-                    "Failed to auto-install protected module '{$moduleName}'",
-                    [
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                    ]
-                );
+            if (! $progressMade) {
+                $remainingModules = array_filter($protectedModules, function ($module) use ($installedModules) {
+                    return ! in_array($module->getName(), $installedModules, true);
+                });
+                $remainingNames = array_map(fn ($m) => $m->getName(), $remainingModules);
+                Log::warning('ModuleDiscoveryService: No progress made in dependency resolution, breaking', [
+                    'remaining_modules' => $remainingNames,
+                    'attempt' => $attempt,
+                ]);
+                break;
             }
         }
 

@@ -6,7 +6,7 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
-export default function Edit({ mustVerifyEmail, status }) {
+export default function Edit({ mustVerifyEmail, status, avatar }) {
   return (
     <DashboardLayout header="Profile">
       <PageShell title="Profile">
@@ -14,6 +14,7 @@ export default function Edit({ mustVerifyEmail, status }) {
           <UpdateProfileInformationForm
             mustVerifyEmail={mustVerifyEmail}
             status={status}
+            avatar={avatar}
             className="max-w-2xl"
           />
 

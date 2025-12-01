@@ -4,15 +4,22 @@ import { CheckCircle2 } from 'lucide-react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormField from '@/Components/Common/FormField';
+import FilePicker from '@/Components/Form/FilePicker';
 import { Button } from '@/Components/ui/button';
 
-export default function UpdateProfileInformation({ mustVerifyEmail, status, className = '' }) {
+export default function UpdateProfileInformation({
+  mustVerifyEmail,
+  status,
+  avatar,
+  className = '',
+}) {
   const user = usePage().props.auth.user;
 
   const { data, setData, errors, processing, submit } = useFormHandler(
     {
       name: user.name,
       email: user.email,
+      avatar_id: avatar?.id || null,
     },
     {
       route: 'profile.update',
@@ -27,6 +34,17 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
       className={className}
     >
       <form onSubmit={submit} className="space-y-6">
+        <FilePicker
+          label="Avatar"
+          value={avatar?.url || data.avatar_id}
+          onChange={(value) => {
+            setData('avatar_id', value ? parseInt(value) : null);
+          }}
+          accept="image/*"
+          directory="avatars"
+          error={errors.avatar_id}
+        />
+
         <FormField
           name="name"
           label="Name"

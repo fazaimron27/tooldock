@@ -3,13 +3,18 @@
 namespace App\Providers;
 
 use App\Listeners\AutoInstallProtectedModules;
+use App\Services\AppConfigService;
+use App\Services\ExceptionResponseService;
+use App\Services\InertiaSharedDataService;
+use App\Services\MediaConfigService;
 use App\Services\MenuRegistry;
+use App\Services\ProtectedModuleMigrationService;
 use App\Services\SettingsRegistry;
+use App\Services\StorageLinkService;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Nwidart\Modules\Facades\Module;
 
 /**
  * Application service provider
@@ -28,6 +33,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(MenuRegistry::class);
         $this->app->singleton(SettingsRegistry::class);
+        $this->app->singleton(MediaConfigService::class);
+        $this->app->singleton(AppConfigService::class);
+        $this->app->singleton(InertiaSharedDataService::class);
+        $this->app->singleton(StorageLinkService::class);
+        $this->app->singleton(ProtectedModuleMigrationService::class);
+        $this->app->singleton(ExceptionResponseService::class);
     }
 
     /**
@@ -36,23 +47,20 @@ class AppServiceProvider extends ServiceProvider
      * Configures Vite prefetching, registers default menu items, and sets up
      * event listeners for module auto-installation after migrations.
      */
-    public function boot(): void
-    {
+    public function boot(
+        ProtectedModuleMigrationService $migrationService,
+        MenuRegistry $menuRegistry,
+        StorageLinkService $storageLinkService,
+        AppConfigService $appConfigService
+    ): void {
         Vite::prefetch(concurrency: 3);
 
-        Module::scan();
-        $allModules = Module::all();
-
-        foreach ($allModules as $module) {
-            if ($module->get('protected') === true) {
-                $migrationPath = $module->getPath().'/database/migrations';
-                if (is_dir($migrationPath)) {
-                    $this->loadMigrationsFrom($migrationPath);
-                }
-            }
+        $migrationPaths = $migrationService->getMigrationPaths();
+        foreach ($migrationPaths as $path) {
+            $this->loadMigrationsFrom($path);
         }
 
-        app(MenuRegistry::class)->registerItem(
+        $menuRegistry->registerItem(
             group: 'Main',
             label: 'Dashboard',
             route: 'dashboard',
@@ -65,29 +73,8 @@ class AppServiceProvider extends ServiceProvider
             AutoInstallProtectedModules::class
         );
 
-        if (function_exists('settings') && ! $this->isRunningMigrations()) {
-            try {
-                $appName = settings('app_name', config('app.name', 'Laravel'));
-                config(['app.name' => $appName]);
+        $storageLinkService->ensureExists();
 
-                $appDebug = settings('app_debug', config('app.debug', false));
-                config(['app.debug' => filter_var($appDebug, FILTER_VALIDATE_BOOLEAN)]);
-            } catch (\Throwable $e) {
-            }
-        }
-    }
-
-    /**
-     * Check if we're currently running migrations.
-     */
-    private function isRunningMigrations(): bool
-    {
-        if (! app()->runningInConsole()) {
-            return false;
-        }
-
-        $command = $_SERVER['argv'][1] ?? '';
-
-        return str_contains($command, 'migrate');
+        $appConfigService->syncFromSettings();
     }
 }
