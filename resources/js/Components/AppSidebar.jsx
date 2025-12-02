@@ -91,7 +91,37 @@ export default function AppSidebar() {
                   <CollapsibleContent>
                     <SidebarGroupContent>
                       <SidebarMenu>
-                        {items.map((item) => {
+                        {items
+                          .filter((item) => route().has(item.route))
+                          .map((item) => {
+                            const Icon = getIcon(item.icon);
+                            const isActive = route().current(item.route);
+
+                            return (
+                              <SidebarMenuItem key={item.route}>
+                                <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                                  <Link href={route(item.route)}>
+                                    <Icon className="h-4 w-4" />
+                                    <span>{item.label}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              ) : (
+                <>
+                  <SidebarGroupLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider group-data-[collapsible=icon]:hidden">
+                    {group}
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {items
+                        .filter((item) => route().has(item.route))
+                        .map((item) => {
                           const Icon = getIcon(item.icon);
                           const isActive = route().current(item.route);
 
@@ -106,32 +136,6 @@ export default function AppSidebar() {
                             </SidebarMenuItem>
                           );
                         })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              ) : (
-                <>
-                  <SidebarGroupLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider group-data-[collapsible=icon]:hidden">
-                    {group}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {items.map((item) => {
-                        const Icon = getIcon(item.icon);
-                        const isActive = route().current(item.route);
-
-                        return (
-                          <SidebarMenuItem key={item.route}>
-                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                              <Link href={route(item.route)}>
-                                <Icon className="h-4 w-4" />
-                                <span>{item.label}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </>

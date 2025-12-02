@@ -67,6 +67,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
       preserveState: true,
       preserveScroll: true,
       only: [],
+      skipLoadingIndicator: true, // Skip loading for tab switching
     });
   };
 
@@ -80,6 +81,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
       preserveState: true,
       preserveScroll: true,
       only: [],
+      skipLoadingIndicator: true, // Skip loading for tab switching
     });
   };
 

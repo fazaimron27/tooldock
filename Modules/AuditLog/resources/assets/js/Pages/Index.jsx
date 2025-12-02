@@ -58,6 +58,7 @@ export default function Index({
       router.get(route('auditlog.index'), params, {
         preserveState: true,
         preserveScroll: true,
+        skipLoadingIndicator: true,
       });
 
       return newFilters;
@@ -79,6 +80,7 @@ export default function Index({
       {
         preserveState: true,
         preserveScroll: true,
+        skipLoadingIndicator: true,
       }
     );
   }, []);

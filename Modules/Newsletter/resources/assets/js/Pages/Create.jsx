@@ -157,7 +157,7 @@ export default function Create({ posts = [] }) {
                 <Button type="submit" disabled={processing}>
                   {processing ? 'Creating...' : 'Create Campaign'}
                 </Button>
-                <Link href={route('dashboard')}>
+                <Link href={route('newsletter.index')}>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>

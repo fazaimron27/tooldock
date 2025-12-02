@@ -24,13 +24,18 @@ export default function ConfirmDialog({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   variant = 'default',
+  disabled = false,
 }) {
   const handleConfirm = () => {
-    onConfirm?.();
+    if (!disabled) {
+      onConfirm?.();
+    }
   };
 
   const handleCancel = () => {
-    onCancel?.();
+    if (!disabled) {
+      onCancel?.();
+    }
   };
 
   const isDestructive = variant === 'destructive';
@@ -43,9 +48,12 @@ export default function ConfirmDialog({
           <AlertDialogDescription>{message}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancel} disabled={disabled}>
+            {cancelLabel}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
+            disabled={disabled}
             className={cn(
               isDestructive &&
                 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90'

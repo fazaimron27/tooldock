@@ -44,12 +44,11 @@ export function useDatatable({
   const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
-    // Prevents unnecessary requests on initial mount when data already exists
-    // and deduplicates requests with identical parameters to avoid flickering
     if (!isServerSide || !route) {
       return;
     }
 
+    // Skip initial request if data already exists to prevent duplicate requests
     if (isInitialMount.current && data.length > 0) {
       isInitialMount.current = false;
       return;
@@ -83,14 +82,15 @@ export function useDatatable({
     }
     previousParamsRef.current = paramsString;
 
-    // Debounce search/filter to reduce server load while typing
-    // Pagination/sorting are immediate for better UX
+    // Debounce search/filter operations to reduce server load during typing
+    // Pagination and sorting remain immediate for better user experience
     const shouldDebounce = globalFilter || Object.keys(filters).length > 0;
 
     const makeRequest = () => {
       const options = {
         preserveState: true,
         preserveScroll: true,
+        skipLoadingIndicator: true,
       };
 
       if (only !== null && Array.isArray(only) && only.length > 0) {
@@ -141,7 +141,6 @@ export function useDatatable({
     (newFilters) => {
       setFilters((prev) => ({ ...prev, ...newFilters }));
       onFilterChange?.(newFilters);
-      // Reset to first page when filters change since results are different
       setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     },
     [onFilterChange]
