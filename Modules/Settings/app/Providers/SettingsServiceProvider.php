@@ -180,9 +180,9 @@ class SettingsServiceProvider extends ServiceProvider
             module: 'Settings',
             group: 'general',
             key: 'app_logo',
-            value: null,
+            value: 'Rocket',
             type: SettingType::Text,
-            label: 'Application Logo',
+            label: 'Application Logo Icon (Lucide)',
             isSystem: false
         );
 
