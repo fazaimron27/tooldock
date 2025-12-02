@@ -169,8 +169,24 @@ class CategoryRegistry
                 $categoriesByType[$category['type']][] = $category;
             }
 
+            $totalCreated = 0;
+            $totalFound = 0;
+            $totalErrors = 0;
+
             foreach ($categoriesByType as $type => $categories) {
-                $this->seedCategoriesForType($type, $categories, $strict);
+                $stats = $this->seedCategoriesForType($type, $categories, $strict);
+                $totalCreated += $stats['created'];
+                $totalFound += $stats['found'];
+                $totalErrors += $stats['errors'];
+            }
+
+            if ($totalCreated > 0 || $totalFound > 0 || $totalErrors > 0) {
+                Log::debug('CategoryRegistry: Seeding completed', [
+                    'created' => $totalCreated,
+                    'found' => $totalFound,
+                    'errors' => $totalErrors,
+                    'total' => count($this->categories),
+                ]);
             }
         });
     }
@@ -181,10 +197,14 @@ class CategoryRegistry
      * @param  string  $type  Category type
      * @param  array<int, array{module: string, type: string, name: string, slug: string, parent_slug: string|null, color: string|null, description: string|null}>  $categories  Categories to seed
      * @param  bool  $strict  If true, exceptions will be re-thrown to rollback transaction
+     * @return array{created: int, found: int, errors: int} Statistics about the seeding operation
      */
-    private function seedCategoriesForType(string $type, array $categories, bool $strict = false): void
+    private function seedCategoriesForType(string $type, array $categories, bool $strict = false): array
     {
-        // Get existing categories for this type
+        $created = 0;
+        $found = 0;
+        $errors = 0;
+
         $existingCategories = Category::where('type', $type)
             ->get()
             ->keyBy(fn ($cat) => "{$cat->type}:{$cat->slug}");
@@ -196,6 +216,7 @@ class CategoryRegistry
 
                 if ($existingCategories->has($key)) {
                     $parentMap[$category['slug']] = $existingCategories->get($key);
+                    $found++;
 
                     continue;
                 }
@@ -212,7 +233,9 @@ class CategoryRegistry
 
                     $parentMap[$category['slug']] = $parentCategory;
                     $existingCategories->put("{$parentCategory->type}:{$parentCategory->slug}", $parentCategory);
+                    $created++;
                 } catch (\Exception $e) {
+                    $errors++;
                     Log::error('CategoryRegistry: Failed to create category', [
                         'module' => $category['module'],
                         'type' => $category['type'],
@@ -238,6 +261,8 @@ class CategoryRegistry
                     $key = "{$category['type']}:{$category['slug']}";
 
                     if ($existingCategories->has($key) || isset($parentMap[$category['slug']])) {
+                        $found++;
+
                         continue;
                     }
 
@@ -272,8 +297,10 @@ class CategoryRegistry
 
                         $parentMap[$category['slug']] = $childCategory;
                         $existingCategories->put("{$childCategory->type}:{$childCategory->slug}", $childCategory);
+                        $created++;
                         $createdInThisPass = true;
                     } catch (\Exception $e) {
+                        $errors++;
                         Log::error('CategoryRegistry: Failed to create child category', [
                             'module' => $category['module'],
                             'type' => $category['type'],
@@ -301,6 +328,12 @@ class CategoryRegistry
                 'type' => $type,
             ]);
         }
+
+        return [
+            'created' => $created,
+            'found' => $found,
+            'errors' => $errors,
+        ];
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\Registry\SettingsService;
+use App\Services\Core\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;

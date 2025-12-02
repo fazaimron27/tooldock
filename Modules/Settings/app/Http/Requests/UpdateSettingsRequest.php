@@ -2,7 +2,7 @@
 
 namespace Modules\Settings\Http\Requests;
 
-use App\Services\Registry\SettingsService;
+use App\Services\Core\SettingsService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSettingsRequest extends FormRequest
@@ -22,7 +22,6 @@ class UpdateSettingsRequest extends FormRequest
         $settingsService = app(SettingsService::class);
         $settings = $settingsService->all();
 
-        // Flatten grouped settings to get all keys
         $existingKeys = $settings->flatten(1)->pluck('key')->toArray();
 
         $rules = [];
