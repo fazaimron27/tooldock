@@ -14,11 +14,14 @@ use Modules\Settings\Models\Setting;
  * Allows modules to register their settings during service provider boot,
  * which are then automatically seeded into the database.
  *
+ * Optimized for Redis with cache tags for efficient invalidation.
  * Group name convention: Use lowercase module name (e.g., 'blog' for Blog module).
  * This ensures proper cleanup when modules are uninstalled.
  */
 class SettingsRegistry
 {
+    private const CACHE_TAG = 'settings';
+
     /**
      * @var array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool}>
      */
@@ -213,7 +216,7 @@ class SettingsRegistry
                     'total' => count($this->settings),
                 ]);
 
-                Cache::forget('app_settings');
+                $this->clearCache();
             }
         });
     }
@@ -239,7 +242,7 @@ class SettingsRegistry
                     'count' => $deleted,
                 ]);
 
-                Cache::forget('app_settings');
+                $this->clearCache();
             } else {
                 Log::info("SettingsRegistry: No settings found for module '{$moduleName}'");
             }
@@ -248,5 +251,29 @@ class SettingsRegistry
                 'deleted' => $deleted,
             ];
         });
+    }
+
+    /**
+     * Clear all settings caches.
+     *
+     * Optimized for Redis - uses tag-based flush for efficient invalidation.
+     * This method is called automatically when settings are seeded or cleaned up,
+     * ensuring cache consistency without manual intervention.
+     */
+    private function clearCache(): void
+    {
+        try {
+            Cache::tags([self::CACHE_TAG])->flush();
+
+            Log::debug('SettingsRegistry: Settings cache cleared via Redis tags', [
+                'tag' => self::CACHE_TAG,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('SettingsRegistry: Failed to clear cache', [
+                'tag' => self::CACHE_TAG,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

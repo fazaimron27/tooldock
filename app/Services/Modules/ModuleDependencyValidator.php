@@ -10,6 +10,8 @@ use Nwidart\Modules\Module;
 
 class ModuleDependencyValidator
 {
+    private const CACHE_TAG = 'module_dependencies';
+
     /**
      * Cached module map for case-insensitive lookups
      * Maps lowercase module name => actual module name
@@ -43,8 +45,7 @@ class ModuleDependencyValidator
 
         $startTime = microtime(true);
         $moduleName = $module->getName();
-        $modulePath = $module->getPath();
-        $appPath = $modulePath.'/app';
+        $appPath = $module->getPath().'/app';
 
         $declaredDependencies = $module->get('requires', []);
         $normalizedDependencies = $this->normalize($declaredDependencies);
@@ -127,8 +128,6 @@ class ModuleDependencyValidator
      */
     public function checkInstalled(Module $module, bool $checkEnabled = false, bool $skipValidation = false): void
     {
-        // If skipping validation, don't check if dependencies are installed
-        // This is used during auto-installation when we handle dependencies manually
         if ($skipValidation) {
             return;
         }
@@ -238,6 +237,8 @@ class ModuleDependencyValidator
      * Ignores comments, strings, and false positives. Uses caching to avoid re-scanning
      * unchanged modules. Cache key includes module name, version, and file hash for proper invalidation.
      *
+     * Optimized for Redis with cache tags for efficient bulk invalidation when modules change.
+     *
      * @param  string  $directory  The directory to scan
      * @param  string  $currentModuleName  The name of the module being scanned (to exclude self-references)
      * @param  Module  $module  The module object (used for cache key generation)
@@ -250,26 +251,52 @@ class ModuleDependencyValidator
         $fileHash = $this->calculateFilesHash($directory);
         $cacheKey = "module_dependencies:{$moduleName}:{$moduleVersion}:{$fileHash}";
 
-        return Cache::remember($cacheKey, now()->addDays(7), function () use ($directory, $currentModuleName) {
-            $dependencies = [];
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
-            );
+        try {
+            return Cache::tags([self::CACHE_TAG])->remember($cacheKey, now()->addDays(7), function () use ($directory, $currentModuleName) {
+                return $this->scanDirectoryDirectly($directory, $currentModuleName);
+            });
+        } catch (\Throwable $e) {
+            Log::warning('ModuleDependencyValidator: Cache error, falling back to direct scan', [
+                'module' => $moduleName,
+                'cache_key' => $cacheKey,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-            foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'php') {
-                    $content = file_get_contents($file->getPathname());
-                    if ($content === false) {
-                        continue;
-                    }
+            return $this->scanDirectoryDirectly($directory, $currentModuleName);
+        }
+    }
 
-                    $fileDependencies = $this->scanPhpFile($content, $currentModuleName);
-                    $dependencies = array_merge($dependencies, $fileDependencies);
+    /**
+     * Scan a directory directly for module dependencies without caching.
+     *
+     * This method performs the actual file scanning logic and is used both
+     * for cache population and as a fallback when cache operations fail.
+     *
+     * @param  string  $directory  The directory to scan
+     * @param  string  $currentModuleName  The name of the module being scanned (to exclude self-references)
+     * @return array<string> Array of module names found in use statements and class references
+     */
+    private function scanDirectoryDirectly(string $directory, string $currentModuleName): array
+    {
+        $dependencies = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $content = file_get_contents($file->getPathname());
+                if ($content === false) {
+                    continue;
                 }
-            }
 
-            return array_unique($dependencies);
-        });
+                $fileDependencies = $this->scanPhpFile($content, $currentModuleName);
+                $dependencies = array_merge($dependencies, $fileDependencies);
+            }
+        }
+
+        return array_unique($dependencies);
     }
 
     /**
@@ -550,5 +577,29 @@ class ModuleDependencyValidator
         }
 
         return $count;
+    }
+
+    /**
+     * Clear all module dependency caches.
+     *
+     * Optimized for Redis - uses tag-based flush for efficient invalidation.
+     * This method can be called when modules are installed/uninstalled to ensure
+     * dependency validation caches are refreshed.
+     */
+    public function clearCache(): void
+    {
+        try {
+            Cache::tags([self::CACHE_TAG])->flush();
+
+            Log::debug('ModuleDependencyValidator: Module dependency cache cleared via Redis tags', [
+                'tag' => self::CACHE_TAG,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('ModuleDependencyValidator: Failed to clear cache', [
+                'tag' => self::CACHE_TAG,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

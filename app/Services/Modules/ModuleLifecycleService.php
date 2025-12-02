@@ -12,6 +12,7 @@ use App\Events\Modules\ModuleUninstalled;
 use App\Events\Modules\ModuleUninstalling;
 use App\Exceptions\MissingDependencyException;
 use App\Services\Registry\CategoryRegistry;
+use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -35,6 +36,7 @@ class ModuleLifecycleService
      * @param  ModuleStatusService  $statusService
      * @param  SettingsRegistry  $settingsRegistry
      * @param  CategoryRegistry  $categoryRegistry
+     * @param  MenuRegistry  $menuRegistry
      * @param  RoleRegistry  $roleRegistry
      * @param  PermissionRegistry  $permissionRegistry
      */
@@ -49,6 +51,7 @@ class ModuleLifecycleService
         private ModuleStatusService $statusService,
         private SettingsRegistry $settingsRegistry,
         private CategoryRegistry $categoryRegistry,
+        private MenuRegistry $menuRegistry,
         private RoleRegistry $roleRegistry,
         private PermissionRegistry $permissionRegistry
     ) {
@@ -91,9 +94,6 @@ class ModuleLifecycleService
         $this->dependencyValidator->checkInstalled($module, checkEnabled: false, skipValidation: $skipValidation);
         Log::info("ModuleLifecycleService: Dependencies checked for '{$moduleName}'");
 
-        // Validate dependencies are enabled before installation completes
-        // Since install() calls enable() at the end, we must ensure dependencies are enabled
-        // to prevent partial installation state. This check happens BEFORE marking as installed.
         if (! $skipValidation) {
             $this->registryHelper->reloadStatuses();
 
@@ -353,12 +353,31 @@ class ModuleLifecycleService
         }
 
         try {
+            $this->menuRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded menus for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Menu seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
             $this->permissionRegistry->seed();
             Log::info("ModuleLifecycleService: Seeded permissions for '{$moduleName}'");
         } catch (\Exception $e) {
             Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->dependencyValidator->clearCache();
+            Log::debug("ModuleLifecycleService: Cleared module dependency cache after seeding '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Failed to clear module dependency cache for '{$moduleName}'", [
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -423,6 +442,28 @@ class ModuleLifecycleService
             Log::warning("ModuleLifecycleService: Category cleanup failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $stats = $this->menuRegistry->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up menus for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+                'orphaned' => $stats['orphaned'],
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Menu cleanup failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->dependencyValidator->clearCache();
+            Log::debug("ModuleLifecycleService: Cleared module dependency cache after cleanup of '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Failed to clear module dependency cache for '{$moduleName}'", [
+                'error' => $e->getMessage(),
             ]);
         }
     }

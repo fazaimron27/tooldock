@@ -5,14 +5,16 @@ namespace App\Services\Core;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\Settings\Models\Setting;
 
 /**
  * Service for managing application settings with aggressive caching.
  *
+ * Optimized for Redis with cache tags for efficient invalidation.
  * Uses Cache::rememberForever to load all settings into memory,
  * ensuring zero database impact on normal requests. Cache is invalidated
- * immediately when settings are updated.
+ * immediately when settings are updated via tag-based flush.
  *
  * Note: For registration and seeding, use SettingsRegistry.
  * This service handles runtime operations (get, set, all) with caching.
@@ -20,6 +22,8 @@ use Modules\Settings\Models\Setting;
 class SettingsService
 {
     private const CACHE_KEY = 'app_settings';
+
+    private const CACHE_TAG = 'settings';
 
     public function __construct(
         private Setting $setting,
@@ -56,8 +60,8 @@ class SettingsService
     /**
      * Set a setting value.
      *
-     * Updates an existing setting's value in the database, then immediately forgets
-     * the cache to force a reload on the next request.
+     * Updates an existing setting's value in the database, then immediately clears
+     * the cache via Redis tags to force a reload on the next request.
      *
      * @param  string  $key  The setting key
      * @param  mixed  $value  The value to set
@@ -77,7 +81,7 @@ class SettingsService
 
         $setting->update(['value' => $value]);
 
-        Cache::forget(self::CACHE_KEY);
+        $this->clearCache();
 
         if ($key === 'app_debug') {
             config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
@@ -110,7 +114,7 @@ class SettingsService
     public function sync(): void
     {
         $this->settingsRegistry->seed();
-        Cache::forget(self::CACHE_KEY);
+        $this->clearCache();
     }
 
     /**
@@ -127,7 +131,7 @@ class SettingsService
         $result = $this->settingsRegistry->cleanup($moduleName);
 
         if ($result['deleted'] > 0) {
-            Cache::forget(self::CACHE_KEY);
+            $this->clearCache();
         }
 
         return $result;
@@ -136,6 +140,7 @@ class SettingsService
     /**
      * Load all settings from cache or database.
      *
+     * Optimized for Redis with cache tags for efficient invalidation.
      * Uses Cache::rememberForever to cache all settings.
      * Cache is invalidated when settings are updated via set().
      * Automatically syncs any missing registered settings from SettingsRegistry
@@ -150,12 +155,18 @@ class SettingsService
         }
 
         try {
-            return Cache::rememberForever(self::CACHE_KEY, function () {
+            return Cache::tags([self::CACHE_TAG])->rememberForever(self::CACHE_KEY, function () {
                 $this->settingsRegistry->seed();
 
                 return $this->setting->all();
             });
         } catch (\Throwable $e) {
+            Log::warning('SettingsService: Cache error, falling back to database', [
+                'cache_key' => self::CACHE_KEY,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return $this->setting->all();
         }
     }
@@ -176,5 +187,29 @@ class SettingsService
         }
 
         return false;
+    }
+
+    /**
+     * Clear all settings caches.
+     *
+     * Optimized for Redis - uses tag-based flush for efficient invalidation.
+     * This method is called automatically when settings are updated, synced, or cleaned up,
+     * ensuring cache consistency without manual intervention.
+     */
+    private function clearCache(): void
+    {
+        try {
+            Cache::tags([self::CACHE_TAG])->flush();
+
+            Log::debug('SettingsService: Settings cache cleared via Redis tags', [
+                'tag' => self::CACHE_TAG,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('SettingsService: Failed to clear cache', [
+                'tag' => self::CACHE_TAG,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }
