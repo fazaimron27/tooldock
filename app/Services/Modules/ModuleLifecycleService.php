@@ -4,7 +4,9 @@ namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
 use App\Services\Registry\CategoryRegistry;
-use App\Services\Registry\SettingsService;
+use App\Services\Registry\PermissionRegistry;
+use App\Services\Registry\RoleRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
@@ -17,28 +19,28 @@ class ModuleLifecycleService
      * @param  ActivatorInterface  $activator
      * @param  ModuleDependencyValidator  $dependencyValidator
      * @param  ModuleDependencyChecker  $dependencyChecker
-     * @param  ModulePermissionManager  $permissionManager
      * @param  ModuleRegistryHelper  $registryHelper
      * @param  ModuleDiscoveryService  $discoveryService
      * @param  ModuleMigrationService  $migrationService
      * @param  ModuleStatusService  $statusService
-     * @param  SettingsService  $settingsService
+     * @param  SettingsRegistry  $settingsRegistry
      * @param  CategoryRegistry  $categoryRegistry
-     *
-     * Note: Sets lifecycle service in discovery service to break circular dependency.
+     * @param  RoleRegistry  $roleRegistry
+     * @param  PermissionRegistry  $permissionRegistry
      */
     public function __construct(
         private RepositoryInterface $moduleRepository,
         private ActivatorInterface $activator,
         private ModuleDependencyValidator $dependencyValidator,
         private ModuleDependencyChecker $dependencyChecker,
-        private ModulePermissionManager $permissionManager,
         private ModuleRegistryHelper $registryHelper,
         private ModuleDiscoveryService $discoveryService,
         private ModuleMigrationService $migrationService,
         private ModuleStatusService $statusService,
-        private SettingsService $settingsService,
-        private CategoryRegistry $categoryRegistry
+        private SettingsRegistry $settingsRegistry,
+        private CategoryRegistry $categoryRegistry,
+        private RoleRegistry $roleRegistry,
+        private PermissionRegistry $permissionRegistry
     ) {
         $this->discoveryService->setLifecycleService($this);
     }
@@ -81,8 +83,6 @@ class ModuleLifecycleService
 
         $this->migrationService->runMigrations($moduleName);
 
-        $this->permissionManager->runSeeder($moduleName);
-
         if ($withSeed) {
             Log::info("ModuleLifecycleService: Running database seeders for '{$moduleName}'");
             $seedResult = Artisan::call('module:seed', [
@@ -101,11 +101,22 @@ class ModuleLifecycleService
         $this->enable($moduleName, skipValidation: $skipValidation);
 
         try {
-            $this->settingsService->sync();
-            Log::info("ModuleLifecycleService: Synced settings after installing '{$moduleName}'");
+            $this->settingsRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded settings after installing '{$moduleName}'");
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Settings sync skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Settings seeding failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->roleRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded roles after installing '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Role seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -113,8 +124,19 @@ class ModuleLifecycleService
             $this->categoryRegistry->seed();
             Log::info("ModuleLifecycleService: Seeded categories after installing '{$moduleName}'");
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Category seeding skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Category seeding failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->permissionRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded permissions after installing '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -151,16 +173,42 @@ class ModuleLifecycleService
 
         $this->disable($moduleName);
 
-        $this->permissionManager->cleanup($moduleName);
+        try {
+            $stats = $this->permissionRegistry->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up permissions for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+                'roles_cleaned' => $stats['roles_cleaned'],
+                'models_cleaned' => $stats['models_cleaned'],
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Permission cleanup failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
 
         try {
-            $stats = $this->settingsService->cleanup($moduleName);
+            $stats = $this->roleRegistry->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up roles for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+                'skipped' => $stats['skipped'],
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Role cleanup failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $stats = $this->settingsRegistry->cleanup($moduleName);
             Log::info("ModuleLifecycleService: Cleaned up settings for '{$moduleName}'", [
                 'deleted' => $stats['deleted'],
             ]);
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Settings cleanup skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Settings cleanup failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -171,8 +219,9 @@ class ModuleLifecycleService
                 'orphaned' => $stats['orphaned'],
             ]);
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Category cleanup skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Category cleanup failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -217,11 +266,22 @@ class ModuleLifecycleService
         $this->activator->enable($module);
 
         try {
-            $this->settingsService->sync();
-            Log::info("ModuleLifecycleService: Synced settings after enabling '{$moduleName}'");
+            $this->settingsRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded settings after enabling '{$moduleName}'");
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Settings sync skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Settings seeding failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->roleRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded roles after enabling '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Role seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -229,8 +289,19 @@ class ModuleLifecycleService
             $this->categoryRegistry->seed();
             Log::info("ModuleLifecycleService: Seeded categories after enabling '{$moduleName}'");
         } catch (\Exception $e) {
-            Log::debug("ModuleLifecycleService: Category seeding skipped for '{$moduleName}'", [
+            Log::warning("ModuleLifecycleService: Category seeding failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->permissionRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded permissions after enabling '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
