@@ -187,6 +187,12 @@ const Ziggy = {
       parameters: ['medium'],
       bindings: { medium: 'id' },
     },
+    'storage.local': {
+      uri: 'storage\/{path}',
+      methods: ['GET', 'HEAD'],
+      wheres: { path: '.*' },
+      parameters: ['path'],
+    },
     'api.blog.index': { uri: 'api\/v1\/blogs', methods: ['GET', 'HEAD'] },
     'api.blog.store': { uri: 'api\/v1\/blogs', methods: ['POST'] },
     'api.blog.show': {
@@ -233,12 +239,6 @@ const Ziggy = {
       methods: ['DELETE'],
       parameters: ['blog'],
       bindings: { blog: 'id' },
-    },
-    'storage.local': {
-      uri: 'storage\/{path}',
-      methods: ['GET', 'HEAD'],
-      wheres: { path: '.*' },
-      parameters: ['path'],
     },
   },
 };
