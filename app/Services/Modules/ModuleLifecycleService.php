@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Contracts\RepositoryInterface;
+use Nwidart\Modules\Facades\Module as ModuleFacade;
 
 class ModuleLifecycleService
 {
@@ -89,6 +90,23 @@ class ModuleLifecycleService
 
         $this->dependencyValidator->checkInstalled($module, checkEnabled: false, skipValidation: $skipValidation);
         Log::info("ModuleLifecycleService: Dependencies checked for '{$moduleName}'");
+
+        // Validate dependencies are enabled before installation completes
+        // Since install() calls enable() at the end, we must ensure dependencies are enabled
+        // to prevent partial installation state. This check happens BEFORE marking as installed.
+        if (! $skipValidation) {
+            $this->registryHelper->reloadStatuses();
+
+            $validatedDependencies = $this->dependencyValidator->validate($module, $skipValidation);
+            foreach ($validatedDependencies as $requiredModuleName) {
+                if ($this->statusService->isInstalled($requiredModuleName) && ! ModuleFacade::isEnabled($requiredModuleName)) {
+                    throw new MissingDependencyException(
+                        "Cannot install '{$moduleName}' because the required dependency '{$requiredModuleName}' is installed but not enabled.\n".
+                            "Please enable '{$requiredModuleName}' first."
+                    );
+                }
+            }
+        }
 
         $this->statusService->markAsInstalled($moduleName, $module->get('version'));
         Log::info("ModuleLifecycleService: Updated modules_statuses for '{$moduleName}'");

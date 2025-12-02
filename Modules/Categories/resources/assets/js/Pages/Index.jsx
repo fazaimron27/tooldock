@@ -51,6 +51,7 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         preserveState: true,
         preserveScroll: true,
         only: ['categories'],
+        skipLoadingIndicator: true,
       }
     );
   };
@@ -79,7 +80,7 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         value: total.toString(),
         icon: Tag,
       },
-      ...typeStats.slice(0, 5), // Show top 5 types
+      ...typeStats.slice(0, 5),
     ];
   }, [categories.total, categories.data]);
 
