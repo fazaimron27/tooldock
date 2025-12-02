@@ -309,14 +309,14 @@ export default function ModuleCard({ module, onKeywordClick }) {
                     disabled={isToggling || module.protected}
                   />
                 </div>
-                {module.is_installed && module.is_active && !module.protected && (
+                {/* {module.is_installed && module.is_active && !module.protected && (
                   <Link href={getModuleRouteUrl(module.name)} className="w-full">
                     <Button variant="outline" className="w-full">
                       <ArrowRight className="mr-2 h-4 w-4" />
                       Go to Module
                     </Button>
                   </Link>
-                )}
+                )} */}
                 {!module.protected && (
                   <Button
                     variant="destructive"

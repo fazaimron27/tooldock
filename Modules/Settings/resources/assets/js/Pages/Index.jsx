@@ -152,9 +152,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
             value={value}
             onChange={(e) => form.setData(setting.key, e.target.value)}
             error={error}
-            placeholder={
-              setting.key === 'app_logo' ? 'e.g., Grid3x3, Home, Settings, User' : undefined
-            }
+            placeholder={setting.key === 'app_logo' ? 'e.g., Cog, Home, Settings, User' : undefined}
           />
         );
     }
