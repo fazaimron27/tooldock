@@ -1,6 +1,6 @@
 import { cn } from '@/Utils/utils';
 import { Slot } from '@radix-ui/react-slot';
-import { ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import * as React from 'react';
 
 const Breadcrumb = React.forwardRef(({ ...props }, ref) => (
@@ -12,7 +12,7 @@ const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => (
   <ol
     ref={ref}
     className={cn(
-      'flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5',
+      'flex flex-wrap items-center gap-1 break-words text-sm text-muted-foreground',
       className
     )}
     {...props}
@@ -21,7 +21,7 @@ const BreadcrumbList = React.forwardRef(({ className, ...props }, ref) => (
 BreadcrumbList.displayName = 'BreadcrumbList';
 
 const BreadcrumbItem = React.forwardRef(({ className, ...props }, ref) => (
-  <li ref={ref} className={cn('inline-flex items-center gap-1.5', className)} {...props} />
+  <li ref={ref} className={cn('inline-flex items-center', className)} {...props} />
 ));
 BreadcrumbItem.displayName = 'BreadcrumbItem';
 
@@ -62,19 +62,6 @@ const BreadcrumbSeparator = ({ children, className, ...props }) => (
 );
 BreadcrumbSeparator.displayName = 'BreadcrumbSeparator';
 
-const BreadcrumbEllipsis = ({ className, ...props }) => (
-  <span
-    role="presentation"
-    aria-hidden="true"
-    className={cn('flex h-9 w-9 items-center justify-center', className)}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More</span>
-  </span>
-);
-BreadcrumbEllipsis.displayName = 'BreadcrumbElipssis';
-
 export {
   Breadcrumb,
   BreadcrumbList,
@@ -82,5 +69,4 @@ export {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  BreadcrumbEllipsis,
 };

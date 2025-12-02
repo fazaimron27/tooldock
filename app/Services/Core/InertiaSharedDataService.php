@@ -34,7 +34,7 @@ class InertiaSharedDataService
         $user = $request->user();
 
         if ($user) {
-            $user->load('avatar');
+            $user->load(['avatar', 'roles']);
         }
 
         $fileSizeInfo = $this->mediaConfigService->getFileSizeInfo();
@@ -53,6 +53,7 @@ class InertiaSharedDataService
                 'warning' => $request->session()->pull('warning'),
             ],
             'app_name' => settings('app_name', config('app.name')),
+            'app_logo' => settings('app_logo', 'Grid3x3'),
             'csrf' => csrf_token(),
             'media' => [
                 'max_file_size_kb' => $fileSizeInfo['effective_kb'],

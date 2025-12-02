@@ -67,7 +67,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
       preserveState: true,
       preserveScroll: true,
       only: [],
-      skipLoadingIndicator: true, // Skip loading for tab switching
+      skipLoadingIndicator: true,
     });
   };
 
@@ -81,7 +81,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
       preserveState: true,
       preserveScroll: true,
       only: [],
-      skipLoadingIndicator: true, // Skip loading for tab switching
+      skipLoadingIndicator: true,
     });
   };
 
@@ -152,6 +152,9 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
             value={value}
             onChange={(e) => form.setData(setting.key, e.target.value)}
             error={error}
+            placeholder={
+              setting.key === 'app_logo' ? 'e.g., Grid3x3, Home, Settings, User' : undefined
+            }
           />
         );
     }
@@ -182,7 +185,6 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
     <DashboardLayout header="Settings">
       <PageShell title="Application Settings">
         <form onSubmit={handleSubmit} className="space-y-8" noValidate>
-          {/* Application Settings Section */}
           {appGroups.length > 0 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold">Application Settings</h2>
@@ -226,10 +228,8 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
             </div>
           )}
 
-          {/* Divider */}
           {appGroups.length > 0 && moduleGroups.length > 0 && <div className="border-t pt-8" />}
 
-          {/* Modules Settings Section */}
           {moduleGroups.length > 0 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold">Modules Settings</h2>

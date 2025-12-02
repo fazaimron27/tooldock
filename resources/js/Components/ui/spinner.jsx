@@ -1,14 +1,11 @@
 import { cn } from '@/Utils/utils';
-import { Loader2Icon } from 'lucide-react';
 
 function Spinner({ className, ...props }) {
   return (
-    <Loader2Icon
-      role="status"
-      aria-label="Loading"
-      className={cn('size-4 animate-spin', className)}
-      {...props}
-    />
+    <div role="status" aria-label="Loading" className={cn('relative', className)} {...props}>
+      <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary border-r-primary/50 animate-spin" />
+    </div>
   );
 }
 

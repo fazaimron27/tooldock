@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
 
 import InputError from '@/Components/InputError';
@@ -10,12 +10,12 @@ import { Spinner } from '@/Components/ui/spinner';
 
 import AuthLayout from '../../Layouts/AuthLayout';
 
-export default function Register() {
+export default function ResetPassword({ token, email }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const { data, setData, post, processing, errors, reset } = useForm({
-    name: '',
-    email: '',
+    token: token,
+    email: email,
     password: '',
     password_confirmation: '',
   });
@@ -23,40 +23,21 @@ export default function Register() {
   const submit = (e) => {
     e.preventDefault();
 
-    post(route('register'), {
+    post(route('password.store'), {
       onFinish: () => reset('password', 'password_confirmation'),
     });
   };
 
   return (
     <AuthLayout>
-      <Head title="Register" />
+      <Head title="Reset Password" />
 
-      {/* Header */}
       <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
-        <p className="text-muted-foreground">Enter your information to get started</p>
+        <h1 className="text-3xl font-bold tracking-tight">Reset your password</h1>
+        <p className="text-muted-foreground">Enter your new password below</p>
       </div>
 
       <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="name"
-              name="name"
-              value={data.name}
-              className="pl-10"
-              autoComplete="name"
-              autoFocus
-              onChange={(e) => setData('name', e.target.value)}
-              required
-            />
-          </div>
-          <InputError message={errors.name} />
-        </div>
-
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
@@ -86,6 +67,7 @@ export default function Register() {
               value={data.password}
               className="pl-10 pr-10"
               autoComplete="new-password"
+              autoFocus
               onChange={(e) => setData('password', e.target.value)}
               required
             />
@@ -133,13 +115,15 @@ export default function Register() {
 
         <Button type="submit" className="w-full" disabled={processing}>
           {processing && <Spinner className="mr-2" />}
-          {processing ? 'Creating account...' : 'Create account'}
+          {processing ? 'Resetting password...' : 'Reset Password'}
         </Button>
 
         <div className="text-center text-sm">
-          <span className="text-muted-foreground">Already have an account? </span>
           <Button asChild variant="link" className="h-auto p-0">
-            <Link href={route('login')}>Login</Link>
+            <Link href={route('login')} className="inline-flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to login
+            </Link>
           </Button>
         </div>
       </form>
