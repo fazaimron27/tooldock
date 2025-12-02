@@ -92,6 +92,8 @@ class SettingsService
      * Get all settings grouped by their 'group' column.
      *
      * Returns a collection grouped by the 'group' column for UI display.
+     * Groups are sorted alphabetically, and settings within each group
+     * are sorted by label alphabetically.
      * Format: ['general' => [...], 'finance' => [...]]
      *
      * @return \Illuminate\Support\Collection<string, \Illuminate\Support\Collection>
@@ -100,7 +102,10 @@ class SettingsService
     {
         $settings = $this->loadAllSettings();
 
-        return $settings->groupBy('group');
+        return $settings
+            ->groupBy('group')
+            ->sortKeys()
+            ->map(fn (Collection $groupSettings) => $groupSettings->sortBy('label')->values());
     }
 
     /**
