@@ -38,7 +38,9 @@ class BlogServiceProvider extends ServiceProvider
             route: 'blog.index',
             icon: 'FileText',
             order: 10,
-            permission: 'blog.posts.view'
+            permission: 'blog.posts.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerSettings($settingsRegistry);
