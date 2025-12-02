@@ -39,11 +39,16 @@ class ModuleDependencyChecker
         }
 
         if (! empty($dependents)) {
-            $dependentsList = implode("', '", $dependents);
-            throw new \RuntimeException(
-                "Cannot disable '{$moduleName}' because the following active modules depend on it: '{$dependentsList}'.\n".
-                    'Please disable the dependent modules first.'
-            );
+            $count = count($dependents);
+
+            if ($count === 1) {
+                $message = "Cannot disable '{$moduleName}' because the active module '{$dependents[0]}' depends on it. Please disable '{$dependents[0]}' first.";
+            } else {
+                $dependentsList = implode("', '", array_slice($dependents, 0, -1))."' and '".end($dependents);
+                $message = "Cannot disable '{$moduleName}' because the following active modules depend on it: '{$dependentsList}'. Please disable these modules first.";
+            }
+
+            throw new \RuntimeException($message);
         }
     }
 
@@ -82,11 +87,16 @@ class ModuleDependencyChecker
         }
 
         if (! empty($dependents)) {
-            $dependentsList = implode("', '", $dependents);
-            throw new \RuntimeException(
-                "Cannot uninstall '{$moduleName}' because the following installed modules depend on it: '{$dependentsList}'.\n".
-                    'Please uninstall the dependent modules first.'
-            );
+            $count = count($dependents);
+
+            if ($count === 1) {
+                $message = "Cannot uninstall '{$moduleName}' because the installed module '{$dependents[0]}' depends on it. Please uninstall '{$dependents[0]}' first.";
+            } else {
+                $dependentsList = implode("', '", array_slice($dependents, 0, -1))."' and '".end($dependents);
+                $message = "Cannot uninstall '{$moduleName}' because the following installed modules depend on it: '{$dependentsList}'. Please uninstall these modules first.";
+            }
+
+            throw new \RuntimeException($message);
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
@@ -65,10 +66,26 @@ class ModuleRegistryHelper
      * Regenerates the Ziggy route definitions file (resources/js/ziggy.js) to include
      * routes from newly installed/enabled modules. This allows the frontend to use
      * route() helper functions for module routes.
+     *
+     * If the command fails (e.g., Ziggy package not available), the error is logged
+     * but does not prevent the module operation from completing.
      */
     public function generateZiggyRoutes(): void
     {
-        Artisan::call('ziggy:generate');
+        try {
+            $commands = Artisan::all();
+            if (isset($commands['ziggy:generate'])) {
+                Artisan::call('ziggy:generate');
+                if (function_exists('opcache_reset')) {
+                    opcache_reset();
+                }
+            }
+        } catch (\Exception $e) {
+            // Ziggy route generation is non-critical - log but don't fail module operations
+            Log::warning('Failed to generate Ziggy routes', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
