@@ -2,25 +2,19 @@
 
 namespace Modules\Newsletter\Database\Seeders;
 
+use App\Services\Registry\PermissionRegistry;
 use Illuminate\Database\Seeder;
-use Modules\Core\App\Services\PermissionRegistry;
 
 class NewsletterPermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Permissions are now registered in NewsletterServiceProvider.
+     * This seeder ensures permissions are seeded if run manually.
      */
     public function run(): void
     {
-        app(PermissionRegistry::class)->register('newsletter', [
-            'campaigns.view',
-            'campaigns.create',
-            'campaigns.edit',
-            'campaigns.delete',
-            'campaigns.send',
-        ], [
-            'Administrator' => ['campaigns.*'],
-            'Staff' => ['campaigns.view', 'campaigns.create'],
-        ]);
+        app(PermissionRegistry::class)->seed();
     }
 }

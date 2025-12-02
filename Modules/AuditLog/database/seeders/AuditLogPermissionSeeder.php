@@ -2,23 +2,19 @@
 
 namespace Modules\AuditLog\Database\Seeders;
 
+use App\Services\Registry\PermissionRegistry;
 use Illuminate\Database\Seeder;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Services\PermissionRegistry;
 
 class AuditLogPermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Permissions are now registered in AuditLogServiceProvider.
+     * This seeder ensures permissions are seeded if run manually.
      */
     public function run(): void
     {
-        app(PermissionRegistry::class)->register('auditlog', [
-            'view',
-        ], [
-            Roles::ADMINISTRATOR => ['view'],
-            Roles::MANAGER => ['view'],
-            Roles::AUDITOR => ['view'],
-        ]);
+        app(PermissionRegistry::class)->seed();
     }
 }

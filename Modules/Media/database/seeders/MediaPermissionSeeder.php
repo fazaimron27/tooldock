@@ -2,24 +2,19 @@
 
 namespace Modules\Media\Database\Seeders;
 
+use App\Services\Registry\PermissionRegistry;
 use Illuminate\Database\Seeder;
-use Modules\Core\App\Services\PermissionRegistry;
 
 class MediaPermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Permissions are now registered in MediaServiceProvider.
+     * This seeder ensures permissions are seeded if run manually.
      */
     public function run(): void
     {
-        app(PermissionRegistry::class)->register('media', [
-            'files.view',
-            'files.upload',
-            'files.edit',
-            'files.delete',
-        ], [
-            'Administrator' => ['files.*'],
-            'Staff' => ['files.view', 'files.upload'],
-        ]);
+        app(PermissionRegistry::class)->seed();
     }
 }

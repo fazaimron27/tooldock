@@ -8,9 +8,11 @@ class AuditLogDatabaseSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Seeds permissions first. This seeder is reserved for future AuditLog module sample data.
      */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call(AuditLogPermissionSeeder::class);
     }
 }

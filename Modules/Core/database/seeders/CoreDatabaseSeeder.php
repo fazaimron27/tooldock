@@ -9,9 +9,11 @@ class CoreDatabaseSeeder extends Seeder
     /**
      * Run the database seeds.
      *
-     * Note: CorePermissionSeeder runs automatically during module installation
-     * via ModulePermissionManager::runSeeder(). This seeder is reserved for
-     * future Core module sample data or additional seeding needs.
+     * Seeds roles, permissions, and super admin user first.
+     * This seeder is reserved for future Core module sample data or additional seeding needs.
      */
-    public function run(): void {}
+    public function run(): void
+    {
+        $this->call(CorePermissionSeeder::class);
+    }
 }

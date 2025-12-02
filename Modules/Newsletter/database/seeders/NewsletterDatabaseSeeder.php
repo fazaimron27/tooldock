@@ -14,11 +14,12 @@ class NewsletterDatabaseSeeder extends Seeder
     /**
      * Run the database seeds.
      *
-     * Note: NewsletterPermissionSeeder is automatically run during module installation.
-     * This seeder only creates sample data for development/testing.
+     * Seeds permissions first, then creates sample data for development/testing.
      */
     public function run(): void
     {
+        $this->call(NewsletterPermissionSeeder::class);
+
         $user = User::withoutEvents(function () {
             return User::firstOrCreate(
                 ['email' => 'newsletter@example.com'],

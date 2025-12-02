@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      *
      * Note: Protected module seeders (CorePermissionSeeder, SettingsPermissionSeeder, etc.)
-     * run automatically during module installation via ModulePermissionManager.
+     * run automatically during module installation via PermissionRegistry.
      * This seeder is only needed for manual seeding or non-protected modules.
      */
     public function run(): void {}
