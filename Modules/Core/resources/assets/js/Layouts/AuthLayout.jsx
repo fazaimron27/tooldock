@@ -31,7 +31,7 @@ export default function AuthLayout({ children }) {
           <div className="space-y-4">
             <Quote className="h-8 w-8 text-zinc-400" />
             <blockquote className="text-lg font-medium leading-relaxed">
-              "Mosaic has transformed how we manage our operations. The intuitive interface and
+              "Tool Dock has transformed how we manage our operations. The intuitive interface and
               powerful features have increased our productivity by 40%."
             </blockquote>
             <div className="flex items-center gap-3">

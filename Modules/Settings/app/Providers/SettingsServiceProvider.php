@@ -170,7 +170,7 @@ class SettingsServiceProvider extends ServiceProvider
             module: 'Settings',
             group: 'general',
             key: 'app_name',
-            value: 'Mosaic',
+            value: 'Tool Dock',
             type: SettingType::Text,
             label: 'Application Name',
             isSystem: false
@@ -180,7 +180,7 @@ class SettingsServiceProvider extends ServiceProvider
             module: 'Settings',
             group: 'general',
             key: 'app_logo',
-            value: 'Rocket',
+            value: 'Squirrel',
             type: SettingType::Text,
             label: 'Application Logo Icon (Lucide)',
             isSystem: false

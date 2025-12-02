@@ -1,19 +1,19 @@
 {
-    "name": "Categories",
-    "alias": "categories",
+  "name": "Categories",
+  "alias": "categories",
   "version": "1.0.0",
   "description": "Master Data module providing central taxonomy for the entire system.",
   "keywords": ["categories", "taxonomy", "master-data", "hierarchy"],
   "priority": -996,
   "protected": true,
   "active": 1,
-    "providers": [
+  "providers": [
     "Modules\\Categories\\Providers\\CategoriesServiceProvider",
     "Modules\\Categories\\Providers\\RouteServiceProvider",
     "Modules\\Categories\\Providers\\AuthServiceProvider"
-    ],
+  ],
   "files": [],
   "requires": ["Core", "Settings", "AuditLog"],
   "icon": "Tag",
-  "author": "Mosaic Team"
+  "author": "Tool Dock Team"
 }

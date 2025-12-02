@@ -13,5 +13,5 @@
   "files": [],
   "requires": ["Core", "Blog", "Settings", "AuditLog"],
   "icon": "Send",
-  "author": "Mosaic Team"
+  "author": "Tool Dock Team"
 }

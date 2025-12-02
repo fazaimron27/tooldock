@@ -15,5 +15,5 @@
   "files": [],
   "requires": ["Core", "Settings"],
   "icon": "FileText",
-  "author": "Mosaic Team"
+  "author": "Tool Dock Team"
 }

@@ -177,7 +177,7 @@ export default function PageShell({
   className,
 }) {
   const { app_name } = usePage().props;
-  const appName = app_name || 'Mosaic';
+  const appName = app_name || 'Tool Dock';
   const finalBreadcrumbs = breadcrumbs || generateBreadcrumbsFromRoute(title, appName);
 
   return (
