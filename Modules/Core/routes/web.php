@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Core\Http\Controllers\ModuleManagerController;
 use Modules\Core\Http\Controllers\RoleController;
 use Modules\Core\Http\Controllers\UserController;
 
@@ -24,4 +25,9 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         'update' => 'core.roles.update',
         'destroy' => 'core.roles.destroy',
     ]);
+
+    Route::get('modules', [ModuleManagerController::class, 'index'])->name('core.modules.index');
+    Route::post('modules/install', [ModuleManagerController::class, 'install'])->name('core.modules.install');
+    Route::post('modules/uninstall', [ModuleManagerController::class, 'uninstall'])->name('core.modules.uninstall');
+    Route::post('modules/toggle', [ModuleManagerController::class, 'toggle'])->name('core.modules.toggle');
 });

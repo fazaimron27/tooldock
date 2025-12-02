@@ -62,6 +62,15 @@ class CoreServiceProvider extends ServiceProvider
             permission: 'core.roles.manage'
         );
 
+        $menuRegistry->registerItem(
+            group: 'System',
+            label: 'Modules',
+            route: 'core.modules.index',
+            icon: 'Package',
+            order: 100,
+            permission: 'core.modules.manage'
+        );
+
         $this->registerDefaultRoles($roleRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
 
@@ -221,6 +230,7 @@ class CoreServiceProvider extends ServiceProvider
             'users.edit',
             'users.delete',
             'roles.manage',
+            'modules.manage',
         ], [
             Roles::ADMINISTRATOR => [
                 'dashboard.view',
@@ -229,6 +239,7 @@ class CoreServiceProvider extends ServiceProvider
                 'users.edit',
                 'users.delete',
                 'roles.manage',
+                'modules.manage',
             ],
             Roles::MANAGER => [
                 'dashboard.view',
