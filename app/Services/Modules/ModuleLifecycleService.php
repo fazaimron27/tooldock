@@ -2,12 +2,21 @@
 
 namespace App\Services\Modules;
 
+use App\Events\Modules\ModuleDisabled;
+use App\Events\Modules\ModuleDisabling;
+use App\Events\Modules\ModuleEnabled;
+use App\Events\Modules\ModuleEnabling;
+use App\Events\Modules\ModuleInstalled;
+use App\Events\Modules\ModuleInstalling;
+use App\Events\Modules\ModuleUninstalled;
+use App\Events\Modules\ModuleUninstalling;
 use App\Exceptions\MissingDependencyException;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Contracts\RepositoryInterface;
@@ -72,6 +81,12 @@ class ModuleLifecycleService
             'version' => $module->get('version'),
         ]);
 
+        $event = new ModuleInstalling($module, $moduleName, $withSeed, $skipValidation);
+        Event::dispatch($event);
+        if ($event->preventInstall) {
+            throw new \RuntimeException($event->preventionReason ?? 'Installation prevented by event listener');
+        }
+
         $this->dependencyValidator->checkInstalled($module, checkEnabled: false, skipValidation: $skipValidation);
         Log::info("ModuleLifecycleService: Dependencies checked for '{$moduleName}'");
 
@@ -100,47 +115,9 @@ class ModuleLifecycleService
 
         $this->enable($moduleName, skipValidation: $skipValidation);
 
-        try {
-            $this->settingsRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded settings after installing '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Settings seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->roleRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded roles after installing '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Role seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->categoryRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded categories after installing '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Category seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->permissionRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded permissions after installing '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
         Log::info("ModuleLifecycleService: Installation complete for '{$moduleName}'");
+
+        $this->dispatchAfterEvent(new ModuleInstalled($module, $moduleName, $withSeed));
     }
 
     /**
@@ -169,10 +146,216 @@ class ModuleLifecycleService
             );
         }
 
+        $event = new ModuleUninstalling($module, $moduleName);
+        Event::dispatch($event);
+        if ($event->preventUninstall) {
+            throw new \RuntimeException($event->preventionReason ?? 'Uninstallation prevented by event listener');
+        }
+
         $this->dependencyChecker->checkForUninstall($moduleName);
 
         $this->disable($moduleName);
 
+        $this->cleanupAllRegistries($moduleName);
+
+        $this->migrationService->rollbackMigrations($moduleName);
+
+        $this->statusService->markAsUninstalled($moduleName);
+
+        $this->dispatchAfterEvent(new ModuleUninstalled($module, $moduleName));
+    }
+
+    /**
+     * Enable a module
+     *
+     * Activates a previously installed module:
+     * 1. Verifies module is installed
+     * 2. Validates dependencies are installed AND enabled
+     * 3. Sets is_active flag in database
+     * 4. Enables via activator (updates nwidart/laravel-modules cache)
+     * 5. Refreshes module registry to boot service providers (allows registries to register data)
+     * 6. Seeds all registries (settings, roles, categories, permissions)
+     * 7. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
+     *
+     * Called by install() after migrations/seeders, or independently to re-enable a disabled module.
+     *
+     * @param  string  $moduleName  The name of the module to enable
+     * @param  bool  $skipValidation  If true, skip dependency validation (useful for CI/CD or trusted modules)
+     *
+     * @throws MissingDependencyException When required dependencies are not installed or enabled
+     * @throws \RuntimeException When module is not installed
+     */
+    public function enable(string $moduleName, bool $skipValidation = false): void
+    {
+        $module = $this->moduleRepository->findOrFail($moduleName);
+
+        if (! $this->statusService->isInstalled($moduleName)) {
+            throw new \RuntimeException(
+                "Cannot enable '{$moduleName}' because it is not installed.\n".
+                    "Please install '{$moduleName}' first."
+            );
+        }
+
+        $event = new ModuleEnabling($module, $moduleName, $skipValidation);
+        Event::dispatch($event);
+        if ($event->preventEnable) {
+            throw new \RuntimeException($event->preventionReason ?? 'Enabling prevented by event listener');
+        }
+
+        $this->dependencyValidator->checkInstalled($module, checkEnabled: true, skipValidation: $skipValidation);
+
+        $this->statusService->setActive($moduleName, true);
+
+        $this->activator->enable($module);
+
+        $this->registryHelper->refresh();
+
+        $this->seedAllRegistries($moduleName);
+
+        $this->registryHelper->finalize();
+
+        $this->dispatchAfterEvent(new ModuleEnabled($module, $moduleName));
+    }
+
+    /**
+     * Disable a module
+     *
+     * Deactivates an enabled module:
+     * 1. Validates no active modules depend on this module
+     * 2. Sets is_active flag to false in database
+     * 3. Disables via activator (updates nwidart/laravel-modules cache)
+     * 4. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
+     *
+     * Called by uninstall() before rollback, or independently to temporarily disable a module.
+     *
+     * @param  string  $moduleName  The name of the module to disable
+     *
+     * @throws \RuntimeException When active modules depend on this module
+     */
+    public function disable(string $moduleName): void
+    {
+        $module = $this->moduleRepository->findOrFail($moduleName);
+
+        if ($module->get('protected') === true) {
+            throw new \RuntimeException(
+                "Cannot disable '{$moduleName}' because it is a protected module.\n".
+                    'Protected modules are essential to the system and must remain enabled.'
+            );
+        }
+
+        $event = new ModuleDisabling($module, $moduleName);
+        Event::dispatch($event);
+        if ($event->preventDisable) {
+            throw new \RuntimeException($event->preventionReason ?? 'Disabling prevented by event listener');
+        }
+
+        $this->dependencyChecker->checkForDisable($moduleName);
+
+        $this->statusService->setActive($moduleName, false);
+
+        $this->activator->disable($module);
+
+        $this->registryHelper->finalize();
+
+        $this->dispatchAfterEvent(new ModuleDisabled($module, $moduleName));
+    }
+
+    /**
+     * Discover and register all available modules in the database
+     *
+     * Scans the Modules directory for all available modules and registers them
+     * in the modules_statuses table. This is useful after a fresh database migration
+     * to ensure all modules are tracked in the database.
+     *
+     * Modules are registered with is_installed=false and is_active=false by default.
+     * They must be explicitly installed using install() or module:manage command.
+     *
+     * @return array<string> Array of discovered module names
+     */
+    public function discoverAndRegisterAll(): array
+    {
+        return $this->discoveryService->discoverAndRegisterAll();
+    }
+
+    /**
+     * Discover and install all protected modules automatically.
+     *
+     * This method is called after migrations complete on a fresh database
+     * to automatically install essential protected modules (like Core).
+     * Only modules marked as "protected": true in their module.json are installed.
+     *
+     * Modules are installed in dependency order (modules with no dependencies first).
+     *
+     * @return array<string> Array of installed module names
+     */
+    public function installProtectedModules(): array
+    {
+        return $this->discoveryService->installProtectedModules();
+    }
+
+    /**
+     * Seed all registries for a module.
+     *
+     * Centralized method to seed all registries (settings, roles, categories, permissions)
+     * with error handling. Uses fail-open strategy - continues on errors to prevent
+     * one registry failure from blocking the entire operation.
+     *
+     * @param  string  $moduleName  The name of the module
+     */
+    private function seedAllRegistries(string $moduleName): void
+    {
+        try {
+            $this->settingsRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded settings for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Settings seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->roleRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded roles for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Role seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->categoryRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded categories for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Category seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $this->permissionRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded permissions for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+    /**
+     * Cleanup all registries for a module.
+     *
+     * Centralized method to cleanup all registries (permissions, roles, settings, categories)
+     * with error handling. Uses fail-open strategy - continues on errors to prevent
+     * one registry failure from blocking the entire operation.
+     *
+     * @param  string  $moduleName  The name of the module
+     */
+    private function cleanupAllRegistries(string $moduleName): void
+    {
         try {
             $stats = $this->permissionRegistry->cleanup($moduleName);
             Log::info("ModuleLifecycleService: Cleaned up permissions for '{$moduleName}'", [
@@ -224,155 +407,25 @@ class ModuleLifecycleService
                 'trace' => $e->getTraceAsString(),
             ]);
         }
-
-        $this->migrationService->rollbackMigrations($moduleName);
-
-        $this->statusService->markAsUninstalled($moduleName);
     }
 
     /**
-     * Enable a module
+     * Dispatch an event, deferring it if running in HTTP context.
      *
-     * Activates a previously installed module:
-     * 1. Verifies module is installed
-     * 2. Validates dependencies are installed AND enabled
-     * 3. Sets is_active flag in database
-     * 4. Enables via activator (updates nwidart/laravel-modules cache)
-     * 5. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
+     * For CLI commands, events are dispatched synchronously for better debugging
+     * and error handling. For HTTP requests, "after" events are deferred to
+     * improve response times by executing listeners after the response is sent.
      *
-     * Called by install() after migrations/seeders, or independently to re-enable a disabled module.
-     *
-     * @param  string  $moduleName  The name of the module to enable
-     * @param  bool  $skipValidation  If true, skip dependency validation (useful for CI/CD or trusted modules)
-     *
-     * @throws MissingDependencyException When required dependencies are not installed or enabled
-     * @throws \RuntimeException When module is not installed
+     * @param  object  $event  The event instance to dispatch
      */
-    public function enable(string $moduleName, bool $skipValidation = false): void
+    private function dispatchAfterEvent(object $event): void
     {
-        $module = $this->moduleRepository->findOrFail($moduleName);
-
-        if (! $this->statusService->isInstalled($moduleName)) {
-            throw new \RuntimeException(
-                "Cannot enable '{$moduleName}' because it is not installed.\n".
-                    "Please install '{$moduleName}' first."
-            );
+        if (app()->runningInConsole()) {
+            Event::dispatch($event);
+        } else {
+            Event::defer(function () use ($event) {
+                Event::dispatch($event);
+            });
         }
-
-        $this->dependencyValidator->checkInstalled($module, checkEnabled: true, skipValidation: $skipValidation);
-
-        $this->statusService->setActive($moduleName, true);
-
-        $this->activator->enable($module);
-
-        try {
-            $this->settingsRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded settings after enabling '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Settings seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->roleRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded roles after enabling '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Role seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->categoryRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded categories after enabling '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Category seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->permissionRegistry->seed();
-            Log::info("ModuleLifecycleService: Seeded permissions after enabling '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Permission seeding failed for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        $this->registryHelper->finalize();
-    }
-
-    /**
-     * Disable a module
-     *
-     * Deactivates an enabled module:
-     * 1. Validates no active modules depend on this module
-     * 2. Sets is_active flag to false in database
-     * 3. Disables via activator (updates nwidart/laravel-modules cache)
-     * 4. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
-     *
-     * Called by uninstall() before rollback, or independently to temporarily disable a module.
-     *
-     * @param  string  $moduleName  The name of the module to disable
-     *
-     * @throws \RuntimeException When active modules depend on this module
-     */
-    public function disable(string $moduleName): void
-    {
-        $module = $this->moduleRepository->findOrFail($moduleName);
-
-        if ($module->get('protected') === true) {
-            throw new \RuntimeException(
-                "Cannot disable '{$moduleName}' because it is a protected module.\n".
-                    'Protected modules are essential to the system and must remain enabled.'
-            );
-        }
-
-        $this->dependencyChecker->checkForDisable($moduleName);
-
-        $this->statusService->setActive($moduleName, false);
-
-        $this->activator->disable($module);
-
-        $this->registryHelper->finalize();
-    }
-
-    /**
-     * Discover and register all available modules in the database
-     *
-     * Scans the Modules directory for all available modules and registers them
-     * in the modules_statuses table. This is useful after a fresh database migration
-     * to ensure all modules are tracked in the database.
-     *
-     * Modules are registered with is_installed=false and is_active=false by default.
-     * They must be explicitly installed using install() or module:manage command.
-     *
-     * @return array<string> Array of discovered module names
-     */
-    public function discoverAndRegisterAll(): array
-    {
-        return $this->discoveryService->discoverAndRegisterAll();
-    }
-
-    /**
-     * Discover and install all protected modules automatically.
-     *
-     * This method is called after migrations complete on a fresh database
-     * to automatically install essential protected modules (like Core).
-     * Only modules marked as "protected": true in their module.json are installed.
-     *
-     * Modules are installed in dependency order (modules with no dependencies first).
-     *
-     * @return array<string> Array of installed module names
-     */
-    public function installProtectedModules(): array
-    {
-        return $this->discoveryService->installProtectedModules();
     }
 }
