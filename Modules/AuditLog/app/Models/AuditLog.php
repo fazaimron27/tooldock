@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Modules\Core\App\Models\User;
 
 class AuditLog extends Model
 {
     use HasFactory;
+
+    /**
+     * Cache tag name for audit log-related cache entries.
+     * Used for efficient bulk invalidation via Redis tags.
+     */
+    private const CACHE_TAG = 'auditlog';
 
     /**
      * The attributes that are mass assignable.
@@ -200,11 +207,24 @@ class AuditLog extends Model
     /**
      * Invalidate the cached model types list.
      *
+     * Optimized for Redis - uses tag-based flush for efficient invalidation.
      * Call this method when you know new model types have been added
      * to ensure the filter dropdown is up-to-date.
      */
     public static function invalidateModelTypesCache(): void
     {
-        Cache::forget('auditlog.model_types');
+        try {
+            Cache::tags([self::CACHE_TAG])->flush();
+
+            Log::debug('AuditLog: Audit log cache cleared via Redis tags', [
+                'tag' => self::CACHE_TAG,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('AuditLog: Failed to clear cache', [
+                'tag' => self::CACHE_TAG,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

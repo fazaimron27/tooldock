@@ -38,7 +38,9 @@ class NewsletterServiceProvider extends ServiceProvider
             route: 'newsletter.index',
             icon: 'Send',
             order: 20,
-            permission: 'newsletter.campaigns.view'
+            permission: 'newsletter.campaigns.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerSettings($settingsRegistry);

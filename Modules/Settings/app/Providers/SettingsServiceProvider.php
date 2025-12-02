@@ -38,7 +38,9 @@ class SettingsServiceProvider extends ServiceProvider
             route: 'settings.index',
             icon: 'Settings',
             order: 30,
-            permission: 'settings.config.view'
+            permission: 'settings.config.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerDefaultSettings($settingsRegistry);

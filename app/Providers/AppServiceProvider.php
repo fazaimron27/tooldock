@@ -75,7 +75,10 @@ class AppServiceProvider extends ServiceProvider
             label: 'Dashboard',
             route: 'dashboard',
             icon: 'Home',
-            order: 1
+            order: 1,
+            permission: null,
+            parentKey: null,
+            module: null
         );
 
         Event::listen(

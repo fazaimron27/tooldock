@@ -44,7 +44,9 @@ class CategoriesServiceProvider extends ServiceProvider
             route: 'categories.index',
             icon: 'Tag',
             order: 10,
-            permission: 'categories.category.view'
+            permission: 'categories.category.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerSettings($settingsRegistry);

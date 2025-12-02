@@ -40,7 +40,9 @@ class AuditLogServiceProvider extends ServiceProvider
             route: 'auditlog.index',
             icon: 'FileText',
             order: 30,
-            permission: 'auditlog.view'
+            permission: 'auditlog.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerSettings($settingsRegistry);

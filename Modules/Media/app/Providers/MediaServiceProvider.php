@@ -42,7 +42,9 @@ class MediaServiceProvider extends ServiceProvider
             route: 'media.index',
             icon: 'Image',
             order: 40,
-            permission: 'media.files.view'
+            permission: 'media.files.view',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerSettings($settingsRegistry);

@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\Menu;
 use Modules\Core\App\Models\User;
+use Modules\Core\App\Observers\MenuObserver;
 use Modules\Core\App\Observers\PermissionObserver;
 use Modules\Core\App\Observers\RoleObserver;
 use Modules\Core\App\Observers\UserObserver;
@@ -46,11 +48,24 @@ class CoreServiceProvider extends ServiceProvider
 
         $menuRegistry->registerItem(
             group: 'System',
+            label: 'User Management',
+            route: 'core.user-management',
+            icon: 'Users',
+            order: 10,
+            permission: null,
+            parentKey: null,
+            module: $this->name
+        );
+
+        $menuRegistry->registerItem(
+            group: 'System',
             label: 'Users',
             route: 'core.users.index',
             icon: 'Users',
             order: 10,
-            permission: 'core.users.view'
+            permission: 'core.users.view',
+            parentKey: 'core.user-management',
+            module: $this->name
         );
 
         $menuRegistry->registerItem(
@@ -59,7 +74,9 @@ class CoreServiceProvider extends ServiceProvider
             route: 'core.roles.index',
             icon: 'Shield',
             order: 20,
-            permission: 'core.roles.manage'
+            permission: 'core.roles.manage',
+            parentKey: 'core.user-management',
+            module: $this->name
         );
 
         $menuRegistry->registerItem(
@@ -68,7 +85,9 @@ class CoreServiceProvider extends ServiceProvider
             route: 'core.modules.index',
             icon: 'Package',
             order: 100,
-            permission: 'core.modules.manage'
+            permission: 'core.modules.manage',
+            parentKey: null,
+            module: $this->name
         );
 
         $this->registerDefaultRoles($roleRegistry);
@@ -87,6 +106,7 @@ class CoreServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Role::observe(RoleObserver::class);
         Permission::observe(PermissionObserver::class);
+        Menu::observe(MenuObserver::class);
     }
 
     /**
