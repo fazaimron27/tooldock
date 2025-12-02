@@ -180,7 +180,7 @@ class SettingsServiceProvider extends ServiceProvider
             module: 'Settings',
             group: 'general',
             key: 'app_logo',
-            value: 'Squirrel',
+            value: 'Cog',
             type: SettingType::Text,
             label: 'Application Logo Icon (Lucide)',
             isSystem: false
