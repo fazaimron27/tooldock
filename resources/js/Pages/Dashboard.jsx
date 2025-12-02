@@ -180,13 +180,10 @@ const tableData = [
 ];
 
 export default function Dashboard() {
-  // Dialog states using useDisclosure
   const viewAnalyticsDialog = useDisclosure();
   const deleteUserDialog = useDisclosure();
-
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // Toast helper function
   const testToast = (type = 'success') => {
     switch (type) {
       case 'success':
@@ -214,7 +211,6 @@ export default function Dashboard() {
     }
   };
 
-  // Table columns definition
   const columns = useMemo(
     () => [
       {
@@ -292,14 +288,12 @@ export default function Dashboard() {
     [deleteUserDialog, setUserToDelete]
   );
 
-  // Use datatable hook
   const { tableProps } = useDatatable({
     data: tableData,
     columns,
-    serverSide: false, // Client-side for demo
+    serverSide: false,
   });
 
-  // Handle user deletion
   const handleDeleteUser = () => {
     if (userToDelete) {
       toast.success(`User ${userToDelete.name} has been deleted.`, {
@@ -311,21 +305,17 @@ export default function Dashboard() {
   };
 
   return (
-    <DashboardLayout header="Dashboard">
+    <DashboardLayout>
       <PageShell title="Dashboard">
-        {/* Stats Grid */}
         <StatGrid stats={stats} />
 
-        {/* Charts Grid */}
         <div className="grid gap-4 md:grid-cols-2">
           <SalesChartCard data={salesData} />
           <RevenueChartCard data={revenueData} />
         </div>
 
-        {/* Growth Trend Chart */}
         <GrowthTrendChartCard data={salesData} />
 
-        {/* Additional Widgets */}
         <div className="grid gap-4 md:grid-cols-3">
           <RecentActivityCard
             activities={[
@@ -417,14 +407,12 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* DataTable */}
         <DataTable
           {...tableProps}
           title="Users Table"
           description="Example table built with TanStack Table - supports search, sorting, and pagination"
         />
 
-        {/* Delete User Confirmation Dialog */}
         <ConfirmDialog
           isOpen={deleteUserDialog.isOpen}
           onConfirm={handleDeleteUser}

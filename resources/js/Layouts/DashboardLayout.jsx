@@ -20,7 +20,7 @@ import { SidebarInset, SidebarProvider } from '@/Components/ui/sidebar';
 import { Toaster } from '@/Components/ui/sonner';
 import { Spinner } from '@/Components/ui/spinner';
 
-export default function DashboardLayout({ header, children }) {
+export default function DashboardLayout({ header: _header, children }) {
   useFlashNotifications();
   const scrollContainerRef = useRef(null);
   const { isLoading } = useNavigationLoading();
@@ -30,20 +30,17 @@ export default function DashboardLayout({ header, children }) {
       <AppSidebar />
       <SidebarInset className="flex h-full flex-col overflow-hidden">
         <div className="relative flex-1 overflow-hidden flex flex-col">
-          <Navbar header={header} scrollContainerRef={scrollContainerRef} />
+          <Navbar scrollContainerRef={scrollContainerRef} />
           <div
             ref={scrollContainerRef}
             className="relative flex-1 overflow-x-hidden overflow-y-auto pt-16"
           >
             {isLoading && (
               <div className="absolute inset-x-0 top-16 bottom-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-4">
-                  <Spinner className="size-12" />
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
+                <Spinner className="size-12" />
               </div>
             )}
-            <div className="flex flex-col gap-4 p-4 min-h-full">{children}</div>
+            <div className="flex flex-col gap-4 p-5 py-7 min-h-full">{children}</div>
           </div>
           <Footer />
         </div>

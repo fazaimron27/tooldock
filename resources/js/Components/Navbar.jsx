@@ -10,22 +10,17 @@
  * @param {React.RefObject} scrollContainerRef - Ref to the scrollable container
  */
 import { useScrollBlur } from '@/Hooks/useScrollBlur';
-import { Link, usePage } from '@inertiajs/react';
-import { Bell, Search } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, LogOut, Mail, Search, Settings, User } from 'lucide-react';
 
 import { ModeToggle } from '@/Components/ModeToggle';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/Components/ui/breadcrumb';
+import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
+import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -33,10 +28,19 @@ import {
 import { Input } from '@/Components/ui/input';
 import { SidebarTrigger } from '@/Components/ui/sidebar';
 
-export default function Navbar({ header, scrollContainerRef }) {
-  const { app_name } = usePage().props;
-  const appName = app_name || 'Mosaic';
+export default function Navbar({ scrollContainerRef }) {
+  const { auth } = usePage().props;
+  const user = auth?.user;
   const isScrolled = useScrollBlur(scrollContainerRef);
+
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const blurClasses = isScrolled
     ? 'bg-background/40 backdrop-blur-xl'
@@ -44,60 +48,105 @@ export default function Navbar({ header, scrollContainerRef }) {
 
   return (
     <header
-      className={`absolute top-0 left-0 right-0 z-50 flex h-16 shrink-0 items-center gap-4 border-b px-4 transition-all duration-200 ${blurClasses}`}
+      className={`absolute top-0 left-0 right-0 z-50 flex shrink-0 border-b px-4 py-4 pb-5 transition-all duration-200 ${blurClasses}`}
     >
-      <SidebarTrigger className="-ml-1" />
-
-      <div className="flex flex-1 items-center gap-4 min-w-0">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={route('dashboard')} className="hover:text-foreground">
-                  {appName}
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {header && (
-              <>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{header}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-
-      <div className="hidden md:flex flex-1 items-center justify-center gap-2 max-w-md">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <Input type="search" placeholder="Search..." className="pl-9 w-full" />
+      <div className="flex w-full items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <SidebarTrigger className="-ml-1" />
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <ModeToggle />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
-              </span>
-              <span className="sr-only">Notifications</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              No new notifications
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <div className="hidden md:block relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input type="search" placeholder="Search..." className="pl-9 w-64 h-9" />
+          </div>
+          <ModeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute right-1 top-1 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+                </span>
+                <span className="sr-only">Notifications</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No new notifications
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full p-0 transition-all hover:ring-2 hover:ring-primary/20 focus-visible:ring-2 focus-visible:ring-primary/20"
+              >
+                <Avatar className="h-10 w-10 ring-2 ring-background">
+                  <AvatarImage src={user?.avatar_url} alt={user?.name} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                    {getInitials(user?.name || 'U')}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <div className="rounded-t-md bg-muted px-3 py-3.5 -mx-1 -mt-1 mb-1">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-sm font-semibold leading-tight text-foreground">
+                      {user?.name || 'User'}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Mail className="h-3 w-3 shrink-0 opacity-70" />
+                      <span className="truncate">{user?.email || ''}</span>
+                    </div>
+                    {user?.roles && user.roles.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {user.roles.map((role) => (
+                          <Badge
+                            key={role.id}
+                            variant="outline"
+                            className="text-xs bg-background/50 border-border/50 text-foreground"
+                          >
+                            {role.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href={route('profile.edit')} className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href={route('settings.index')} className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                onClick={() => {
+                  router.post(route('logout'));
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

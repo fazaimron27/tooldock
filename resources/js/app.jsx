@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client';
 
 import '../css/app.css';
 import { ThemeProvider } from './Components/ThemeProvider';
+import { hideGlobalLoading } from './Utils/hideGlobalLoading';
+import { generateInertiaTitle } from './Utils/inertiaTitle';
 import './bootstrap';
 
 const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/**/*.jsx', {
@@ -11,19 +13,7 @@ const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/
 });
 
 createInertiaApp({
-  title: (title) => {
-    try {
-      const appElement = document.getElementById('app');
-      if (appElement?.dataset?.page) {
-        const parsed = JSON.parse(appElement.dataset.page);
-        const appName = parsed?.props?.app_name || 'Laravel';
-        return `${title} - ${appName}`;
-      }
-    } catch {
-      // Fallback to default title if parsing fails
-    }
-    return `${title} - Laravel`;
-  },
+  title: generateInertiaTitle,
   resolve: (name) => {
     if (name.startsWith('Modules::')) {
       const parts = name.replace('Modules::', '').split('/');
@@ -73,6 +63,8 @@ createInertiaApp({
         <App {...props} />
       </ThemeProvider>
     );
+
+    hideGlobalLoading();
   },
   progress: {
     color: '#4B5563',
