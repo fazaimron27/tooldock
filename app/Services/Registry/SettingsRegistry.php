@@ -2,6 +2,7 @@
 
 namespace App\Services\Registry;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Settings\Enums\SettingType;
@@ -31,7 +32,10 @@ class SettingsRegistry
     private array $registeredKeys = [];
 
     /**
-     * Register a setting.
+     * Register a single setting for a module.
+     *
+     * Validates that the setting key is unique across all modules. If a duplicate
+     * key is detected from a different module, a RuntimeException is thrown.
      *
      * @param  string  $module  Module name (e.g., 'Blog', 'Newsletter')
      * @param  string  $group  Setting group name (should be lowercase module name, e.g., 'blog')
@@ -73,7 +77,10 @@ class SettingsRegistry
     }
 
     /**
-     * Register multiple settings at once.
+     * Register multiple settings for a module in a single call.
+     *
+     * Convenience method that iterates through an array of setting definitions
+     * and registers each one using the register() method.
      *
      * @param  string  $module  Module name
      * @param  string  $group  Setting group name
@@ -118,13 +125,15 @@ class SettingsRegistry
     }
 
     /**
-     * Seed all registered settings into the database.
+     * Sync all registered settings to the database.
      *
-     * This is automatically called by ModuleLifecycleService during module installation
-     * and enabling. Only updates metadata (module, group, type, label, is_system) for existing settings
-     * to preserve user-modified values. New settings are created with default values.
+     * Creates new settings with default values and updates metadata for existing
+     * settings (module, group, type, label, is_system) while preserving user-modified
+     * values. If a setting's type changes, the value is reset to the default.
      *
-     * Wrapped in a database transaction to ensure atomicity.
+     * Automatically called by ModuleLifecycleService during module installation
+     * and enabling. Clears the settings cache after successful seeding to ensure
+     * changes are immediately visible.
      *
      * @param  bool  $strict  If true, any exception during seeding will cause the transaction to rollback.
      *                        If false (default), exceptions are logged but processing continues.
@@ -203,41 +212,37 @@ class SettingsRegistry
                     'errors' => $errors,
                     'total' => count($this->settings),
                 ]);
+
+                Cache::forget('app_settings');
             }
         });
     }
 
     /**
-     * Clean up settings for a module when uninstalling.
+     * Remove all settings for a module during uninstallation.
      *
-     * Removes all settings that belong to the specified module.
-     * Wrapped in a database transaction to ensure atomicity.
+     * Queries the database directly by module name (case-insensitive) rather than
+     * relying on the registry, since uninstalled modules are no longer registered
+     * and their service providers don't boot. Clears the settings cache after
+     * successful deletion to ensure changes are immediately visible in the UI.
      *
      * @param  string  $moduleName  The module name (e.g., 'Blog', 'Newsletter')
      * @return array{deleted: int} Statistics about the cleanup operation
      */
     public function cleanup(string $moduleName): array
     {
-        $moduleName = strtolower($moduleName);
-
         return DB::transaction(function () use ($moduleName) {
-            $moduleSettings = $this->getSettingsByModule($moduleName);
+            $deleted = Setting::whereRaw('LOWER(module) = ?', [strtolower($moduleName)])->delete();
 
-            if (empty($moduleSettings)) {
+            if ($deleted > 0) {
+                Log::info("SettingsRegistry: Cleaned up settings for module '{$moduleName}'", [
+                    'count' => $deleted,
+                ]);
+
+                Cache::forget('app_settings');
+            } else {
                 Log::info("SettingsRegistry: No settings found for module '{$moduleName}'");
-
-                return [
-                    'deleted' => 0,
-                ];
             }
-
-            $settingKeys = array_column($moduleSettings, 'key');
-            $deleted = Setting::whereIn('key', $settingKeys)->delete();
-
-            Log::info("SettingsRegistry: Cleaned up settings for module '{$moduleName}'", [
-                'count' => $deleted,
-                'keys' => $settingKeys,
-            ]);
 
             return [
                 'deleted' => $deleted,
