@@ -1,0 +1,180 @@
+<?php
+
+namespace App\Services\Core;
+
+use App\Services\Registry\SettingsRegistry;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Modules\Settings\Models\Setting;
+
+/**
+ * Service for managing application settings with aggressive caching.
+ *
+ * Uses Cache::rememberForever to load all settings into memory,
+ * ensuring zero database impact on normal requests. Cache is invalidated
+ * immediately when settings are updated.
+ *
+ * Note: For registration and seeding, use SettingsRegistry.
+ * This service handles runtime operations (get, set, all) with caching.
+ */
+class SettingsService
+{
+    private const CACHE_KEY = 'app_settings';
+
+    public function __construct(
+        private Setting $setting,
+        private SettingsRegistry $settingsRegistry
+    ) {}
+
+    /**
+     * Get a setting value by key.
+     *
+     * Uses Cache::rememberForever to load ALL settings into a Collection,
+     * then finds the specific key from that cached collection.
+     *
+     * @param  string  $key  The setting key
+     * @param  mixed  $default  Default value if key not found
+     * @return mixed The setting value (automatically cast based on type)
+     */
+    public function get(string $key, mixed $default = null): mixed
+    {
+        try {
+            $settings = $this->loadAllSettings();
+
+            $setting = $settings->firstWhere('key', $key);
+
+            if ($setting === null) {
+                return $default;
+            }
+
+            return $setting->value;
+        } catch (\Throwable $e) {
+            return $default;
+        }
+    }
+
+    /**
+     * Set a setting value.
+     *
+     * Updates an existing setting's value in the database, then immediately forgets
+     * the cache to force a reload on the next request.
+     *
+     * @param  string  $key  The setting key
+     * @param  mixed  $value  The value to set
+     *
+     * @throws \RuntimeException When the setting key doesn't exist in the database
+     */
+    public function set(string $key, mixed $value): void
+    {
+        $setting = $this->setting->where('key', $key)->first();
+
+        if ($setting === null) {
+            throw new \RuntimeException(
+                "Setting key '{$key}' does not exist. Settings must be registered ".
+                    'via SettingsRegistry before they can be updated.'
+            );
+        }
+
+        $setting->update(['value' => $value]);
+
+        Cache::forget(self::CACHE_KEY);
+
+        if ($key === 'app_debug') {
+            config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
+        }
+    }
+
+    /**
+     * Get all settings grouped by their 'group' column.
+     *
+     * Returns a collection grouped by the 'group' column for UI display.
+     * Format: ['general' => [...], 'finance' => [...]]
+     *
+     * @return \Illuminate\Support\Collection<string, \Illuminate\Support\Collection>
+     */
+    public function all(): Collection
+    {
+        $settings = $this->loadAllSettings();
+
+        return $settings->groupBy('group');
+    }
+
+    /**
+     * Force sync all registered settings to database.
+     *
+     * Delegates to SettingsRegistry::seed() to sync all registered settings.
+     * Clears cache after syncing to ensure changes are reflected immediately.
+     *
+     * @return void
+     */
+    public function sync(): void
+    {
+        $this->settingsRegistry->seed();
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    /**
+     * Clean up settings for a module when uninstalling.
+     *
+     * Delegates to SettingsRegistry::cleanup() to remove settings for a module.
+     * Clears the cache after cleanup to ensure changes are reflected immediately.
+     *
+     * @param  string  $moduleName  The module name (e.g., 'Blog', 'Newsletter')
+     * @return array{deleted: int} Statistics about the cleanup operation
+     */
+    public function cleanup(string $moduleName): array
+    {
+        $result = $this->settingsRegistry->cleanup($moduleName);
+
+        if ($result['deleted'] > 0) {
+            Cache::forget(self::CACHE_KEY);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Load all settings from cache or database.
+     *
+     * Uses Cache::rememberForever to cache all settings.
+     * Cache is invalidated when settings are updated via set().
+     * Automatically syncs any missing registered settings from SettingsRegistry
+     * only when cache is empty (first load or after cache clear).
+     *
+     * @return \Illuminate\Support\Collection<\Modules\Settings\Models\Setting>
+     */
+    private function loadAllSettings(): Collection
+    {
+        if ($this->shouldSkipCache()) {
+            return $this->setting->all();
+        }
+
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, function () {
+                $this->settingsRegistry->seed();
+
+                return $this->setting->all();
+            });
+        } catch (\Throwable $e) {
+            return $this->setting->all();
+        }
+    }
+
+    /**
+     * Check if we should skip using cache.
+     *
+     * Returns true during migrations or when running in console without database setup.
+     */
+    private function shouldSkipCache(): bool
+    {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            $argv = $_SERVER['argv'] ?? [];
+            $command = $argv[1] ?? '';
+            if (str_contains($command, 'migrate')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
