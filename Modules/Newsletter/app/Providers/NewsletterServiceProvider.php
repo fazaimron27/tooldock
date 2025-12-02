@@ -3,6 +3,7 @@
 namespace Modules\Newsletter\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -22,7 +23,7 @@ class NewsletterServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -41,6 +42,7 @@ class NewsletterServiceProvider extends ServiceProvider
         );
 
         $this->registerSettings($settingsRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
     }
 
     /**
@@ -196,5 +198,22 @@ class NewsletterServiceProvider extends ServiceProvider
             label: 'Default Sort Direction',
             isSystem: false
         );
+    }
+
+    /**
+     * Register default permissions for the Newsletter module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('newsletter', [
+            'campaigns.view',
+            'campaigns.create',
+            'campaigns.edit',
+            'campaigns.delete',
+            'campaigns.send',
+        ], [
+            'Administrator' => ['campaigns.*'],
+            'Staff' => ['campaigns.view', 'campaigns.create'],
+        ]);
     }
 }

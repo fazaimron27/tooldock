@@ -4,9 +4,11 @@ namespace Modules\Categories\Providers;
 
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\App\Constants\Roles as RoleConstants;
 use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -26,7 +28,8 @@ class CategoriesServiceProvider extends ServiceProvider
     public function boot(
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
-        CategoryRegistry $categoryRegistry
+        CategoryRegistry $categoryRegistry,
+        PermissionRegistry $permissionRegistry
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -46,6 +49,7 @@ class CategoriesServiceProvider extends ServiceProvider
 
         $this->registerSettings($settingsRegistry);
         $this->registerDefaultCategories($categoryRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
     }
 
     /**
@@ -414,6 +418,26 @@ class CategoriesServiceProvider extends ServiceProvider
                 'slug' => 'finance',
                 'color' => '#134E4A',
                 'description' => 'Finance and accounting department',
+            ],
+        ]);
+    }
+
+    /**
+     * Register default permissions for the Categories module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('categories', [
+            'category.view',
+            'category.create',
+            'category.edit',
+            'category.delete',
+        ], [
+            RoleConstants::ADMINISTRATOR => [
+                'category.*',
+            ],
+            RoleConstants::MANAGER => [
+                'category.*',
             ],
         ]);
     }

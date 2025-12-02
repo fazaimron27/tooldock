@@ -3,6 +3,7 @@
 namespace Modules\Settings\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -22,7 +23,7 @@ class SettingsServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -41,6 +42,7 @@ class SettingsServiceProvider extends ServiceProvider
         );
 
         $this->registerDefaultSettings($settingsRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
     }
 
     /**
@@ -211,5 +213,18 @@ class SettingsServiceProvider extends ServiceProvider
             label: 'Application Debug Mode',
             isSystem: true
         );
+    }
+
+    /**
+     * Register default permissions for the Settings module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('settings', [
+            'config.view',
+            'config.update',
+        ], [
+            'Administrator' => ['config.*'],
+        ]);
     }
 }

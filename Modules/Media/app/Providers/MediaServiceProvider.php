@@ -3,6 +3,7 @@
 namespace Modules\Media\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class MediaServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -45,6 +46,7 @@ class MediaServiceProvider extends ServiceProvider
         );
 
         $this->registerSettings($settingsRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
         $this->registerRateLimiter();
     }
 
@@ -285,5 +287,21 @@ class MediaServiceProvider extends ServiceProvider
                 ? Limit::perMinute($userLimit)->by($request->user()->id)
                 : Limit::perMinute($guestLimit)->by($request->ip());
         });
+    }
+
+    /**
+     * Register default permissions for the Media module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('media', [
+            'files.view',
+            'files.upload',
+            'files.edit',
+            'files.delete',
+        ], [
+            'Administrator' => ['files.*'],
+            'Staff' => ['files.view', 'files.upload'],
+        ]);
     }
 }

@@ -3,10 +3,12 @@
 namespace Modules\AuditLog\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\App\Constants\Roles;
 use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -23,7 +25,7 @@ class AuditLogServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -42,6 +44,7 @@ class AuditLogServiceProvider extends ServiceProvider
         );
 
         $this->registerSettings($settingsRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
     }
 
     /**
@@ -237,5 +240,19 @@ class AuditLogServiceProvider extends ServiceProvider
             label: 'Cleanup Schedule Time (HH:MM)',
             isSystem: false
         );
+    }
+
+    /**
+     * Register default permissions for the AuditLog module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('auditlog', [
+            'view',
+        ], [
+            Roles::ADMINISTRATOR => ['view'],
+            Roles::MANAGER => ['view'],
+            Roles::AUDITOR => ['view'],
+        ]);
     }
 }

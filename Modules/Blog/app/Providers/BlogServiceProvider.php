@@ -3,6 +3,7 @@
 namespace Modules\Blog\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -22,7 +23,7 @@ class BlogServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry): void
+    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
     {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -41,6 +42,7 @@ class BlogServiceProvider extends ServiceProvider
         );
 
         $this->registerSettings($settingsRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
     }
 
     /**
@@ -186,5 +188,22 @@ class BlogServiceProvider extends ServiceProvider
             label: 'Default Sort Direction',
             isSystem: false
         );
+    }
+
+    /**
+     * Register default permissions for the Blog module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('blog', [
+            'posts.view',
+            'posts.create',
+            'posts.edit',
+            'posts.delete',
+            'posts.publish',
+        ], [
+            'Administrator' => ['posts.*'],
+            'Staff' => ['posts.view', 'posts.create'],
+        ]);
     }
 }

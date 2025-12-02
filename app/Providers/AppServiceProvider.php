@@ -6,16 +6,20 @@ use App\Listeners\AutoInstallProtectedModules;
 use App\Services\Core\AppConfigService;
 use App\Services\Core\ExceptionResponseService;
 use App\Services\Core\InertiaSharedDataService;
+use App\Services\Core\SettingsService;
 use App\Services\Core\StorageLinkService;
 use App\Services\Media\MediaConfigService;
 use App\Services\Modules\ProtectedModuleMigrationService;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
+use App\Services\Registry\RoleRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\App\Services\SuperAdminService;
 
 /**
  * Application service provider
@@ -34,7 +38,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(MenuRegistry::class);
         $this->app->singleton(SettingsRegistry::class);
+        $this->app->singleton(SettingsService::class);
         $this->app->singleton(CategoryRegistry::class);
+        $this->app->singleton(RoleRegistry::class);
+        $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
         $this->app->singleton(InertiaSharedDataService::class);

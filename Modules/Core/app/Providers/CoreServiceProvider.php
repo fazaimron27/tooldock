@@ -3,6 +3,8 @@
 namespace Modules\Core\Providers;
 
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\PermissionRegistry;
+use App\Services\Registry\RoleRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -11,6 +13,7 @@ use Modules\Core\App\Models\User;
 use Modules\Core\App\Observers\PermissionObserver;
 use Modules\Core\App\Observers\RoleObserver;
 use Modules\Core\App\Observers\UserObserver;
+use Modules\Core\App\Services\SuperAdminService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -28,8 +31,12 @@ class CoreServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        PermissionRegistry $permissionRegistry,
+        RoleRegistry $roleRegistry,
+        SuperAdminService $superAdminService
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -54,6 +61,11 @@ class CoreServiceProvider extends ServiceProvider
             order: 20,
             permission: 'core.roles.manage'
         );
+
+        $this->registerDefaultRoles($roleRegistry);
+        $this->registerDefaultPermissions($permissionRegistry);
+
+        $superAdminService->ensureExists($roleRegistry);
 
         Gate::before(function ($user, $ability) {
             if ($user && method_exists($user, 'hasRole')) {
@@ -183,5 +195,52 @@ class CoreServiceProvider extends ServiceProvider
         }
 
         return $paths;
+    }
+
+    /**
+     * Register default roles for the Core module.
+     */
+    private function registerDefaultRoles(RoleRegistry $registry): void
+    {
+        $registry->register('core', Roles::SUPER_ADMIN);
+        $registry->register('core', Roles::ADMINISTRATOR);
+        $registry->register('core', Roles::MANAGER);
+        $registry->register('core', Roles::STAFF);
+        $registry->register('core', Roles::AUDITOR);
+    }
+
+    /**
+     * Register default permissions for the Core module.
+     */
+    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    {
+        $registry->register('core', [
+            'dashboard.view',
+            'users.view',
+            'users.create',
+            'users.edit',
+            'users.delete',
+            'roles.manage',
+        ], [
+            Roles::ADMINISTRATOR => [
+                'dashboard.view',
+                'users.view',
+                'users.create',
+                'users.edit',
+                'users.delete',
+                'roles.manage',
+            ],
+            Roles::MANAGER => [
+                'dashboard.view',
+                'users.view',
+            ],
+            Roles::STAFF => [
+                'dashboard.view',
+            ],
+            Roles::AUDITOR => [
+                'dashboard.view',
+                'users.view',
+            ],
+        ]);
     }
 }
