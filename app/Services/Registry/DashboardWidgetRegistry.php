@@ -48,7 +48,7 @@ class DashboardWidgetRegistry
     /**
      * Valid widget types that are supported.
      */
-    private const VALID_TYPES = ['stat', 'chart', 'activity', 'system'];
+    private const VALID_TYPES = ['stat', 'chart', 'activity', 'system', 'table'];
 
     /**
      * Valid widget scopes.

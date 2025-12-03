@@ -53,7 +53,7 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
     /**
      * Create a new dashboard widget instance.
      *
-     * @param  string  $type  Widget type. Valid types: 'stat' (statistics card), 'chart' (data visualization), 'activity' (recent activity list), 'system' (system status metrics)
+     * @param  string  $type  Widget type. Valid types: 'stat' (statistics card), 'chart' (data visualization), 'activity' (recent activity list), 'system' (system status metrics), 'table' (data table)
      * @param  string  $title  Widget display title (e.g., 'Total Users', 'Recent Posts')
      * @param  string|int|Closure  $value  Static value (string/int) or closure returning string|int. For stat widgets, this is the main metric. For charts/activities, typically 0.
      * @param  string  $icon  Lucide React icon name (e.g., 'Users', 'FileText', 'TrendingUp'). Must be a valid icon from lucide-react package.
@@ -62,10 +62,10 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
      * @param  string|Closure|null  $change  Change indicator (e.g., '+20.1%', '-5.2%') or closure returning string. Shows percentage change for stat widgets.
      * @param  'up'|'down'|null  $trend  Trend direction: 'up' (positive/green), 'down' (negative/red), or null (no trend indicator)
      * @param  int|null  $order  Display order for sorting widgets. Lower numbers appear first. If null, widgets maintain registration order.
-     * @param  array|Closure|null  $data  Additional data for complex widgets. For charts: array of data points. For activities: array of activity items. For systems: array of metric objects. Can be a closure returning array.
+     * @param  array|Closure|null  $data  Additional data for complex widgets. For charts: array of data points. For activities: array of activity items. For systems: array of metric objects. For tables: array of table row objects. Can be a closure returning array.
      * @param  string|null  $description  Optional description text displayed below the widget title (useful for charts and system widgets)
      * @param  string|null  $chartType  Chart type for chart widgets. Valid: 'bar' (bar chart), 'area' (area chart), 'line' (line chart). Required for chart widgets.
-     * @param  array|null  $config  Chart configuration object defining data keys, colors, and labels. Used by recharts library for rendering.
+     * @param  array|null  $config  Chart configuration object defining data keys, colors, and labels. Used by recharts library for rendering. For table widgets, can contain 'columns' array for column definitions.
      * @param  string|null  $xAxisKey  X-axis data key for charts (e.g., 'month', 'date', 'name'). Defaults to 'name' if not provided.
      * @param  array|null  $dataKeys  Data keys for multi-value charts (e.g., ['revenue', 'expenses']). Used for area/line charts with multiple series.
      * @param  string|null  $scope  Widget visibility scope: 'overview' (main dashboard only), 'detail' (module dashboard only), 'both' (both dashboards, default)
