@@ -11,7 +11,7 @@ use Modules\Core\Http\Controllers\Auth\PasswordResetLinkController;
 use Modules\Core\Http\Controllers\Auth\RegisteredUserController;
 use Modules\Core\Http\Controllers\Auth\VerifyEmailController;
 
-Route::middleware('guest')->group(function () {
+Route::prefix('tooldock')->middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
@@ -35,7 +35,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
-Route::middleware('auth')->group(function () {
+Route::prefix('tooldock')->middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 
