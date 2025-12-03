@@ -164,7 +164,7 @@ class ModuleManagerController extends Controller
      * Tries to use Ziggy route name first, falls back to manual URL construction.
      *
      * @param  string  $moduleName  The module name (e.g., "Blog")
-     * @return string The route URL (e.g., "/blog" or route('blog.index'))
+     * @return string The route URL (e.g., "/tooldock/blog" or route('blog.index'))
      */
     private function getModuleRouteUrl(string $moduleName): string
     {
@@ -179,6 +179,7 @@ class ModuleManagerController extends Controller
             // Route doesn't exist, fall through to fallback
         }
 
-        return "/{$moduleNameLower}";
+        // All module routes use the /tooldock prefix
+        return "/tooldock/{$moduleNameLower}";
     }
 }

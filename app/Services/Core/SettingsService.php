@@ -2,10 +2,9 @@
 
 namespace App\Services\Core;
 
+use App\Services\Cache\CacheService;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Modules\Settings\Models\Setting;
 
 /**
@@ -27,7 +26,8 @@ class SettingsService
 
     public function __construct(
         private Setting $setting,
-        private SettingsRegistry $settingsRegistry
+        private SettingsRegistry $settingsRegistry,
+        private CacheService $cacheService
     ) {}
 
     /**
@@ -148,8 +148,11 @@ class SettingsService
      * Optimized for Redis with cache tags for efficient invalidation.
      * Uses Cache::rememberForever to cache all settings.
      * Cache is invalidated when settings are updated via set().
-     * Automatically syncs any missing registered settings from SettingsRegistry
-     * only when cache is empty (first load or after cache clear).
+     *
+     * Note: Settings seeding should only happen explicitly via:
+     * - SettingsService::sync() method
+     * - ModuleLifecycleService during module installation
+     * - Database seeders
      *
      * @return \Illuminate\Support\Collection<\Modules\Settings\Models\Setting>
      */
@@ -159,21 +162,13 @@ class SettingsService
             return $this->setting->all();
         }
 
-        try {
-            return Cache::tags([self::CACHE_TAG])->rememberForever(self::CACHE_KEY, function () {
-                $this->settingsRegistry->seed();
-
-                return $this->setting->all();
-            });
-        } catch (\Throwable $e) {
-            Log::warning('SettingsService: Cache error, falling back to database', [
-                'cache_key' => self::CACHE_KEY,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return $this->setting->all();
-        }
+        // Load from cache without auto-seeding
+        // Seeding should only happen explicitly, not automatically on cache miss
+        return $this->cacheService->rememberForever(
+            self::CACHE_KEY,
+            fn () => $this->setting->all(),
+            self::CACHE_TAG
+        );
     }
 
     /**
@@ -185,8 +180,16 @@ class SettingsService
     {
         if (app()->runningInConsole() && ! app()->runningUnitTests()) {
             $argv = $_SERVER['argv'] ?? [];
+            // Check full command line to catch optimize:clear and sub-commands
+            $commandLine = implode(' ', array_slice($argv, 1));
             $command = $argv[1] ?? '';
-            if (str_contains($command, 'migrate')) {
+
+            // Skip cache during migrations or optimize commands to prevent automatic seeding
+            if (
+                str_contains($command, 'migrate') ||
+                str_contains($command, 'optimize') ||
+                str_contains($commandLine, 'optimize:clear')
+            ) {
                 return true;
             }
         }
@@ -203,18 +206,6 @@ class SettingsService
      */
     private function clearCache(): void
     {
-        try {
-            Cache::tags([self::CACHE_TAG])->flush();
-
-            Log::debug('SettingsService: Settings cache cleared via Redis tags', [
-                'tag' => self::CACHE_TAG,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('SettingsService: Failed to clear cache', [
-                'tag' => self::CACHE_TAG,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
+        $this->cacheService->clearTag(self::CACHE_TAG, 'SettingsService');
     }
 }
