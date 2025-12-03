@@ -2,7 +2,6 @@
 
 namespace Modules\Categories\Providers;
 
-use App\Data\DashboardWidget;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
@@ -10,9 +9,11 @@ use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Categories\Models\Category;
-use Modules\Core\App\Constants\Roles as RoleConstants;
-use Modules\Settings\Enums\SettingType;
+use Modules\Categories\Services\CategoriesCategoryRegistrar;
+use Modules\Categories\Services\CategoriesDashboardService;
+use Modules\Categories\Services\CategoriesMenuRegistrar;
+use Modules\Categories\Services\CategoriesPermissionRegistrar;
+use Modules\Categories\Services\CategoriesSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -33,7 +34,12 @@ class CategoriesServiceProvider extends ServiceProvider
         SettingsRegistry $settingsRegistry,
         CategoryRegistry $categoryRegistry,
         PermissionRegistry $permissionRegistry,
-        DashboardWidgetRegistry $widgetRegistry
+        DashboardWidgetRegistry $widgetRegistry,
+        CategoriesMenuRegistrar $menuRegistrar,
+        CategoriesDashboardService $dashboardService,
+        CategoriesPermissionRegistrar $permissionRegistrar,
+        CategoriesSettingsRegistrar $settingsRegistrar,
+        CategoriesCategoryRegistrar $categoryRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -42,45 +48,11 @@ class CategoriesServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'Master Data',
-            label: 'Categories',
-            route: 'categories.index',
-            icon: 'Tag',
-            order: 10,
-            permission: 'categories.category.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        // Register Categories module dashboard as child of Dashboard
-        $menuRegistry->registerItem(
-            group: 'Dashboard',
-            label: 'Categories Dashboard',
-            route: 'categories.dashboard',
-            icon: 'LayoutDashboard',
-            order: 30,
-            permission: 'categories.dashboard.view',
-            parentKey: 'dashboard',
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultCategories($categoryRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
-        // Stat Widget: Total Categories (Overview - shown on main dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Categories',
-                value: fn () => Category::count(),
-                icon: 'Tag',
-                module: $this->name,
-                order: 30,
-                scope: 'overview'
-            )
-        );
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $categoryRegistrar->register($categoryRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -195,284 +167,5 @@ class CategoriesServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register categories module settings.
-     *
-     * Group name should be lowercase module name for consistency.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Categories',
-            group: 'categories',
-            key: 'categories_per_page',
-            value: '20',
-            type: SettingType::Integer,
-            label: 'Categories Per Page',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Categories',
-            group: 'categories',
-            key: 'categories_default_sort',
-            value: 'created_at',
-            type: SettingType::Text,
-            label: 'Default Sort Column',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Categories',
-            group: 'categories',
-            key: 'categories_default_sort_direction',
-            value: 'desc',
-            type: SettingType::Text,
-            label: 'Default Sort Direction',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Categories',
-            group: 'categories',
-            key: 'categories_default_type',
-            value: '',
-            type: SettingType::Text,
-            label: 'Default Type Filter',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Categories',
-            group: 'categories',
-            key: 'categories_default_types',
-            value: 'product,finance,project,inventory,expense,department',
-            type: SettingType::Text,
-            label: 'Default Category Types (comma-separated)',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default categories for the Categories module.
-     *
-     * These are sample categories for development/testing purposes.
-     * Other modules can register their own categories using CategoryRegistry.
-     */
-    private function registerDefaultCategories(CategoryRegistry $registry): void
-    {
-        $registry->registerMany('Categories', 'product', [
-            [
-                'name' => 'Electronics',
-                'slug' => 'electronics',
-                'color' => '#3B82F6',
-                'description' => 'Electronic devices and components',
-            ],
-            [
-                'name' => 'Smartphones',
-                'slug' => 'smartphones',
-                'parent_slug' => 'electronics',
-                'color' => '#2563EB',
-                'description' => 'Mobile phones and smartphones',
-            ],
-            [
-                'name' => 'Laptops',
-                'slug' => 'laptops',
-                'parent_slug' => 'electronics',
-                'color' => '#1D4ED8',
-                'description' => 'Laptop computers and accessories',
-            ],
-            [
-                'name' => 'Clothing',
-                'slug' => 'clothing',
-                'color' => '#EC4899',
-                'description' => 'Apparel and fashion items',
-            ],
-            [
-                'name' => 'Men\'s Wear',
-                'slug' => 'mens-wear',
-                'parent_slug' => 'clothing',
-                'color' => '#DB2777',
-                'description' => 'Men\'s clothing and accessories',
-            ],
-            [
-                'name' => 'Women\'s Wear',
-                'slug' => 'womens-wear',
-                'parent_slug' => 'clothing',
-                'color' => '#BE185D',
-                'description' => 'Women\'s clothing and accessories',
-            ],
-        ]);
-
-        $registry->registerMany('Categories', 'finance', [
-            [
-                'name' => 'Income',
-                'slug' => 'income',
-                'color' => '#10B981',
-                'description' => 'Revenue and income sources',
-            ],
-            [
-                'name' => 'Sales Revenue',
-                'slug' => 'sales-revenue',
-                'parent_slug' => 'income',
-                'color' => '#059669',
-                'description' => 'Revenue from product sales',
-            ],
-            [
-                'name' => 'Service Revenue',
-                'slug' => 'service-revenue',
-                'parent_slug' => 'income',
-                'color' => '#047857',
-                'description' => 'Revenue from services provided',
-            ],
-            [
-                'name' => 'Operating Expenses',
-                'slug' => 'operating-expenses',
-                'color' => '#EF4444',
-                'description' => 'Day-to-day business expenses',
-            ],
-            [
-                'name' => 'Salaries',
-                'slug' => 'salaries',
-                'parent_slug' => 'operating-expenses',
-                'color' => '#DC2626',
-                'description' => 'Employee salaries and wages',
-            ],
-            [
-                'name' => 'Utilities',
-                'slug' => 'utilities',
-                'parent_slug' => 'operating-expenses',
-                'color' => '#B91C1C',
-                'description' => 'Electricity, water, internet, etc.',
-            ],
-            [
-                'name' => 'Marketing',
-                'slug' => 'marketing',
-                'parent_slug' => 'operating-expenses',
-                'color' => '#991B1B',
-                'description' => 'Marketing and advertising expenses',
-            ],
-        ]);
-
-        $registry->registerMany('Categories', 'project', [
-            [
-                'name' => 'Web Development',
-                'slug' => 'web-development',
-                'color' => '#8B5CF6',
-                'description' => 'Website and web application projects',
-            ],
-            [
-                'name' => 'Mobile App',
-                'slug' => 'mobile-app',
-                'color' => '#7C3AED',
-                'description' => 'Mobile application development projects',
-            ],
-            [
-                'name' => 'Infrastructure',
-                'slug' => 'infrastructure',
-                'color' => '#6D28D9',
-                'description' => 'IT infrastructure and system projects',
-            ],
-        ]);
-
-        $registry->registerMany('Categories', 'inventory', [
-            [
-                'name' => 'Raw Materials',
-                'slug' => 'raw-materials',
-                'color' => '#F59E0B',
-                'description' => 'Raw materials and components',
-            ],
-            [
-                'name' => 'Finished Goods',
-                'slug' => 'finished-goods',
-                'color' => '#D97706',
-                'description' => 'Completed products ready for sale',
-            ],
-            [
-                'name' => 'Work in Progress',
-                'slug' => 'work-in-progress',
-                'color' => '#B45309',
-                'description' => 'Items currently in production',
-            ],
-        ]);
-
-        $registry->registerMany('Categories', 'expense', [
-            [
-                'name' => 'Office Supplies',
-                'slug' => 'office-supplies',
-                'color' => '#06B6D4',
-                'description' => 'Office equipment and supplies',
-            ],
-            [
-                'name' => 'Travel',
-                'slug' => 'travel',
-                'color' => '#0891B2',
-                'description' => 'Business travel expenses',
-            ],
-            [
-                'name' => 'Training',
-                'slug' => 'training',
-                'color' => '#0E7490',
-                'description' => 'Employee training and development',
-            ],
-        ]);
-
-        $registry->registerMany('Categories', 'department', [
-            [
-                'name' => 'Sales',
-                'slug' => 'sales',
-                'color' => '#14B8A6',
-                'description' => 'Sales department',
-            ],
-            [
-                'name' => 'Marketing',
-                'slug' => 'marketing',
-                'color' => '#0D9488',
-                'description' => 'Marketing department',
-            ],
-            [
-                'name' => 'IT',
-                'slug' => 'it',
-                'color' => '#0F766E',
-                'description' => 'Information Technology department',
-            ],
-            [
-                'name' => 'HR',
-                'slug' => 'hr',
-                'color' => '#115E59',
-                'description' => 'Human Resources department',
-            ],
-            [
-                'name' => 'Finance',
-                'slug' => 'finance',
-                'color' => '#134E4A',
-                'description' => 'Finance and accounting department',
-            ],
-        ]);
-    }
-
-    /**
-     * Register default permissions for the Categories module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('categories', [
-            'dashboard.view',
-            'category.view',
-            'category.create',
-            'category.edit',
-            'category.delete',
-        ], [
-            RoleConstants::ADMINISTRATOR => [
-                'dashboard.view',
-                'category.*',
-            ],
-            RoleConstants::MANAGER => [
-                'dashboard.view',
-                'category.*',
-            ],
-        ]);
     }
 }

@@ -2,15 +2,16 @@
 
 namespace Modules\Settings\Providers;
 
-use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Settings\Enums\SettingType;
-use Modules\Settings\Models\Setting;
+use Modules\Settings\Services\SettingsDashboardService;
+use Modules\Settings\Services\SettingsMenuRegistrar;
+use Modules\Settings\Services\SettingsPermissionRegistrar;
+use Modules\Settings\Services\SettingsSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -30,7 +31,11 @@ class SettingsServiceProvider extends ServiceProvider
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         PermissionRegistry $permissionRegistry,
-        DashboardWidgetRegistry $widgetRegistry
+        DashboardWidgetRegistry $widgetRegistry,
+        SettingsMenuRegistrar $menuRegistrar,
+        SettingsDashboardService $dashboardService,
+        SettingsPermissionRegistrar $permissionRegistrar,
+        SettingsSettingsRegistrar $settingsRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -39,60 +44,10 @@ class SettingsServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Settings',
-            route: 'settings.index',
-            icon: 'Settings',
-            order: 30,
-            permission: 'settings.config.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        // Register Settings module dashboard as child of Dashboard
-        $menuRegistry->registerItem(
-            group: 'Dashboard',
-            label: 'Settings Dashboard',
-            route: 'settings.dashboard',
-            icon: 'LayoutDashboard',
-            order: 70,
-            permission: 'settings.dashboard.view',
-            parentKey: 'dashboard',
-            module: $this->name
-        );
-
-        $this->registerDefaultSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Settings',
-                value: fn () => Setting::count(),
-                icon: 'Settings',
-                module: $this->name,
-                order: 70,
-                scope: 'overview'
-            )
-        );
-
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'table',
-                title: 'Settings Configuration',
-                value: 0,
-                icon: 'Settings',
-                module: $this->name,
-                description: 'Manage and view all application settings',
-                data: fn () => $this->getSettingsTableData(),
-                config: [
-                    'columns' => $this->getSettingsTableColumns(),
-                ],
-                order: 71,
-                scope: 'detail'
-            )
-        );
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -207,160 +162,5 @@ class SettingsServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register default application settings.
-     */
-    private function registerDefaultSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Settings',
-            group: 'general',
-            key: 'app_name',
-            value: 'Tool Dock',
-            type: SettingType::Text,
-            label: 'Application Name',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Settings',
-            group: 'general',
-            key: 'app_logo',
-            value: 'Cog',
-            type: SettingType::Text,
-            label: 'Application Logo Icon (Lucide)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Settings',
-            group: 'general',
-            key: 'date_format',
-            value: 'd/m/Y',
-            type: SettingType::Text,
-            label: 'Date Format',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Settings',
-            group: 'finance',
-            key: 'currency_symbol',
-            value: 'Rp',
-            type: SettingType::Text,
-            label: 'Currency Symbol',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Settings',
-            group: 'system',
-            key: 'app_debug',
-            value: '0',
-            type: SettingType::Boolean,
-            label: 'Application Debug Mode',
-            isSystem: true
-        );
-    }
-
-    /**
-     * Register default permissions for the Settings module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('settings', [
-            'dashboard.view',
-            'config.view',
-            'config.update',
-        ], [
-            'Administrator' => ['dashboard.view', 'config.*'],
-        ]);
-    }
-
-    /**
-     * Formats settings data for the table widget.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function getSettingsTableData(): array
-    {
-        return Setting::query()
-            ->orderBy('module')
-            ->orderBy('group')
-            ->orderBy('key')
-            ->get()
-            ->map(function (Setting $setting) {
-                return [
-                    'id' => $setting->id,
-                    'module' => $setting->module ?? 'N/A',
-                    'group' => $setting->group ?? 'N/A',
-                    'key' => $setting->key,
-                    'label' => $setting->label ?? $setting->key,
-                    'value' => $this->formatSettingValue($setting),
-                    'type' => ucfirst($setting->type->value),
-                    'is_system' => $setting->is_system ? 'Yes' : 'No',
-                ];
-            })
-            ->toArray();
-    }
-
-    /**
-     * Formats a setting value for display in the table.
-     */
-    private function formatSettingValue(Setting $setting): string
-    {
-        $value = $setting->value;
-
-        if ($value === null) {
-            return 'N/A';
-        }
-
-        return match ($setting->type) {
-            SettingType::Boolean => $value ? 'Yes' : 'No',
-            SettingType::Integer => (string) $value,
-            SettingType::Textarea => strlen($value) > 50 ? substr($value, 0, 50).'...' : $value,
-            default => (string) $value,
-        };
-    }
-
-    /**
-     * Returns column definitions for the settings table widget.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function getSettingsTableColumns(): array
-    {
-        return [
-            [
-                'accessorKey' => 'module',
-                'header' => 'Module',
-            ],
-            [
-                'accessorKey' => 'group',
-                'header' => 'Group',
-            ],
-            [
-                'accessorKey' => 'key',
-                'header' => 'Key',
-            ],
-            [
-                'accessorKey' => 'label',
-                'header' => 'Label',
-            ],
-            [
-                'accessorKey' => 'value',
-                'header' => 'Value',
-            ],
-            [
-                'accessorKey' => 'type',
-                'header' => 'Type',
-            ],
-            [
-                'accessorKey' => 'is_system',
-                'header' => 'System',
-            ],
-        ];
     }
 }

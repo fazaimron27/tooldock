@@ -2,7 +2,6 @@
 
 namespace Modules\AuditLog\Providers;
 
-use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
@@ -10,9 +9,10 @@ use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Modules\AuditLog\App\Models\AuditLog;
-use Modules\Core\App\Constants\Roles;
-use Modules\Settings\Enums\SettingType;
+use Modules\AuditLog\Services\AuditLogDashboardService;
+use Modules\AuditLog\Services\AuditLogMenuRegistrar;
+use Modules\AuditLog\Services\AuditLogPermissionRegistrar;
+use Modules\AuditLog\Services\AuditLogSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -32,7 +32,11 @@ class AuditLogServiceProvider extends ServiceProvider
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         PermissionRegistry $permissionRegistry,
-        DashboardWidgetRegistry $widgetRegistry
+        DashboardWidgetRegistry $widgetRegistry,
+        AuditLogMenuRegistrar $menuRegistrar,
+        AuditLogDashboardService $dashboardService,
+        AuditLogPermissionRegistrar $permissionRegistrar,
+        AuditLogSettingsRegistrar $settingsRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -41,174 +45,10 @@ class AuditLogServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Audit Logs',
-            route: 'auditlog.index',
-            icon: 'FileText',
-            order: 30,
-            permission: 'auditlog.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        // Register AuditLog module dashboard as child of Dashboard
-        $menuRegistry->registerItem(
-            group: 'Dashboard',
-            label: 'Audit Log Dashboard',
-            route: 'auditlog.dashboard',
-            icon: 'LayoutDashboard',
-            order: 60,
-            permission: 'auditlog.dashboard.view',
-            parentKey: 'dashboard',
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
-        // Stat Widget: Total Audit Logs (Overview - shown on main dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Audit Logs',
-                value: fn () => AuditLog::count(),
-                icon: 'FileText',
-                module: $this->name,
-                order: 60,
-                scope: 'overview'
-            )
-        );
-
-        // Chart Widget: Audit Events Over Time (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'chart',
-                title: 'Audit Events',
-                value: 0,
-                icon: 'Activity',
-                module: $this->name,
-                description: 'Audit events over the last 7 days',
-                chartType: 'area',
-                data: fn () => $this->getAuditEventsData(),
-                config: [
-                    'created' => [
-                        'label' => 'Created',
-                        'color' => 'hsl(var(--chart-1))',
-                    ],
-                    'updated' => [
-                        'label' => 'Updated',
-                        'color' => 'hsl(var(--chart-2))',
-                    ],
-                    'deleted' => [
-                        'label' => 'Deleted',
-                        'color' => 'hsl(var(--chart-3))',
-                    ],
-                ],
-                xAxisKey: 'date',
-                dataKeys: ['created', 'updated', 'deleted'],
-                order: 61,
-                scope: 'detail'
-            )
-        );
-
-        // Activity Widget: Recent Audit Logs (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'activity',
-                title: 'Recent Audit Logs',
-                value: 0,
-                icon: 'Shield',
-                module: $this->name,
-                description: 'Latest system activities',
-                data: fn () => $this->getRecentAuditLogsActivity(),
-                order: 62,
-                scope: 'detail'
-            )
-        );
-    }
-
-    /**
-     * Get audit events data for chart widget.
-     *
-     * Optimized: Uses a single query with GROUP BY instead of 21 separate queries (7 days × 3 events).
-     */
-    private function getAuditEventsData(): array
-    {
-        $now = now();
-        $startDate = $now->copy()->subDays(6)->startOfDay();
-        $endDate = $now->copy()->endOfDay();
-
-        // Single query to get counts grouped by date and event
-        $results = AuditLog::selectRaw('
-                DATE(created_at) as date,
-                event,
-                COUNT(*) as count
-            ')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('event', ['created', 'updated', 'deleted'])
-            ->groupBy('date', 'event')
-            ->orderBy('date')
-            ->get()
-            ->groupBy('date')
-            ->map(function ($dayLogs) {
-                return $dayLogs->pluck('count', 'event')->toArray();
-            })
-            ->toArray();
-
-        // Build days array with data from query
-        $days = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $day = $now->copy()->subDays($i);
-            $dateKey = $day->format('Y-m-d');
-
-            $dayData = $results[$dateKey] ?? [];
-
-            $days[] = [
-                'date' => $day->format('M d'),
-                'created' => $dayData['created'] ?? 0,
-                'updated' => $dayData['updated'] ?? 0,
-                'deleted' => $dayData['deleted'] ?? 0,
-            ];
-        }
-
-        return $days;
-    }
-
-    /**
-     * Get recent audit logs activity for activity widget.
-     */
-    private function getRecentAuditLogsActivity(): array
-    {
-        return AuditLog::latest('created_at')
-            ->limit(5)
-            ->get()
-            ->map(function ($log) {
-                $eventIcon = match ($log->event) {
-                    'created' => 'Plus',
-                    'updated' => 'Edit',
-                    'deleted' => 'Trash',
-                    default => 'Activity',
-                };
-
-                $eventColor = match ($log->event) {
-                    'created' => 'bg-green-500',
-                    'updated' => 'bg-blue-500',
-                    'deleted' => 'bg-red-500',
-                    default => 'bg-gray-500',
-                };
-
-                $modelName = class_basename($log->auditable_type ?? 'Unknown');
-
-                return [
-                    'id' => $log->id,
-                    'title' => ucfirst($log->event)." {$modelName}",
-                    'timestamp' => $log->created_at->diffForHumans(),
-                    'icon' => $eventIcon,
-                    'iconColor' => $eventColor,
-                ];
-            })
-            ->toArray();
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -348,76 +188,5 @@ class AuditLogServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register default settings for the AuditLog module.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'retention_days',
-            value: '90',
-            type: SettingType::Integer,
-            label: 'Audit Log Retention (Days)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'scheduled_cleanup_enabled',
-            value: '1',
-            type: SettingType::Boolean,
-            label: 'Enable Scheduled Cleanup',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'model_types_cache_ttl',
-            value: '3600',
-            type: SettingType::Integer,
-            label: 'Model Types Cache TTL (Seconds)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'export_chunk_size',
-            value: '500',
-            type: SettingType::Integer,
-            label: 'Export Chunk Size',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'cleanup_schedule_time',
-            value: '02:00',
-            type: SettingType::Text,
-            label: 'Cleanup Schedule Time (HH:MM)',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default permissions for the AuditLog module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('auditlog', [
-            'view',
-            'dashboard.view',
-        ], [
-            Roles::ADMINISTRATOR => ['view', 'dashboard.view'],
-            Roles::MANAGER => ['view', 'dashboard.view'],
-            Roles::AUDITOR => ['view', 'dashboard.view'],
-        ]);
     }
 }

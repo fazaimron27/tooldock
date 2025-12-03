@@ -2,7 +2,6 @@
 
 namespace Modules\Newsletter\Providers;
 
-use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
@@ -11,7 +10,10 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Newsletter\Models\Campaign;
 use Modules\Newsletter\Observers\CampaignObserver;
-use Modules\Settings\Enums\SettingType;
+use Modules\Newsletter\Services\NewsletterDashboardService;
+use Modules\Newsletter\Services\NewsletterMenuRegistrar;
+use Modules\Newsletter\Services\NewsletterPermissionRegistrar;
+use Modules\Newsletter\Services\NewsletterSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -31,7 +33,11 @@ class NewsletterServiceProvider extends ServiceProvider
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         PermissionRegistry $permissionRegistry,
-        DashboardWidgetRegistry $widgetRegistry
+        DashboardWidgetRegistry $widgetRegistry,
+        NewsletterMenuRegistrar $menuRegistrar,
+        NewsletterDashboardService $dashboardService,
+        NewsletterPermissionRegistrar $permissionRegistrar,
+        NewsletterSettingsRegistrar $settingsRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -40,140 +46,11 @@ class NewsletterServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'Content',
-            label: 'Newsletter',
-            route: 'newsletter.index',
-            icon: 'Send',
-            order: 20,
-            permission: 'newsletter.campaigns.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        // Register Newsletter module dashboard as child of Dashboard
-        $menuRegistry->registerItem(
-            group: 'Dashboard',
-            label: 'Newsletter Dashboard',
-            route: 'newsletter.dashboard',
-            icon: 'LayoutDashboard',
-            order: 50,
-            permission: 'newsletter.dashboard.view',
-            parentKey: 'dashboard',
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
-        // Register model observers
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
         $this->bootObservers();
-
-        // Stat Widget: Total Campaigns (Overview - shown on main dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Campaigns',
-                value: fn () => Campaign::count(),
-                icon: 'Send',
-                module: $this->name,
-                order: 50,
-                scope: 'overview'
-            )
-        );
-
-        // Chart Widget: Campaign Status Distribution (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'chart',
-                title: 'Campaign Status',
-                value: 0,
-                icon: 'PieChart',
-                module: $this->name,
-                description: 'Distribution of campaign statuses',
-                chartType: 'bar',
-                data: fn () => $this->getCampaignStatusData(),
-                order: 51,
-                scope: 'detail'
-            )
-        );
-
-        // Activity Widget: Recent Campaigns (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'activity',
-                title: 'Recent Campaigns',
-                value: 0,
-                icon: 'Send',
-                module: $this->name,
-                description: 'Latest newsletter campaigns',
-                data: fn () => $this->getRecentCampaignsActivity(),
-                order: 52,
-                scope: 'detail'
-            )
-        );
-    }
-
-    /**
-     * Get campaign status data for chart widget.
-     *
-     * Optimized: Uses a single query with GROUP BY instead of multiple queries.
-     */
-    private function getCampaignStatusData(): array
-    {
-        $statuses = ['draft', 'sending', 'sent'];
-
-        // Single query to get counts grouped by status
-        $results = Campaign::selectRaw('status, COUNT(*) as count')
-            ->whereIn('status', $statuses)
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        // Build data array with results from query
-        $data = [];
-        foreach ($statuses as $status) {
-            $data[] = [
-                'name' => ucfirst($status),
-                'value' => $results[$status] ?? 0,
-            ];
-        }
-
-        return $data;
-    }
-
-    /**
-     * Get recent campaigns activity for activity widget.
-     */
-    private function getRecentCampaignsActivity(): array
-    {
-        return Campaign::latest('created_at')
-            ->limit(5)
-            ->get()
-            ->map(function ($campaign) {
-                $statusIcon = match ($campaign->status) {
-                    'sent' => 'CheckCircle',
-                    'sending' => 'Send',
-                    'draft' => 'Edit',
-                    default => 'Send',
-                };
-
-                $statusColor = match ($campaign->status) {
-                    'sent' => 'bg-green-500',
-                    'sending' => 'bg-blue-500',
-                    'draft' => 'bg-gray-500',
-                    default => 'bg-gray-500',
-                };
-
-                return [
-                    'id' => $campaign->id,
-                    'title' => "Campaign: {$campaign->subject} ({$campaign->status})",
-                    'timestamp' => $campaign->created_at->diffForHumans(),
-                    'icon' => $statusIcon,
-                    'iconColor' => $statusColor,
-                ];
-            })
-            ->toArray();
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -289,71 +166,5 @@ class NewsletterServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register newsletter module settings.
-     *
-     * Group name should be lowercase module name for consistency.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'campaigns_per_page',
-            value: '10',
-            type: SettingType::Integer,
-            label: 'Campaigns Per Page',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'max_posts_per_campaign',
-            value: '20',
-            type: SettingType::Integer,
-            label: 'Maximum Posts Per Campaign',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'newsletter_default_sort',
-            value: 'created_at',
-            type: SettingType::Text,
-            label: 'Default Sort Column',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'newsletter_default_sort_direction',
-            value: 'desc',
-            type: SettingType::Text,
-            label: 'Default Sort Direction',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default permissions for the Newsletter module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('newsletter', [
-            'dashboard.view',
-            'campaigns.view',
-            'campaigns.create',
-            'campaigns.edit',
-            'campaigns.delete',
-            'campaigns.send',
-        ], [
-            'Administrator' => ['dashboard.view', 'campaigns.*'],
-            'Staff' => ['dashboard.view', 'campaigns.view', 'campaigns.create'],
-        ]);
     }
 }

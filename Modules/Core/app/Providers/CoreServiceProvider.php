@@ -2,7 +2,6 @@
 
 namespace Modules\Core\Providers;
 
-use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
@@ -17,6 +16,9 @@ use Modules\Core\App\Observers\MenuObserver;
 use Modules\Core\App\Observers\PermissionObserver;
 use Modules\Core\App\Observers\RoleObserver;
 use Modules\Core\App\Observers\UserObserver;
+use Modules\Core\App\Services\CoreDashboardService;
+use Modules\Core\App\Services\CoreMenuRegistrar;
+use Modules\Core\App\Services\CorePermissionRegistrar;
 use Modules\Core\App\Services\SuperAdminService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -40,7 +42,10 @@ class CoreServiceProvider extends ServiceProvider
         PermissionRegistry $permissionRegistry,
         RoleRegistry $roleRegistry,
         SuperAdminService $superAdminService,
-        DashboardWidgetRegistry $widgetRegistry
+        DashboardWidgetRegistry $widgetRegistry,
+        CoreMenuRegistrar $menuRegistrar,
+        CoreDashboardService $dashboardService,
+        CorePermissionRegistrar $permissionRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -49,153 +54,13 @@ class CoreServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        // Register Core module dashboard as child of Dashboard
-        $menuRegistry->registerItem(
-            group: 'Dashboard',
-            label: 'Core Dashboard',
-            route: 'core.dashboard',
-            icon: 'LayoutDashboard',
-            order: 10,
-            permission: 'core.dashboard.view',
-            parentKey: 'dashboard',
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'User Management',
-            route: 'core.user-management',
-            icon: 'Users',
-            order: 10,
-            permission: null,
-            parentKey: null,
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Users',
-            route: 'core.users.index',
-            icon: 'Users',
-            order: 10,
-            permission: 'core.users.view',
-            parentKey: 'core.user-management',
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Roles',
-            route: 'core.roles.index',
-            icon: 'Shield',
-            order: 20,
-            permission: 'core.roles.manage',
-            parentKey: 'core.user-management',
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Modules',
-            route: 'core.modules.index',
-            icon: 'Package',
-            order: 100,
-            permission: 'core.modules.manage',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerDefaultRoles($roleRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $permissionRegistrar->registerRoles($roleRegistry);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
         $superAdminService->ensureExists($roleRegistry);
-
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Users',
-                value: fn () => User::count(),
-                icon: 'Users',
-                module: $this->name,
-                group: 'User Management',
-                order: 10,
-                scope: 'overview'
-            )
-        );
-
-        // Stat Widget: Total Roles (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Roles',
-                value: fn () => Role::count(),
-                icon: 'Shield',
-                module: $this->name,
-                group: 'User Management',
-                order: 11,
-                scope: 'detail'
-            )
-        );
-
-        // Stat Widget: Total Permissions (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'stat',
-                title: 'Total Permissions',
-                value: fn () => Permission::count(),
-                icon: 'Key',
-                module: $this->name,
-                group: 'User Management',
-                order: 12,
-                scope: 'detail'
-            )
-        );
-
-        // Chart Widget: User Growth Over Time (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'chart',
-                title: 'User Growth',
-                value: 0,
-                icon: 'TrendingUp',
-                module: $this->name,
-                group: 'Analytics',
-                description: 'New user registrations over the last 6 months',
-                chartType: 'line',
-                data: fn () => $this->getUserGrowthData(),
-                order: 13,
-                scope: 'detail'
-            )
-        );
-
-        // Activity Widget: Recent User Registrations (Detail - shown on module dashboard)
-        $widgetRegistry->register(
-            new DashboardWidget(
-                type: 'activity',
-                title: 'Recent Users',
-                value: 0,
-                icon: 'UserPlus',
-                module: $this->name,
-                group: 'Activity',
-                description: 'Latest user registrations',
-                data: fn () => $this->getRecentUsersActivity(),
-                order: 14,
-                scope: 'detail'
-            )
-        );
-
-        Gate::before(function ($user, $ability) {
-            if ($user && method_exists($user, 'hasRole')) {
-                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
-            }
-
-            return null;
-        });
-
-        User::observe(UserObserver::class);
-        Role::observe(RoleObserver::class);
-        Permission::observe(PermissionObserver::class);
-        Menu::observe(MenuObserver::class);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $this->registerAuthorization();
+        $this->registerObservers();
     }
 
     /**
@@ -316,113 +181,27 @@ class CoreServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register default roles for the Core module.
+     * Register authorization gates and policies.
      */
-    private function registerDefaultRoles(RoleRegistry $registry): void
+    private function registerAuthorization(): void
     {
-        $registry->register('core', Roles::SUPER_ADMIN);
-        $registry->register('core', Roles::ADMINISTRATOR);
-        $registry->register('core', Roles::MANAGER);
-        $registry->register('core', Roles::STAFF);
-        $registry->register('core', Roles::AUDITOR);
+        Gate::before(function ($user, $ability) {
+            if ($user && method_exists($user, 'hasRole')) {
+                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
+            }
+
+            return null;
+        });
     }
 
     /**
-     * Register default permissions for the Core module.
+     * Register model observers.
      */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    private function registerObservers(): void
     {
-        $registry->register('core', [
-            'dashboard.view',
-            'users.view',
-            'users.create',
-            'users.edit',
-            'users.delete',
-            'roles.manage',
-            'modules.manage',
-        ], [
-            Roles::ADMINISTRATOR => [
-                'dashboard.view',
-                'users.view',
-                'users.create',
-                'users.edit',
-                'users.delete',
-                'roles.manage',
-                'modules.manage',
-            ],
-            Roles::MANAGER => [
-                'dashboard.view',
-                'users.view',
-            ],
-            Roles::STAFF => [
-                'dashboard.view',
-            ],
-            Roles::AUDITOR => [
-                'dashboard.view',
-                'users.view',
-            ],
-        ]);
-    }
-
-    /**
-     * Get user growth data for chart widget.
-     *
-     * Optimized: Uses a single query with GROUP BY instead of 6 separate queries.
-     */
-    private function getUserGrowthData(): array
-    {
-        $now = now();
-        $startDate = $now->copy()->subMonths(5)->startOfMonth();
-        $endDate = $now->copy()->endOfMonth();
-
-        // Single query to get counts grouped by month
-        $results = User::selectRaw('
-                DATE_TRUNC(\'month\', created_at)::date as month,
-                COUNT(*) as count
-            ')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->keyBy(function ($item) {
-                // Extract Y-m from date string (format: YYYY-MM-DD)
-                return substr($item->month, 0, 7);
-            })
-            ->map(fn ($item) => (int) $item->count)
-            ->toArray();
-
-        // Build months array with data from query
-        $months = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = $now->copy()->subMonths($i);
-            $monthKey = $month->format('Y-m');
-
-            $months[] = [
-                'name' => $month->format('M Y'),
-                'value' => $results[$monthKey] ?? 0,
-            ];
-        }
-
-        return $months;
-    }
-
-    /**
-     * Get recent users activity for activity widget.
-     */
-    private function getRecentUsersActivity(): array
-    {
-        return User::latest('created_at')
-            ->limit(5)
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'title' => "New user registered: {$user->name}",
-                    'timestamp' => $user->created_at->diffForHumans(),
-                    'icon' => 'UserPlus',
-                    'iconColor' => 'bg-blue-500',
-                ];
-            })
-            ->toArray();
+        User::observe(UserObserver::class);
+        Role::observe(RoleObserver::class);
+        Permission::observe(PermissionObserver::class);
+        Menu::observe(MenuObserver::class);
     }
 }
