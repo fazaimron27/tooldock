@@ -143,10 +143,15 @@ function generateBreadcrumbsFromRoute(title, appName) {
   const resourceIndexRoute = `${resourceName}.index`;
   const hasIndexRoute = route().has(resourceIndexRoute);
 
-  if (hasIndexRoute && action !== 'index') {
+  // For dashboard routes, always show module name even if index route doesn't exist
+  const isDashboardRoute = action === 'dashboard';
+  const dashboardRoute = `${resourceName}.dashboard`;
+  const hasDashboardRoute = route().has(dashboardRoute);
+
+  if ((hasIndexRoute || (isDashboardRoute && hasDashboardRoute)) && action !== 'index') {
     breadcrumbs.push({
       label: resourceLabel,
-      href: route(resourceIndexRoute),
+      href: hasIndexRoute ? route(resourceIndexRoute) : route(dashboardRoute),
     });
   } else if (action === 'index') {
     breadcrumbs.push({ label: resourceLabel });
