@@ -65,7 +65,6 @@ class SettingsServiceProvider extends ServiceProvider
         $this->registerDefaultSettings($settingsRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
 
-        // Stat Widget: Total Settings (Overview - shown on main dashboard)
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
@@ -75,6 +74,23 @@ class SettingsServiceProvider extends ServiceProvider
                 module: $this->name,
                 order: 70,
                 scope: 'overview'
+            )
+        );
+
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'table',
+                title: 'Settings Configuration',
+                value: 0,
+                icon: 'Settings',
+                module: $this->name,
+                description: 'Manage and view all application settings',
+                data: fn () => $this->getSettingsTableData(),
+                config: [
+                    'columns' => $this->getSettingsTableColumns(),
+                ],
+                order: 71,
+                scope: 'detail'
             )
         );
     }
@@ -261,5 +277,90 @@ class SettingsServiceProvider extends ServiceProvider
         ], [
             'Administrator' => ['dashboard.view', 'config.*'],
         ]);
+    }
+
+    /**
+     * Formats settings data for the table widget.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getSettingsTableData(): array
+    {
+        return Setting::query()
+            ->orderBy('module')
+            ->orderBy('group')
+            ->orderBy('key')
+            ->get()
+            ->map(function (Setting $setting) {
+                return [
+                    'id' => $setting->id,
+                    'module' => $setting->module ?? 'N/A',
+                    'group' => $setting->group ?? 'N/A',
+                    'key' => $setting->key,
+                    'label' => $setting->label ?? $setting->key,
+                    'value' => $this->formatSettingValue($setting),
+                    'type' => ucfirst($setting->type->value),
+                    'is_system' => $setting->is_system ? 'Yes' : 'No',
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Formats a setting value for display in the table.
+     */
+    private function formatSettingValue(Setting $setting): string
+    {
+        $value = $setting->value;
+
+        if ($value === null) {
+            return 'N/A';
+        }
+
+        return match ($setting->type) {
+            SettingType::Boolean => $value ? 'Yes' : 'No',
+            SettingType::Integer => (string) $value,
+            SettingType::Textarea => strlen($value) > 50 ? substr($value, 0, 50).'...' : $value,
+            default => (string) $value,
+        };
+    }
+
+    /**
+     * Returns column definitions for the settings table widget.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getSettingsTableColumns(): array
+    {
+        return [
+            [
+                'accessorKey' => 'module',
+                'header' => 'Module',
+            ],
+            [
+                'accessorKey' => 'group',
+                'header' => 'Group',
+            ],
+            [
+                'accessorKey' => 'key',
+                'header' => 'Key',
+            ],
+            [
+                'accessorKey' => 'label',
+                'header' => 'Label',
+            ],
+            [
+                'accessorKey' => 'value',
+                'header' => 'Value',
+            ],
+            [
+                'accessorKey' => 'type',
+                'header' => 'Type',
+            ],
+            [
+                'accessorKey' => 'is_system',
+                'header' => 'System',
+            ],
+        ];
     }
 }
