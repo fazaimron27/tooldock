@@ -9,13 +9,13 @@ import { usePage } from '@inertiajs/react';
 
 export default function ApplicationLogo({ className = '', ...props }) {
   const { app_name, app_logo } = usePage().props;
-  const appName = app_name || 'Mosaic';
-  const LogoIcon = getIcon(app_logo || 'Grid3x3');
+  const appName = app_name || 'Tool Dock';
+  const LogoIcon = getIcon(app_logo || 'Cog');
 
   return (
     <div className={cn('flex items-center gap-2.5', className)} {...props}>
       <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-lg ring-1 ring-primary/30 backdrop-blur-sm">
-        <LogoIcon className="h-5 w-5 text-primary-foreground drop-shadow-sm" strokeWidth={2.5} />
+        <LogoIcon className="h-6 w-6 text-primary-foreground drop-shadow-sm" strokeWidth={2.5} />
       </div>
 
       <span className="text-xl font-bold tracking-tight text-foreground">{appName}</span>

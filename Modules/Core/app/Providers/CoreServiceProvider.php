@@ -2,6 +2,7 @@
 
 namespace Modules\Core\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
@@ -15,6 +16,9 @@ use Modules\Core\App\Observers\MenuObserver;
 use Modules\Core\App\Observers\PermissionObserver;
 use Modules\Core\App\Observers\RoleObserver;
 use Modules\Core\App\Observers\UserObserver;
+use Modules\Core\App\Services\CoreDashboardService;
+use Modules\Core\App\Services\CoreMenuRegistrar;
+use Modules\Core\App\Services\CorePermissionRegistrar;
 use Modules\Core\App\Services\SuperAdminService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -37,7 +41,11 @@ class CoreServiceProvider extends ServiceProvider
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         RoleRegistry $roleRegistry,
-        SuperAdminService $superAdminService
+        SuperAdminService $superAdminService,
+        DashboardWidgetRegistry $widgetRegistry,
+        CoreMenuRegistrar $menuRegistrar,
+        CoreDashboardService $dashboardService,
+        CorePermissionRegistrar $permissionRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -46,67 +54,13 @@ class CoreServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'User Management',
-            route: 'core.user-management',
-            icon: 'Users',
-            order: 10,
-            permission: null,
-            parentKey: null,
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Users',
-            route: 'core.users.index',
-            icon: 'Users',
-            order: 10,
-            permission: 'core.users.view',
-            parentKey: 'core.user-management',
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Roles',
-            route: 'core.roles.index',
-            icon: 'Shield',
-            order: 20,
-            permission: 'core.roles.manage',
-            parentKey: 'core.user-management',
-            module: $this->name
-        );
-
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Modules',
-            route: 'core.modules.index',
-            icon: 'Package',
-            order: 100,
-            permission: 'core.modules.manage',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerDefaultRoles($roleRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
-
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $permissionRegistrar->registerRoles($roleRegistry);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
         $superAdminService->ensureExists($roleRegistry);
-
-        Gate::before(function ($user, $ability) {
-            if ($user && method_exists($user, 'hasRole')) {
-                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
-            }
-
-            return null;
-        });
-
-        User::observe(UserObserver::class);
-        Role::observe(RoleObserver::class);
-        Permission::observe(PermissionObserver::class);
-        Menu::observe(MenuObserver::class);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $this->registerAuthorization();
+        $this->registerObservers();
     }
 
     /**
@@ -227,51 +181,27 @@ class CoreServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register default roles for the Core module.
+     * Register authorization gates and policies.
      */
-    private function registerDefaultRoles(RoleRegistry $registry): void
+    private function registerAuthorization(): void
     {
-        $registry->register('core', Roles::SUPER_ADMIN);
-        $registry->register('core', Roles::ADMINISTRATOR);
-        $registry->register('core', Roles::MANAGER);
-        $registry->register('core', Roles::STAFF);
-        $registry->register('core', Roles::AUDITOR);
+        Gate::before(function ($user, $ability) {
+            if ($user && method_exists($user, 'hasRole')) {
+                return $user->hasRole(Roles::SUPER_ADMIN) ? true : null;
+            }
+
+            return null;
+        });
     }
 
     /**
-     * Register default permissions for the Core module.
+     * Register model observers.
      */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
+    private function registerObservers(): void
     {
-        $registry->register('core', [
-            'dashboard.view',
-            'users.view',
-            'users.create',
-            'users.edit',
-            'users.delete',
-            'roles.manage',
-            'modules.manage',
-        ], [
-            Roles::ADMINISTRATOR => [
-                'dashboard.view',
-                'users.view',
-                'users.create',
-                'users.edit',
-                'users.delete',
-                'roles.manage',
-                'modules.manage',
-            ],
-            Roles::MANAGER => [
-                'dashboard.view',
-                'users.view',
-            ],
-            Roles::STAFF => [
-                'dashboard.view',
-            ],
-            Roles::AUDITOR => [
-                'dashboard.view',
-                'users.view',
-            ],
-        ]);
+        User::observe(UserObserver::class);
+        Role::observe(RoleObserver::class);
+        Permission::observe(PermissionObserver::class);
+        Menu::observe(MenuObserver::class);
     }
 }

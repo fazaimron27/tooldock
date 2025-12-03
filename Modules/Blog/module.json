@@ -13,5 +13,5 @@
   "files": [],
   "requires": ["Core", "Settings", "AuditLog"],
   "icon": "BookOpen",
-  "author": "Mosaic Team"
+  "author": "Tool Dock Team"
 }

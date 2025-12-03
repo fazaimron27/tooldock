@@ -2,7 +2,7 @@
 
 namespace App\Services\Registry;
 
-use Illuminate\Support\Facades\Cache;
+use App\Services\Cache\CacheService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Settings\Enums\SettingType;
@@ -26,6 +26,10 @@ class SettingsRegistry
      * @var array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool}>
      */
     private array $settings = [];
+
+    public function __construct(
+        private CacheService $cacheService
+    ) {}
 
     /**
      * Track registered keys to prevent duplicates.
@@ -262,18 +266,6 @@ class SettingsRegistry
      */
     private function clearCache(): void
     {
-        try {
-            Cache::tags([self::CACHE_TAG])->flush();
-
-            Log::debug('SettingsRegistry: Settings cache cleared via Redis tags', [
-                'tag' => self::CACHE_TAG,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('SettingsRegistry: Failed to clear cache', [
-                'tag' => self::CACHE_TAG,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
+        $this->cacheService->clearTag(self::CACHE_TAG, 'SettingsRegistry');
     }
 }

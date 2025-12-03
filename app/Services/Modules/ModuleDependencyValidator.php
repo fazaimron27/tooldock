@@ -3,7 +3,7 @@
 namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
-use Illuminate\Support\Facades\Cache;
+use App\Services\Cache\CacheService;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Nwidart\Modules\Module;
@@ -21,7 +21,8 @@ class ModuleDependencyValidator
     private ?array $moduleMapCache = null;
 
     public function __construct(
-        private ModuleStatusService $statusService
+        private ModuleStatusService $statusService,
+        private CacheService $cacheService
     ) {}
 
     /**
@@ -251,20 +252,12 @@ class ModuleDependencyValidator
         $fileHash = $this->calculateFilesHash($directory);
         $cacheKey = "module_dependencies:{$moduleName}:{$moduleVersion}:{$fileHash}";
 
-        try {
-            return Cache::tags([self::CACHE_TAG])->remember($cacheKey, now()->addDays(7), function () use ($directory, $currentModuleName) {
-                return $this->scanDirectoryDirectly($directory, $currentModuleName);
-            });
-        } catch (\Throwable $e) {
-            Log::warning('ModuleDependencyValidator: Cache error, falling back to direct scan', [
-                'module' => $moduleName,
-                'cache_key' => $cacheKey,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return $this->scanDirectoryDirectly($directory, $currentModuleName);
-        }
+        return $this->cacheService->remember(
+            $cacheKey,
+            now()->addDays(7),
+            fn () => $this->scanDirectoryDirectly($directory, $currentModuleName),
+            self::CACHE_TAG
+        );
     }
 
     /**
@@ -588,18 +581,6 @@ class ModuleDependencyValidator
      */
     public function clearCache(): void
     {
-        try {
-            Cache::tags([self::CACHE_TAG])->flush();
-
-            Log::debug('ModuleDependencyValidator: Module dependency cache cleared via Redis tags', [
-                'tag' => self::CACHE_TAG,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('ModuleDependencyValidator: Failed to clear cache', [
-                'tag' => self::CACHE_TAG,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
+        $this->cacheService->clearTag(self::CACHE_TAG, 'ModuleDependencyValidator');
     }
 }

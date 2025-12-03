@@ -2,12 +2,18 @@
 
 namespace Modules\Blog\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Settings\Enums\SettingType;
+use Modules\Blog\Models\Post;
+use Modules\Blog\Observers\PostObserver;
+use Modules\Blog\Services\BlogDashboardService;
+use Modules\Blog\Services\BlogMenuRegistrar;
+use Modules\Blog\Services\BlogPermissionRegistrar;
+use Modules\Blog\Services\BlogSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -23,8 +29,16 @@ class BlogServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
+        BlogMenuRegistrar $menuRegistrar,
+        BlogDashboardService $dashboardService,
+        BlogPermissionRegistrar $permissionRegistrar,
+        BlogSettingsRegistrar $settingsRegistrar
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -32,19 +46,11 @@ class BlogServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'Content',
-            label: 'Blog',
-            route: 'blog.index',
-            icon: 'FileText',
-            order: 10,
-            permission: 'blog.posts.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $this->bootObservers();
     }
 
     /**
@@ -54,6 +60,14 @@ class BlogServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register model observers.
+     */
+    public function bootObservers(): void
+    {
+        Post::observe(PostObserver::class);
     }
 
     protected function registerCommands(): void {}
@@ -152,60 +166,5 @@ class BlogServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register blog module settings.
-     *
-     * Group name should be lowercase module name for consistency.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Blog',
-            group: 'blog',
-            key: 'posts_per_page',
-            value: '10',
-            type: SettingType::Integer,
-            label: 'Posts Per Page',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Blog',
-            group: 'blog',
-            key: 'blog_default_sort',
-            value: 'created_at',
-            type: SettingType::Text,
-            label: 'Default Sort Column',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Blog',
-            group: 'blog',
-            key: 'blog_default_sort_direction',
-            value: 'desc',
-            type: SettingType::Text,
-            label: 'Default Sort Direction',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default permissions for the Blog module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('blog', [
-            'posts.view',
-            'posts.create',
-            'posts.edit',
-            'posts.delete',
-            'posts.publish',
-        ], [
-            'Administrator' => ['posts.*'],
-            'Staff' => ['posts.view', 'posts.create'],
-        ]);
     }
 }

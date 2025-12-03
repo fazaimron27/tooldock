@@ -65,7 +65,7 @@ class BlogController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $post = Post::create([
+        Post::create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
         ]);

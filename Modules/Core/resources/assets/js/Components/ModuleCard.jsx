@@ -7,7 +7,7 @@ import { useNavigationLoading } from '@/Hooks/useNavigationLoading';
 import { useSmartForm } from '@/Hooks/useSmartForm';
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, router } from '@inertiajs/react';
-import { ArrowRight, Tag } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
@@ -28,7 +28,7 @@ import { Switch } from '@/Components/ui/switch';
 /**
  * Get module route URL - tries Ziggy first, falls back to manual construction
  * @param {string} moduleName - The module name (e.g., "Blog")
- * @returns {string} The route URL (e.g., "/blog" or route('blog.index'))
+ * @returns {string} The route URL (e.g., "/tooldock/blog" or route('blog.index'))
  */
 const getModuleRouteUrl = (moduleName) => {
   const moduleNameLower = moduleName.toLowerCase();
@@ -38,13 +38,14 @@ const getModuleRouteUrl = (moduleName) => {
     return route(routeName);
   }
 
-  return `/${moduleNameLower}`;
+  // All module routes use the /tooldock prefix
+  return `/tooldock/${moduleNameLower}`;
 };
 
 export default function ModuleCard({ module, onKeywordClick }) {
   const uninstallDialog = useDisclosure();
   const successDialog = useDisclosure();
-  const { showLoading, hideLoading } = useNavigationLoading();
+  const { showLoading } = useNavigationLoading();
   const [isToggling, setIsToggling] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [moduleRouteUrl, setModuleRouteUrl] = useState(null);
@@ -161,33 +162,12 @@ export default function ModuleCard({ module, onKeywordClick }) {
     showLoading();
 
     if (moduleRouteUrl) {
-      const path = moduleRouteUrl.startsWith('http')
-        ? moduleRouteUrl.replace(window.location.origin, '')
-        : moduleRouteUrl;
-
-      const moduleName = path.replace(/^\//, '').split('/')[0];
-      const routeName = `${moduleName}.index`;
-
-      // Use SPA navigation if route exists, otherwise fallback to full page reload
-      // This handles cases where routes haven't been regenerated after module installation
-      if (route().has(routeName)) {
-        router.visit(path, {
-          onStart: () => {
-            showLoading();
-          },
-          onFinish: () => {
-            setIsNavigating(false);
-            hideLoading();
-          },
-          onError: () => {
-            setIsNavigating(false);
-            hideLoading();
-            window.location.href = moduleRouteUrl;
-          },
-        });
-      } else {
-        window.location.href = moduleRouteUrl;
-      }
+      // Always use full page reload for newly installed/enabled modules
+      // This ensures:
+      // 1. Service providers boot and register routes
+      // 2. Ziggy routes are reloaded in the frontend
+      // 3. The frontend route() helper has updated routes
+      window.location.href = moduleRouteUrl;
     } else {
       // Persist loading state to sessionStorage before reload for immediate display
       showLoading();
@@ -195,7 +175,7 @@ export default function ModuleCard({ module, onKeywordClick }) {
         window.location.reload();
       }, 0);
     }
-  }, [moduleRouteUrl, showLoading, hideLoading]);
+  }, [moduleRouteUrl, showLoading]);
 
   const Icon = getIcon(module.icon);
   const isProcessing = installForm.processing || uninstallForm.processing || isToggling;
@@ -210,18 +190,18 @@ export default function ModuleCard({ module, onKeywordClick }) {
                 <Icon className="h-7 w-7 text-primary" />
               </div>
               <div className="flex-1 min-w-0 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-xl font-semibold leading-tight">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <CardTitle className="text-xl font-semibold leading-tight truncate min-w-0">
                     {module.name}
                   </CardTitle>
-                  <div className="flex shrink-0 gap-1.5">
+                  <div className="flex gap-1.5 shrink-0">
                     {module.is_active && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge variant="default" className="text-xs whitespace-nowrap">
                         Active
                       </Badge>
                     )}
                     {module.protected && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
                         Protected
                       </Badge>
                     )}
@@ -309,14 +289,6 @@ export default function ModuleCard({ module, onKeywordClick }) {
                     disabled={isToggling || module.protected}
                   />
                 </div>
-                {module.is_installed && module.is_active && !module.protected && (
-                  <Link href={getModuleRouteUrl(module.name)} className="w-full">
-                    <Button variant="outline" className="w-full">
-                      <ArrowRight className="mr-2 h-4 w-4" />
-                      Go to Module
-                    </Button>
-                  </Link>
-                )}
                 {!module.protected && (
                   <Button
                     variant="destructive"

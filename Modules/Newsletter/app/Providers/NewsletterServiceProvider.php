@@ -2,12 +2,18 @@
 
 namespace Modules\Newsletter\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Settings\Enums\SettingType;
+use Modules\Newsletter\Models\Campaign;
+use Modules\Newsletter\Observers\CampaignObserver;
+use Modules\Newsletter\Services\NewsletterDashboardService;
+use Modules\Newsletter\Services\NewsletterMenuRegistrar;
+use Modules\Newsletter\Services\NewsletterPermissionRegistrar;
+use Modules\Newsletter\Services\NewsletterSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -23,8 +29,16 @@ class NewsletterServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
+        NewsletterMenuRegistrar $menuRegistrar,
+        NewsletterDashboardService $dashboardService,
+        NewsletterPermissionRegistrar $permissionRegistrar,
+        NewsletterSettingsRegistrar $settingsRegistrar
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -32,19 +46,11 @@ class NewsletterServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'Content',
-            label: 'Newsletter',
-            route: 'newsletter.index',
-            icon: 'Send',
-            order: 20,
-            permission: 'newsletter.campaigns.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $this->bootObservers();
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -54,6 +60,14 @@ class NewsletterServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register model observers.
+     */
+    public function bootObservers(): void
+    {
+        Campaign::observe(CampaignObserver::class);
     }
 
     protected function registerCommands(): void {}
@@ -152,70 +166,5 @@ class NewsletterServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register newsletter module settings.
-     *
-     * Group name should be lowercase module name for consistency.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'campaigns_per_page',
-            value: '10',
-            type: SettingType::Integer,
-            label: 'Campaigns Per Page',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'max_posts_per_campaign',
-            value: '20',
-            type: SettingType::Integer,
-            label: 'Maximum Posts Per Campaign',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'newsletter_default_sort',
-            value: 'created_at',
-            type: SettingType::Text,
-            label: 'Default Sort Column',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Newsletter',
-            group: 'newsletter',
-            key: 'newsletter_default_sort_direction',
-            value: 'desc',
-            type: SettingType::Text,
-            label: 'Default Sort Direction',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default permissions for the Newsletter module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('newsletter', [
-            'campaigns.view',
-            'campaigns.create',
-            'campaigns.edit',
-            'campaigns.delete',
-            'campaigns.send',
-        ], [
-            'Administrator' => ['campaigns.*'],
-            'Staff' => ['campaigns.view', 'campaigns.create'],
-        ]);
     }
 }

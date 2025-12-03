@@ -2,14 +2,17 @@
 
 namespace Modules\AuditLog\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Modules\Core\App\Constants\Roles;
-use Modules\Settings\Enums\SettingType;
+use Modules\AuditLog\Services\AuditLogDashboardService;
+use Modules\AuditLog\Services\AuditLogMenuRegistrar;
+use Modules\AuditLog\Services\AuditLogPermissionRegistrar;
+use Modules\AuditLog\Services\AuditLogSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -25,8 +28,16 @@ class AuditLogServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
+        AuditLogMenuRegistrar $menuRegistrar,
+        AuditLogDashboardService $dashboardService,
+        AuditLogPermissionRegistrar $permissionRegistrar,
+        AuditLogSettingsRegistrar $settingsRegistrar
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -34,19 +45,10 @@ class AuditLogServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Audit Logs',
-            route: 'auditlog.index',
-            icon: 'FileText',
-            order: 30,
-            permission: 'auditlog.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -186,75 +188,5 @@ class AuditLogServiceProvider extends ServiceProvider
         }
 
         return $paths;
-    }
-
-    /**
-     * Register default settings for the AuditLog module.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'retention_days',
-            value: '90',
-            type: SettingType::Integer,
-            label: 'Audit Log Retention (Days)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'scheduled_cleanup_enabled',
-            value: '1',
-            type: SettingType::Boolean,
-            label: 'Enable Scheduled Cleanup',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'model_types_cache_ttl',
-            value: '3600',
-            type: SettingType::Integer,
-            label: 'Model Types Cache TTL (Seconds)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'export_chunk_size',
-            value: '500',
-            type: SettingType::Integer,
-            label: 'Export Chunk Size',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'AuditLog',
-            group: 'auditlog',
-            key: 'cleanup_schedule_time',
-            value: '02:00',
-            type: SettingType::Text,
-            label: 'Cleanup Schedule Time (HH:MM)',
-            isSystem: false
-        );
-    }
-
-    /**
-     * Register default permissions for the AuditLog module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('auditlog', [
-            'view',
-        ], [
-            Roles::ADMINISTRATOR => ['view'],
-            Roles::MANAGER => ['view'],
-            Roles::AUDITOR => ['view'],
-        ]);
     }
 }

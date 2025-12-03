@@ -3,7 +3,7 @@
  * Features a sticky navbar with developer-focused navigation and GitHub integration
  */
 import { Link, usePage } from '@inertiajs/react';
-import { GitHub } from 'lucide-react';
+import { Github } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Button } from '@/Components/ui/button';
@@ -55,7 +55,7 @@ export default function LandingLayout({ children }) {
                 rel="noopener noreferrer"
                 className="flex items-center"
               >
-                <GitHub className="h-5 w-5" />
+                <Github className="h-5 w-5" />
               </a>
             </Button>
             {isAuthenticated ? (
@@ -82,12 +82,12 @@ export default function LandingLayout({ children }) {
         <div className="container flex flex-col items-center justify-between gap-4 px-4 md:flex-row">
           <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Mosaic. Open Source under{' '}
+              © {new Date().getFullYear()} Tool Dock. Proudly Open Source under{' '}
               <a
                 href="https://opensource.org/licenses/MIT"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-foreground hover:underline"
+                className="font-medium text-foreground hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
               >
                 MIT License
               </a>
@@ -106,7 +106,7 @@ export default function LandingLayout({ children }) {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-foreground transition-colors"
             >
-              <GitHub className="h-4 w-4" />
+              <Github className="h-4 w-4" />
               GitHub
             </a>
           </div>

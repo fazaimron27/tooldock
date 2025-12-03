@@ -2,6 +2,7 @@
 
 namespace Modules\Media\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -11,7 +12,12 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Media\Console\CleanupTemporaryMedia;
-use Modules\Settings\Enums\SettingType;
+use Modules\Media\Models\MediaFile;
+use Modules\Media\Observers\MediaFileObserver;
+use Modules\Media\Services\MediaDashboardService;
+use Modules\Media\Services\MediaMenuRegistrar;
+use Modules\Media\Services\MediaPermissionRegistrar;
+use Modules\Media\Services\MediaSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -27,8 +33,16 @@ class MediaServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
+        MediaMenuRegistrar $menuRegistrar,
+        MediaDashboardService $dashboardService,
+        MediaPermissionRegistrar $permissionRegistrar,
+        MediaSettingsRegistrar $settingsRegistrar
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -36,20 +50,12 @@ class MediaServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $menuRegistry->registerItem(
-            group: 'System',
-            label: 'Media',
-            route: 'media.index',
-            icon: 'Image',
-            order: 40,
-            permission: 'media.files.view',
-            parentKey: null,
-            module: $this->name
-        );
-
-        $this->registerSettings($settingsRegistry);
-        $this->registerDefaultPermissions($permissionRegistry);
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
         $this->registerRateLimiter();
+        $this->bootObservers();
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**
@@ -59,6 +65,14 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register model observers.
+     */
+    public function bootObservers(): void
+    {
+        MediaFile::observe(MediaFileObserver::class);
     }
 
     /**
@@ -177,102 +191,6 @@ class MediaServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register media module settings.
-     */
-    private function registerSettings(SettingsRegistry $registry): void
-    {
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'max_file_size',
-            value: '10240',
-            type: SettingType::Integer,
-            label: 'Max File Size (KB)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'default_storage_disk',
-            value: 'public',
-            type: SettingType::Text,
-            label: 'Default Storage Disk',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'temporary_file_retention_hours',
-            value: '24',
-            type: SettingType::Integer,
-            label: 'Temporary File Retention (Hours)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'image_max_dimension',
-            value: '2000',
-            type: SettingType::Integer,
-            label: 'Image Max Dimension (px)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'image_quality',
-            value: '85',
-            type: SettingType::Integer,
-            label: 'Image Quality (1-100)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'allowed_mime_types',
-            value: 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf',
-            type: SettingType::Text,
-            label: 'Allowed MIME Types (comma-separated)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'prefer_webp',
-            value: '0',
-            type: SettingType::Integer,
-            label: 'Prefer WebP Format (0=No, 1=Yes)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'upload_rate_limit_per_minute',
-            value: '10',
-            type: SettingType::Integer,
-            label: 'Upload Rate Limit (per minute for authenticated users)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: 'Media',
-            group: 'media',
-            key: 'upload_rate_limit_guest_per_minute',
-            value: '5',
-            type: SettingType::Integer,
-            label: 'Upload Rate Limit (per minute for guests)',
-            isSystem: false
-        );
-    }
-
-    /**
      * Register rate limiter for media uploads.
      */
     private function registerRateLimiter(): void
@@ -289,21 +207,5 @@ class MediaServiceProvider extends ServiceProvider
                 ? Limit::perMinute($userLimit)->by($request->user()->id)
                 : Limit::perMinute($guestLimit)->by($request->ip());
         });
-    }
-
-    /**
-     * Register default permissions for the Media module.
-     */
-    private function registerDefaultPermissions(PermissionRegistry $registry): void
-    {
-        $registry->register('media', [
-            'files.view',
-            'files.upload',
-            'files.edit',
-            'files.delete',
-        ], [
-            'Administrator' => ['files.*'],
-            'Staff' => ['files.view', 'files.upload'],
-        ]);
     }
 }

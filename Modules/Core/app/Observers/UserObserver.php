@@ -2,6 +2,7 @@
 
 namespace Modules\Core\App\Observers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
@@ -34,6 +35,8 @@ class UserObserver
                     app(PermissionCacheService::class)->clear();
                     $user->load('roles.permissions');
                 }
+
+                app(DashboardWidgetRegistry::class)->clearCache(null, 'Core');
             } catch (\Exception $e) {
                 Log::warning('Failed to assign default role to user: '.$e->getMessage(), [
                     'user_id' => $user->id,
