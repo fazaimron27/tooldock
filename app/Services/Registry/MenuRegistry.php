@@ -2,7 +2,7 @@
 
 namespace App\Services\Registry;
 
-use Illuminate\Support\Facades\Cache;
+use App\Services\Cache\CacheService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +24,10 @@ class MenuRegistry
      * Used for efficient bulk invalidation via Redis tags.
      */
     private const CACHE_TAG = 'menus';
+
+    public function __construct(
+        private CacheService $cacheService
+    ) {}
 
     /**
      * Cache TTL (Time To Live) for menu cache entries.
@@ -350,25 +354,12 @@ class MenuRegistry
         $userId = $user?->id ?? 0;
         $cacheKey = "menus:user:{$userId}";
 
-        try {
-            // Use Redis cache tags for efficient invalidation
-            return Cache::tags([self::CACHE_TAG])->remember(
-                $cacheKey,
-                now()->addHours(self::CACHE_TTL_HOURS),
-                function () use ($user) {
-                    return $this->loadMenusFromDatabase($user);
-                }
-            );
-        } catch (\Throwable $e) {
-            Log::warning('MenuRegistry: Cache error, falling back to database', [
-                'user_id' => $userId,
-                'cache_key' => $cacheKey,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return $this->loadMenusFromDatabase($user);
-        }
+        return $this->cacheService->remember(
+            $cacheKey,
+            now()->addHours(self::CACHE_TTL_HOURS),
+            fn () => $this->loadMenusFromDatabase($user),
+            self::CACHE_TAG
+        );
     }
 
     /**
@@ -398,7 +389,7 @@ class MenuRegistry
         }
 
         $sorted = [];
-        $groupOrder = ['Main' => 0];
+        $groupOrder = ['Main' => 0, 'Dashboard' => 1];
 
         foreach ($rootMenus as $menu) {
             $group = $menu->group;
@@ -580,18 +571,6 @@ class MenuRegistry
      */
     public function clearCache(): void
     {
-        try {
-            Cache::tags([self::CACHE_TAG])->flush();
-
-            Log::debug('MenuRegistry: Menu cache cleared via Redis tags', [
-                'tag' => self::CACHE_TAG,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('MenuRegistry: Failed to clear cache', [
-                'tag' => self::CACHE_TAG,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-        }
+        $this->cacheService->clearTag(self::CACHE_TAG, 'MenuRegistry');
     }
 }
