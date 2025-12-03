@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Core\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
@@ -15,13 +15,13 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    Gate::authorize('core.dashboard.view');
+// All authenticated routes with /tooldock prefix
+Route::prefix('tooldock')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+});
 
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
+Route::prefix('tooldock')->middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
