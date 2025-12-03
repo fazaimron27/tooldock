@@ -2,11 +2,15 @@
 
 namespace Modules\Blog\Providers;
 
+use App\Data\DashboardWidget;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Blog\Models\Post;
+use Modules\Blog\Observers\PostObserver;
 use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -23,8 +27,12 @@ class BlogServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -43,8 +51,155 @@ class BlogServiceProvider extends ServiceProvider
             module: $this->name
         );
 
+        // Register Blog module dashboard as child of Dashboard
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Blog Dashboard',
+            route: 'blog.dashboard',
+            icon: 'LayoutDashboard',
+            order: 20,
+            permission: 'blog.dashboard.view',
+            parentKey: 'dashboard',
+            module: $this->name
+        );
+
         $this->registerSettings($settingsRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
+
+        // Register model observers
+        $this->bootObservers();
+
+        // Stat Widget: Total Posts (Overview - shown on main dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'stat',
+                title: 'Total Posts',
+                value: fn () => Post::count(),
+                icon: 'FileText',
+                module: $this->name,
+                order: 20,
+                scope: 'overview'
+            )
+        );
+
+        // Chart Widget: Posts Published Over Time (Detail - shown on module dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'chart',
+                title: 'Posts Published',
+                value: 0,
+                icon: 'BarChart3',
+                module: $this->name,
+                description: 'Posts published over the last 6 months',
+                chartType: 'bar',
+                data: fn () => $this->getPostsPublishedData(),
+                order: 21,
+                scope: 'detail'
+            )
+        );
+
+        // Activity Widget: Recent Posts (Detail - shown on module dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'activity',
+                title: 'Recent Posts',
+                value: 0,
+                icon: 'FileText',
+                module: $this->name,
+                description: 'Latest published posts',
+                data: fn () => $this->getRecentPostsActivity(),
+                order: 22,
+                scope: 'detail'
+            )
+        );
+    }
+
+    /**
+     * Get posts published data for chart widget.
+     *
+     * Optimized: Uses a single query with GROUP BY instead of 6 separate queries.
+     * Always returns an array with 6 months of data, even if no posts exist.
+     */
+    private function getPostsPublishedData(): array
+    {
+        try {
+            $now = now();
+            $startDate = $now->copy()->subMonths(5)->startOfMonth();
+            $endDate = $now->copy()->endOfMonth();
+
+            // Single query to get counts grouped by month
+            $results = Post::selectRaw('
+                    DATE_TRUNC(\'month\', published_at)::date as month,
+                    COUNT(*) as count
+                ')
+                ->whereNotNull('published_at')
+                ->whereBetween('published_at', [$startDate, $endDate])
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->keyBy(function ($item) {
+                    // Extract Y-m from date string (format: YYYY-MM-DD)
+                    // Handle both string and date object formats
+                    $monthValue = is_string($item->month) ? $item->month : (string) $item->month;
+
+                    return substr($monthValue, 0, 7);
+                })
+                ->map(fn ($item) => (int) $item->count)
+                ->toArray();
+
+            // Build months array with data from query
+            $months = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = $now->copy()->subMonths($i);
+                $monthKey = $month->format('Y-m');
+
+                $months[] = [
+                    'name' => $month->format('M Y'),
+                    'value' => $results[$monthKey] ?? 0,
+                ];
+            }
+
+            return $months;
+        } catch (\Throwable $e) {
+            // Fallback: return empty data structure on error
+            \Illuminate\Support\Facades\Log::error('BlogServiceProvider: Error getting posts published data', [
+                'error' => $e->getMessage(),
+            ]);
+
+            // Return empty structure with 6 months
+            $now = now();
+            $months = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = $now->copy()->subMonths($i);
+                $months[] = [
+                    'name' => $month->format('M Y'),
+                    'value' => 0,
+                ];
+            }
+
+            return $months;
+        }
+    }
+
+    /**
+     * Get recent posts activity for activity widget.
+     */
+    private function getRecentPostsActivity(): array
+    {
+        return Post::whereNotNull('published_at')
+            ->latest('published_at')
+            ->limit(5)
+            ->get()
+            ->map(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'title' => "Post published: {$post->title}",
+                    'timestamp' => $post->published_at->diffForHumans(),
+                    'icon' => 'FileText',
+                    'iconColor' => 'bg-green-500',
+                ];
+            })
+            ->toArray();
     }
 
     /**
@@ -54,6 +209,14 @@ class BlogServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register model observers.
+     */
+    public function bootObservers(): void
+    {
+        Post::observe(PostObserver::class);
     }
 
     protected function registerCommands(): void {}
@@ -198,14 +361,15 @@ class BlogServiceProvider extends ServiceProvider
     private function registerDefaultPermissions(PermissionRegistry $registry): void
     {
         $registry->register('blog', [
+            'dashboard.view',
             'posts.view',
             'posts.create',
             'posts.edit',
             'posts.delete',
             'posts.publish',
         ], [
-            'Administrator' => ['posts.*'],
-            'Staff' => ['posts.view', 'posts.create'],
+            'Administrator' => ['dashboard.view', 'posts.*'],
+            'Staff' => ['dashboard.view', 'posts.view', 'posts.create'],
         ]);
     }
 }

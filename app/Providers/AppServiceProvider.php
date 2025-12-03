@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Listeners\AutoInstallProtectedModules;
+use App\Services\Cache\CacheMetricsService;
+use App\Services\Cache\CacheService;
 use App\Services\Core\AppConfigService;
 use App\Services\Core\ExceptionResponseService;
 use App\Services\Core\InertiaSharedDataService;
@@ -11,6 +13,7 @@ use App\Services\Core\StorageLinkService;
 use App\Services\Media\MediaConfigService;
 use App\Services\Modules\ProtectedModuleMigrationService;
 use App\Services\Registry\CategoryRegistry;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(CacheService::class);
+        $this->app->singleton(CacheMetricsService::class);
+        $this->app->singleton(DashboardWidgetRegistry::class);
         $this->app->singleton(MenuRegistry::class);
         $this->app->singleton(SettingsRegistry::class);
         $this->app->singleton(SettingsService::class);

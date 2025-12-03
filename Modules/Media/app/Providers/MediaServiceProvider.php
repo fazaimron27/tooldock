@@ -2,6 +2,8 @@
 
 namespace Modules\Media\Providers;
 
+use App\Data\DashboardWidget;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -11,6 +13,8 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Media\Console\CleanupTemporaryMedia;
+use Modules\Media\Models\MediaFile;
+use Modules\Media\Observers\MediaFileObserver;
 use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -27,8 +31,12 @@ class MediaServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -47,9 +55,138 @@ class MediaServiceProvider extends ServiceProvider
             module: $this->name
         );
 
+        // Register Media module dashboard as child of Dashboard
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Media Dashboard',
+            route: 'media.dashboard',
+            icon: 'LayoutDashboard',
+            order: 40,
+            permission: 'media.dashboard.view',
+            parentKey: 'dashboard',
+            module: $this->name
+        );
+
         $this->registerSettings($settingsRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
         $this->registerRateLimiter();
+
+        // Register model observers
+        $this->bootObservers();
+
+        // Stat Widget: Total Media Files (Overview - shown on main dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'stat',
+                title: 'Total Media Files',
+                value: fn () => MediaFile::permanent()->count(),
+                icon: 'Image',
+                module: $this->name,
+                order: 40,
+                scope: 'overview'
+            )
+        );
+
+        // System Widget: Storage Usage (Detail - shown on module dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'system',
+                title: 'Storage Usage',
+                value: 0,
+                icon: 'HardDrive',
+                module: $this->name,
+                description: 'Media storage metrics',
+                data: fn () => $this->getStorageUsageMetrics(),
+                order: 41,
+                scope: 'detail'
+            )
+        );
+
+        // Activity Widget: Recent Media Uploads (Detail - shown on module dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'activity',
+                title: 'Recent Uploads',
+                value: 0,
+                icon: 'Upload',
+                module: $this->name,
+                description: 'Latest media file uploads',
+                data: fn () => $this->getRecentMediaActivity(),
+                order: 42,
+                scope: 'detail'
+            )
+        );
+    }
+
+    /**
+     * Get storage usage metrics for system widget.
+     *
+     * Optimized: Uses a single query with conditional aggregation instead of multiple queries.
+     */
+    private function getStorageUsageMetrics(): array
+    {
+        // Single query to get all metrics at once
+        $metrics = MediaFile::selectRaw('
+                COUNT(*) FILTER (WHERE is_temporary = false) as permanent_count,
+                COUNT(*) FILTER (WHERE is_temporary = true) as temporary_count,
+                COALESCE(SUM(size) FILTER (WHERE is_temporary = false), 0) as total_size
+            ')
+            ->first();
+
+        $totalFiles = (int) ($metrics->permanent_count ?? 0);
+        $totalSize = (int) ($metrics->total_size ?? 0);
+        $temporaryFiles = (int) ($metrics->temporary_count ?? 0);
+
+        // Convert bytes to MB
+        $totalSizeMB = round($totalSize / 1024 / 1024, 2);
+
+        // Calculate percentages (assuming 10GB max for demo)
+        $maxStorage = 10 * 1024; // 10GB in MB
+        $usagePercentage = $maxStorage > 0 ? round(($totalSizeMB / $maxStorage) * 100, 1) : 0;
+
+        return [
+            [
+                'label' => 'Total Storage Used',
+                'value' => "{$totalSizeMB} MB",
+                'percentage' => min($usagePercentage, 100),
+                'color' => $usagePercentage > 80 ? 'destructive' : ($usagePercentage > 60 ? 'warning' : 'success'),
+            ],
+            [
+                'label' => 'Permanent Files',
+                'value' => (string) $totalFiles,
+                'percentage' => $totalFiles > 0 ? 100 : 0,
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Temporary Files',
+                'value' => (string) $temporaryFiles,
+                'percentage' => $temporaryFiles > 0 ? 50 : 0,
+                'color' => 'warning',
+            ],
+        ];
+    }
+
+    /**
+     * Get recent media uploads activity for activity widget.
+     */
+    private function getRecentMediaActivity(): array
+    {
+        return MediaFile::permanent()
+            ->latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(function ($file) {
+                $fileSize = round($file->size / 1024, 2); // KB
+
+                return [
+                    'id' => $file->id,
+                    'title' => "Uploaded: {$file->filename} ({$fileSize} KB)",
+                    'timestamp' => $file->created_at->diffForHumans(),
+                    'icon' => 'Upload',
+                    'iconColor' => 'bg-purple-500',
+                ];
+            })
+            ->toArray();
     }
 
     /**
@@ -59,6 +196,14 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register model observers.
+     */
+    public function bootObservers(): void
+    {
+        MediaFile::observe(MediaFileObserver::class);
     }
 
     /**
@@ -297,13 +442,14 @@ class MediaServiceProvider extends ServiceProvider
     private function registerDefaultPermissions(PermissionRegistry $registry): void
     {
         $registry->register('media', [
+            'dashboard.view',
             'files.view',
             'files.upload',
             'files.edit',
             'files.delete',
         ], [
-            'Administrator' => ['files.*'],
-            'Staff' => ['files.view', 'files.upload'],
+            'Administrator' => ['dashboard.view', 'files.*'],
+            'Staff' => ['dashboard.view', 'files.view', 'files.upload'],
         ]);
     }
 }

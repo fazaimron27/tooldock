@@ -2,12 +2,15 @@
 
 namespace Modules\Categories\Providers;
 
+use App\Data\DashboardWidget;
 use App\Services\Registry\CategoryRegistry;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Categories\Models\Category;
 use Modules\Core\App\Constants\Roles as RoleConstants;
 use Modules\Settings\Enums\SettingType;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -29,7 +32,8 @@ class CategoriesServiceProvider extends ServiceProvider
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         CategoryRegistry $categoryRegistry,
-        PermissionRegistry $permissionRegistry
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -49,9 +53,34 @@ class CategoriesServiceProvider extends ServiceProvider
             module: $this->name
         );
 
+        // Register Categories module dashboard as child of Dashboard
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Categories Dashboard',
+            route: 'categories.dashboard',
+            icon: 'LayoutDashboard',
+            order: 30,
+            permission: 'categories.dashboard.view',
+            parentKey: 'dashboard',
+            module: $this->name
+        );
+
         $this->registerSettings($settingsRegistry);
         $this->registerDefaultCategories($categoryRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
+
+        // Stat Widget: Total Categories (Overview - shown on main dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'stat',
+                title: 'Total Categories',
+                value: fn () => Category::count(),
+                icon: 'Tag',
+                module: $this->name,
+                order: 30,
+                scope: 'overview'
+            )
+        );
     }
 
     /**
@@ -430,15 +459,18 @@ class CategoriesServiceProvider extends ServiceProvider
     private function registerDefaultPermissions(PermissionRegistry $registry): void
     {
         $registry->register('categories', [
+            'dashboard.view',
             'category.view',
             'category.create',
             'category.edit',
             'category.delete',
         ], [
             RoleConstants::ADMINISTRATOR => [
+                'dashboard.view',
                 'category.*',
             ],
             RoleConstants::MANAGER => [
+                'dashboard.view',
                 'category.*',
             ],
         ]);

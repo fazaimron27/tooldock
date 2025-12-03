@@ -20,6 +20,11 @@ class RouteServiceProvider extends ServiceProvider
         parent::boot();
 
         Route::bind('newsletter', function ($value) {
+            // Only bind if value is numeric (Campaign ID), otherwise let it pass through
+            if (! is_numeric($value)) {
+                abort(404);
+            }
+
             return Campaign::query()
                 ->where('id', $value)
                 ->forUser()
@@ -43,7 +48,9 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes(): void
     {
-        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));
+        Route::middleware('web')
+            ->prefix('tooldock')
+            ->group(module_path($this->name, '/routes/web.php'));
     }
 
     /**

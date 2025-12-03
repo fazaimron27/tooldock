@@ -2,12 +2,15 @@
 
 namespace Modules\Settings\Providers;
 
+use App\Data\DashboardWidget;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Settings\Enums\SettingType;
+use Modules\Settings\Models\Setting;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -23,8 +26,12 @@ class SettingsServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      */
-    public function boot(MenuRegistry $menuRegistry, SettingsRegistry $settingsRegistry, PermissionRegistry $permissionRegistry): void
-    {
+    public function boot(
+        MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        PermissionRegistry $permissionRegistry,
+        DashboardWidgetRegistry $widgetRegistry
+    ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -43,8 +50,33 @@ class SettingsServiceProvider extends ServiceProvider
             module: $this->name
         );
 
+        // Register Settings module dashboard as child of Dashboard
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Settings Dashboard',
+            route: 'settings.dashboard',
+            icon: 'LayoutDashboard',
+            order: 70,
+            permission: 'settings.dashboard.view',
+            parentKey: 'dashboard',
+            module: $this->name
+        );
+
         $this->registerDefaultSettings($settingsRegistry);
         $this->registerDefaultPermissions($permissionRegistry);
+
+        // Stat Widget: Total Settings (Overview - shown on main dashboard)
+        $widgetRegistry->register(
+            new DashboardWidget(
+                type: 'stat',
+                title: 'Total Settings',
+                value: fn () => Setting::count(),
+                icon: 'Settings',
+                module: $this->name,
+                order: 70,
+                scope: 'overview'
+            )
+        );
     }
 
     /**
@@ -223,10 +255,11 @@ class SettingsServiceProvider extends ServiceProvider
     private function registerDefaultPermissions(PermissionRegistry $registry): void
     {
         $registry->register('settings', [
+            'dashboard.view',
             'config.view',
             'config.update',
         ], [
-            'Administrator' => ['config.*'],
+            'Administrator' => ['dashboard.view', 'config.*'],
         ]);
     }
 }
