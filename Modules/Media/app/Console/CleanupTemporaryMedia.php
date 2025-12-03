@@ -13,7 +13,7 @@ class CleanupTemporaryMedia extends Command
      *
      * @var string
      */
-    protected $signature = 'media:cleanup-temporary {--hours=24 : Number of hours old temporary files should be before cleanup}';
+    protected $signature = 'media:cleanup-temporary {--hours= : Number of hours old temporary files should be before cleanup}';
 
     /**
      * The console command description.
@@ -27,12 +27,10 @@ class CleanupTemporaryMedia extends Command
      */
     public function handle(): int
     {
-        $hours = (int) $this->option('hours');
-
-        // Use setting if hours option not provided
-        if ($hours === 24 && $this->option('hours') === null) {
-            $hours = (int) settings('temporary_file_retention_hours', 24);
-        }
+        // Use setting from database if hours option not provided, otherwise use the provided value
+        $hours = $this->option('hours') !== null
+            ? (int) $this->option('hours')
+            : (int) settings('temporary_file_retention_hours', 24);
 
         $cutoffTime = now()->subHours($hours);
 
