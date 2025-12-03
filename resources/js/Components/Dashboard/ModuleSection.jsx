@@ -1,26 +1,24 @@
 /**
- * Module Section component for displaying widgets grouped by module
- * Each module section is displayed in its own card with widgets organized by group and type
+ * Displays widgets grouped by module in card sections.
+ * Organizes widgets by group and type within each module.
  */
 import WidgetRenderer from '@/Components/Dashboard/WidgetRenderer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 
-/**
- * Render a widget group section
- *
- * @param {Object} props
- * @param {string} props.groupName - Name of the group
- * @param {array} props.statWidgets - Array of stat widgets
- * @param {array} props.chartWidgets - Array of chart widgets
- * @param {array} props.activityWidgets - Array of activity widgets
- * @param {array} props.systemWidgets - Array of system widgets
- */
-function WidgetGroup({ groupName, statWidgets, chartWidgets, activityWidgets, systemWidgets }) {
+function WidgetGroup({
+  groupName,
+  statWidgets,
+  chartWidgets,
+  activityWidgets,
+  systemWidgets,
+  tableWidgets,
+}) {
   const hasWidgets =
     statWidgets.length > 0 ||
     chartWidgets.length > 0 ||
     activityWidgets.length > 0 ||
-    systemWidgets.length > 0;
+    systemWidgets.length > 0 ||
+    tableWidgets.length > 0;
 
   if (!hasWidgets) {
     return null;
@@ -68,16 +66,23 @@ function WidgetGroup({ groupName, statWidgets, chartWidgets, activityWidgets, sy
           ))}
         </div>
       )}
+
+      {tableWidgets.length > 0 && (
+        <div className="space-y-4">
+          {tableWidgets.map((widget, index) => (
+            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Render a module section with its widgets grouped by group and type
+ * Renders a module section with widgets grouped by group and type.
  *
- * @param {Object} props
- * @param {string} props.moduleName - Name of the module
- * @param {array} props.groups - Array of group objects with name and widget arrays by type
+ * @param {string} moduleName - Name of the module
+ * @param {array} groups - Array of group objects with widget arrays by type
  */
 export default function ModuleSection({ moduleName, groups = [] }) {
   if (!groups || groups.length === 0) {
@@ -98,6 +103,7 @@ export default function ModuleSection({ moduleName, groups = [] }) {
             chartWidgets={group.charts || []}
             activityWidgets={group.activities || []}
             systemWidgets={group.systems || []}
+            tableWidgets={group.tables || []}
           />
         ))}
       </CardContent>

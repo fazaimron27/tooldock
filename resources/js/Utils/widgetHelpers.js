@@ -1,9 +1,5 @@
 /**
- * Widget helper utilities for dashboard components
- */
-
-/**
- * Group widgets by module, group, and type
+ * Groups widgets by module, group, and type.
  *
  * @param {array} widgets - Array of widget objects
  * @returns {object} Object with module names as keys, then groups, then widget arrays by type
@@ -25,6 +21,7 @@ export function groupWidgetsByModule(widgets) {
         charts: [],
         activities: [],
         systems: [],
+        tables: [],
       };
     }
 
@@ -41,6 +38,9 @@ export function groupWidgetsByModule(widgets) {
       case 'system':
         grouped[module][group].systems.push(widget);
         break;
+      case 'table':
+        grouped[module][group].tables.push(widget);
+        break;
     }
   });
 
@@ -48,7 +48,7 @@ export function groupWidgetsByModule(widgets) {
 }
 
 /**
- * Sort modules: Core first, then alphabetically
+ * Sorts modules with Core first, then alphabetically.
  *
  * @param {array} moduleNames - Array of module names
  * @returns {array} Sorted array of module names

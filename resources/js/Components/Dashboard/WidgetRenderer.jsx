@@ -1,7 +1,6 @@
 /**
- * Widget Renderer component for dynamically rendering dashboard widgets
- * Supports different widget types (stat, chart, activity, system, etc.)
- * Uses dedicated widget components from Components/Widgets
+ * Dynamically renders dashboard widgets based on their type.
+ * Routes to appropriate widget components (stat, chart, activity, system, table).
  */
 import { AlertTriangle } from 'lucide-react';
 
@@ -9,16 +8,11 @@ import ActivityWidget from '@/Components/Widgets/ActivityWidget';
 import ChartWidget from '@/Components/Widgets/ChartWidget';
 import StatWidget from '@/Components/Widgets/StatWidget';
 import SystemWidget from '@/Components/Widgets/SystemWidget';
+import TableWidget from '@/Components/Widgets/TableWidget';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 
-/**
- * Valid widget types
- */
-const VALID_TYPES = ['stat', 'chart', 'activity', 'system'];
+const VALID_TYPES = ['stat', 'chart', 'activity', 'system', 'table'];
 
-/**
- * Error widget component for displaying invalid widget types
- */
 function ErrorWidget({ widget, error }) {
   return (
     <Card className="border-destructive">
@@ -51,18 +45,9 @@ function ErrorWidget({ widget, error }) {
 }
 
 /**
- * Render a widget based on its type
+ * Renders a widget based on its type from the dashboard widget registry.
  *
- * @param {Object} widget - The widget object from the registry
- * @param {string} widget.type - Widget type (e.g., 'stat', 'chart', 'activity', 'system')
- * @param {string} widget.title - Widget title
- * @param {string|number} widget.value - Widget value
- * @param {string} widget.icon - Lucide icon name
- * @param {string|null} widget.change - Change indicator (e.g., '+20.1%')
- * @param {string|null} widget.trend - Trend direction ('up' or 'down')
- * @param {array|null} widget.data - Additional data for complex widgets
- * @param {string|null} widget.description - Optional description
- * @param {string|null} widget.chartType - Chart type for chart widgets ('bar', 'area', 'line')
+ * @param {Object} widget - Widget configuration from registry
  */
 export default function WidgetRenderer({ widget }) {
   if (!widget) {
@@ -101,8 +86,10 @@ export default function WidgetRenderer({ widget }) {
     case 'system':
       return <SystemWidget widget={widget} />;
 
+    case 'table':
+      return <TableWidget widget={widget} />;
+
     default:
-      // This should never happen due to validation above, but kept as safety net
       return <ErrorWidget widget={widget} />;
   }
 }
