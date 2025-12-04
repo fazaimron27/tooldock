@@ -77,10 +77,12 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): RedirectResponse|\Illuminate\Http\Response
     {
         $request->validate([
             'password' => ['required', 'current_password'],
+        ], [], [
+            'password' => 'password',
         ]);
 
         $user = $request->user();
@@ -91,6 +93,16 @@ class ProfileController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        /**
+         * For Inertia requests, return 409 with X-Inertia-Location header.
+         * This forces a full page reload, which is necessary after session invalidation.
+         * Note: Flash messages cannot be used here since the session is invalidated.
+         */
+        if ($request->header('X-Inertia')) {
+            return response('', 409)
+                ->header('X-Inertia-Location', url('/'));
+        }
 
         return Redirect::to('/')->with('success', 'Your account has been permanently deleted.');
     }

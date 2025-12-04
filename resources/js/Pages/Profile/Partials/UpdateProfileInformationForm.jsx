@@ -1,9 +1,10 @@
-import { useFormHandler } from '@/Hooks/useFormHandler';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
+import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import FilePicker from '@/Components/Form/FilePicker';
 import { Button } from '@/Components/ui/button';
 
@@ -15,17 +16,24 @@ export default function UpdateProfileInformation({
 }) {
   const user = usePage().props.auth.user;
 
-  const { data, setData, errors, processing, submit } = useFormHandler(
+  const form = useInertiaForm(
     {
       name: user.name,
       email: user.email,
       avatar_id: avatar?.id || null,
     },
     {
-      route: 'profile.update',
-      method: 'patch',
+      toast: {
+        success: 'Profile updated successfully!',
+        error: 'Failed to update profile. Please check the form for errors.',
+      },
     }
   );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    form.patch(route('profile.update'));
+  };
 
   return (
     <FormCard
@@ -33,37 +41,56 @@ export default function UpdateProfileInformation({
       description="Update your account's profile information and email address."
       className={className}
     >
-      <form onSubmit={submit} className="space-y-6">
-        <FilePicker
-          label="Avatar"
-          value={avatar?.url || data.avatar_id}
-          onChange={(value) => {
-            setData('avatar_id', value ? parseInt(value) : null);
-          }}
-          accept="image/*"
-          directory="avatars"
-          error={errors.avatar_id}
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <Controller
+          name="avatar_id"
+          control={form.control}
+          render={({ field, fieldState: { error } }) => (
+            <div className="space-y-2">
+              <FilePicker
+                label="Avatar"
+                value={avatar?.url || (field.value ? String(field.value) : null)}
+                onChange={(value) => {
+                  field.onChange(value ? parseInt(value) : null);
+                }}
+                accept="image/*"
+                directory="avatars"
+                error={error?.message}
+              />
+              {error && <p className="text-sm text-destructive">{error.message}</p>}
+            </div>
+          )}
         />
 
-        <FormField
+        <FormFieldRHF
           name="name"
+          control={form.control}
           label="Name"
-          value={data.name}
-          onChange={(e) => setData('name', e.target.value)}
-          error={errors.name}
           required
           autoComplete="name"
+          rules={{
+            required: 'Name is required',
+            maxLength: {
+              value: 255,
+              message: 'Name must not exceed 255 characters',
+            },
+          }}
         />
 
-        <FormField
+        <FormFieldRHF
           name="email"
+          control={form.control}
           label="Email"
           type="email"
-          value={data.email}
-          onChange={(e) => setData('email', e.target.value)}
-          error={errors.email}
           required
           autoComplete="username"
+          rules={{
+            required: 'Email is required',
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: 'Invalid email address',
+            },
+          }}
         />
 
         {mustVerifyEmail && user.email_verified_at === null && (
@@ -90,8 +117,8 @@ export default function UpdateProfileInformation({
         )}
 
         <div className="flex items-center gap-4">
-          <Button type="submit" disabled={processing}>
-            {processing ? 'Saving...' : 'Save'}
+          <Button type="submit" disabled={form.processing}>
+            {form.processing ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </form>

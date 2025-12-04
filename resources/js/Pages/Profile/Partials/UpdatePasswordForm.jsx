@@ -1,31 +1,37 @@
-import { useFormWithFocus } from '@/Hooks/useFormWithFocus';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import { Button } from '@/Components/ui/button';
 
 export default function UpdatePasswordForm({ className = '' }) {
-  const { data, setData, errors, reset, processing, submit, fieldRefs } = useFormWithFocus(
+  const form = useInertiaForm(
     {
       current_password: '',
       password: '',
       password_confirmation: '',
     },
     {
-      route: 'password.update',
-      method: 'put',
-      focusFields: ['password', 'current_password'],
-      onSuccess: () => reset(),
-      onError: (errors) => {
-        if (errors.password) {
-          reset('password', 'password_confirmation');
-        }
-        if (errors.current_password) {
-          reset('current_password');
-        }
+      toast: {
+        success: 'Password updated successfully!',
+        error: 'Failed to update password. Please check the form for errors.',
       },
     }
   );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    form.put(route('password.update'), {
+      onSuccess: () => {
+        form.reset();
+      },
+      /**
+       * Don't clear fields on error to allow error display.
+       * mapServerErrors in useInertiaForm handles error mapping automatically.
+       */
+    });
+  };
 
   return (
     <FormCard
@@ -33,42 +39,54 @@ export default function UpdatePasswordForm({ className = '' }) {
       description="Ensure your account is using a long, random password to stay secure."
       className={className}
     >
-      <form onSubmit={submit} className="space-y-6">
-        <FormField
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <FormFieldRHF
           name="current_password"
+          control={form.control}
           label="Current Password"
           type="password"
-          value={data.current_password}
-          onChange={(e) => setData('current_password', e.target.value)}
-          error={errors.current_password}
+          required
           autoComplete="current-password"
-          inputRef={fieldRefs.current_password}
+          rules={{
+            required: 'Current password is required',
+          }}
         />
 
-        <FormField
+        <FormFieldRHF
           name="password"
+          control={form.control}
           label="New Password"
           type="password"
-          value={data.password}
-          onChange={(e) => setData('password', e.target.value)}
-          error={errors.password}
+          required
           autoComplete="new-password"
-          inputRef={fieldRefs.password}
+          rules={{
+            required: 'New password is required',
+            minLength: {
+              value: 8,
+              message: 'Password must be at least 8 characters',
+            },
+          }}
         />
 
-        <FormField
+        <FormFieldRHF
           name="password_confirmation"
+          control={form.control}
           label="Confirm Password"
           type="password"
-          value={data.password_confirmation}
-          onChange={(e) => setData('password_confirmation', e.target.value)}
-          error={errors.password_confirmation}
+          required
           autoComplete="new-password"
+          rules={{
+            required: 'Password confirmation is required',
+            validate: (value) => {
+              const password = form.getValues('password');
+              return value === password || 'Passwords do not match';
+            },
+          }}
         />
 
         <div className="flex items-center gap-4">
-          <Button type="submit" disabled={processing}>
-            {processing ? 'Saving...' : 'Save'}
+          <Button type="submit" disabled={form.processing}>
+            {form.processing ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </form>
