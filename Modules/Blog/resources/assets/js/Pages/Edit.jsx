@@ -1,13 +1,15 @@
 /**
  * Edit blog post page with form for updating existing posts
  * Pre-fills form fields with current post data
+ * Uses React Hook Form for improved performance and validation
  */
-import { useFormHandler } from '@/Hooks/useFormHandler';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
+import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
-import FormTextarea from '@/Components/Common/FormTextarea';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import FormTextareaRHF from '@/Components/Common/FormTextareaRHF';
 import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
@@ -15,7 +17,7 @@ import { Button } from '@/Components/ui/button';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Edit({ post }) {
-  const { data, setData, errors, processing, submit } = useFormHandler(
+  const form = useInertiaForm(
     {
       title: post.title || '',
       excerpt: post.excerpt || '',
@@ -25,58 +27,69 @@ export default function Edit({ post }) {
         : '',
     },
     {
-      route: () => route('blog.update', { blog: post.id }),
-      method: 'put',
+      toast: {
+        success: 'Post updated successfully!',
+        error: 'Failed to update post. Please check the form for errors.',
+      },
     }
   );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    form.put(route('blog.update', { blog: post.id }));
+  };
 
   return (
     <DashboardLayout header="Blog">
       <PageShell title="Edit Post">
         <div className="space-y-6">
           <FormCard title="Edit Post" description="Update your blog post" className="max-w-3xl">
-            <form onSubmit={submit} className="space-y-6" noValidate>
-              <FormField
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <FormFieldRHF
                 name="title"
+                control={form.control}
                 label="Title"
-                value={data.title}
-                onChange={(e) => setData('title', e.target.value)}
-                error={errors.title}
                 required
                 placeholder="Enter post title"
+                rules={{ required: 'Title is required' }}
               />
 
-              <FormField
+              <FormFieldRHF
                 name="excerpt"
+                control={form.control}
                 label="Excerpt"
-                value={data.excerpt}
-                onChange={(e) => setData('excerpt', e.target.value)}
-                error={errors.excerpt}
                 placeholder="Brief summary of the post (optional)"
               />
 
-              <FormTextarea
+              <FormTextareaRHF
                 name="content"
+                control={form.control}
                 label="Content"
-                value={data.content}
-                onChange={(e) => setData('content', e.target.value)}
-                error={errors.content}
                 required
                 rows={10}
                 placeholder="Enter post content"
+                rules={{ required: 'Content is required' }}
               />
 
-              <DatePicker
-                label="Publish Date"
-                value={data.published_at}
-                onChange={(date) => setData('published_at', date || '')}
-                error={errors.published_at}
-                placeholder="Leave empty for draft"
+              <Controller
+                name="published_at"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <div className="space-y-2">
+                    <DatePicker
+                      label="Publish Date"
+                      value={field.value}
+                      onChange={(date) => field.onChange(date || '')}
+                      error={error?.message}
+                      placeholder="Leave empty for draft"
+                    />
+                  </div>
+                )}
               />
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={processing}>
-                  {processing ? 'Updating...' : 'Update Post'}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Updating...' : 'Update Post'}
                 </Button>
                 <Link href={route('blog.index')}>
                   <Button type="button" variant="outline">

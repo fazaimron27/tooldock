@@ -1,12 +1,13 @@
 /**
  * Edit user page with form for updating existing users
  * Pre-fills form fields with current user data
+ * Uses React Hook Form for improved performance and validation
  */
-import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
@@ -15,7 +16,7 @@ import { Label } from '@/Components/ui/label';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Edit({ user, roles = [] }) {
-  const form = useSmartForm(
+  const form = useInertiaForm(
     {
       name: user.name || '',
       email: user.email || '',
@@ -32,14 +33,15 @@ export default function Edit({ user, roles = [] }) {
   );
 
   const handleRoleToggle = (roleId) => {
-    const currentRoles = form.data.roles || [];
+    const currentRoles = form.watch('roles') || [];
     if (currentRoles.includes(roleId)) {
-      form.setData(
+      form.setValue(
         'roles',
-        currentRoles.filter((id) => id !== roleId)
+        currentRoles.filter((id) => id !== roleId),
+        { shouldValidate: false }
       );
     } else {
-      form.setData('roles', [...currentRoles, roleId]);
+      form.setValue('roles', [...currentRoles, roleId], { shouldValidate: false });
     }
   };
 
@@ -54,45 +56,61 @@ export default function Edit({ user, roles = [] }) {
         <div className="space-y-6">
           <FormCard title="Edit User" description="Update user information" className="max-w-3xl">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <FormField
+              <FormFieldRHF
                 name="name"
+                control={form.control}
                 label="Name"
-                value={form.data.name}
-                onChange={(e) => form.setData('name', e.target.value)}
-                error={form.errors.name}
                 required
                 placeholder="Enter full name"
+                rules={{ required: 'Name is required' }}
               />
 
-              <FormField
+              <FormFieldRHF
                 name="email"
+                control={form.control}
                 label="Email"
                 type="email"
-                value={form.data.email}
-                onChange={(e) => form.setData('email', e.target.value)}
-                error={form.errors.email}
                 required
                 placeholder="Enter email address"
+                rules={{
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address',
+                  },
+                }}
               />
 
-              <FormField
+              <FormFieldRHF
                 name="password"
+                control={form.control}
                 label="Password"
                 type="password"
-                value={form.data.password}
-                onChange={(e) => form.setData('password', e.target.value)}
-                error={form.errors.password}
                 placeholder="Leave empty to keep current password"
+                rules={{
+                  validate: (value) => {
+                    if (!value) return true; // Optional for updates
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
+                    }
+                    return true;
+                  },
+                }}
               />
 
-              <FormField
+              <FormFieldRHF
                 name="password_confirmation"
+                control={form.control}
                 label="Confirm Password"
                 type="password"
-                value={form.data.password_confirmation}
-                onChange={(e) => form.setData('password_confirmation', e.target.value)}
-                error={form.errors.password_confirmation}
                 placeholder="Confirm new password"
+                rules={{
+                  validate: (value) => {
+                    const password = form.watch('password');
+                    if (!password) return true; // Optional if password is empty
+                    return value === password || 'Passwords do not match';
+                  },
+                }}
               />
 
               <div className="space-y-4">
@@ -105,7 +123,7 @@ export default function Edit({ user, roles = [] }) {
                       <div key={role.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`role-${role.id}`}
-                          checked={form.data.roles?.includes(role.id) || false}
+                          checked={form.watch('roles')?.includes(role.id) || false}
                           onCheckedChange={() => handleRoleToggle(role.id)}
                         />
                         <Label
@@ -118,14 +136,14 @@ export default function Edit({ user, roles = [] }) {
                     ))
                   )}
                 </div>
-                {form.errors.roles && (
-                  <p className="text-sm text-destructive">{form.errors.roles}</p>
+                {form.formState.errors.roles && (
+                  <p className="text-sm text-destructive">{form.formState.errors.roles.message}</p>
                 )}
               </div>
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.processing}>
-                  {form.processing ? 'Updating...' : 'Update User'}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Updating...' : 'Update User'}
                 </Button>
                 <Link href={route('core.users.index')}>
                   <Button type="button" variant="outline">

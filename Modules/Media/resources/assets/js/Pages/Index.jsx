@@ -241,7 +241,17 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
         variant="destructive"
       />
 
-      <Dialog open={imagePreviewDialog.isOpen} onOpenChange={imagePreviewDialog.onToggle}>
+      <Dialog
+        open={imagePreviewDialog.isOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            imagePreviewDialog.onOpen();
+          } else {
+            imagePreviewDialog.onClose();
+            setPreviewImage(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
           {previewImage && (
             <>
@@ -251,7 +261,7 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
                   {previewImage.mime_type} • {formatFileSize(previewImage.size)}
                 </DialogDescription>
               </DialogHeader>
-              <div className="relative flex items-center justify-center bg-muted/50 p-6">
+              <div className="relative flex items-center justify-center bg-muted/50 p-6 overflow-auto">
                 <img
                   src={previewImage.url}
                   alt={previewImage.filename}

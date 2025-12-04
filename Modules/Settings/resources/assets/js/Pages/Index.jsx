@@ -2,13 +2,15 @@
  * Settings management page with grouped tabs and dynamic form fields
  * Allows admins to manage application settings organized by groups
  * Uses URL query parameters for tabs to ensure proper flash message handling
+ * Uses React Hook Form for improved performance and validation
  */
-import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { router, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
+import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import FormTextarea from '@/Components/Common/FormTextarea';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
@@ -50,7 +52,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
     return data;
   }, [applicationSettings, modulesSettings]);
 
-  const form = useSmartForm(initialData, {
+  const form = useInertiaForm(initialData, {
     toast: {
       success: 'Settings updated successfully!',
       error: 'Failed to update settings. Please check the form for errors.',
@@ -100,58 +102,76 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
   };
 
   const renderField = (setting) => {
-    const value = form.data[setting.key];
-    const error = form.errors[setting.key];
+    const error = form.formState.errors[setting.key];
 
     switch (setting.type) {
       case 'boolean':
         return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor={setting.key}>{setting.label}</Label>
-              <Switch
-                id={setting.key}
-                checked={value === true || value === '1' || value === 1}
-                onCheckedChange={(checked) => form.setData(setting.key, checked)}
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+          <Controller
+            key={setting.key}
+            name={setting.key}
+            control={form.control}
+            render={({ field }) => (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={setting.key}>{setting.label}</Label>
+                  <Switch
+                    id={setting.key}
+                    checked={field.value === true || field.value === '1' || field.value === 1}
+                    onCheckedChange={field.onChange}
+                  />
+                </div>
+                {error && <p className="text-sm text-destructive">{error.message}</p>}
+              </div>
+            )}
+          />
         );
 
       case 'integer':
         return (
-          <FormField
+          <FormFieldRHF
+            key={setting.key}
             name={setting.key}
+            control={form.control}
             label={setting.label}
             type="number"
-            value={value}
-            onChange={(e) => form.setData(setting.key, parseInt(e.target.value, 10) || 0)}
-            error={error}
+            rules={{
+              valueAsNumber: true,
+            }}
           />
         );
 
       case 'textarea':
         return (
-          <FormTextarea
+          <Controller
+            key={setting.key}
             name={setting.key}
-            label={setting.label}
-            value={value}
-            onChange={(e) => form.setData(setting.key, e.target.value)}
-            error={error}
+            control={form.control}
+            render={({ field, fieldState: { error: fieldError } }) => (
+              <div className="space-y-2">
+                <Label htmlFor={setting.key}>{setting.label}</Label>
+                <FormTextarea
+                  name={setting.key}
+                  label={setting.label}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={fieldError?.message}
+                />
+              </div>
+            )}
           />
         );
 
       case 'text':
       default:
         return (
-          <FormField
+          <FormFieldRHF
+            key={setting.key}
             name={setting.key}
+            control={form.control}
             label={setting.label}
             type="text"
-            value={value}
-            onChange={(e) => form.setData(setting.key, e.target.value)}
-            error={error}
             placeholder={setting.key === 'app_logo' ? 'e.g., Cog, Home, Settings, User' : undefined}
           />
         );
@@ -276,8 +296,8 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
           )}
 
           <div className="flex items-center gap-4">
-            <Button type="submit" disabled={form.processing}>
-              {form.processing ? 'Saving...' : 'Save Changes'}
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>
