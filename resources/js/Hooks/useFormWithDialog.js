@@ -1,11 +1,11 @@
 /**
  * Form handler hook integrated with dialog state management
- * Combines form handling with dialog open/close state and automatic focus management
+ * Combines React Hook Form with dialog open/close state and automatic focus management
  */
-import { useForm } from '@inertiajs/react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback } from 'react';
 
 import { useDisclosure } from './useDisclosure';
+import { useInertiaForm } from './useInertiaForm';
 
 export function useFormWithDialog(initialData, options = {}) {
   const {
@@ -14,55 +14,20 @@ export function useFormWithDialog(initialData, options = {}) {
     preserveScroll = true,
     closeOnSuccess = true,
     resetOnClose = true,
-    focusFields = [],
     onSuccess,
     onError,
     onFinish,
+    ...formOptions
   } = options;
 
-  const form = useForm(initialData);
   const dialog = useDisclosure();
 
-  // Determine field names that need refs
-  const fieldNames = useMemo(() => {
-    if (Array.isArray(focusFields)) {
-      return focusFields;
-    }
-    if (typeof focusFields === 'object' && focusFields !== null) {
-      return Object.keys(focusFields);
-    }
-    return [];
-  }, [focusFields]);
+  const form = useInertiaForm(initialData, formOptions);
 
-  // Create refs on-demand for specified fields
-  const fieldRefsStorage = useRef({});
-
-  // Initialize refs for all field names
-  fieldNames.forEach((fieldName) => {
-    if (!fieldRefsStorage.current[fieldName]) {
-      // Create a ref-like object (React refs are just objects with 'current' property)
-      fieldRefsStorage.current[fieldName] = { current: null };
-    }
-  });
-
-  // Create or use provided refs for each field
-  const fieldRefs = useMemo(() => {
-    const refs = {};
-    fieldNames.forEach((fieldName) => {
-      // Use provided ref if available (backward compatibility), otherwise use created ref
-      if (
-        typeof focusFields === 'object' &&
-        !Array.isArray(focusFields) &&
-        focusFields[fieldName]
-      ) {
-        refs[fieldName] = focusFields[fieldName];
-      } else {
-        refs[fieldName] = fieldRefsStorage.current[fieldName];
-      }
-    });
-    return refs;
-  }, [fieldNames, focusFields]);
-
+  /**
+   * Handles successful form submission.
+   * Closes dialog if closeOnSuccess is enabled.
+   */
   const handleSuccess = useCallback(
     (page) => {
       if (closeOnSuccess) {
@@ -74,18 +39,19 @@ export function useFormWithDialog(initialData, options = {}) {
     [closeOnSuccess, dialog, onSuccess, onFinish]
   );
 
+  /**
+   * Handles form submission errors.
+   * Keeps dialog open to display validation errors to the user.
+   */
   const handleError = useCallback(
     (errors) => {
-      // Focus on first error field if refs are available
-      const errorField = Object.keys(errors)[0];
-      if (errorField && fieldRefs[errorField]?.current) {
-        fieldRefs[errorField].current?.focus();
+      if (errors && Object.keys(errors).length > 0 && !dialog.isOpen) {
+        dialog.onOpen();
       }
-
       onError?.(errors);
       onFinish?.(errors);
     },
-    [onError, onFinish, fieldRefs]
+    [onError, onFinish, dialog]
   );
 
   const submit = useCallback(
@@ -100,11 +66,11 @@ export function useFormWithDialog(initialData, options = {}) {
         preserveScroll,
         onSuccess: handleSuccess,
         onError: handleError,
-        onFinish: (result) => {
-          if (!form.errors || Object.keys(form.errors).length === 0) {
-            onFinish?.(result);
-          }
-        },
+        /**
+         * Error bag scopes validation errors to this specific form instance.
+         * Prevents cross-form error contamination on pages with multiple forms.
+         */
+        errorBag: options.errorBag,
       };
 
       switch (method.toLowerCase()) {
@@ -123,14 +89,33 @@ export function useFormWithDialog(initialData, options = {}) {
           break;
       }
     },
-    [form, routeName, method, preserveScroll, handleSuccess, handleError, onFinish]
+    [form, routeName, method, preserveScroll, handleSuccess, handleError, options.errorBag]
   );
 
+  /**
+   * Handles dialog open/close state changes.
+   * Prevents accidental closure during form submission with validation errors.
+   * Allows manual closure via Cancel button even when errors exist.
+   */
   const handleDialogChange = useCallback(
     (isOpen) => {
       if (isOpen) {
         dialog.onOpen();
       } else {
+        const hasErrors = Object.keys(form.formState.errors || {}).length > 0;
+        const isSubmitting = form.formState.isSubmitting;
+
+        /**
+         * Prevent auto-closure during submission with errors.
+         * User-initiated closure (Cancel button) is handled separately.
+         */
+        if (isSubmitting && hasErrors) {
+          if (!dialog.isOpen) {
+            dialog.onOpen();
+          }
+          return;
+        }
+
         dialog.onClose();
         if (resetOnClose) {
           form.clearErrors();
@@ -141,11 +126,23 @@ export function useFormWithDialog(initialData, options = {}) {
     [dialog, form, resetOnClose]
   );
 
+  /**
+   * Cancel button handler that always closes dialog and clears form state.
+   * Bypasses validation error checks to allow user-initiated cancellation.
+   */
+  const handleCancel = useCallback(() => {
+    dialog.onClose();
+    if (resetOnClose) {
+      form.clearErrors();
+      form.reset();
+    }
+  }, [dialog, form, resetOnClose]);
+
   return {
     ...form,
     submit,
     dialog,
     handleDialogChange,
-    fieldRefs,
+    handleCancel,
   };
 }
