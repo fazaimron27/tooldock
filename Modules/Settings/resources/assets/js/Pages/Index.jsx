@@ -1,22 +1,28 @@
 /**
- * Settings management page with grouped tabs and dynamic form fields
+ * Settings management page with grouped accordion sections and dynamic form fields
  * Allows admins to manage application settings organized by groups
- * Uses URL query parameters for tabs to ensure proper flash message handling
+ * Uses URL query parameters for accordion sections to ensure proper flash message handling
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { router, usePage } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import FormTextarea from '@/Components/Common/FormTextarea';
 import PageShell from '@/Components/Layouts/PageShell';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/Components/ui/accordion';
 import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
@@ -27,21 +33,22 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
   const appGroups = Object.keys(applicationSettings);
   const moduleGroups = Object.keys(modulesSettings);
 
-  const urlParts = url.split('?');
+  const urlParts = useMemo(() => url.split('?'), [url]);
   const queryString = urlParts[1] || '';
-  const getQueryParam = (param) => {
-    const params = queryString.split('&');
-    for (const p of params) {
-      const [key, value] = p.split('=');
-      if (key === param) {
-        return decodeURIComponent(value || '');
-      }
-    }
-    return null;
-  };
+  const queryParams = useMemo(() => {
+    return new URLSearchParams(queryString);
+  }, [queryString]);
 
-  const activeAppTab = getQueryParam('appTab') || appGroups[0] || '';
-  const activeModuleTab = getQueryParam('moduleTab') || moduleGroups[0] || '';
+  const activeAppTab = queryParams.get('appTab') || appGroups[0] || '';
+  const activeModuleTab = queryParams.get('moduleTab') || moduleGroups[0] || '';
+
+  const defaultAppValues = useMemo(() => {
+    return activeAppTab ? [activeAppTab] : appGroups.length > 0 ? [appGroups[0]] : [];
+  }, [activeAppTab, appGroups]);
+
+  const defaultModuleValues = useMemo(() => {
+    return activeModuleTab ? [activeModuleTab] : moduleGroups.length > 0 ? [moduleGroups[0]] : [];
+  }, [activeModuleTab, moduleGroups]);
 
   const initialData = useMemo(() => {
     const data = {};
@@ -62,33 +69,43 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
     },
   });
 
-  const handleAppTabChange = (value) => {
-    const baseUrl = urlParts[0];
-    const queryParams = { appTab: value };
-    if (activeModuleTab) {
-      queryParams.moduleTab = activeModuleTab;
-    }
-    router.get(baseUrl, queryParams, {
-      preserveState: true,
-      preserveScroll: true,
-      only: [],
-      skipLoadingIndicator: true,
-    });
-  };
+  const handleAccordionChange = useCallback(
+    (values, tabType) => {
+      const value = Array.isArray(values) && values.length > 0 ? values[values.length - 1] : values;
+      const baseUrl = urlParts[0];
+      const newQueryParams = {};
 
-  const handleModuleTabChange = (value) => {
-    const baseUrl = urlParts[0];
-    const queryParams = { moduleTab: value };
-    if (activeAppTab) {
-      queryParams.appTab = activeAppTab;
-    }
-    router.get(baseUrl, queryParams, {
-      preserveState: true,
-      preserveScroll: true,
-      only: [],
-      skipLoadingIndicator: true,
-    });
-  };
+      if (tabType === 'app') {
+        newQueryParams.appTab = value;
+        if (activeModuleTab) {
+          newQueryParams.moduleTab = activeModuleTab;
+        }
+      } else {
+        newQueryParams.moduleTab = value;
+        if (activeAppTab) {
+          newQueryParams.appTab = activeAppTab;
+        }
+      }
+
+      router.get(baseUrl, newQueryParams, {
+        preserveState: true,
+        preserveScroll: true,
+        only: [],
+        skipLoadingIndicator: true,
+      });
+    },
+    [urlParts, activeAppTab, activeModuleTab]
+  );
+
+  const handleAppAccordionChange = useCallback(
+    (values) => handleAccordionChange(values, 'app'),
+    [handleAccordionChange]
+  );
+
+  const handleModuleAccordionChange = useCallback(
+    (values) => handleAccordionChange(values, 'module'),
+    [handleAccordionChange]
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -181,129 +198,120 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
     }
   };
 
-  const getGridColsClass = (count) => {
-    const gridColsMap = {
-      1: 'grid-cols-1',
-      2: 'grid-cols-2',
-      3: 'grid-cols-3',
-      4: 'grid-cols-4',
-      5: 'grid-cols-5',
-      6: 'grid-cols-6',
-      7: 'grid-cols-7',
-      8: 'grid-cols-8',
-      9: 'grid-cols-9',
-      10: 'grid-cols-10',
-      11: 'grid-cols-11',
-      12: 'grid-cols-12',
-    };
-    if (count > 12) {
-      return 'grid-cols-6';
-    }
-    return gridColsMap[count] || 'grid-cols-5';
-  };
+  const hasSettings = appGroups.length > 0 || moduleGroups.length > 0;
 
   return (
     <DashboardLayout header="Settings">
       <PageShell title="Application Settings">
-        <form onSubmit={handleSubmit} className="space-y-8" noValidate>
-          {appGroups.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold">Application Settings</h2>
-              <Tabs value={activeAppTab} onValueChange={handleAppTabChange} className="w-full">
-                <div className={appGroups.length > 12 ? 'overflow-x-auto' : ''}>
-                  <TabsList className={`grid w-full ${getGridColsClass(appGroups.length)}`}>
-                    {appGroups.map((group) => (
-                      <TabsTrigger key={group} value={group} className="capitalize">
-                        {group}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
-
-                {appGroups.map((group) => {
-                  const groupSettings = applicationSettings[group] || [];
-                  const modules = [...new Set(groupSettings.map((s) => s.module).filter(Boolean))];
-                  const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
-
-                  return (
-                    <TabsContent key={group} value={group} className="space-y-6">
-                      <FormCard
-                        title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
-                        description={
-                          moduleLabel
-                            ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
-                            : `Manage ${group} related settings`
-                        }
-                        className="max-w-4xl"
-                      >
-                        <div className="space-y-6">
-                          {groupSettings.map((setting) => (
-                            <div key={setting.key}>{renderField(setting)}</div>
-                          ))}
-                        </div>
-                      </FormCard>
-                    </TabsContent>
-                  );
-                })}
-              </Tabs>
-            </div>
-          )}
-
-          {appGroups.length > 0 && moduleGroups.length > 0 && <div className="border-t pt-8" />}
-
-          {moduleGroups.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold">Modules Settings</h2>
-              <Tabs
-                value={activeModuleTab}
-                onValueChange={handleModuleTabChange}
-                className="w-full"
-              >
-                <div className={moduleGroups.length > 12 ? 'overflow-x-auto' : ''}>
-                  <TabsList className={`grid w-full ${getGridColsClass(moduleGroups.length)}`}>
-                    {moduleGroups.map((group) => (
-                      <TabsTrigger key={group} value={group} className="capitalize">
-                        {group}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </div>
-
-                {moduleGroups.map((group) => {
-                  const groupSettings = modulesSettings[group] || [];
-                  const modules = [...new Set(groupSettings.map((s) => s.module).filter(Boolean))];
-                  const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
-
-                  return (
-                    <TabsContent key={group} value={group} className="space-y-6">
-                      <FormCard
-                        title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
-                        description={
-                          moduleLabel
-                            ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
-                            : `Manage ${group} related settings`
-                        }
-                        className="max-w-4xl"
-                      >
-                        <div className="space-y-6">
-                          {groupSettings.map((setting) => (
-                            <div key={setting.key}>{renderField(setting)}</div>
-                          ))}
-                        </div>
-                      </FormCard>
-                    </TabsContent>
-                  );
-                })}
-              </Tabs>
-            </div>
-          )}
-
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
-            </Button>
+        {!hasSettings ? (
+          <div className="rounded-lg border border-dashed p-12 text-center">
+            <p className="text-muted-foreground">No settings available at this time.</p>
           </div>
-        </form>
+        ) : (
+          <form id="settings-form" onSubmit={handleSubmit} className="space-y-8" noValidate>
+            <div className="grid gap-6 md:grid-cols-2 md:items-start">
+              {appGroups.length > 0 && (
+                <Card className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Application Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <Accordion
+                      type="multiple"
+                      defaultValue={defaultAppValues}
+                      onValueChange={handleAppAccordionChange}
+                      className="w-full"
+                    >
+                      {appGroups.map((group) => {
+                        const groupSettings = applicationSettings[group] || [];
+                        const modules = [
+                          ...new Set(groupSettings.map((s) => s.module).filter(Boolean)),
+                        ];
+                        const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
+
+                        return (
+                          <AccordionItem key={group} value={group}>
+                            <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                            <AccordionContent className="space-y-6">
+                              <FormCard
+                                title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
+                                description={
+                                  moduleLabel
+                                    ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
+                                    : `Manage ${group} related settings`
+                                }
+                                className="max-w-4xl"
+                              >
+                                <div className="space-y-6">
+                                  {groupSettings.map((setting) => (
+                                    <div key={setting.key}>{renderField(setting)}</div>
+                                  ))}
+                                </div>
+                              </FormCard>
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              )}
+
+              {moduleGroups.length > 0 && (
+                <Card className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Modules Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <Accordion
+                      type="multiple"
+                      defaultValue={defaultModuleValues}
+                      onValueChange={handleModuleAccordionChange}
+                      className="w-full"
+                    >
+                      {moduleGroups.map((group) => {
+                        const groupSettings = modulesSettings[group] || [];
+                        const modules = [
+                          ...new Set(groupSettings.map((s) => s.module).filter(Boolean)),
+                        ];
+                        const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
+
+                        return (
+                          <AccordionItem key={group} value={group}>
+                            <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                            <AccordionContent className="space-y-6">
+                              <FormCard
+                                title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
+                                description={
+                                  moduleLabel
+                                    ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
+                                    : `Manage ${group} related settings`
+                                }
+                                className="max-w-4xl"
+                              >
+                                <div className="space-y-6">
+                                  {groupSettings.map((setting) => (
+                                    <div key={setting.key}>{renderField(setting)}</div>
+                                  ))}
+                                </div>
+                              </FormCard>
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        )}
       </PageShell>
     </DashboardLayout>
   );

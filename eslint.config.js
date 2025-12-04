@@ -36,6 +36,7 @@ export default [
         route: 'readonly',
         FormData: 'readonly',
         fetch: 'readonly',
+        URLSearchParams: 'readonly',
       },
     },
     settings: {

@@ -21,7 +21,7 @@ class SettingsController extends Controller
     /**
      * Display all settings grouped by their 'group' column.
      *
-     * Returns grouped settings for the UI to display in tabs.
+     * Returns grouped settings for the UI to display in accordion sections.
      * Separates Application Settings (from Settings module) from Modules Settings.
      */
     public function index(): Response
