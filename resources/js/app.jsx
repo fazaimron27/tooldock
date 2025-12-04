@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 import { GlobalSpinner, setNavigationState } from './Components/AppSpinner';
 import { ThemeProvider } from './Components/ThemeProvider';
+import { QueryProvider } from './Providers/QueryProvider';
 import { generateInertiaTitle } from './Utils/inertiaTitle';
 import './bootstrap';
 
@@ -59,10 +60,12 @@ createInertiaApp({
     const root = createRoot(el);
 
     root.render(
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <GlobalSpinner />
-        <App {...props} />
-      </ThemeProvider>
+      <QueryProvider>
+        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+          <GlobalSpinner />
+          <App {...props} />
+        </ThemeProvider>
+      </QueryProvider>
     );
   },
   progress: {
@@ -70,9 +73,9 @@ createInertiaApp({
     delay: 0,
     includeCSS: false,
     /**
-     * Fallback navigation state handlers
-     * Primary navigation state is managed by NavigationSpinner via router events
-     * These callbacks serve as a safety net for edge cases
+     * Fallback navigation state handlers.
+     * Primary navigation state is managed by NavigationSpinner via router events.
+     * These callbacks serve as a safety net for edge cases.
      */
     onStart: () => {
       setNavigationState(true);
