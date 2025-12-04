@@ -4,10 +4,10 @@
  * Supports grouped menu items with expand/collapse functionality
  * Modern implementation with proper nested menu support
  */
+import { useAppStore } from '@/Stores/useAppStore';
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
-import { useState } from 'react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
@@ -30,22 +30,8 @@ import {
 export default function AppSidebar() {
   const { menus } = usePage().props;
   const menuEntries = Object.entries(menus || {});
-  const [openGroups, setOpenGroups] = useState({});
-  const [openItems, setOpenItems] = useState({});
-
-  const toggleGroup = (group) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [group]: !prev[group],
-    }));
-  };
-
-  const toggleMenuItem = (route) => {
-    setOpenItems((prev) => ({
-      ...prev,
-      [route]: !prev[route],
-    }));
-  };
+  const { sidebarMenu, toggleGroup, toggleMenuItem } = useAppStore();
+  const { openGroups, openItems } = sidebarMenu;
 
   const isChildActive = (item) => {
     if (!item.children || item.children.length === 0) {

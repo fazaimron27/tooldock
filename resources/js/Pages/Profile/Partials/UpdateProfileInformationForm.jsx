@@ -1,5 +1,6 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link, usePage } from '@inertiajs/react';
+import { updateProfileResolver } from '@modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 import { CheckCircle2 } from 'lucide-react';
 import { Controller } from 'react-hook-form';
 
@@ -23,6 +24,7 @@ export default function UpdateProfileInformation({
       avatar_id: avatar?.id || null,
     },
     {
+      resolver: updateProfileResolver,
       toast: {
         success: 'Profile updated successfully!',
         error: 'Failed to update profile. Please check the form for errors.',
@@ -68,13 +70,6 @@ export default function UpdateProfileInformation({
           label="Name"
           required
           autoComplete="name"
-          rules={{
-            required: 'Name is required',
-            maxLength: {
-              value: 255,
-              message: 'Name must not exceed 255 characters',
-            },
-          }}
         />
 
         <FormFieldRHF
@@ -84,13 +79,6 @@ export default function UpdateProfileInformation({
           type="email"
           required
           autoComplete="username"
-          rules={{
-            required: 'Email is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address',
-            },
-          }}
         />
 
         {mustVerifyEmail && user.email_verified_at === null && (

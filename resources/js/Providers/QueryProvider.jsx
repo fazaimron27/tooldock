@@ -6,6 +6,15 @@ import { createQueryClient } from '@/Config/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+/**
+ * React Query Devtools (optional)
+ * To enable devtools in development, install the package:
+ * npm install -D @tanstack/react-query-devtools
+ *
+ * Then uncomment the import and component below:
+ */
+// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
 export function QueryProvider({ children }) {
   /**
    * Create a single QueryClient instance per component tree.
@@ -16,7 +25,9 @@ export function QueryProvider({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {/* Devtools can be added later if needed - install @tanstack/react-query-devtools as devDependency */}
+      {/* Uncomment to enable React Query Devtools in development:
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      */}
     </QueryClientProvider>
   );
 }

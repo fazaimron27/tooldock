@@ -21,10 +21,7 @@ export const useAppStore = create(
       /**
        * User preferences for UI customization.
        */
-      preferences: {
-        compactMode: false,
-        denseTables: false,
-      },
+      preferences: {},
       setPreferences: (preferences) =>
         set((state) => ({
           preferences: { ...state.preferences, ...preferences },
@@ -54,6 +51,34 @@ export const useAppStore = create(
           delete newState[key];
           return { uiState: newState };
         }),
+
+      /**
+       * Sidebar menu state for tracking open groups and menu items.
+       */
+      sidebarMenu: {
+        openGroups: {},
+        openItems: {},
+      },
+      toggleGroup: (group) =>
+        set((state) => ({
+          sidebarMenu: {
+            ...state.sidebarMenu,
+            openGroups: {
+              ...state.sidebarMenu.openGroups,
+              [group]: !state.sidebarMenu.openGroups[group],
+            },
+          },
+        })),
+      toggleMenuItem: (route) =>
+        set((state) => ({
+          sidebarMenu: {
+            ...state.sidebarMenu,
+            openItems: {
+              ...state.sidebarMenu.openItems,
+              [route]: !state.sidebarMenu.openItems[route],
+            },
+          },
+        })),
     }),
     {
       name: 'app-storage',
@@ -65,6 +90,7 @@ export const useAppStore = create(
         sidebarOpen: state.sidebarOpen,
         preferences: state.preferences,
         navigationHistory: state.navigationHistory,
+        sidebarMenu: state.sidebarMenu,
       }),
     }
   )
