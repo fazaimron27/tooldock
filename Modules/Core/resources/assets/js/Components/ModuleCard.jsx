@@ -3,10 +3,9 @@
  * Shows install/uninstall buttons, toggle switch, and module metadata
  */
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { useNavigationLoading } from '@/Hooks/useNavigationLoading';
 import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useToggleState } from '@/Hooks/useToggleState';
 import { getIcon } from '@/Utils/iconResolver';
-import { Link, router } from '@inertiajs/react';
 import { Tag } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
@@ -38,21 +37,23 @@ const getModuleRouteUrl = (moduleName) => {
     return route(routeName);
   }
 
-  // All module routes use the /tooldock prefix
   return `/tooldock/${moduleNameLower}`;
 };
 
 export default function ModuleCard({ module, onKeywordClick }) {
   const uninstallDialog = useDisclosure();
   const successDialog = useDisclosure();
-  const { showLoading } = useNavigationLoading();
-  const [isToggling, setIsToggling] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [moduleRouteUrl, setModuleRouteUrl] = useState(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const installForm = useSmartForm({ module: module.name });
-  const uninstallForm = useSmartForm({ module: module.name });
+  /**
+   * Component-level forms automatically skip the navigation spinner
+   * and show only the local card overlay spinner during actions
+   */
+  const installForm = useSmartForm({ module: module.name }, { componentLevel: true });
+  const uninstallForm = useSmartForm({ module: module.name }, { componentLevel: true });
+  const { isToggling, toggle: toggleModule } = useToggleState();
 
   const handleInstall = useCallback(() => {
     installForm.post(route('core.modules.install'), {
@@ -110,17 +111,15 @@ export default function ModuleCard({ module, onKeywordClick }) {
 
   const handleToggle = useCallback(
     (checked) => {
-      setIsToggling(true);
       const action = checked ? 'enable' : 'disable';
 
-      router.post(
+      toggleModule(
         route('core.modules.toggle'),
         {
           module: module.name,
           action,
         },
         {
-          preserveScroll: true,
           onSuccess: (page) => {
             const hasFlashError = page?.props?.flash?.error;
 
@@ -148,41 +147,35 @@ export default function ModuleCard({ module, onKeywordClick }) {
           onError: () => {
             successDialog.onClose();
           },
-          onFinish: () => {
-            setIsToggling(false);
-          },
         }
       );
     },
-    [module.name, successDialog]
+    [module.name, toggleModule, successDialog]
   );
 
+  /**
+   * Handles page reload after module operations
+   * Uses full page reload to ensure service providers boot and routes are registered
+   * GlobalSpinner handles loading state, preventing double spinner
+   */
   const handleReloadPage = useCallback(() => {
     setIsNavigating(true);
-    showLoading();
 
     if (moduleRouteUrl) {
-      // Always use full page reload for newly installed/enabled modules
-      // This ensures:
-      // 1. Service providers boot and register routes
-      // 2. Ziggy routes are reloaded in the frontend
-      // 3. The frontend route() helper has updated routes
       window.location.href = moduleRouteUrl;
     } else {
-      // Persist loading state to sessionStorage before reload for immediate display
-      showLoading();
       window.setTimeout(() => {
         window.location.reload();
       }, 0);
     }
-  }, [moduleRouteUrl, showLoading]);
+  }, [moduleRouteUrl]);
 
   const Icon = getIcon(module.icon);
   const isProcessing = installForm.processing || uninstallForm.processing || isToggling;
 
   return (
     <>
-      <div className="relative w-full">
+      <div className="relative w-full overflow-hidden">
         <Card className="group flex h-full w-full flex-col transition-all duration-200 hover:shadow-lg">
           <CardHeader className="pb-4">
             <div className="flex items-start gap-4">
@@ -311,8 +304,8 @@ export default function ModuleCard({ module, onKeywordClick }) {
           </CardFooter>
         </Card>
 
-        {isProcessing && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
+        {isProcessing && !isNavigating && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
               <Spinner className="size-8" />
               <p className="text-xs text-muted-foreground">
