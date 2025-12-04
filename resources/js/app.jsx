@@ -3,8 +3,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 import '../css/app.css';
+import { GlobalSpinner, setNavigationState } from './Components/AppSpinner';
 import { ThemeProvider } from './Components/ThemeProvider';
-import { hideGlobalLoading } from './Utils/hideGlobalLoading';
 import { generateInertiaTitle } from './Utils/inertiaTitle';
 import './bootstrap';
 
@@ -60,13 +60,28 @@ createInertiaApp({
 
     root.render(
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <GlobalSpinner />
         <App {...props} />
       </ThemeProvider>
     );
-
-    hideGlobalLoading();
   },
   progress: {
-    color: '#4B5563',
+    showSpinner: false,
+    delay: 0,
+    includeCSS: false,
+    /**
+     * Fallback navigation state handlers
+     * Primary navigation state is managed by NavigationSpinner via router events
+     * These callbacks serve as a safety net for edge cases
+     */
+    onStart: () => {
+      setNavigationState(true);
+    },
+    onFinish: () => {
+      setNavigationState(false);
+    },
+    onError: () => {
+      setNavigationState(false);
+    },
   },
 });
