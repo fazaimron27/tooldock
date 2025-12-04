@@ -13,6 +13,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebounce } from 'use-debounce';
 
 export function useDatatable({
   data = [],
@@ -39,16 +40,25 @@ export function useDatatable({
   const [rowSelection, setRowSelection] = useState({});
   const [filters, setFilters] = useState(initialFilters);
 
+  /**
+   * Debounced search and filter values to reduce server requests.
+   * 300ms delay balances responsiveness with performance.
+   */
+  const [debouncedGlobalFilter] = useDebounce(globalFilter, 300);
+  const [debouncedFilters] = useDebounce(filters, 300);
+
   const previousParamsRef = useRef(null);
   const isInitialMount = useRef(true);
-  const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!isServerSide || !route) {
       return;
     }
 
-    // Skip initial request if data already exists to prevent duplicate requests
+    /**
+     * Skip initial request if data already exists to prevent duplicate requests.
+     * This handles cases where data is pre-loaded via Inertia props.
+     */
     if (isInitialMount.current && data.length > 0) {
       isInitialMount.current = false;
       return;
@@ -66,58 +76,80 @@ export function useDatatable({
       params.direction = sort.desc ? 'desc' : 'asc';
     }
 
-    if (globalFilter) {
-      params.search = globalFilter;
+    /**
+     * Use debounced values for search and filters to reduce server load.
+     * Pagination and sorting remain immediate for better user experience.
+     */
+    const hasSearchOrFilters = debouncedGlobalFilter || Object.keys(debouncedFilters).length > 0;
+
+    if (debouncedGlobalFilter) {
+      params.search = debouncedGlobalFilter;
     }
 
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(debouncedFilters).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         params[key] = value;
       }
     });
 
-    const paramsString = JSON.stringify(params);
+    /**
+     * Determine whether to use debounced or immediate values.
+     * Immediate values for pagination/sorting, debounced for search/filters.
+     */
+    const shouldUseDebounced = hasSearchOrFilters;
+    const effectiveGlobalFilter = shouldUseDebounced ? debouncedGlobalFilter : globalFilter;
+    const effectiveFilters = shouldUseDebounced ? debouncedFilters : filters;
+
+    const finalParams = {
+      page: pagination.pageIndex + 1,
+      per_page: pagination.pageSize,
+    };
+
+    if (sorting.length > 0) {
+      const sort = sorting[0];
+      finalParams.sort = sort.id;
+      finalParams.direction = sort.desc ? 'desc' : 'asc';
+    }
+
+    if (effectiveGlobalFilter) {
+      finalParams.search = effectiveGlobalFilter;
+    }
+
+    Object.entries(effectiveFilters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        finalParams[key] = value;
+      }
+    });
+
+    const paramsString = JSON.stringify(finalParams);
     if (previousParamsRef.current === paramsString) {
       return;
     }
     previousParamsRef.current = paramsString;
 
-    // Debounce search/filter operations to reduce server load during typing
-    // Pagination and sorting remain immediate for better user experience
-    const shouldDebounce = globalFilter || Object.keys(filters).length > 0;
-
-    const makeRequest = () => {
-      const options = {
-        preserveState: true,
-        preserveScroll: true,
-        skipLoadingIndicator: true,
-      };
-
-      if (only !== null && Array.isArray(only) && only.length > 0) {
-        options.only = only;
-      }
-
-      router.get(route, params, options);
+    const options = {
+      preserveState: true,
+      preserveScroll: true,
+      skipLoadingIndicator: true,
     };
 
-    if (shouldDebounce) {
-      if (searchTimeoutRef.current) {
-        window.clearTimeout(searchTimeoutRef.current);
-      }
-
-      searchTimeoutRef.current = window.setTimeout(() => {
-        makeRequest();
-      }, 300);
-    } else {
-      makeRequest();
+    if (only !== null && Array.isArray(only) && only.length > 0) {
+      options.only = only;
     }
 
-    return () => {
-      if (searchTimeoutRef.current) {
-        window.clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [pagination, sorting, globalFilter, filters, isServerSide, route, only, data.length]);
+    router.get(route, finalParams, options);
+  }, [
+    pagination,
+    sorting,
+    globalFilter,
+    filters,
+    debouncedGlobalFilter,
+    debouncedFilters,
+    isServerSide,
+    route,
+    only,
+    data.length,
+  ]);
 
   const handleSortingChange = useCallback(
     (updater) => {
