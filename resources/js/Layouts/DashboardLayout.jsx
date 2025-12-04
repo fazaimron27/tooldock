@@ -10,20 +10,18 @@
  * @param {React.ReactNode} children - Page content to render
  */
 import { useFlashNotifications } from '@/Hooks/useFlashNotifications';
-import { useNavigationLoading } from '@/Hooks/useNavigationLoading';
 import { useRef } from 'react';
 
 import AppSidebar from '@/Components/AppSidebar';
+import { NavigationSpinner } from '@/Components/AppSpinner';
 import Footer from '@/Components/Footer';
 import Navbar from '@/Components/Navbar';
 import { SidebarInset, SidebarProvider } from '@/Components/ui/sidebar';
 import { Toaster } from '@/Components/ui/sonner';
-import { Spinner } from '@/Components/ui/spinner';
 
 export default function DashboardLayout({ header: _header, children }) {
   useFlashNotifications();
   const scrollContainerRef = useRef(null);
-  const { isLoading } = useNavigationLoading();
 
   return (
     <SidebarProvider className="h-svh overflow-hidden">
@@ -35,11 +33,7 @@ export default function DashboardLayout({ header: _header, children }) {
             ref={scrollContainerRef}
             className="relative flex-1 overflow-x-hidden overflow-y-auto pt-16"
           >
-            {isLoading && (
-              <div className="absolute inset-x-0 top-16 bottom-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <Spinner className="size-12" />
-              </div>
-            )}
+            <NavigationSpinner containerRef={scrollContainerRef} />
             <div className="flex flex-col gap-4 p-5 py-7 min-h-full">{children}</div>
           </div>
           <Footer />
