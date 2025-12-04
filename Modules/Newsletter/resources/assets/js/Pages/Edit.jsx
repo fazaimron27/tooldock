@@ -20,6 +20,8 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateCampaignResolver } from '../Schemas/newsletterSchemas';
+
 export default function Edit({ campaign, posts = [] }) {
   const form = useInertiaForm(
     {
@@ -31,6 +33,7 @@ export default function Edit({ campaign, posts = [] }) {
         : '',
     },
     {
+      resolver: updateCampaignResolver,
       toast: {
         success: 'Campaign updated successfully!',
         error: 'Failed to update campaign. Please try again.',
@@ -88,7 +91,6 @@ export default function Edit({ campaign, posts = [] }) {
                 label="Subject"
                 required
                 placeholder="Enter campaign subject"
-                rules={{ required: 'Subject is required' }}
               />
 
               <FormTextareaRHF
@@ -98,7 +100,6 @@ export default function Edit({ campaign, posts = [] }) {
                 required
                 rows={10}
                 placeholder="Enter email body content"
-                rules={{ required: 'Content is required' }}
               />
 
               <Controller

@@ -18,6 +18,8 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { createRoleResolver } from '../../Schemas/roleSchemas';
+
 export default function Create({ groupedPermissions = {} }) {
   const form = useInertiaForm(
     {
@@ -25,6 +27,7 @@ export default function Create({ groupedPermissions = {} }) {
       permissions: [],
     },
     {
+      resolver: createRoleResolver,
       toast: {
         success: 'Role created successfully!',
         error: 'Failed to create role. Please check the form for errors.',
@@ -133,7 +136,6 @@ export default function Create({ groupedPermissions = {} }) {
                 label="Role Name"
                 required
                 placeholder="Enter role name (e.g., Editor, Manager)"
-                rules={{ required: 'Role name is required' }}
               />
 
               <div className="space-y-4">
@@ -153,7 +155,6 @@ export default function Create({ groupedPermissions = {} }) {
                       const resourceKeys = Object.keys(moduleResources).sort();
                       const isModuleOpen = openModules[module] ?? true;
 
-                      // Calculate total permissions for module
                       const allModulePermissions = resourceKeys.flatMap(
                         (resource) => moduleResources[resource] || []
                       );

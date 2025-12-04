@@ -18,6 +18,7 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateRoleResolver } from '../../Schemas/roleSchemas';
 import { ROLES } from '../../constants';
 
 export default function Edit({ role, groupedPermissions = {} }) {
@@ -29,6 +30,7 @@ export default function Edit({ role, groupedPermissions = {} }) {
       permissions: role.permissions?.map((p) => p.id) || [],
     },
     {
+      resolver: updateRoleResolver,
       toast: {
         success: 'Role updated successfully!',
         error: 'Failed to update role. Please check the form for errors.',
@@ -138,7 +140,6 @@ export default function Edit({ role, groupedPermissions = {} }) {
                 required
                 disabled={isSuperAdmin}
                 placeholder="Enter role name (e.g., Editor, Manager)"
-                rules={{ required: 'Role name is required' }}
               />
               {isSuperAdmin && (
                 <p className="text-xs text-muted-foreground">
@@ -175,7 +176,6 @@ export default function Edit({ role, groupedPermissions = {} }) {
                         const resourceKeys = Object.keys(moduleResources).sort();
                         const isModuleOpen = openModules[module] ?? true;
 
-                        // Calculate total permissions for module
                         const allModulePermissions = resourceKeys.flatMap(
                           (resource) => moduleResources[resource] || []
                         );

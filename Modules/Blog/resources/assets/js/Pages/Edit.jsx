@@ -16,6 +16,8 @@ import { Button } from '@/Components/ui/button';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updatePostResolver } from '../Schemas/blogSchemas';
+
 export default function Edit({ post }) {
   const form = useInertiaForm(
     {
@@ -27,6 +29,7 @@ export default function Edit({ post }) {
         : '',
     },
     {
+      resolver: updatePostResolver,
       toast: {
         success: 'Post updated successfully!',
         error: 'Failed to update post. Please check the form for errors.',
@@ -51,7 +54,6 @@ export default function Edit({ post }) {
                 label="Title"
                 required
                 placeholder="Enter post title"
-                rules={{ required: 'Title is required' }}
               />
 
               <FormFieldRHF
@@ -68,7 +70,6 @@ export default function Edit({ post }) {
                 required
                 rows={10}
                 placeholder="Enter post content"
-                rules={{ required: 'Content is required' }}
               />
 
               <Controller

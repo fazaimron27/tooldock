@@ -5,7 +5,6 @@
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
-import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
@@ -15,6 +14,8 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
+
+import { createUserResolver } from '../../Schemas/userSchemas';
 
 export default function Create({ roles = [] }) {
   const form = useInertiaForm(
@@ -26,6 +27,7 @@ export default function Create({ roles = [] }) {
       roles: [],
     },
     {
+      resolver: createUserResolver,
       toast: {
         success: 'User created successfully!',
         error: 'Failed to create user. Please check the form for errors.',
@@ -63,7 +65,6 @@ export default function Create({ roles = [] }) {
                 label="Name"
                 required
                 placeholder="Enter full name"
-                rules={{ required: 'Name is required' }}
               />
 
               <FormFieldRHF
@@ -73,13 +74,6 @@ export default function Create({ roles = [] }) {
                 type="email"
                 required
                 placeholder="Enter email address"
-                rules={{
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                }}
               />
 
               <FormFieldRHF
@@ -89,13 +83,6 @@ export default function Create({ roles = [] }) {
                 type="password"
                 required
                 placeholder="Enter password"
-                rules={{
-                  required: 'Password is required',
-                  minLength: {
-                    value: 8,
-                    message: 'Password must be at least 8 characters',
-                  },
-                }}
               />
 
               <FormFieldRHF
@@ -105,13 +92,6 @@ export default function Create({ roles = [] }) {
                 type="password"
                 required
                 placeholder="Confirm password"
-                rules={{
-                  required: 'Password confirmation is required',
-                  validate: (value) => {
-                    const password = form.watch('password');
-                    return value === password || 'Passwords do not match';
-                  },
-                }}
               />
 
               <div className="space-y-4">

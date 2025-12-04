@@ -16,6 +16,8 @@ import { Button } from '@/Components/ui/button';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { createPostResolver } from '../Schemas/blogSchemas';
+
 export default function Create() {
   const form = useInertiaForm(
     {
@@ -25,6 +27,7 @@ export default function Create() {
       published_at: '',
     },
     {
+      resolver: createPostResolver,
       toast: {
         success: 'Post created successfully!',
         error: 'Failed to create post. Please check the form for errors.',
@@ -49,7 +52,6 @@ export default function Create() {
                 label="Title"
                 required
                 placeholder="Enter post title"
-                rules={{ required: 'Title is required' }}
               />
 
               <FormFieldRHF
@@ -66,7 +68,6 @@ export default function Create() {
                 required
                 rows={10}
                 placeholder="Enter post content"
-                rules={{ required: 'Content is required' }}
               />
 
               <Controller

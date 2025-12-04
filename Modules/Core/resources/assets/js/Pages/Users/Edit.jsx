@@ -15,6 +15,8 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateUserResolver } from '../../Schemas/userSchemas';
+
 export default function Edit({ user, roles = [] }) {
   const form = useInertiaForm(
     {
@@ -25,6 +27,7 @@ export default function Edit({ user, roles = [] }) {
       roles: user.roles?.map((role) => role.id) || [],
     },
     {
+      resolver: updateUserResolver,
       toast: {
         success: 'User updated successfully!',
         error: 'Failed to update user. Please check the form for errors.',
@@ -62,7 +65,6 @@ export default function Edit({ user, roles = [] }) {
                 label="Name"
                 required
                 placeholder="Enter full name"
-                rules={{ required: 'Name is required' }}
               />
 
               <FormFieldRHF
@@ -72,13 +74,6 @@ export default function Edit({ user, roles = [] }) {
                 type="email"
                 required
                 placeholder="Enter email address"
-                rules={{
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                }}
               />
 
               <FormFieldRHF
@@ -87,15 +82,6 @@ export default function Edit({ user, roles = [] }) {
                 label="Password"
                 type="password"
                 placeholder="Leave empty to keep current password"
-                rules={{
-                  validate: (value) => {
-                    if (!value) return true; // Optional for updates
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    return true;
-                  },
-                }}
               />
 
               <FormFieldRHF
@@ -104,13 +90,6 @@ export default function Edit({ user, roles = [] }) {
                 label="Confirm Password"
                 type="password"
                 placeholder="Confirm new password"
-                rules={{
-                  validate: (value) => {
-                    const password = form.watch('password');
-                    if (!password) return true; // Optional if password is empty
-                    return value === password || 'Passwords do not match';
-                  },
-                }}
               />
 
               <div className="space-y-4">

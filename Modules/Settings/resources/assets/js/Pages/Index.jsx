@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateSettingsResolver } from '../Schemas/settingsSchemas';
+
 export default function Index({ applicationSettings = {}, modulesSettings = {} }) {
   const { url } = usePage();
   const appGroups = Object.keys(applicationSettings);
@@ -53,6 +55,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
   }, [applicationSettings, modulesSettings]);
 
   const form = useInertiaForm(initialData, {
+    resolver: updateSettingsResolver,
     toast: {
       success: 'Settings updated successfully!',
       error: 'Failed to update settings. Please check the form for errors.',

@@ -20,6 +20,8 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { createCampaignResolver } from '../Schemas/newsletterSchemas';
+
 export default function Create({ posts = [] }) {
   const form = useInertiaForm(
     {
@@ -29,6 +31,7 @@ export default function Create({ posts = [] }) {
       scheduled_at: '',
     },
     {
+      resolver: createCampaignResolver,
       toast: {
         success: 'Campaign created successfully!',
         error: 'Failed to create campaign. Please try again.',
@@ -86,7 +89,6 @@ export default function Create({ posts = [] }) {
                 label="Subject"
                 required
                 placeholder="Enter campaign subject"
-                rules={{ required: 'Subject is required' }}
               />
 
               <FormTextareaRHF
@@ -96,7 +98,6 @@ export default function Create({ posts = [] }) {
                 required
                 rows={10}
                 placeholder="Enter email body content"
-                rules={{ required: 'Content is required' }}
               />
 
               <Controller

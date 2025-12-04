@@ -6,17 +6,18 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { cn } from '@/Utils/utils';
 import { Link } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import FormTextareaRHF from '@/Components/Common/FormTextareaRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
+
+import { createCategoryResolver } from '../Schemas/categorySchemas';
 
 export default function Create({ parentCategories = {}, types = [] }) {
   const form = useInertiaForm(
@@ -29,6 +30,7 @@ export default function Create({ parentCategories = {}, types = [] }) {
       description: '',
     },
     {
+      resolver: createCategoryResolver,
       toast: {
         success: 'Category created successfully!',
         error: 'Failed to create category. Please check the form for errors.',
@@ -41,17 +43,26 @@ export default function Create({ parentCategories = {}, types = [] }) {
     form.post(route('categories.store'));
   };
 
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+  /**
+   * Handles name field changes and auto-generates slug if not manually edited.
+   */
   const handleNameChange = (e) => {
     const name = e.target.value;
     form.setValue('name', name);
-    const currentSlug = form.watch('slug');
-    if (!currentSlug || currentSlug === '') {
+    if (!slugManuallyEdited) {
       const slug = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
       form.setValue('slug', slug, { shouldValidate: false });
     }
+  };
+
+  const handleSlugChange = (e) => {
+    form.setValue('slug', e.target.value);
+    setSlugManuallyEdited(true);
   };
 
   const type = form.watch('type');
@@ -71,7 +82,6 @@ export default function Create({ parentCategories = {}, types = [] }) {
               <Controller
                 name="name"
                 control={form.control}
-                rules={{ required: 'Name is required' }}
                 render={({ field, fieldState: { error } }) => (
                   <div className="space-y-2">
                     <Label htmlFor="name">
@@ -97,17 +107,34 @@ export default function Create({ parentCategories = {}, types = [] }) {
                 )}
               />
 
-              <FormFieldRHF
+              <Controller
                 name="slug"
                 control={form.control}
-                label="Slug"
-                placeholder="Auto-generated from name"
+                render={({ field, fieldState: { error } }) => (
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">Slug</Label>
+                    <input
+                      id="slug"
+                      type="text"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleSlugChange(e);
+                      }}
+                      className={cn(
+                        'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+                        error && 'border-destructive'
+                      )}
+                      placeholder="Auto-generated from name"
+                    />
+                    {error && <p className="text-sm text-destructive">{error.message}</p>}
+                  </div>
+                )}
               />
 
               <Controller
                 name="type"
                 control={form.control}
-                rules={{ required: 'Type is required' }}
                 render={({ field, fieldState: { error } }) => (
                   <div className="space-y-2">
                     <Label htmlFor="type">
