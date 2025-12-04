@@ -1,4 +1,5 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { updatePasswordResolver } from '@modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
@@ -12,6 +13,7 @@ export default function UpdatePasswordForm({ className = '' }) {
       password_confirmation: '',
     },
     {
+      resolver: updatePasswordResolver,
       toast: {
         success: 'Password updated successfully!',
         error: 'Failed to update password. Please check the form for errors.',
@@ -26,10 +28,6 @@ export default function UpdatePasswordForm({ className = '' }) {
       onSuccess: () => {
         form.reset();
       },
-      /**
-       * Don't clear fields on error to allow error display.
-       * mapServerErrors in useInertiaForm handles error mapping automatically.
-       */
     });
   };
 
@@ -47,9 +45,6 @@ export default function UpdatePasswordForm({ className = '' }) {
           type="password"
           required
           autoComplete="current-password"
-          rules={{
-            required: 'Current password is required',
-          }}
         />
 
         <FormFieldRHF
@@ -59,13 +54,6 @@ export default function UpdatePasswordForm({ className = '' }) {
           type="password"
           required
           autoComplete="new-password"
-          rules={{
-            required: 'New password is required',
-            minLength: {
-              value: 8,
-              message: 'Password must be at least 8 characters',
-            },
-          }}
         />
 
         <FormFieldRHF
@@ -75,13 +63,6 @@ export default function UpdatePasswordForm({ className = '' }) {
           type="password"
           required
           autoComplete="new-password"
-          rules={{
-            required: 'Password confirmation is required',
-            validate: (value) => {
-              const password = form.getValues('password');
-              return value === password || 'Passwords do not match';
-            },
-          }}
         />
 
         <div className="flex items-center gap-4">

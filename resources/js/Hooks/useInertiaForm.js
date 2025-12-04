@@ -47,10 +47,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
         const errorValue = errors[field];
         if (!errorValue) return;
 
-        /**
-         * Handle both array of errors and single error string.
-         * Always use the first error message for consistency.
-         */
         const errorMessages = Array.isArray(errorValue) ? errorValue : [errorValue];
         const firstError = errorMessages[0];
 
@@ -75,10 +71,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
     const originalOnSuccess = submitOptions.onSuccess;
     const originalOnError = submitOptions.onError;
 
-    /**
-     * Automatically inject skipLoadingIndicator for component-level forms.
-     * Prevents global navigation spinner during form submission.
-     */
     const finalOptions = {
       ...submitOptions,
       ...(componentLevel && !submitOptions.skipLoadingIndicator
@@ -90,17 +82,22 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
       (data) => {
         const httpMethod = method.toLowerCase();
 
-        /**
-         * Filter out null/undefined values, but preserve empty strings.
-         * Empty strings are valid form values (e.g., password fields) and should be validated server-side.
-         */
+        const isUpdateOperation = httpMethod === 'put' || httpMethod === 'patch';
         const filteredData = Object.fromEntries(
-          Object.entries(data).filter(([_, value]) => value !== null && value !== undefined)
+          Object.entries(data).filter(([key, value]) => {
+            if (value === null || value === undefined) return false;
+            if (
+              isUpdateOperation &&
+              typeof value === 'string' &&
+              value === '' &&
+              (key === 'password' || key === 'password_confirmation')
+            ) {
+              return false;
+            }
+            return true;
+          })
         );
 
-        /**
-         * Success handler called by Inertia when there are no validation errors.
-         */
         const handleSuccess = (page) => {
           if (toastEnabled && !submitOptions.silent) {
             const message =
@@ -112,18 +109,10 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
           originalOnSuccess?.(page);
         };
 
-        /**
-         * Error handler processes server-side validation errors.
-         * Errors may come from callback or page props (errorBag scoped).
-         */
         const handleError = (errors) => {
           const pageErrors = errorBag ? page?.props?.errors?.[errorBag] : page?.props?.errors;
           const errorData = errors || pageErrors || {};
 
-          /**
-           * Only map errors for fields that exist in this form.
-           * Prevents cross-form error contamination.
-           */
           const formFields = Object.keys(defaultValues);
           const relevantErrors = Object.keys(errorData)
             .filter((field) => formFields.includes(field))
@@ -159,10 +148,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
           originalOnError?.(relevantErrors);
         };
 
-        /**
-         * Use appropriate Inertia router method based on HTTP verb.
-         * POST uses router.post, other methods use router.visit with method option.
-         */
         if (httpMethod === 'post') {
           router.post(url, filteredData, {
             ...finalOptions,
@@ -184,10 +169,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
         }
       },
       (errors) => {
-        /**
-         * Client-side validation failed.
-         * Display toast notification and call error callback.
-         */
         if (toastEnabled && !submitOptions.silent) {
           let message;
           if (typeof toastConfig.error === 'function') {
@@ -208,23 +189,14 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
 
   const enhancedForm = {
     ...form,
-    /**
-     * Inertia-specific submission methods.
-     */
     submit: submitInertia,
     post: (url, submitOptions = {}) => submitInertia('post', url, submitOptions),
     put: (url, submitOptions = {}) => submitInertia('put', url, submitOptions),
     patch: (url, submitOptions = {}) => submitInertia('patch', url, submitOptions),
     delete: (url, submitOptions = {}) => submitInertia('delete', url, submitOptions),
-    /**
-     * Processing state for backward compatibility with useSmartForm.
-     */
     get processing() {
       return form.formState.isSubmitting;
     },
-    /**
-     * Errors in format compatible with existing code.
-     */
     get errors() {
       const rhfErrors = form.formState.errors;
       const formattedErrors = {};
@@ -233,28 +205,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
       });
       return formattedErrors;
     },
-    /**
-     * Form data getter for backward compatibility.
-     */
-    get data() {
-      return form.getValues();
-    },
-    /**
-     * Set form data method for backward compatibility.
-     * Supports both single field and bulk updates.
-     */
-    setData: (name, value) => {
-      if (typeof name === 'string') {
-        form.setValue(name, value, { shouldValidate: false });
-      } else {
-        Object.keys(name).forEach((key) => {
-          form.setValue(key, name[key], { shouldValidate: false });
-        });
-      }
-    },
-    /**
-     * Clear form errors method.
-     */
     clearErrors: (name) => {
       if (name) {
         form.clearErrors(name);
@@ -262,9 +212,6 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
         form.clearErrors();
       }
     },
-    /**
-     * Reset form to initial or provided values.
-     */
     reset: (values) => {
       form.reset(values || defaultValues);
     },
