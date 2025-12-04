@@ -1,12 +1,13 @@
 /**
  * Create user page with form for creating new users
  * Includes fields for name, email, password, and role assignment
+ * Uses React Hook Form for improved performance and validation
  */
-import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
@@ -14,8 +15,10 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { createUserResolver } from '../../Schemas/userSchemas';
+
 export default function Create({ roles = [] }) {
-  const form = useSmartForm(
+  const form = useInertiaForm(
     {
       name: '',
       email: '',
@@ -24,6 +27,7 @@ export default function Create({ roles = [] }) {
       roles: [],
     },
     {
+      resolver: createUserResolver,
       toast: {
         success: 'User created successfully!',
         error: 'Failed to create user. Please check the form for errors.',
@@ -32,14 +36,15 @@ export default function Create({ roles = [] }) {
   );
 
   const handleRoleToggle = (roleId) => {
-    const currentRoles = form.data.roles || [];
+    const currentRoles = form.watch('roles') || [];
     if (currentRoles.includes(roleId)) {
-      form.setData(
+      form.setValue(
         'roles',
-        currentRoles.filter((id) => id !== roleId)
+        currentRoles.filter((id) => id !== roleId),
+        { shouldValidate: false }
       );
     } else {
-      form.setData('roles', [...currentRoles, roleId]);
+      form.setValue('roles', [...currentRoles, roleId], { shouldValidate: false });
     }
   };
 
@@ -54,45 +59,37 @@ export default function Create({ roles = [] }) {
         <div className="space-y-6">
           <FormCard title="New User" description="Create a new user account" className="max-w-3xl">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <FormField
+              <FormFieldRHF
                 name="name"
+                control={form.control}
                 label="Name"
-                value={form.data.name}
-                onChange={(e) => form.setData('name', e.target.value)}
-                error={form.errors.name}
                 required
                 placeholder="Enter full name"
               />
 
-              <FormField
+              <FormFieldRHF
                 name="email"
+                control={form.control}
                 label="Email"
                 type="email"
-                value={form.data.email}
-                onChange={(e) => form.setData('email', e.target.value)}
-                error={form.errors.email}
                 required
                 placeholder="Enter email address"
               />
 
-              <FormField
+              <FormFieldRHF
                 name="password"
+                control={form.control}
                 label="Password"
                 type="password"
-                value={form.data.password}
-                onChange={(e) => form.setData('password', e.target.value)}
-                error={form.errors.password}
                 required
                 placeholder="Enter password"
               />
 
-              <FormField
+              <FormFieldRHF
                 name="password_confirmation"
+                control={form.control}
                 label="Confirm Password"
                 type="password"
-                value={form.data.password_confirmation}
-                onChange={(e) => form.setData('password_confirmation', e.target.value)}
-                error={form.errors.password_confirmation}
                 required
                 placeholder="Confirm password"
               />
@@ -107,7 +104,7 @@ export default function Create({ roles = [] }) {
                       <div key={role.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`role-${role.id}`}
-                          checked={form.data.roles?.includes(role.id) || false}
+                          checked={form.watch('roles')?.includes(role.id) || false}
                           onCheckedChange={() => handleRoleToggle(role.id)}
                         />
                         <Label
@@ -120,14 +117,14 @@ export default function Create({ roles = [] }) {
                     ))
                   )}
                 </div>
-                {form.errors.roles && (
-                  <p className="text-sm text-destructive">{form.errors.roles}</p>
+                {form.formState.errors.roles && (
+                  <p className="text-sm text-destructive">{form.formState.errors.roles.message}</p>
                 )}
               </div>
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.processing}>
-                  {form.processing ? 'Creating...' : 'Create User'}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Creating...' : 'Create User'}
                 </Button>
                 <Link href={route('core.users.index')}>
                   <Button type="button" variant="outline">

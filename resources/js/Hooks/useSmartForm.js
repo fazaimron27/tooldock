@@ -1,6 +1,30 @@
 /**
  * Enhanced useForm hook with automatic toast notifications and component-level loading support.
  *
+ * @deprecated This hook is deprecated. Please use `useInertiaForm` from '@/Hooks/useInertiaForm' instead.
+ * `useInertiaForm` provides better performance with React Hook Form, improved validation,
+ * and better error handling.
+ *
+ * Migration guide:
+ * - Replace `useSmartForm` with `useInertiaForm`
+ * - Replace `FormField` with `FormFieldRHF` (or use `Controller` for custom inputs)
+ * - Replace `FormTextarea` with `FormTextareaRHF`
+ * - Update form state access: `form.data` → `form.watch('fieldName')`
+ * - Update errors: `form.errors` → `form.formState.errors`
+ * - Update processing: `form.processing` → `form.formState.isSubmitting`
+ * - Use `form.setValue()` instead of `form.setData()` for programmatic updates
+ *
+ * Example migration:
+ * ```jsx
+ * // Old
+ * const form = useSmartForm({ name: '', email: '' });
+ * <FormField value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} />
+ *
+ * // New
+ * const form = useInertiaForm({ name: '', email: '' });
+ * <FormFieldRHF name="name" control={form.control} label="Name" />
+ * ```
+ *
  * Provides a wrapper around Inertia's useForm that automatically displays
  * toast notifications for form submission success/error states.
  * Server-side flash messages are handled globally by useFlashNotifications
@@ -33,8 +57,9 @@ export function useSmartForm(initialData, options = {}) {
       const originalOnError = submitOptions.onError;
 
       /**
-       * Automatically inject skipLoadingIndicator for component-level forms
-       * Allows override via submitOptions if needed
+       * Automatically inject skipLoadingIndicator for component-level forms.
+       * Prevents global navigation spinner from showing during form submission.
+       * Can be overridden via submitOptions if needed.
        */
       const finalOptions = {
         ...submitOptions,

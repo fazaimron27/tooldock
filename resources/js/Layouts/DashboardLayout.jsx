@@ -10,6 +10,8 @@
  * @param {React.ReactNode} children - Page content to render
  */
 import { useFlashNotifications } from '@/Hooks/useFlashNotifications';
+import { useNavigationTracking } from '@/Hooks/useNavigationTracking';
+import { useAppStore } from '@/Stores/useAppStore';
 import { useRef } from 'react';
 
 import AppSidebar from '@/Components/AppSidebar';
@@ -21,10 +23,16 @@ import { Toaster } from '@/Components/ui/sonner';
 
 export default function DashboardLayout({ header: _header, children }) {
   useFlashNotifications();
+  useNavigationTracking();
   const scrollContainerRef = useRef(null);
+  const { sidebarOpen, setSidebarOpen } = useAppStore();
 
   return (
-    <SidebarProvider className="h-svh overflow-hidden">
+    <SidebarProvider
+      className="h-svh overflow-hidden"
+      open={sidebarOpen}
+      onOpenChange={setSidebarOpen}
+    >
       <AppSidebar />
       <SidebarInset className="flex h-full flex-col overflow-hidden">
         <div className="relative flex-1 overflow-hidden flex flex-col">

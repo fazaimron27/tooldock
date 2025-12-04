@@ -5,6 +5,7 @@
 import { useDatatable } from '@/Hooks/useDatatable';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Filter, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -284,118 +285,128 @@ export default function Index({
           </div>
         }
       >
-        {showFilters && (
-          <div className="mb-6 rounded-lg border bg-card p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Filters</h3>
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-              <div className="space-y-2">
-                <Label htmlFor="user_id">User</Label>
-                <select
-                  id="user_id"
-                  value={localFilters.user_id}
-                  onChange={(e) => handleFilterChange('user_id', e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="">All Users</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="system">System</Label>
-                <select
-                  id="system"
-                  value={localFilters.system}
-                  onChange={(e) => handleFilterChange('system', e.target.value)}
-                  disabled={!!localFilters.user_id}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  title={
-                    localFilters.user_id
-                      ? 'System filter is disabled when a specific user is selected'
-                      : ''
-                  }
-                >
-                  <option value="">All Actions</option>
-                  <option value="user">User Actions</option>
-                  <option value="system">System Actions</option>
-                </select>
-                {localFilters.user_id && (
-                  <p className="text-xs text-muted-foreground">Disabled when filtering by user</p>
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              className="mb-6 rounded-lg border bg-card p-4 overflow-hidden"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    <X className="mr-2 h-4 w-4" />
+                    Clear Filters
+                  </Button>
                 )}
               </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+                <div className="space-y-2">
+                  <Label htmlFor="user_id">User</Label>
+                  <select
+                    id="user_id"
+                    value={localFilters.user_id}
+                    onChange={(e) => handleFilterChange('user_id', e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">All Users</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="event">Event Type</Label>
-                <select
-                  id="event"
-                  value={localFilters.event}
-                  onChange={(e) => handleFilterChange('event', e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="">All Events</option>
-                  {eventTypes.map((eventType) => (
-                    <option key={eventType.value} value={eventType.value}>
-                      {eventType.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="system">System</Label>
+                  <select
+                    id="system"
+                    value={localFilters.system}
+                    onChange={(e) => handleFilterChange('system', e.target.value)}
+                    disabled={!!localFilters.user_id}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    title={
+                      localFilters.user_id
+                        ? 'System filter is disabled when a specific user is selected'
+                        : ''
+                    }
+                  >
+                    <option value="">All Actions</option>
+                    <option value="user">User Actions</option>
+                    <option value="system">System Actions</option>
+                  </select>
+                  {localFilters.user_id && (
+                    <p className="text-xs text-muted-foreground">Disabled when filtering by user</p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="auditable_type">Model Type</Label>
-                <select
-                  id="auditable_type"
-                  value={localFilters.auditable_type}
-                  onChange={(e) => handleFilterChange('auditable_type', e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="">All Models</option>
-                  {modelTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="event">Event Type</Label>
+                  <select
+                    id="event"
+                    value={localFilters.event}
+                    onChange={(e) => handleFilterChange('event', e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">All Events</option>
+                    {eventTypes.map((eventType) => (
+                      <option key={eventType.value} value={eventType.value}>
+                        {eventType.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date</Label>
-                <DatePicker
-                  value={localFilters.start_date}
-                  onChange={(date) => handleFilterChange('start_date', date || '')}
-                  placeholder="Pick start date"
-                />
-                {hasInvalidDateRange && (
-                  <p className="text-xs text-destructive">Start date must be before end date</p>
-                )}
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="auditable_type">Model Type</Label>
+                  <select
+                    id="auditable_type"
+                    value={localFilters.auditable_type}
+                    onChange={(e) => handleFilterChange('auditable_type', e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">All Models</option>
+                    {modelTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="end_date">End Date</Label>
-                <DatePicker
-                  value={localFilters.end_date}
-                  onChange={(date) => handleFilterChange('end_date', date || '')}
-                  placeholder="Pick end date"
-                />
-                {hasInvalidDateRange && (
-                  <p className="text-xs text-destructive">End date must be after start date</p>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="start_date">Start Date</Label>
+                  <DatePicker
+                    id="start_date"
+                    value={localFilters.start_date}
+                    onChange={(date) => handleFilterChange('start_date', date || '')}
+                    placeholder="Pick start date"
+                  />
+                  {hasInvalidDateRange && (
+                    <p className="text-xs text-destructive">Start date must be before end date</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">End Date</Label>
+                  <DatePicker
+                    id="end_date"
+                    value={localFilters.end_date}
+                    onChange={(date) => handleFilterChange('end_date', date || '')}
+                    placeholder="Pick end date"
+                  />
+                  {hasInvalidDateRange && (
+                    <p className="text-xs text-destructive">End date must be after start date</p>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <DataTable
           {...tableProps}

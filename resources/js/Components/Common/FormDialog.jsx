@@ -19,6 +19,7 @@ import { Button } from '@/Components/ui/button';
 export default function FormDialog({
   open,
   onOpenChange,
+  onCancel,
   title,
   description,
   children,
@@ -43,7 +44,20 @@ export default function FormDialog({
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
-          <AlertDialogCancel type="button" onClick={() => onOpenChange?.(false)}>
+          <AlertDialogCancel
+            type="button"
+            onClick={() => {
+              /**
+               * Use onCancel if provided to allow manual close even with errors.
+               * Otherwise fall back to onOpenChange handler.
+               */
+              if (onCancel) {
+                onCancel();
+              } else {
+                onOpenChange?.(false);
+              }
+            }}
+          >
             {cancelLabel}
           </AlertDialogCancel>
           <Button

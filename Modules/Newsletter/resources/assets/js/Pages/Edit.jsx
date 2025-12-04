@@ -1,14 +1,16 @@
 /**
  * Edit newsletter campaign page with form for updating existing campaigns
  * Pre-fills form fields with current campaign data
+ * Uses React Hook Form for improved performance and validation
  */
-import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
 import { Calendar } from 'lucide-react';
+import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
-import FormTextarea from '@/Components/Common/FormTextarea';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import FormTextareaRHF from '@/Components/Common/FormTextareaRHF';
 import DatePicker from '@/Components/Form/DatePicker';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
@@ -18,8 +20,10 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateCampaignResolver } from '../Schemas/newsletterSchemas';
+
 export default function Edit({ campaign, posts = [] }) {
-  const { data, setData, errors, processing, put } = useSmartForm(
+  const form = useInertiaForm(
     {
       subject: campaign.subject || '',
       content: campaign.content || '',
@@ -29,6 +33,7 @@ export default function Edit({ campaign, posts = [] }) {
         : '',
     },
     {
+      resolver: updateCampaignResolver,
       toast: {
         success: 'Campaign updated successfully!',
         error: 'Failed to update campaign. Please try again.',
@@ -38,18 +43,19 @@ export default function Edit({ campaign, posts = [] }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    put(route('newsletter.update', { newsletter: campaign.id }));
+    form.put(route('newsletter.update', { newsletter: campaign.id }));
   };
 
   const handlePostToggle = (postId) => {
-    const currentPosts = data.selected_posts || [];
+    const currentPosts = form.watch('selected_posts') || [];
     if (currentPosts.includes(postId)) {
-      setData(
+      form.setValue(
         'selected_posts',
-        currentPosts.filter((id) => id !== postId)
+        currentPosts.filter((id) => id !== postId),
+        { shouldValidate: false }
       );
     } else {
-      setData('selected_posts', [...currentPosts, postId]);
+      form.setValue('selected_posts', [...currentPosts, postId], { shouldValidate: false });
     }
   };
 
@@ -79,85 +85,91 @@ export default function Edit({ campaign, posts = [] }) {
             icon={Calendar}
           >
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <FormField
+              <FormFieldRHF
                 name="subject"
+                control={form.control}
                 label="Subject"
-                value={data.subject}
-                onChange={(e) => setData('subject', e.target.value)}
-                error={errors.subject}
                 required
                 placeholder="Enter campaign subject"
               />
 
-              <FormTextarea
+              <FormTextareaRHF
                 name="content"
+                control={form.control}
                 label="Content"
-                value={data.content}
-                onChange={(e) => setData('content', e.target.value)}
-                error={errors.content}
                 required
                 rows={10}
                 placeholder="Enter email body content"
               />
 
-              <div className="space-y-2">
-                <Label>Select Blog Posts</Label>
-                {errors.selected_posts && (
-                  <p className="text-sm text-destructive">{errors.selected_posts}</p>
-                )}
-                {posts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No published posts available. Create some blog posts first.
-                  </p>
-                ) : (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                        {posts.map((post) => {
-                          const isSelected = data.selected_posts?.includes(post.id) || false;
-                          return (
-                            <div
-                              key={post.id}
-                              className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                                isSelected
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-border hover:bg-accent/50'
-                              }`}
-                            >
-                              <div className="mt-1">
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => handlePostToggle(post.id)}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm">{post.title}</div>
-                                {post.published_at && (
-                                  <div className="text-xs text-muted-foreground mt-1">
-                                    Published: {formatDate(post.published_at)}
+              <Controller
+                name="selected_posts"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <div className="space-y-2">
+                    <Label>Select Blog Posts</Label>
+                    {error && <p className="text-sm text-destructive">{error.message}</p>}
+                    {posts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No published posts available. Create some blog posts first.
+                      </p>
+                    ) : (
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                            {posts.map((post) => {
+                              const isSelected = field.value?.includes(post.id) || false;
+                              return (
+                                <div
+                                  key={post.id}
+                                  className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                                    isSelected
+                                      ? 'border-primary bg-primary/5'
+                                      : 'border-border hover:bg-accent/50'
+                                  }`}
+                                >
+                                  <div className="mt-1">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() => handlePostToggle(post.id)}
+                                    />
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm">{post.title}</div>
+                                    {post.published_at && (
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Published: {formatDate(post.published_at)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
                 )}
-              </div>
+              />
 
-              <DatePicker
-                label="Scheduled At (Optional)"
-                value={data.scheduled_at}
-                onChange={(date) => setData('scheduled_at', date || '')}
-                error={errors.scheduled_at}
-                placeholder="Leave empty to send immediately"
+              <Controller
+                name="scheduled_at"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <DatePicker
+                    label="Scheduled At (Optional)"
+                    value={field.value}
+                    onChange={(date) => field.onChange(date || '')}
+                    error={error?.message}
+                    placeholder="Leave empty to send immediately"
+                  />
+                )}
               />
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={processing}>
-                  {processing ? 'Updating...' : 'Update Campaign'}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Updating...' : 'Update Campaign'}
                 </Button>
                 <Link href={route('newsletter.index')}>
                   <Button type="button" variant="outline">

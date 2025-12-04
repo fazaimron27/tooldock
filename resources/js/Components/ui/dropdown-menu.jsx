@@ -1,5 +1,7 @@
+import { dialogVariants } from '@/Utils/animations';
 import { cn } from '@/Utils/utils';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Check, ChevronRight, Circle } from 'lucide-react';
 import * as React from 'react';
 
@@ -31,32 +33,56 @@ const DropdownMenuSubTrigger = React.forwardRef(({ className, inset, children, .
 ));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
 
-const DropdownMenuSubContent = React.forwardRef(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubContent
-    ref={ref}
-    className={cn(
-      'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]',
-      className
-    )}
-    {...props}
-  />
-));
+const DropdownMenuSubContent = React.forwardRef(({ className, children, ...props }, ref) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <DropdownMenuPrimitive.SubContent asChild {...props}>
+      <motion.div
+        ref={ref}
+        className={cn(
+          'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg origin-[--radix-dropdown-menu-content-transform-origin]',
+          className
+        )}
+        initial={shouldReduceMotion ? false : dialogVariants.content.initial}
+        animate={dialogVariants.content.animate}
+        exit={shouldReduceMotion ? false : dialogVariants.content.exit}
+        transition={dialogVariants.content.transition}
+        style={{ transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)' }}
+      >
+        {children}
+      </motion.div>
+    </DropdownMenuPrimitive.SubContent>
+  );
+});
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
 
-const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        'z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]',
-        className
-      )}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-));
+const DropdownMenuContent = React.forwardRef(
+  ({ className, sideOffset = 4, children, ...props }, ref) => {
+    const shouldReduceMotion = useReducedMotion();
+
+    return (
+      <DropdownMenuPrimitive.Portal>
+        <DropdownMenuPrimitive.Content asChild sideOffset={sideOffset} {...props}>
+          <motion.div
+            ref={ref}
+            className={cn(
+              'z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md origin-[--radix-dropdown-menu-content-transform-origin]',
+              className
+            )}
+            initial={shouldReduceMotion ? false : dialogVariants.content.initial}
+            animate={dialogVariants.content.animate}
+            exit={shouldReduceMotion ? false : dialogVariants.content.exit}
+            transition={dialogVariants.content.transition}
+            style={{ transformOrigin: 'var(--radix-dropdown-menu-content-transform-origin)' }}
+          >
+            {children}
+          </motion.div>
+        </DropdownMenuPrimitive.Content>
+      </DropdownMenuPrimitive.Portal>
+    );
+  }
+);
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 
 const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (

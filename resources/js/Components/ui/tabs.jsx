@@ -1,5 +1,7 @@
+import { pageTransition } from '@/Utils/animations';
 import { cn } from '@/Utils/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import * as React from 'react';
 
 const Tabs = TabsPrimitive.Root;
@@ -28,16 +30,26 @@ const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => (
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-const TabsContent = React.forwardRef(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-      className
-    )}
-    {...props}
-  />
-));
+const TabsContent = React.forwardRef(({ className, children, ...props }, ref) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <TabsPrimitive.Content ref={ref} {...props}>
+      <motion.div
+        className={cn(
+          'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          className
+        )}
+        initial={shouldReduceMotion ? false : pageTransition.initial}
+        animate={pageTransition.animate}
+        exit={shouldReduceMotion ? false : pageTransition.exit}
+        transition={pageTransition.transition}
+      >
+        {children}
+      </motion.div>
+    </TabsPrimitive.Content>
+  );
+});
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 
 export { Tabs, TabsList, TabsTrigger, TabsContent };

@@ -1,16 +1,39 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '../css/app.css';
 import { GlobalSpinner, setNavigationState } from './Components/AppSpinner';
 import { ThemeProvider } from './Components/ThemeProvider';
+import { QueryProvider } from './Providers/QueryProvider';
 import { generateInertiaTitle } from './Utils/inertiaTitle';
 import './bootstrap';
 
 const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/**/*.jsx', {
   eager: false,
 });
+
+/**
+ * Wraps a page loader with React.lazy for better code splitting and Suspense support.
+ * This enables React to create separate chunks and provides Suspense boundaries.
+ */
+function lazyPage(loader) {
+  return lazy(() =>
+    loader().then((module) => {
+      if (typeof module === 'function') {
+        return { default: module };
+      }
+      if (typeof module === 'object' && module !== null) {
+        if ('default' in module) {
+          return module;
+        }
+        return { default: module };
+      }
+      throw new Error(`Invalid module export type: ${typeof module}`);
+    })
+  );
+}
 
 createInertiaApp({
   title: generateInertiaTitle,
@@ -32,37 +55,30 @@ createInertiaApp({
           throw new Error(`Module loader for ${modulePageKey} is not a function`);
         }
 
-        return moduleLoader()
-          .then((module) => {
-            if (typeof module === 'function') {
-              return module;
-            }
-            if (typeof module === 'object' && module !== null) {
-              if ('default' in module) {
-                return module.default;
-              }
-              return module;
-            }
-            throw new Error(`Module ${name} exported an invalid component type: ${typeof module}`);
-          })
-          .catch((error) => {
-            throw new Error(`Failed to load module ${name}: ${error.message}`);
-          });
+        return lazyPage(moduleLoader);
       }
 
       throw new Error(`Module page not found: ${name} (looked for: ${expectedPath}.jsx)`);
     }
 
-    return resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx'));
+    const pageLoader = resolvePageComponent(
+      `./Pages/${name}.jsx`,
+      import.meta.glob('./Pages/**/*.jsx')
+    );
+    return lazyPage(() => pageLoader);
   },
   setup({ el, App, props }) {
     const root = createRoot(el);
 
     root.render(
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <GlobalSpinner />
-        <App {...props} />
-      </ThemeProvider>
+      <QueryProvider>
+        <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+          <GlobalSpinner />
+          <Suspense fallback={null}>
+            <App {...props} />
+          </Suspense>
+        </ThemeProvider>
+      </QueryProvider>
     );
   },
   progress: {
@@ -70,9 +86,9 @@ createInertiaApp({
     delay: 0,
     includeCSS: false,
     /**
-     * Fallback navigation state handlers
-     * Primary navigation state is managed by NavigationSpinner via router events
-     * These callbacks serve as a safety net for edge cases
+     * Fallback navigation state handlers.
+     * Primary navigation state is managed by NavigationSpinner via router events.
+     * These callbacks serve as a safety net for edge cases.
      */
     onStart: () => {
       setNavigationState(true);

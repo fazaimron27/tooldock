@@ -1,14 +1,15 @@
 /**
  * Edit role page with form for updating existing roles
  * Includes permission matrix grouped by resource/module with pre-selected permissions
+ * Uses React Hook Form for improved performance and validation
  */
-import { useSmartForm } from '@/Hooks/useSmartForm';
+import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { Link } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
@@ -17,17 +18,19 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import { updateRoleResolver } from '../../Schemas/roleSchemas';
 import { ROLES } from '../../constants';
 
 export default function Edit({ role, groupedPermissions = {} }) {
   const isSuperAdmin = role.name === ROLES.SUPER_ADMIN;
 
-  const form = useSmartForm(
+  const form = useInertiaForm(
     {
       name: role.name || '',
       permissions: role.permissions?.map((p) => p.id) || [],
     },
     {
+      resolver: updateRoleResolver,
       toast: {
         success: 'Role updated successfully!',
         error: 'Failed to update role. Please check the form for errors.',
@@ -54,32 +57,36 @@ export default function Edit({ role, groupedPermissions = {} }) {
   };
 
   const handlePermissionToggle = (permissionId) => {
-    const currentPermissions = form.data.permissions || [];
+    const currentPermissions = form.watch('permissions') || [];
     if (currentPermissions.includes(permissionId)) {
-      form.setData(
+      form.setValue(
         'permissions',
-        currentPermissions.filter((id) => id !== permissionId)
+        currentPermissions.filter((id) => id !== permissionId),
+        { shouldValidate: false }
       );
     } else {
-      form.setData('permissions', [...currentPermissions, permissionId]);
+      form.setValue('permissions', [...currentPermissions, permissionId], {
+        shouldValidate: false,
+      });
     }
   };
 
   const handleSelectAllInResource = (module, resource) => {
     const resourcePermissions = groupedPermissions[module]?.[resource] || [];
-    const currentPermissions = form.data.permissions || [];
+    const currentPermissions = form.watch('permissions') || [];
     const resourcePermissionIds = resourcePermissions.map((p) => p.id);
 
     const allSelected = resourcePermissionIds.every((id) => currentPermissions.includes(id));
 
     if (allSelected) {
-      form.setData(
+      form.setValue(
         'permissions',
-        currentPermissions.filter((id) => !resourcePermissionIds.includes(id))
+        currentPermissions.filter((id) => !resourcePermissionIds.includes(id)),
+        { shouldValidate: false }
       );
     } else {
       const newPermissions = [...new Set([...currentPermissions, ...resourcePermissionIds])];
-      form.setData('permissions', newPermissions);
+      form.setValue('permissions', newPermissions, { shouldValidate: false });
     }
   };
 
@@ -126,12 +133,10 @@ export default function Edit({ role, groupedPermissions = {} }) {
             className="max-w-4xl"
           >
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <FormField
+              <FormFieldRHF
                 name="name"
+                control={form.control}
                 label="Role Name"
-                value={form.data.name}
-                onChange={(e) => form.setData('name', e.target.value)}
-                error={form.errors.name}
                 required
                 disabled={isSuperAdmin}
                 placeholder="Enter role name (e.g., Editor, Manager)"
@@ -158,7 +163,7 @@ export default function Edit({ role, groupedPermissions = {} }) {
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-semibold">Permissions</Label>
                     <span className="text-sm text-muted-foreground">
-                      {form.data.permissions?.length || 0} selected
+                      {form.watch('permissions')?.length || 0} selected
                     </span>
                   </div>
 
@@ -171,12 +176,11 @@ export default function Edit({ role, groupedPermissions = {} }) {
                         const resourceKeys = Object.keys(moduleResources).sort();
                         const isModuleOpen = openModules[module] ?? true;
 
-                        // Calculate total permissions for module
                         const allModulePermissions = resourceKeys.flatMap(
                           (resource) => moduleResources[resource] || []
                         );
                         const modulePermissionIds = allModulePermissions.map((p) => p.id);
-                        const moduleSelectedCount = (form.data.permissions || []).filter((id) =>
+                        const moduleSelectedCount = (form.watch('permissions') || []).filter((id) =>
                           modulePermissionIds.includes(id)
                         ).length;
 
@@ -216,7 +220,7 @@ export default function Edit({ role, groupedPermissions = {} }) {
                                     (p) => p.id
                                   );
                                   const resourceSelectedCount = (
-                                    form.data.permissions || []
+                                    form.watch('permissions') || []
                                   ).filter((id) => resourcePermissionIds.includes(id)).length;
                                   const allResourceSelected =
                                     resourcePermissions.length > 0 &&
@@ -270,8 +274,9 @@ export default function Edit({ role, groupedPermissions = {} }) {
                                               <Checkbox
                                                 id={`permission-${permission.id}`}
                                                 checked={
-                                                  form.data.permissions?.includes(permission.id) ||
-                                                  false
+                                                  form
+                                                    .watch('permissions')
+                                                    ?.includes(permission.id) || false
                                                 }
                                                 onCheckedChange={() =>
                                                   handlePermissionToggle(permission.id)
@@ -297,15 +302,17 @@ export default function Edit({ role, groupedPermissions = {} }) {
                       })}
                     </div>
                   )}
-                  {form.errors.permissions && (
-                    <p className="text-sm text-destructive">{form.errors.permissions}</p>
+                  {form.formState.errors.permissions && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.permissions.message}
+                    </p>
                   )}
                 </div>
               )}
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.processing}>
-                  {form.processing ? 'Updating...' : 'Update Role'}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Updating...' : 'Update Role'}
                 </Button>
                 <Link href={route('core.roles.index')}>
                   <Button type="button" variant="outline">

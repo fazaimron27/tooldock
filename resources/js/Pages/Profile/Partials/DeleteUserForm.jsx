@@ -1,23 +1,77 @@
 import { useFormWithDialog } from '@/Hooks/useFormWithDialog';
 import { cn } from '@/Utils/utils';
+import { usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormDialog from '@/Components/Common/FormDialog';
-import FormField from '@/Components/Common/FormField';
+import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import { Button } from '@/Components/ui/button';
 
 export default function DeleteUserForm({ className = '' }) {
-  const { data, setData, errors, processing, submit, dialog, handleDialogChange, fieldRefs } =
-    useFormWithDialog(
-      {
-        password: '',
+  const page = usePage();
+
+  const formHook = useFormWithDialog(
+    {
+      password: '',
+    },
+    {
+      route: 'profile.destroy',
+      method: 'delete',
+      errorBag: 'deleteAccount',
+      toast: {
+        success: 'Account deleted successfully!',
+        error: 'The password is incorrect.',
       },
-      {
-        route: 'profile.destroy',
-        method: 'delete',
-        focusFields: ['password'],
+      onSuccess: () => {
+        window.location.href = '/';
+      },
+      onError: () => {
+        // Keep dialog open when there are errors
+        if (!formHook.dialog.isOpen) {
+          formHook.dialog.onOpen();
+        }
+      },
+    }
+  );
+
+  /**
+   * Handle errors from error bag scoped to delete account form.
+   * Prevents errors from being shared with Update Password form on the same page.
+   */
+  useEffect(() => {
+    const deleteErrors = page.props.errors?.deleteAccount;
+    if (!deleteErrors) return;
+
+    const passwordError = deleteErrors.password;
+    if (passwordError && !formHook.formState.errors.password) {
+      const errorMessage = Array.isArray(passwordError) ? passwordError[0] : passwordError;
+      if (errorMessage) {
+        formHook.setError('password', {
+          type: 'server',
+          message: String(errorMessage),
+        });
+        /**
+         * Ensure dialog stays open to display validation error to user.
+         */
+        if (!formHook.dialog.isOpen) {
+          formHook.dialog.onOpen();
+        }
+        toast.error(String(errorMessage));
       }
-    );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page.props.errors?.deleteAccount]);
+
+  /**
+   * Form submission handler.
+   * useFormWithDialog handles React Hook Form validation and Inertia submission.
+   */
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    formHook.submit(e);
+  };
 
   return (
     <FormCard
@@ -27,29 +81,32 @@ export default function DeleteUserForm({ className = '' }) {
       titleClassName="text-destructive"
     >
       <FormDialog
-        open={dialog.isOpen}
-        onOpenChange={handleDialogChange}
+        open={formHook.dialog.isOpen}
+        onOpenChange={formHook.handleDialogChange}
+        onCancel={formHook.handleCancel}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your account and remove all your data from our servers. Please enter your password to confirm you would like to permanently delete your account."
         trigger={<Button variant="destructive">Delete Account</Button>}
         confirmLabel="Delete Account"
         cancelLabel="Cancel"
         variant="destructive"
-        processing={processing}
+        processing={formHook.processing}
         processingLabel="Deleting..."
         formId="delete-account-form"
       >
-        <form id="delete-account-form" onSubmit={submit} className="space-y-4">
-          <FormField
+        <form id="delete-account-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <FormFieldRHF
             name="password"
+            control={formHook.control}
             label="Password"
             type="password"
-            value={data.password}
-            onChange={(e) => setData('password', e.target.value)}
-            error={errors.password}
+            required
             placeholder="Enter your password"
-            inputRef={fieldRefs.password}
             autoFocus
+            id="delete-account-password"
+            rules={{
+              required: 'Password is required to confirm account deletion',
+            }}
           />
         </form>
       </FormDialog>

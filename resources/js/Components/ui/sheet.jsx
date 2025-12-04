@@ -1,6 +1,8 @@
+import { sheetVariants as animationVariants } from '@/Utils/animations';
 import { cn } from '@/Utils/utils';
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva } from 'class-variance-authority';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
@@ -13,14 +15,16 @@ const SheetClose = SheetPrimitive.Close;
 const SheetPortal = SheetPrimitive.Portal;
 
 const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
-  <SheetPrimitive.Overlay
-    className={cn(
-      'fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-      className
-    )}
-    {...props}
-    ref={ref}
-  />
+  <SheetPrimitive.Overlay asChild {...props}>
+    <motion.div
+      ref={ref}
+      className={cn('fixed inset-0 z-50 bg-black/80', className)}
+      initial={animationVariants.overlay.initial}
+      animate={animationVariants.overlay.animate}
+      exit={animationVariants.overlay.exit}
+      transition={animationVariants.overlay.transition}
+    />
+  </SheetPrimitive.Overlay>
 ));
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
@@ -43,18 +47,72 @@ const sheetVariants = cva(
   }
 );
 
-const SheetContent = React.forwardRef(({ side = 'right', className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+const SheetContent = React.forwardRef(({ side = 'right', className, children, ...props }, ref) => {
+  // Map side to animation direction
+  const getAnimationVariants = () => {
+    const baseVariants = {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: animationVariants.content.transition,
+    };
+
+    switch (side) {
+      case 'right':
+        return {
+          ...baseVariants,
+          initial: { ...baseVariants.initial, x: '100%' },
+          animate: { ...baseVariants.animate, x: 0 },
+          exit: { ...baseVariants.exit, x: '100%' },
+        };
+      case 'left':
+        return {
+          ...baseVariants,
+          initial: { ...baseVariants.initial, x: '-100%' },
+          animate: { ...baseVariants.animate, x: 0 },
+          exit: { ...baseVariants.exit, x: '-100%' },
+        };
+      case 'top':
+        return {
+          ...baseVariants,
+          initial: { ...baseVariants.initial, y: '-100%' },
+          animate: { ...baseVariants.animate, y: 0 },
+          exit: { ...baseVariants.exit, y: '-100%' },
+        };
+      case 'bottom':
+        return {
+          ...baseVariants,
+          initial: { ...baseVariants.initial, y: '100%' },
+          animate: { ...baseVariants.animate, y: 0 },
+          exit: { ...baseVariants.exit, y: '100%' },
+        };
+      default:
+        return baseVariants;
+    }
+  };
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content asChild {...props}>
+        <motion.div
+          ref={ref}
+          className={cn(sheetVariants({ side }), className)}
+          initial={getAnimationVariants().initial}
+          animate={getAnimationVariants().animate}
+          exit={getAnimationVariants().exit}
+          transition={getAnimationVariants().transition}
+        >
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+          {children}
+        </motion.div>
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }) => (
