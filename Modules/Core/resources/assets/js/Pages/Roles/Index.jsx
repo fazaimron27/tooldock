@@ -85,6 +85,26 @@ export default function Index({ roles, defaultPerPage = 20 }) {
         },
       },
       {
+        id: 'inherit',
+        header: 'Inherit',
+        cell: (info) => {
+          const role = info.row.original;
+          const groups = role.groups || [];
+          if (groups.length === 0) {
+            return <span className="text-muted-foreground text-sm">—</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-2">
+              {groups.map((group) => (
+                <Badge key={group.id} variant="outline">
+                  {group.name}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'created_at',
         header: 'Created',
         cell: (info) => {
