@@ -4,6 +4,7 @@ namespace Modules\Groups\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -50,6 +51,17 @@ class GroupsController extends Controller
                 'defaultPerPage' => $defaultPerPage,
             ]
         );
+
+        Collection::make($groups->items())->load(['roles' => function ($query) {
+            $query->select('roles.id', 'roles.name');
+        }]);
+
+        foreach ($groups->items() as $group) {
+            $group->setAttribute('roles', $group->roles->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])->values());
+        }
 
         return Inertia::render('Modules::Groups/Groups/Index', [
             'groups' => $groups,
