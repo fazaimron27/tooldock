@@ -205,6 +205,12 @@ const Ziggy = {
       parameters: ['group'],
       bindings: { group: 'id' },
     },
+    'groups.transfer-user': {
+      uri: 'tooldock\/groups\/{group}\/transfer-user',
+      methods: ['POST'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
     'api.categories.index': { uri: 'api\/v1\/categories', methods: ['GET', 'HEAD'] },
     'api.categories.store': { uri: 'api\/v1\/categories', methods: ['POST'] },
     'api.categories.show': {
