@@ -8,13 +8,61 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Core\Database\Factories\UserFactory;
+use Modules\Groups\App\Traits\HasGroups;
 use Modules\Media\Models\MediaFile;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Modules\Core\Database\Factories\UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable;
+    use HasFactory, HasGroups, HasRoles, LogsActivity, Notifiable;
+
+    /**
+     * Determine if the user has the given permission.
+     *
+     * Overrides Spatie's hasPermissionTo to also check group permissions.
+     * This ensures that policies calling hasPermissionTo() will also check
+     * group-based permissions, not just role-based permissions.
+     *
+     * @param  string|\Spatie\Permission\Contracts\Permission  $permission
+     * @param  string|null  $guardName
+     * @return bool
+     */
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        $permissionName = is_string($permission) ? $permission : (is_object($permission) ? $permission->name : null);
+
+        if (! $permissionName) {
+            return $this->hasPermissionToViaRole($permission, $guardName);
+        }
+
+        if (method_exists($this, 'hasGroupPermission') && $this->hasGroupPermission($permissionName)) {
+            return true;
+        }
+
+        return $this->hasPermissionToViaRole($permission, $guardName);
+    }
+
+    /**
+     * Check permission using Spatie's standard method (roles only).
+     *
+     * This calls the original hasPermissionTo from HasPermissions trait
+     * without causing infinite recursion.
+     *
+     * @param  string|\Spatie\Permission\Contracts\Permission  $permission
+     * @param  string|null  $guardName
+     * @return bool
+     */
+    private function hasPermissionToViaRole($permission, $guardName = null): bool
+    {
+        if ($this->getWildcardClass()) {
+            return $this->hasWildcardPermission($permission, $guardName);
+        }
+
+        $permission = $this->filterPermission($permission, $guardName);
+
+        return $this->hasDirectPermission($permission) || $this->hasPermissionViaRole($permission);
+    }
 
     /**
      * The attributes that are mass assignable.
