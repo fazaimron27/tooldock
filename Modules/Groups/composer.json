@@ -1,0 +1,29 @@
+{
+  "name": "fazaimron27/groups",
+  "description": "",
+  "authors": [
+    {
+      "name": "Faza Iman Imron",
+      "email": "fazaimanimron@gmail.com"
+    }
+  ],
+  "extra": {
+    "laravel": {
+      "providers": [],
+      "aliases": {}
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\Groups\\App\\": "app/",
+      "Modules\\Groups\\": "app/",
+      "Modules\\Groups\\Database\\Factories\\": "database/factories/",
+      "Modules\\Groups\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Modules\\Groups\\Tests\\": "tests/"
+    }
+  }
+}
