@@ -4,6 +4,7 @@ namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -17,6 +18,10 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     use SyncsRelationshipsWithAuditLog;
+
+    public function __construct(
+        private MenuRegistry $menuRegistry
+    ) {}
 
     /**
      * Display a paginated listing of users.
@@ -156,5 +161,7 @@ class UserController extends Controller
             relatedModelClass: Role::class,
             relationshipDisplayName: 'roles'
         );
+
+        $this->menuRegistry->clearCacheForUser($user->id);
     }
 }

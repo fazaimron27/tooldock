@@ -51,7 +51,7 @@ class CoreMenuRegistrar
             group: 'System',
             label: 'Roles',
             route: 'core.roles.index',
-            icon: 'Shield',
+            icon: 'ShieldUser',
             order: 20,
             permission: 'core.roles.manage',
             parentKey: 'core.user-management',

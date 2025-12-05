@@ -4,6 +4,7 @@ namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +21,8 @@ class RoleController extends Controller
     use SyncsRelationshipsWithAuditLog;
 
     public function __construct(
-        private PermissionService $permissionService
+        private PermissionService $permissionService,
+        private MenuRegistry $menuRegistry
     ) {}
 
     /**
@@ -153,7 +155,14 @@ class RoleController extends Controller
                 ->with('error', 'Cannot delete role that is assigned to users.');
         }
 
+        $userIds = $role->users()->pluck('users.id')->toArray();
         $role->delete();
+
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $this->menuRegistry->clearCacheForUser($userId);
+            }
+        }
 
         return redirect()->route('core.roles.index')
             ->with('success', 'Role deleted successfully.');
@@ -175,5 +184,12 @@ class RoleController extends Controller
             relatedModelClass: Permission::class,
             relationshipDisplayName: 'permissions'
         );
+
+        $userIds = $role->users()->pluck('users.id')->toArray();
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $this->menuRegistry->clearCacheForUser($userId);
+            }
+        }
     }
 }
