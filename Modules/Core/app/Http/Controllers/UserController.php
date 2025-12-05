@@ -33,7 +33,15 @@ class UserController extends Controller
         $defaultPerPage = 20;
 
         $users = $datatableService->build(
-            User::with(['roles', 'avatar']),
+            User::with([
+                'roles' => function ($query) {
+                    $query->select('id', 'name');
+                },
+                'avatar',
+                'groups' => function ($query) {
+                    $query->select('id', 'name');
+                },
+            ]),
             [
                 'searchFields' => ['name', 'email'],
                 'allowedSorts' => ['name', 'email', 'created_at', 'updated_at'],
