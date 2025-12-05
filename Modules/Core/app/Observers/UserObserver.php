@@ -3,44 +3,56 @@
 namespace Modules\Core\App\Observers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\GroupRegistry;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Services\PermissionCacheService;
-use Spatie\Permission\Models\Role;
 
 /**
  * Observer for User model events.
  *
- * Automatically assigns default role to newly created users
- * if they don't already have any roles assigned.
+ * Automatically assigns default Guest group to newly created users
+ * if they don't already have any groups assigned.
  */
 class UserObserver
 {
+    public function __construct(
+        private PermissionCacheService $permissionCacheService,
+        private MenuRegistry $menuRegistry,
+        private DashboardWidgetRegistry $dashboardWidgetRegistry,
+        private GroupRegistry $groupRegistry
+    ) {}
+
     /**
      * Handle the User "created" event.
      *
-     * Assigns the default role (configured in core config) to new users
-     * if they don't already have any roles.
+     * Assigns the default Guest group (configured in core config) to new users
+     * if they don't already have any groups assigned.
      */
     public function created(User $user): void
     {
-        if (! $user->roles()->exists()) {
+        if (! $user->groups()->exists()) {
             try {
-                $defaultRoleName = config('core.default_role', Roles::STAFF);
-                $defaultRole = Role::where('name', $defaultRoleName)->first();
+                $defaultGroupName = config('core.default_group', 'Guest');
+                $defaultGroup = $this->groupRegistry->getGroup($defaultGroupName);
 
-                if ($defaultRole) {
-                    $user->assignRole($defaultRole);
-                    app(PermissionCacheService::class)->clear();
-                    $user->load('roles.permissions');
+                if (! $defaultGroup) {
+                    $defaultGroup = \Modules\Groups\Models\Group::where('name', $defaultGroupName)->first();
                 }
 
-                app(DashboardWidgetRegistry::class)->clearCache(null, 'Core');
+                if ($defaultGroup) {
+                    $user->groups()->attach($defaultGroup->id);
+                    $this->permissionCacheService->clear();
+                    $this->menuRegistry->clearCacheForUser($user->id);
+                    $user->load('groups');
+                }
+
+                $this->dashboardWidgetRegistry->clearCache(null, 'Core');
             } catch (\Exception $e) {
-                Log::warning('Failed to assign default role to user: '.$e->getMessage(), [
+                Log::warning('Failed to assign default group to user: '.$e->getMessage(), [
                     'user_id' => $user->id,
-                    'role' => $defaultRoleName ?? 'unknown',
+                    'group' => $defaultGroupName ?? 'unknown',
                 ]);
             }
         }

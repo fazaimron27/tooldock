@@ -2,6 +2,7 @@
 
 namespace Modules\Core\App\Observers;
 
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\LogsActivity;
@@ -9,6 +10,10 @@ use Spatie\Permission\Models\Role;
 
 class RoleObserver
 {
+    public function __construct(
+        private MenuRegistry $menuRegistry
+    ) {}
+
     /**
      * Handle the Role "created" event.
      *
@@ -36,6 +41,7 @@ class RoleObserver
      * Handle the Role "updated" event.
      *
      * Prevents infinite loop if Role model uses LogsActivity trait.
+     * Clears menu cache for all users with this role if the role name changed.
      */
     public function updated(Role $role): void
     {
@@ -66,12 +72,20 @@ class RoleObserver
             ipAddress: request()?->ip(),
             userAgent: request()?->userAgent()
         );
+
+        if (isset($dirty['name'])) {
+            $role->load('users');
+            foreach ($role->users as $user) {
+                $this->menuRegistry->clearCacheForUser($user->id);
+            }
+        }
     }
 
     /**
      * Handle the Role "deleted" event.
      *
      * Prevents infinite loop if Role model uses LogsActivity trait.
+     * Clears menu cache for all users who had this role.
      */
     public function deleted(Role $role): void
     {
@@ -89,5 +103,7 @@ class RoleObserver
             ipAddress: request()?->ip(),
             userAgent: request()?->userAgent()
         );
+
+        $this->menuRegistry->clearCache();
     }
 }
