@@ -8,14 +8,17 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
+use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Services\PermissionCacheService;
 use Modules\Core\App\Services\PermissionService;
 use Modules\Groups\App\Services\GroupCacheService;
 use Modules\Groups\Http\Requests\StoreGroupRequest;
+use Modules\Groups\Http\Requests\TransferUserRequest;
 use Modules\Groups\Http\Requests\UpdateGroupRequest;
 use Modules\Groups\Models\Group;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class GroupsController extends Controller
 {
@@ -61,12 +64,17 @@ class GroupsController extends Controller
     {
         $this->authorize('view', $group);
 
-        $group->load(['users.avatar', 'permissions']);
+        $group->load(['users.avatar', 'permissions', 'roles']);
         $groupedPermissions = $this->permissionService->groupByModule($group->permissions);
+
+        $availableGroups = Group::where('id', '!=', $group->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return Inertia::render('Modules::Groups/Groups/Show', [
             'group' => $group,
             'groupedPermissions' => $groupedPermissions,
+            'availableGroups' => $availableGroups,
         ]);
     }
 
@@ -78,11 +86,15 @@ class GroupsController extends Controller
         $this->authorize('create', Group::class);
 
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $roles = Role::with('permissions')
+            ->where('name', '!=', Roles::SUPER_ADMIN)
+            ->get();
         $permissions = Permission::all();
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Groups/Groups/Create', [
             'users' => $users,
+            'roles' => $roles,
             'groupedPermissions' => $groupedPermissions,
         ]);
     }
@@ -108,6 +120,10 @@ class GroupsController extends Controller
             $this->syncGroupPermissions($group, $request->permissions);
         }
 
+        if ($request->has('roles') && is_array($request->roles)) {
+            $this->syncGroupRoles($group, $request->roles);
+        }
+
         return redirect()->route('groups.groups.index')
             ->with('success', 'Group created successfully.');
     }
@@ -119,14 +135,18 @@ class GroupsController extends Controller
     {
         $this->authorize('update', $group);
 
-        $group->load(['users', 'permissions']);
+        $group->load(['users', 'permissions', 'roles.permissions']);
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $roles = Role::with('permissions')
+            ->where('name', '!=', Roles::SUPER_ADMIN)
+            ->get();
         $permissions = Permission::all();
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Groups/Groups/Edit', [
             'group' => $group,
             'users' => $users,
+            'roles' => $roles,
             'groupedPermissions' => $groupedPermissions,
         ]);
     }
@@ -152,6 +172,10 @@ class GroupsController extends Controller
             $this->syncGroupPermissions($group, $request->permissions);
         }
 
+        if ($request->has('roles') && is_array($request->roles)) {
+            $this->syncGroupRoles($group, $request->roles);
+        }
+
         return redirect()->route('groups.groups.index')
             ->with('success', 'Group updated successfully.');
     }
@@ -163,6 +187,15 @@ class GroupsController extends Controller
     {
         $this->authorize('delete', $group);
 
+        $userCount = $group->users()->count();
+
+        if ($userCount > 0) {
+            return redirect()->route('groups.groups.show', $group)
+                ->with('error', "Cannot delete group. It has {$userCount} ".
+                    ($userCount === 1 ? 'member' : 'members').
+                    '. Please transfer or remove all members first.');
+        }
+
         $group->delete();
 
         return redirect()->route('groups.groups.index')
@@ -170,10 +203,13 @@ class GroupsController extends Controller
     }
 
     /**
-     * Sync members for a group and log changes to audit log.
+     * Sync group members and handle related operations.
      *
-     * @param  Group  $group
-     * @param  array<int|string>  $newMemberIds
+     * Synchronizes the group's member list, logs changes to the audit log,
+     * and clears permission caches for all affected users.
+     *
+     * @param  Group  $group  The group to sync members for
+     * @param  array<int|string>  $newMemberIds  Array of user IDs to assign to the group
      * @return void
      */
     private function syncGroupMembers(Group $group, array $newMemberIds): void
@@ -193,10 +229,13 @@ class GroupsController extends Controller
     }
 
     /**
-     * Sync permissions for a group and log changes to audit log.
+     * Sync group permissions and handle related operations.
      *
-     * @param  Group  $group
-     * @param  array<int|string>  $newPermissionIds
+     * Synchronizes the group's direct permission assignments, logs changes
+     * to the audit log, and clears permission caches for all affected users.
+     *
+     * @param  Group  $group  The group to sync permissions for
+     * @param  array<int|string>  $newPermissionIds  Array of permission IDs to assign to the group
      * @return void
      */
     private function syncGroupPermissions(Group $group, array $newPermissionIds): void
@@ -216,5 +255,75 @@ class GroupsController extends Controller
         } else {
             $this->permissionCacheService->clear();
         }
+    }
+
+    /**
+     * Sync group roles and handle related operations.
+     *
+     * Synchronizes the group's role assignments, automatically filters out
+     * the Super Admin role (which cannot be assigned to groups), logs changes
+     * to the audit log, and clears permission caches for all affected users.
+     *
+     * @param  Group  $group  The group to sync roles for
+     * @param  array<int|string>  $newRoleIds  Array of role IDs to assign to the group
+     * @return void
+     */
+    private function syncGroupRoles(Group $group, array $newRoleIds): void
+    {
+        static $superAdminRoleId = null;
+        if ($superAdminRoleId === null) {
+            $superAdminRoleId = Role::where('name', Roles::SUPER_ADMIN)->value('id');
+        }
+
+        if ($superAdminRoleId) {
+            $newRoleIds = array_filter(
+                $newRoleIds,
+                fn ($roleId) => (int) $roleId !== $superAdminRoleId
+            );
+        }
+
+        $this->syncRelationshipWithAuditLog(
+            model: $group,
+            relationshipName: 'roles',
+            newIds: $newRoleIds,
+            relatedModelClass: Role::class,
+            relationshipDisplayName: 'roles'
+        );
+
+        $userIds = $group->users()->pluck('users.id')->toArray();
+
+        if (! empty($userIds)) {
+            $this->cacheService->clearForRoleChange($userIds);
+        } else {
+            $this->permissionCacheService->clear();
+        }
+    }
+
+    /**
+     * Transfer a user from the current group to another group.
+     *
+     * Removes the user from the current group and adds them to the target group.
+     * Clears permission caches for the affected user.
+     */
+    public function transferUser(TransferUserRequest $request, Group $group): RedirectResponse
+    {
+        $this->authorize('update', $group);
+
+        $userId = $request->user_id;
+        $targetGroupId = $request->target_group_id;
+
+        $targetGroup = Group::findOrFail($targetGroupId);
+
+        $group->users()->detach($userId);
+
+        if (! $targetGroup->users()->where('users.id', $userId)->exists()) {
+            $targetGroup->users()->attach($userId);
+        }
+
+        $this->cacheService->clearForMembershipChange([$userId]);
+
+        return redirect()
+            ->route('groups.groups.show', $group)
+            ->with('success', 'User transferred successfully.');
     }
 }
