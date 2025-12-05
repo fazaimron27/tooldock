@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
@@ -175,6 +176,17 @@ class RoleController extends Controller
         if ($role->users()->count() > 0) {
             return redirect()->route('core.roles.index')
                 ->with('error', 'Cannot delete role that is assigned to users.');
+        }
+
+        $groupCount = DB::table('group_has_roles')
+            ->where('role_id', $role->id)
+            ->count();
+
+        if ($groupCount > 0) {
+            return redirect()->route('core.roles.index')
+                ->with('error', "Cannot delete role. It is used as a base role in {$groupCount} ".
+                    ($groupCount === 1 ? 'group' : 'groups').
+                    '. Please remove the role from all groups first.');
         }
 
         $userIds = $role->users()->pluck('users.id')->toArray();
