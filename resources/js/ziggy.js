@@ -185,6 +185,7 @@ const Ziggy = {
       uri: 'tooldock\/groups\/{group}',
       methods: ['GET', 'HEAD'],
       parameters: ['group'],
+      bindings: { group: 'id' },
     },
     'groups.groups.edit': {
       uri: 'tooldock\/groups\/{group}\/edit',
