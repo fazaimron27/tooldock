@@ -1,6 +1,7 @@
 /**
  * Edit group page with form for updating existing groups
- * Includes member selection and permission matrix grouped by resource/module with pre-selected values
+ * Includes permission matrix grouped by resource/module with pre-selected values
+ * Note: Member management is handled on the Show page, not here
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
@@ -22,10 +23,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Comp
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-import MemberSelect from '../../Components/MemberSelect';
 import { updateGroupResolver } from '../../Schemas/groupSchemas';
 
-export default function Edit({ group, users = [], roles = [], groupedPermissions = {} }) {
+export default function Edit({ group, roles = [], groupedPermissions = {} }) {
   const availableRoles = useMemo(
     () => roles.filter((role) => role.name !== ROLES.SUPER_ADMIN),
     [roles]
@@ -35,7 +35,6 @@ export default function Edit({ group, users = [], roles = [], groupedPermissions
     {
       name: group.name || '',
       description: group.description || '',
-      members: group.users?.map((u) => u.id) || [],
       roles: group.roles?.map((r) => r.id) || [],
       permissions: group.permissions?.map((p) => p.id) || [],
     },
@@ -65,14 +64,6 @@ export default function Edit({ group, users = [], roles = [], groupedPermissions
       [key]: !prev[key],
     }));
   };
-
-  const userOptions = useMemo(() => {
-    return users.map((user) => ({
-      label: user.name,
-      value: user.id,
-      email: user.email,
-    }));
-  }, [users]);
 
   const handlePermissionToggle = (permissionId) => {
     const currentPermissions = form.watch('permissions') || [];
@@ -160,7 +151,7 @@ export default function Edit({ group, users = [], roles = [], groupedPermissions
         <div className="space-y-6">
           <FormCard
             title="Edit Group"
-            description="Update group details, members, and permissions"
+            description="Update group details, roles, and permissions. To manage members, visit the group detail page."
             className="max-w-4xl"
           >
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
@@ -178,24 +169,6 @@ export default function Edit({ group, users = [], roles = [], groupedPermissions
                 label="Description"
                 placeholder="Enter group description (optional)"
               />
-
-              <div className="space-y-4">
-                <Label>Members</Label>
-                <MemberSelect
-                  options={userOptions}
-                  value={form.watch('members') || []}
-                  onChange={(selected) =>
-                    form.setValue('members', selected, { shouldValidate: false })
-                  }
-                  placeholder="Select users for this group"
-                  emptyMessage="No users found."
-                />
-                {form.formState.errors.members && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.members.message}
-                  </p>
-                )}
-              </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

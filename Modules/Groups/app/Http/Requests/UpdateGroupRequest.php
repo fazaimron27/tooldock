@@ -52,8 +52,7 @@ class UpdateGroupRequest extends FormRequest
                 Rule::unique(Group::class)->ignore($groupId),
             ],
             'description' => ['nullable', 'string'],
-            'members' => ['nullable', 'array'],
-            'members.*' => ['exists:'.(config('permission.table_names.users') ?? 'users').',id'],
+            // Note: Members are managed on the Show page, not in the edit form
             'roles' => ['nullable', 'array'],
             'roles.*' => [
                 'exists:roles,id',
