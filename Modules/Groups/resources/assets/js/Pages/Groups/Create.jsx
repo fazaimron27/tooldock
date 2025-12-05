@@ -4,8 +4,10 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { cn } from '@/Utils/utils';
 import { Link } from '@inertiajs/react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ROLES } from '@modules/Core/resources/assets/js/constants';
+import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import FormCard from '@/Components/Common/FormCard';
@@ -16,18 +18,25 @@ import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
 import { Label } from '@/Components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 import MemberSelect from '../../Components/MemberSelect';
 import { createGroupResolver } from '../../Schemas/groupSchemas';
 
-export default function Create({ users = [], groupedPermissions = {} }) {
+export default function Create({ users = [], roles = [], groupedPermissions = {} }) {
+  const availableRoles = useMemo(
+    () => roles.filter((role) => role.name !== ROLES.SUPER_ADMIN),
+    [roles]
+  );
+
   const form = useInertiaForm(
     {
       name: '',
       description: '',
       members: [],
+      roles: [],
       permissions: [],
     },
     {
@@ -127,6 +136,19 @@ export default function Create({ users = [], groupedPermissions = {} }) {
     return Object.keys(groupedPermissions).sort();
   }, [groupedPermissions]);
 
+  const inheritedPermissionIds = useMemo(() => {
+    const selectedRoleIds = form.watch('roles') || [];
+    const selectedRoles = availableRoles.filter((role) => selectedRoleIds.includes(role.id));
+
+    return selectedRoles
+      .flatMap((role) => role.permissions?.map((p) => p.id) || [])
+      .filter((id) => id !== undefined);
+  }, [form, availableRoles]);
+
+  const isPermissionInherited = (permissionId) => {
+    return inheritedPermissionIds.includes(permissionId);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     form.post(route('groups.groups.store'));
@@ -177,11 +199,65 @@ export default function Create({ users = [], groupedPermissions = {} }) {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-semibold">Permissions</Label>
+                  <Label className="text-base font-semibold">Base Roles</Label>
+                  <span className="text-sm text-muted-foreground">
+                    {form.watch('roles')?.length || 0} selected
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Select base roles that members of this group will inherit. Members will receive
+                  all permissions from these roles.
+                </p>
+                {availableRoles.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No roles available</p>
+                ) : (
+                  <div className="space-y-3 rounded-md border p-4">
+                    {availableRoles.map((role) => (
+                      <div key={role.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`role-${role.id}`}
+                          checked={form.watch('roles')?.includes(role.id) || false}
+                          onCheckedChange={() => {
+                            const currentRoles = form.watch('roles') || [];
+                            if (currentRoles.includes(role.id)) {
+                              form.setValue(
+                                'roles',
+                                currentRoles.filter((id) => id !== role.id),
+                                { shouldValidate: false }
+                              );
+                            } else {
+                              form.setValue('roles', [...currentRoles, role.id], {
+                                shouldValidate: false,
+                              });
+                            }
+                          }}
+                        />
+                        <Label
+                          htmlFor={`role-${role.id}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {role.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {form.formState.errors.roles && (
+                  <p className="text-sm text-destructive">{form.formState.errors.roles.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Ad-Hoc Permissions</Label>
                   <span className="text-sm text-muted-foreground">
                     {form.watch('permissions')?.length || 0} selected
                   </span>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Select additional permissions that members of this group will inherit. Members
+                  will receive BOTH the selected base roles AND these ad-hoc permissions.
+                </p>
 
                 {moduleKeys.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No permissions available</p>
@@ -280,30 +356,53 @@ export default function Create({ users = [], groupedPermissions = {} }) {
                                     </div>
                                     <CollapsibleContent className="pt-2">
                                       <div className="space-y-2 pl-6">
-                                        {resourcePermissions.map((permission) => (
-                                          <div
-                                            key={permission.id}
-                                            className="flex items-center space-x-2"
-                                          >
-                                            <Checkbox
-                                              id={`permission-${permission.id}`}
-                                              checked={
-                                                form
-                                                  .watch('permissions')
-                                                  ?.includes(permission.id) || false
-                                              }
-                                              onCheckedChange={() =>
-                                                handlePermissionToggle(permission.id)
-                                              }
-                                            />
-                                            <Label
-                                              htmlFor={`permission-${permission.id}`}
-                                              className="text-sm font-normal cursor-pointer"
+                                        {resourcePermissions.map((permission) => {
+                                          const isInherited = isPermissionInherited(permission.id);
+                                          const isChecked =
+                                            form.watch('permissions')?.includes(permission.id) ||
+                                            false;
+
+                                          return (
+                                            <div
+                                              key={permission.id}
+                                              className="flex items-center space-x-2"
                                             >
-                                              {formatPermissionName(permission.name)}
-                                            </Label>
-                                          </div>
-                                        ))}
+                                              <Checkbox
+                                                id={`permission-${permission.id}`}
+                                                checked={isChecked || isInherited}
+                                                disabled={isInherited}
+                                                onCheckedChange={() =>
+                                                  handlePermissionToggle(permission.id)
+                                                }
+                                              />
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <Label
+                                                  htmlFor={`permission-${permission.id}`}
+                                                  className={cn(
+                                                    'text-sm font-normal',
+                                                    isInherited
+                                                      ? 'cursor-not-allowed text-muted-foreground'
+                                                      : 'cursor-pointer'
+                                                  )}
+                                                >
+                                                  {formatPermissionName(permission.name)}
+                                                </Label>
+                                                {isInherited && (
+                                                  <TooltipProvider>
+                                                    <Tooltip>
+                                                      <TooltipTrigger asChild>
+                                                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                                                      </TooltipTrigger>
+                                                      <TooltipContent>
+                                                        <p>Inherited via role</p>
+                                                      </TooltipContent>
+                                                    </Tooltip>
+                                                  </TooltipProvider>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     </CollapsibleContent>
                                   </Collapsible>
