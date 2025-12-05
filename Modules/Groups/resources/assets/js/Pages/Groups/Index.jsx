@@ -84,6 +84,26 @@ export default function Index({ groups, defaultPerPage = 20 }) {
         },
       },
       {
+        id: 'base_roles',
+        header: 'Base Roles',
+        cell: (info) => {
+          const group = info.row.original;
+          const roles = group.roles || [];
+          if (roles.length === 0) {
+            return <span className="text-muted-foreground text-sm">No roles</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-2">
+              {roles.map((role) => (
+                <Badge key={role.id} variant="outline">
+                  {role.name}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         id: 'permissions',
         header: 'Permissions',
         cell: (info) => {
