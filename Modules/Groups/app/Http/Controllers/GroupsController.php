@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
@@ -14,8 +16,10 @@ use Modules\Core\App\Models\User;
 use Modules\Core\App\Services\PermissionCacheService;
 use Modules\Core\App\Services\PermissionService;
 use Modules\Groups\App\Services\GroupCacheService;
+use Modules\Groups\Http\Requests\AddMembersRequest;
+use Modules\Groups\Http\Requests\RemoveMembersRequest;
 use Modules\Groups\Http\Requests\StoreGroupRequest;
-use Modules\Groups\Http\Requests\TransferUserRequest;
+use Modules\Groups\Http\Requests\TransferMembersRequest;
 use Modules\Groups\Http\Requests\UpdateGroupRequest;
 use Modules\Groups\Models\Group;
 use Spatie\Permission\Models\Permission;
@@ -76,17 +80,23 @@ class GroupsController extends Controller
     {
         $this->authorize('view', $group);
 
-        $group->load(['users.avatar', 'permissions', 'roles']);
+        $group->load(['users.avatar', 'users.roles', 'permissions', 'roles']);
         $groupedPermissions = $this->permissionService->groupByModule($group->permissions);
 
         $availableGroups = Group::where('id', '!=', $group->id)
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $allUsers = User::select('id', 'name', 'email')
+            ->with(['avatar', 'roles'])
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Modules::Groups/Groups/Show', [
             'group' => $group,
             'groupedPermissions' => $groupedPermissions,
             'availableGroups' => $availableGroups,
+            'allUsers' => $allUsers,
         ]);
     }
 
@@ -147,8 +157,7 @@ class GroupsController extends Controller
     {
         $this->authorize('update', $group);
 
-        $group->load(['users', 'permissions', 'roles.permissions']);
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+        $group->load(['permissions', 'roles.permissions']);
         $roles = Role::with('permissions')
             ->where('name', '!=', Roles::SUPER_ADMIN)
             ->get();
@@ -157,7 +166,6 @@ class GroupsController extends Controller
 
         return Inertia::render('Modules::Groups/Groups/Edit', [
             'group' => $group,
-            'users' => $users,
             'roles' => $roles,
             'groupedPermissions' => $groupedPermissions,
         ]);
@@ -176,10 +184,7 @@ class GroupsController extends Controller
             'description' => $request->description,
         ]);
 
-        if ($request->has('members') && is_array($request->members)) {
-            $this->syncGroupMembers($group, $request->members);
-        }
-
+        // Note: Members are managed on the Show page, not in the edit form
         if ($request->has('permissions') && is_array($request->permissions)) {
             $this->syncGroupPermissions($group, $request->permissions);
         }
@@ -188,7 +193,7 @@ class GroupsController extends Controller
             $this->syncGroupRoles($group, $request->roles);
         }
 
-        return redirect()->route('groups.groups.index')
+        return redirect()->route('groups.groups.show', $group)
             ->with('success', 'Group updated successfully.');
     }
 
@@ -312,30 +317,237 @@ class GroupsController extends Controller
     }
 
     /**
-     * Transfer a user from the current group to another group.
+     * Add members to the specified group.
      *
-     * Removes the user from the current group and adds them to the target group.
-     * Clears permission caches for the affected user.
+     * Bulk adds multiple users to a group. Skips users that are already members.
+     * All operations are performed within a database transaction to ensure data integrity.
+     * Changes are logged to the audit log and permission caches are cleared.
      */
-    public function transferUser(TransferUserRequest $request, Group $group): RedirectResponse
+    public function addMembers(AddMembersRequest $request, Group $group): RedirectResponse
     {
-        $this->authorize('update', $group);
+        return DB::transaction(function () use ($request, $group) {
+            $userIds = $request->user_ids;
 
-        $userId = $request->user_id;
-        $targetGroupId = $request->target_group_id;
+            $oldMemberData = $this->getMemberData($group);
+            $currentMemberIds = $oldMemberData['ids'];
 
-        $targetGroup = Group::findOrFail($targetGroupId);
+            $newUserIds = array_diff($userIds, $currentMemberIds);
 
-        $group->users()->detach($userId);
+            if (empty($newUserIds)) {
+                return redirect()
+                    ->route('groups.groups.show', $group)
+                    ->with('info', 'All selected users are already members of this group.');
+            }
 
-        if (! $targetGroup->users()->where('users.id', $userId)->exists()) {
-            $targetGroup->users()->attach($userId);
-        }
+            $group->users()->attach($newUserIds);
 
-        $this->cacheService->clearForMembershipChange([$userId]);
+            $group->load('users');
+            $newMemberData = $this->getMemberData($group);
+            $newMemberIds = $newMemberData['ids'];
+            $newMemberNames = $newMemberData['names'];
 
-        return redirect()
-            ->route('groups.groups.show', $group)
-            ->with('success', 'User transferred successfully.');
+            \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
+                event: 'updated',
+                model: $group,
+                oldValues: [
+                    'members' => $oldMemberData['names'],
+                    'member_ids' => $oldMemberData['ids'],
+                ],
+                newValues: [
+                    'members' => $newMemberNames,
+                    'member_ids' => $newMemberIds,
+                ],
+                userId: Auth::id(),
+                url: request()?->url(),
+                ipAddress: request()?->ip(),
+                userAgent: request()?->userAgent()
+            );
+
+            $this->cacheService->clearForMembershipChange($newUserIds);
+
+            $count = count($newUserIds);
+            $skipped = count($userIds) - $count;
+
+            $message = "{$count} member".($count === 1 ? '' : 's').' added successfully.';
+            if ($skipped > 0) {
+                $message .= " {$skipped} ".($skipped === 1 ? 'was' : 'were').' already a member of this group.';
+            }
+
+            return redirect()
+                ->route('groups.groups.show', $group)
+                ->with('success', $message);
+        });
+    }
+
+    /**
+     * Remove members from the specified group.
+     *
+     * Bulk removes multiple users from a group. Only removes users that are actually members.
+     * All operations are performed within a database transaction to ensure data integrity.
+     * Changes are logged to the audit log and permission caches are cleared.
+     */
+    public function removeMembers(RemoveMembersRequest $request, Group $group): RedirectResponse
+    {
+        return DB::transaction(function () use ($request, $group) {
+            $userIds = $request->user_ids;
+
+            $oldMemberData = $this->getMemberData($group);
+            $currentMemberIds = $oldMemberData['ids'];
+
+            $usersToRemove = array_intersect($userIds, $currentMemberIds);
+
+            if (empty($usersToRemove)) {
+                return redirect()
+                    ->route('groups.groups.show', $group)
+                    ->with('info', 'None of the selected users are members of this group.');
+            }
+
+            $group->users()->detach($usersToRemove);
+
+            $group->load('users');
+            $newMemberData = $this->getMemberData($group);
+            $newMemberIds = $newMemberData['ids'];
+            $newMemberNames = $newMemberData['names'];
+
+            \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
+                event: 'updated',
+                model: $group,
+                oldValues: [
+                    'members' => $oldMemberData['names'],
+                    'member_ids' => $oldMemberData['ids'],
+                ],
+                newValues: [
+                    'members' => $newMemberNames,
+                    'member_ids' => $newMemberIds,
+                ],
+                userId: Auth::id(),
+                url: request()?->url(),
+                ipAddress: request()?->ip(),
+                userAgent: request()?->userAgent()
+            );
+
+            $this->cacheService->clearForMembershipChange($usersToRemove);
+
+            $count = count($usersToRemove);
+
+            return redirect()
+                ->route('groups.groups.show', $group)
+                ->with('success', "{$count} member".($count === 1 ? '' : 's').' removed successfully.');
+        });
+    }
+
+    /**
+     * Get member data (IDs and names) for a group efficiently.
+     *
+     * This method fetches all users belonging to a given group in a single database query,
+     * then extracts and sorts their IDs and names. This optimizes performance by
+     * reducing the number of database interactions, especially when audit logging
+     * requires both old and new states of group members.
+     *
+     * @param  Group  $group  The group for which to retrieve member data
+     * @return array{ids: array<int>, names: array<string>} An associative array
+     *                                                      containing two keys: 'ids' (an array of sorted user IDs) and
+     *                                                      'names' (an array of sorted user names)
+     */
+    private function getMemberData(Group $group): array
+    {
+        $members = $group->users()->select('users.id', 'users.name')->get();
+
+        return [
+            'ids' => $members->pluck('id')->sort()->values()->toArray(),
+            'names' => $members->pluck('name')->sort()->values()->toArray(),
+        ];
+    }
+
+    /**
+     * Transfer multiple members from the current group to another group.
+     *
+     * Removes users from the source group and adds them to the target group.
+     * Users already in the target group are skipped. All operations are performed
+     * within a database transaction to ensure data integrity. Changes are logged
+     * to the audit log for both groups and permission caches are cleared.
+     */
+    public function transferMembers(TransferMembersRequest $request, Group $group): RedirectResponse
+    {
+        return DB::transaction(function () use ($request, $group) {
+            $userIds = $request->user_ids;
+            $targetGroupId = $request->target_group_id;
+
+            $targetGroup = Group::findOrFail($targetGroupId);
+
+            $oldMemberData = $this->getMemberData($group);
+            $oldMemberIds = $oldMemberData['ids'];
+            $oldMemberNames = $oldMemberData['names'];
+
+            $targetMemberData = $this->getMemberData($targetGroup);
+            $targetGroupMemberIds = $targetMemberData['ids'];
+            $usersToAdd = array_diff($userIds, $targetGroupMemberIds);
+
+            $group->users()->detach($userIds);
+
+            if (! empty($usersToAdd)) {
+                $targetGroup->users()->attach($usersToAdd);
+                $targetGroup->load('users');
+            }
+
+            $group->load('users');
+            $newMemberData = $this->getMemberData($group);
+            $newMemberIds = $newMemberData['ids'];
+            $newMemberNames = $newMemberData['names'];
+
+            \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
+                event: 'updated',
+                model: $group,
+                oldValues: [
+                    'members' => $oldMemberNames,
+                    'member_ids' => $oldMemberIds,
+                ],
+                newValues: [
+                    'members' => $newMemberNames,
+                    'member_ids' => $newMemberIds,
+                ],
+                userId: Auth::id(),
+                url: request()?->url(),
+                ipAddress: request()?->ip(),
+                userAgent: request()?->userAgent()
+            );
+
+            if (! empty($usersToAdd)) {
+                $targetNewMemberData = $this->getMemberData($targetGroup);
+                $targetNewMemberIds = $targetNewMemberData['ids'];
+                $targetNewMemberNames = $targetNewMemberData['names'];
+
+                \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
+                    event: 'updated',
+                    model: $targetGroup,
+                    oldValues: [
+                        'members' => $targetMemberData['names'],
+                        'member_ids' => $targetMemberData['ids'],
+                    ],
+                    newValues: [
+                        'members' => $targetNewMemberNames,
+                        'member_ids' => $targetNewMemberIds,
+                    ],
+                    userId: Auth::id(),
+                    url: request()?->url(),
+                    ipAddress: request()?->ip(),
+                    userAgent: request()?->userAgent()
+                );
+            }
+
+            $this->cacheService->clearForMembershipChange($userIds);
+
+            $count = count($userIds);
+            $alreadyInTarget = count($userIds) - count($usersToAdd);
+
+            $message = "{$count} member".($count === 1 ? '' : 's').' transferred successfully.';
+            if ($alreadyInTarget > 0) {
+                $message .= " {$alreadyInTarget} ".($alreadyInTarget === 1 ? 'was' : 'were').' already in the target group.';
+            }
+
+            return redirect()
+                ->route('groups.groups.show', $group)
+                ->with('success', $message);
+        });
     }
 }
