@@ -14,6 +14,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'destroy' => 'groups.groups.destroy',
     ]);
 
-    Route::post('groups/{group}/transfer-user', [GroupsController::class, 'transferUser'])
-        ->name('groups.transfer-user');
+    Route::post('groups/{group}/transfer-members', [GroupsController::class, 'transferMembers'])
+        ->name('groups.transfer-members');
+
+    Route::post('groups/{group}/add-members', [GroupsController::class, 'addMembers'])
+        ->name('groups.add-members');
+
+    Route::post('groups/{group}/remove-members', [GroupsController::class, 'removeMembers'])
+        ->name('groups.remove-members');
 });
