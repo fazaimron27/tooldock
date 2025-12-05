@@ -52,6 +52,22 @@ class GroupCacheService
     }
 
     /**
+     * Clear all caches when group roles change.
+     *
+     * @param  array<int>  $userIds  Array of user IDs in the group
+     * @return void
+     */
+    public function clearForRoleChange(array $userIds): void
+    {
+        $this->permissionCacheService->clear();
+
+        foreach ($userIds as $userId) {
+            $this->groupPermissionCacheService->clearForUser($userId);
+            $this->menuRegistry->clearCacheForUser($userId);
+        }
+    }
+
+    /**
      * Clear all caches when a group is deleted.
      *
      * @param  array<int>  $userIds  Array of user IDs who were in the group

@@ -20,6 +20,9 @@ trait HasGroups
     /**
      * Get all permissions the user has through their groups.
      *
+     * Collects permissions from both direct group permissions and permissions
+     * inherited through group roles.
+     *
      * @return array<string>
      */
     public function getGroupPermissions(): array
@@ -32,10 +35,16 @@ trait HasGroups
         }
 
         $permissions = $this->groups()
-            ->with('permissions')
+            ->with(['permissions', 'roles.permissions'])
             ->get()
             ->flatMap(function ($group) {
-                return $group->permissions->pluck('name');
+                $directPermissions = $group->permissions->pluck('name');
+
+                $rolePermissions = $group->roles->flatMap(function ($role) {
+                    return $role->permissions->pluck('name');
+                });
+
+                return $directPermissions->merge($rolePermissions);
             })
             ->unique()
             ->values()

@@ -10,6 +10,7 @@ use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Core\App\Models\User;
 use Modules\Groups\Database\Factories\GroupFactory;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class Group extends Model
 {
@@ -70,5 +71,85 @@ class Group extends Model
     {
         return $this->belongsToMany(Permission::class, 'group_has_permissions')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the roles assigned to this group.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'group_has_roles')
+            ->withTimestamps();
+    }
+
+    /**
+     * Assign a role to this group.
+     *
+     * @param  Role|int|string  $role  Role model, ID, or name
+     * @return void
+     */
+    public function assignRole($role): void
+    {
+        if (is_string($role)) {
+            $role = Role::findByName($role);
+        } elseif (is_int($role)) {
+            $role = Role::findById($role);
+        }
+
+        if ($role && ! $this->roles()->where('roles.id', $role->id)->exists()) {
+            $this->roles()->attach($role->id);
+        }
+    }
+
+    /**
+     * Remove a role from this group.
+     *
+     * @param  Role|int|string  $role  Role model, ID, or name
+     * @return void
+     */
+    public function removeRole($role): void
+    {
+        if (is_string($role)) {
+            $role = Role::findByName($role);
+        } elseif (is_int($role)) {
+            $role = Role::findById($role);
+        }
+
+        if ($role) {
+            $this->roles()->detach($role->id);
+        }
+    }
+
+    /**
+     * Check if the group has a specific permission.
+     *
+     * Checks both direct permissions and permissions through roles.
+     *
+     * @param  string|\Spatie\Permission\Contracts\Permission  $permission
+     * @return bool
+     */
+    public function hasPermissionTo($permission): bool
+    {
+        $permissionName = is_string($permission) ? $permission : (is_object($permission) ? $permission->name : null);
+
+        if (! $permissionName) {
+            return false;
+        }
+
+        // Check direct permissions
+        $this->loadMissing('permissions');
+        if ($this->permissions->contains('name', $permissionName)) {
+            return true;
+        }
+
+        // Check permissions through roles
+        $this->loadMissing('roles.permissions');
+        foreach ($this->roles as $role) {
+            if ($role->hasPermissionTo($permissionName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
