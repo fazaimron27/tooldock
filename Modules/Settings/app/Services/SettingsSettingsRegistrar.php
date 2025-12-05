@@ -29,7 +29,7 @@ class SettingsSettingsRegistrar
             module: $moduleName,
             group: 'general',
             key: 'app_logo',
-            value: 'Cog',
+            value: 'Ship',
             type: SettingType::Text,
             label: 'Application Logo Icon (Lucide)',
             isSystem: false
