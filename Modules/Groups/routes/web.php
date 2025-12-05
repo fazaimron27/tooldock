@@ -13,4 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'update' => 'groups.groups.update',
         'destroy' => 'groups.groups.destroy',
     ]);
+
+    Route::post('groups/{group}/transfer-user', [GroupsController::class, 'transferUser'])
+        ->name('groups.transfer-user');
 });
