@@ -5,6 +5,7 @@ namespace Modules\Groups\Providers;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +17,7 @@ use Modules\Groups\Services\GroupsPermissionRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Spatie\Permission\Models\Role;
 
 class GroupsServiceProvider extends ServiceProvider
 {
@@ -47,6 +49,7 @@ class GroupsServiceProvider extends ServiceProvider
         $groupRegistrar->register($groupRegistry, $this->name);
         $this->registerAuthorization();
         $this->registerObservers();
+        $this->registerRoleGroupsRelationship();
     }
 
     /**
@@ -110,7 +113,6 @@ class GroupsServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -186,24 +188,19 @@ class GroupsServiceProvider extends ServiceProvider
     private function registerAuthorization(): void
     {
         Gate::before(function ($user, $ability) {
-            // Skip for unauthenticated users
             if (! $user) {
                 return null;
             }
 
-            // Skip if user doesn't have the method (shouldn't happen, but safety check)
             if (! method_exists($user, 'hasGroupPermission')) {
                 return null;
             }
 
-            // Skip checking for certain system abilities that shouldn't trigger group checks
-            // This prevents redirect loops on login/auth routes
             $skipAbilities = ['login', 'register', 'logout', 'password.request', 'password.reset'];
             if (in_array($ability, $skipAbilities, true)) {
                 return null;
             }
 
-            // Check group permissions
             return $user->hasGroupPermission($ability) ? true : null;
         });
     }
@@ -214,5 +211,22 @@ class GroupsServiceProvider extends ServiceProvider
     private function registerObservers(): void
     {
         Group::observe(GroupObserver::class);
+    }
+
+    /**
+     * Register relationship macro for Role model to access groups.
+     *
+     * This allows Role models to access their associated groups through
+     * the group_has_roles pivot table, enabling efficient eager loading.
+     */
+    private function registerRoleGroupsRelationship(): void
+    {
+        if (! Role::hasMacro('groups')) {
+            Role::macro('groups', function (): BelongsToMany {
+                /** @var Role $this */
+                return $this->belongsToMany(Group::class, 'group_has_roles')
+                    ->withTimestamps();
+            });
+        }
     }
 }
