@@ -5,6 +5,7 @@
 import { useDatatable } from '@/Hooks/useDatatable';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Filter, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';

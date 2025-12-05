@@ -1,6 +1,7 @@
 import { dialogVariants } from '@/Utils/animations';
 import { cn } from '@/Utils/utils';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+// eslint-disable-next-line no-unused-vars
 import { motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import * as React from 'react';
