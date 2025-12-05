@@ -46,6 +46,28 @@ class RoleController extends Controller
             ]
         );
 
+        $roleIds = array_column($roles->items(), 'id');
+        if (! empty($roleIds)) {
+            $groupsByRole = \Modules\Groups\Models\Group::query()
+                ->join('group_has_roles', 'groups.id', '=', 'group_has_roles.group_id')
+                ->whereIn('group_has_roles.role_id', $roleIds)
+                ->select('groups.id', 'groups.name', 'group_has_roles.role_id')
+                ->get()
+                ->groupBy('role_id')
+                ->map(fn ($groups) => $groups->map(fn ($group) => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                ])->values());
+
+            foreach ($roles->items() as $role) {
+                $role->setAttribute('groups', $groupsByRole->get($role->id, []));
+            }
+        } else {
+            foreach ($roles->items() as $role) {
+                $role->setAttribute('groups', []);
+            }
+        }
+
         return Inertia::render('Modules::Core/Roles/Index', [
             'roles' => $roles,
             'defaultPerPage' => $defaultPerPage,
