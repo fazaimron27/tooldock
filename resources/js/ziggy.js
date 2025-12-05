@@ -211,6 +211,24 @@ const Ziggy = {
       parameters: ['group'],
       bindings: { group: 'id' },
     },
+    'groups.transfer-members': {
+      uri: 'tooldock\/groups\/{group}\/transfer-members',
+      methods: ['POST'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
+    'groups.add-members': {
+      uri: 'tooldock\/groups\/{group}\/add-members',
+      methods: ['POST'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
+    'groups.remove-members': {
+      uri: 'tooldock\/groups\/{group}\/remove-members',
+      methods: ['POST'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
     'api.categories.index': { uri: 'api\/v1\/categories', methods: ['GET', 'HEAD'] },
     'api.categories.store': { uri: 'api\/v1\/categories', methods: ['POST'] },
     'api.categories.show': {
