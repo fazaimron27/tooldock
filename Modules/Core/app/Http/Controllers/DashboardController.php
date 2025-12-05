@@ -3,8 +3,8 @@
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\Modules\ModuleStatusService;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -17,20 +17,60 @@ class DashboardController extends Controller
      * Display the dashboard.
      */
     public function index(
-        DashboardWidgetRegistry $widgetRegistry,
-        ModuleStatusService $moduleStatusService
-    ): Response {
-        Gate::authorize('core.dashboard.view');
+        DashboardWidgetRegistry $widgetRegistry
+    ): Response|RedirectResponse {
+        $user = request()->user();
+
+        if ($user && $this->isGuestOnly($user)) {
+            return redirect()->route('guest.welcome');
+        }
 
         $systemHealth = $this->calculateSystemHealth();
         $widgets = $widgetRegistry->getOverviewWidgets();
-        $modules = $this->getActiveModules($moduleStatusService);
+        $modules = $this->getActiveModules();
 
         return Inertia::render('Dashboard', [
             'systemHealth' => $systemHealth,
             'widgets' => $widgets,
             'modules' => $modules,
         ]);
+    }
+
+    /**
+     * Check if user is Guest-only (only has Guest group and no roles with permissions).
+     *
+     * @param  \Modules\Core\App\Models\User  $user
+     * @return bool
+     */
+    private function isGuestOnly($user): bool
+    {
+        if (! $user->relationLoaded('groups')) {
+            $user->load('groups');
+        }
+        if (! $user->relationLoaded('roles')) {
+            $user->load('roles');
+        }
+
+        $groups = $user->groups;
+        if ($groups->count() !== 1 || $groups->first()->name !== 'Guest') {
+            return false;
+        }
+
+        $roles = $user->roles;
+        if ($roles->isEmpty()) {
+            return true;
+        }
+
+        foreach ($roles as $role) {
+            if (! $role->relationLoaded('permissions')) {
+                $role->load('permissions');
+            }
+            if ($role->permissions->isNotEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -76,10 +116,9 @@ class DashboardController extends Controller
     /**
      * Get list of active modules with their dashboard routes.
      *
-     * @param  ModuleStatusService  $moduleStatusService
      * @return array<int, array{name: string, route: string}>
      */
-    private function getActiveModules(ModuleStatusService $moduleStatusService): array
+    private function getActiveModules(): array
     {
         $statuses = DB::table('modules_statuses')
             ->where('is_installed', true)
