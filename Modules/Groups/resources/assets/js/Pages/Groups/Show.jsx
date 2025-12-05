@@ -2,6 +2,7 @@
  * Group detail page displaying full group information
  * Shows group details, list of users, and permissions attached to the group
  */
+import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
@@ -10,29 +11,25 @@ import {
   ArrowRight,
   ArrowRightLeft,
   Pencil,
+  Plus,
   Search,
   Shield,
   Trash2,
+  UserMinus,
   UserPlus,
   Users,
-  X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
+import DataTable from '@/Components/DataDisplay/DataTable';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/Components/ui/dialog';
+import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import {
@@ -45,13 +42,26 @@ import {
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-export default function Show({ group, groupedPermissions = {}, availableGroups = [] }) {
+import MemberDialog from '../../Components/MemberDialog';
+import { isSuperAdmin } from '../../Utils/userUtils';
+
+export default function Show({
+  group,
+  groupedPermissions = {},
+  availableGroups = [],
+  allUsers = [],
+}) {
   const deleteDialog = useDisclosure();
-  const transferDialog = useDisclosure();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [targetGroupId, setTargetGroupId] = useState('');
-  const [isTransferring, setIsTransferring] = useState(false);
+  const bulkTransferDialog = useDisclosure();
+  const addMembersDialog = useDisclosure();
+  const removeMembersDialog = useDisclosure();
+  const [bulkTargetGroupId, setBulkTargetGroupId] = useState('');
+  const [isBulkTransferring, setIsBulkTransferring] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [addMembersSearch, setAddMembersSearch] = useState('');
+  const [usersToAdd, setUsersToAdd] = useState([]);
+  const [isAddingMembers, setIsAddingMembers] = useState(false);
+  const [isRemovingMembers, setIsRemovingMembers] = useState(false);
 
   const permissionCount = useMemo(() => {
     return Object.values(groupedPermissions).reduce(
@@ -61,58 +71,263 @@ export default function Show({ group, groupedPermissions = {}, availableGroups =
     );
   }, [groupedPermissions]);
 
-  // Filter members based on search query
-  const filteredMembers = useMemo(() => {
-    if (!group.users || group.users.length === 0) {
-      return [];
-    }
+  /**
+   * Get available users that can be added to the group.
+   * Uses Set for O(1) lookup performance when filtering out existing members.
+   */
+  const availableUsers = useMemo(() => {
+    const currentMemberIds = new Set(group.users?.map((u) => u.id) || []);
+    return allUsers.filter((user) => !currentMemberIds.has(user.id));
+  }, [allUsers, group.users]);
 
-    if (!searchQuery.trim()) {
-      return group.users;
+  /**
+   * Filter available users based on search query.
+   * Searches both name and email fields case-insensitively.
+   */
+  const filteredAvailableUsers = useMemo(() => {
+    if (!addMembersSearch.trim()) {
+      return availableUsers;
     }
-
-    const query = searchQuery.toLowerCase();
-    return group.users.filter(
+    const query = addMembersSearch.toLowerCase();
+    return availableUsers.filter(
       (user) => user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query)
     );
-  }, [group.users, searchQuery]);
+  }, [availableUsers, addMembersSearch]);
 
-  const handleTransferClick = (user) => {
-    setSelectedUser(user);
-    setTargetGroupId('');
-    transferDialog.onOpen();
+  /**
+   * Table column definitions for the members data table.
+   * Includes selection checkbox, user name with avatar and Super Admin badge, and email.
+   */
+  const memberColumns = useMemo(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: (info) => {
+          const user = info.row.original;
+          const userIsSuperAdmin = isSuperAdmin(user);
+          return (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                {user.avatar?.url ? <AvatarImage src={user.avatar.url} alt={user.name} /> : null}
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={route('core.users.edit', { user: user.id })}
+                  className="font-medium hover:underline"
+                >
+                  {user.name}
+                </Link>
+                {userIsSuperAdmin && (
+                  <Badge variant="default" className="text-xs">
+                    <Shield className="mr-1 h-3 w-3" />
+                    Super Admin
+                  </Badge>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: (info) => {
+          const user = info.row.original;
+          return <span className="text-muted-foreground">{user.email}</span>;
+        },
+      },
+    ],
+    []
+  );
+
+  const membersData = useMemo(() => group.users || [], [group.users]);
+  const { tableProps: memberTableProps } = useDatatable({
+    data: membersData,
+    columns: memberColumns,
+    serverSide: false,
+    pageSize: 10,
+    initialSorting: [{ id: 'name', desc: false }],
+  });
+
+  /**
+   * Get currently selected rows from the members table.
+   */
+  const table = memberTableProps.table;
+  const selectedRows = useMemo(() => {
+    return table?.getSelectedRowModel().rows || [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, table?.getState().rowSelection]);
+
+  /**
+   * Extract user IDs from selected table rows.
+   */
+  const selectedMemberIds = useMemo(() => {
+    return selectedRows.map((row) => row.original.id);
+  }, [selectedRows]);
+
+  /**
+   * Open the add members dialog and reset selection state.
+   */
+  const handleAddMembersClick = () => {
+    setUsersToAdd([]);
+    setAddMembersSearch('');
+    addMembersDialog.onOpen();
   };
 
-  const handleTransferConfirm = () => {
-    if (!selectedUser || !targetGroupId) {
+  const handleToggleUserToAdd = (userId) => {
+    setUsersToAdd((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
+  /**
+   * Submit the add members request to the server.
+   * Displays error toast if the request fails.
+   */
+  const handleAddMembersConfirm = () => {
+    if (usersToAdd.length === 0) {
       return;
     }
 
-    setIsTransferring(true);
+    setIsAddingMembers(true);
     router.post(
-      route('groups.transfer-user', { group: group.id }),
-      {
-        user_id: selectedUser.id,
-        target_group_id: targetGroupId,
-      },
+      route('groups.add-members', { group: group.id }),
+      { user_ids: usersToAdd },
       {
         onSuccess: () => {
-          transferDialog.onClose();
-          setSelectedUser(null);
-          setTargetGroupId('');
-          setIsTransferring(false);
+          addMembersDialog.onClose();
+          setUsersToAdd([]);
+          setAddMembersSearch('');
+          setIsAddingMembers(false);
+          memberTableProps.table?.resetRowSelection();
         },
-        onError: () => {
-          setIsTransferring(false);
+        onError: (errors) => {
+          setIsAddingMembers(false);
+          const errorMessage =
+            errors?.message || errors?.user_ids?.[0] || 'Failed to add members. Please try again.';
+          toast.error(errorMessage);
         },
       }
     );
   };
 
-  const handleTransferCancel = () => {
-    transferDialog.onClose();
-    setSelectedUser(null);
-    setTargetGroupId('');
+  /**
+   * Open the bulk transfer dialog for selected members.
+   */
+  const handleBulkTransferClick = () => {
+    if (selectedMemberIds.length === 0) {
+      return;
+    }
+    setBulkTargetGroupId('');
+    bulkTransferDialog.onOpen();
+  };
+
+  /**
+   * Submit the bulk transfer request to move selected members to another group.
+   * Displays error toast if the request fails.
+   */
+  const handleBulkTransferConfirm = () => {
+    if (selectedMemberIds.length === 0 || !bulkTargetGroupId) {
+      return;
+    }
+
+    setIsBulkTransferring(true);
+    router.post(
+      route('groups.transfer-members', { group: group.id }),
+      {
+        user_ids: selectedMemberIds,
+        target_group_id: bulkTargetGroupId,
+      },
+      {
+        onSuccess: () => {
+          bulkTransferDialog.onClose();
+          setBulkTargetGroupId('');
+          setIsBulkTransferring(false);
+          memberTableProps.table?.resetRowSelection();
+        },
+        onError: (errors) => {
+          setIsBulkTransferring(false);
+          const errorMessage =
+            errors?.message ||
+            errors?.user_ids?.[0] ||
+            errors?.target_group_id?.[0] ||
+            'Failed to transfer members. Please try again.';
+          toast.error(errorMessage);
+        },
+      }
+    );
+  };
+
+  /**
+   * Cancel the bulk transfer operation and reset state.
+   */
+  const handleBulkTransferCancel = () => {
+    bulkTransferDialog.onClose();
+    setBulkTargetGroupId('');
+  };
+
+  /**
+   * Open the remove members confirmation dialog for selected members.
+   */
+  const handleRemoveMembersClick = () => {
+    if (selectedMemberIds.length === 0) {
+      return;
+    }
+    setSelectedUserIds(selectedMemberIds);
+    removeMembersDialog.onOpen();
+  };
+
+  /**
+   * Submit the remove members request to the server.
+   * Displays error toast if the request fails.
+   */
+  const handleRemoveMembersConfirm = () => {
+    if (selectedUserIds.length === 0) {
+      return;
+    }
+
+    setIsRemovingMembers(true);
+    router.post(
+      route('groups.remove-members', { group: group.id }),
+      { user_ids: selectedUserIds },
+      {
+        onSuccess: () => {
+          removeMembersDialog.onClose();
+          setSelectedUserIds([]);
+          setIsRemovingMembers(false);
+          memberTableProps.table?.resetRowSelection();
+        },
+        onError: (errors) => {
+          setIsRemovingMembers(false);
+          const errorMessage =
+            errors?.message ||
+            errors?.user_ids?.[0] ||
+            'Failed to remove members. Please try again.';
+          toast.error(errorMessage);
+        },
+      }
+    );
   };
 
   if (!group || !group.id) {
@@ -179,7 +394,7 @@ export default function Show({ group, groupedPermissions = {}, availableGroups =
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
+                <UserPlus className="h-5 w-5 text-primary" />
                 <CardTitle>Group Details</CardTitle>
               </div>
               <CardDescription>Basic information about this group</CardDescription>
@@ -224,84 +439,73 @@ export default function Show({ group, groupedPermissions = {}, availableGroups =
                   {group.users?.length || 0} {group.users?.length === 1 ? 'member' : 'members'}
                 </Badge>
               </div>
-              <CardDescription>Users assigned to this group</CardDescription>
+              <CardDescription>
+                Users assigned to this group. Super Admin users have full system access regardless
+                of group membership.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {!group.users || group.users.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <Users className="mx-auto h-12 w-12 opacity-50" />
-                  <p className="mt-2">No members assigned to this group</p>
+                <div className="space-y-4">
+                  <div className="py-8 text-center text-muted-foreground">
+                    <Users className="mx-auto h-12 w-12 opacity-50" />
+                    <p className="mt-2">No members assigned to this group</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button onClick={handleAddMembersClick}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Members
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Search Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Search members by name or email..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 pr-9"
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
-                        onClick={() => setSearchQuery('')}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                  {/* Bulk Actions Toolbar */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button onClick={handleAddMembersClick} size="sm">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Members
+                    </Button>
+                    {selectedMemberIds.length > 0 && (
+                      <>
+                        {availableGroups.length > 0 && (
+                          <Button
+                            onClick={handleBulkTransferClick}
+                            variant="outline"
+                            size="sm"
+                            disabled={isBulkTransferring}
+                          >
+                            <ArrowRightLeft className="mr-2 h-4 w-4" />
+                            Transfer Selected ({selectedMemberIds.length})
+                          </Button>
+                        )}
+                        <Button
+                          onClick={handleRemoveMembersClick}
+                          variant="destructive"
+                          size="sm"
+                          disabled={isRemovingMembers}
+                        >
+                          <UserMinus className="mr-2 h-4 w-4" />
+                          Remove Selected ({selectedMemberIds.length})
+                        </Button>
+                        <Button
+                          onClick={() => memberTableProps.table?.resetRowSelection()}
+                          variant="ghost"
+                          size="sm"
+                        >
+                          Clear Selection
+                        </Button>
+                      </>
                     )}
                   </div>
 
-                  {/* Members List */}
-                  {filteredMembers.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      <Users className="mx-auto h-12 w-12 opacity-50" />
-                      <p className="mt-2">No members found matching your search</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {filteredMembers.map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
-                        >
-                          <Avatar className="h-10 w-10 shrink-0">
-                            {user.avatar?.url ? (
-                              <AvatarImage src={user.avatar.url} alt={user.name} />
-                            ) : null}
-                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={route('core.users.edit', { user: user.id })}
-                              className="block truncate font-medium hover:underline"
-                            >
-                              {user.name}
-                            </Link>
-                            <div className="truncate text-sm text-muted-foreground">
-                              {user.email}
-                            </div>
-                          </div>
-                          {availableGroups.length > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTransferClick(user)}
-                              className="shrink-0 text-muted-foreground hover:text-foreground"
-                              title="Transfer user"
-                            >
-                              <ArrowRight className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Transfer</span>
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <DataTable
+                    {...memberTableProps}
+                    searchable={true}
+                    pagination={true}
+                    sorting={true}
+                    showCard={false}
+                  />
                 </div>
               )}
             </CardContent>
@@ -418,137 +622,271 @@ export default function Show({ group, groupedPermissions = {}, availableGroups =
         variant="destructive"
       />
 
-      {/* Transfer User Dialog */}
-      <Dialog open={transferDialog.isOpen} onOpenChange={handleTransferCancel}>
-        <DialogContent className="sm:max-w-[500px]">
-          <div className="p-6">
-            <DialogHeader className="pb-4 text-left sm:text-left">
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <ArrowRightLeft className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <DialogTitle className="text-lg sm:text-xl">
-                    Transfer User to Another Group
-                  </DialogTitle>
-                  <DialogDescription className="mt-1.5 text-sm sm:text-base">
-                    Move this user from the current group to a different group
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+      {/* Add Members Dialog */}
+      <MemberDialog
+        open={addMembersDialog.isOpen}
+        onOpenChange={addMembersDialog.onClose}
+        title="Add Members to Group"
+        description={
+          <>
+            Select users to add to <strong>{group.name}</strong>
+          </>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={addMembersDialog.onClose} disabled={isAddingMembers}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddMembersConfirm}
+              disabled={usersToAdd.length === 0 || isAddingMembers}
+            >
+              {isAddingMembers ? (
+                <>Adding...</>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add {usersToAdd.length > 0 ? `${usersToAdd.length} ` : ''}Member
+                  {usersToAdd.length !== 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search users by name or email..."
+              value={addMembersSearch}
+              onChange={(e) => setAddMembersSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
 
-            {selectedUser && (
-              <div className="space-y-6">
-                {/* User Info Card */}
-                <div className="rounded-lg border bg-muted/50 p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 shrink-0">
-                      {selectedUser.avatar?.url ? (
-                        <AvatarImage src={selectedUser.avatar.url} alt={selectedUser.name} />
+          {/* Users List */}
+          {filteredAvailableUsers.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <Users className="mx-auto h-12 w-12 opacity-50" />
+              <p className="mt-2">
+                {availableUsers.length === 0
+                  ? 'All users are already members of this group'
+                  : 'No users found matching your search'}
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[400px] space-y-2 overflow-y-auto rounded-md border p-2">
+              {filteredAvailableUsers.map((user) => {
+                const userIsSuperAdmin = isSuperAdmin(user);
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
+                  >
+                    <Checkbox
+                      checked={usersToAdd.includes(user.id)}
+                      onCheckedChange={() => handleToggleUserToAdd(user.id)}
+                    />
+                    <Avatar className="h-10 w-10 shrink-0">
+                      {user.avatar?.url ? (
+                        <AvatarImage src={user.avatar.url} alt={user.name} />
                       ) : null}
-                      <AvatarFallback>{getInitials(selectedUser.name)}</AvatarFallback>
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">{selectedUser.name}</div>
-                      <div className="truncate text-sm text-muted-foreground">
-                        {selectedUser.email}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transfer Flow */}
-                <div className="space-y-4">
-                  {/* From Group */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Current Group
-                    </Label>
-                    <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2.5">
-                      <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate font-medium">{group.name}</span>
-                    </div>
-                  </div>
-
-                  {/* Arrow Icon */}
-                  <div className="flex justify-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <ArrowRight className="h-4 w-4 text-primary" />
-                    </div>
-                  </div>
-
-                  {/* To Group Select */}
-                  <div className="space-y-2">
-                    <Label htmlFor="target-group" className="text-sm font-medium">
-                      Target Group
-                    </Label>
-                    <Select value={targetGroupId} onValueChange={setTargetGroupId}>
-                      <SelectTrigger id="target-group" className="h-11">
-                        <SelectValue placeholder="Select a group to transfer to..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableGroups.length === 0 ? (
-                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                            No other groups available
-                          </div>
-                        ) : (
-                          availableGroups.map((g) => (
-                            <SelectItem key={g.id} value={String(g.id)}>
-                              <div className="flex items-center gap-2">
-                                <UserPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate">{g.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))
+                      <div className="flex items-center gap-2">
+                        <div className="truncate font-medium">{user.name}</div>
+                        {userIsSuperAdmin && (
+                          <Badge variant="default" className="text-xs shrink-0">
+                            <Shield className="mr-1 h-3 w-3" />
+                            Super Admin
+                          </Badge>
                         )}
-                      </SelectContent>
-                    </Select>
-                    {availableGroups.length === 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Create another group first to enable transfers
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Info Message */}
-                <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
-                  <div className="flex items-start gap-2">
-                    <Shield className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      The user will be <strong>removed</strong> from <strong>{group.name}</strong>{' '}
-                      and <strong>added</strong> to the selected group. Their permissions will be
-                      updated accordingly.
+                      </div>
+                      <div className="truncate text-sm text-muted-foreground">{user.email}</div>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
+                );
+              })}
+            </div>
+          )}
 
-            <DialogFooter className="gap-2 pt-4 sm:gap-0">
-              <Button variant="outline" onClick={handleTransferCancel} disabled={isTransferring}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleTransferConfirm}
-                disabled={!targetGroupId || isTransferring || availableGroups.length === 0}
-              >
-                {isTransferring ? (
-                  <>
-                    <span className="mr-2">Transferring...</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    Transfer User
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
+          {usersToAdd.length > 0 && (
+            <div className="rounded-md bg-muted p-3 text-sm">
+              <strong>{usersToAdd.length}</strong> user{usersToAdd.length === 1 ? '' : 's'} selected
+            </div>
+          )}
+        </div>
+      </MemberDialog>
+
+      {/* Bulk Transfer Members Dialog */}
+      <MemberDialog
+        open={bulkTransferDialog.isOpen}
+        onOpenChange={handleBulkTransferCancel}
+        title="Transfer Members to Another Group"
+        description={
+          <>
+            Transfer {selectedMemberIds.length} selected member
+            {selectedMemberIds.length === 1 ? '' : 's'} from <strong>{group.name}</strong> to
+            another group
+          </>
+        }
+        maxWidth="500px"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={handleBulkTransferCancel}
+              disabled={isBulkTransferring}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkTransferConfirm}
+              disabled={!bulkTargetGroupId || isBulkTransferring || availableGroups.length === 0}
+            >
+              {isBulkTransferring ? (
+                <>Transferring...</>
+              ) : (
+                <>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Transfer {selectedMemberIds.length} Member
+                  {selectedMemberIds.length === 1 ? '' : 's'}
+                </>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {/* Selected Users Preview */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Selected Members ({selectedMemberIds.length})
+            </Label>
+            <div className="max-h-[200px] space-y-2 overflow-y-auto rounded-md border p-2">
+              {selectedRows.slice(0, 10).map((row) => {
+                const user = row.original;
+                const userIsSuperAdmin = isSuperAdmin(user);
+                return (
+                  <div key={user.id} className="flex items-center gap-2 rounded-lg border p-2">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      {user.avatar?.url ? (
+                        <AvatarImage src={user.avatar.url} alt={user.name} />
+                      ) : null}
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-sm font-medium">{user.name}</div>
+                        {userIsSuperAdmin && (
+                          <Badge variant="default" className="text-xs shrink-0">
+                            <Shield className="mr-1 h-3 w-3" />
+                            Super Admin
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {selectedRows.length > 10 && (
+                <div className="text-center text-sm text-muted-foreground">
+                  and {selectedRows.length - 10} more...
+                </div>
+              )}
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* Transfer Flow */}
+          <div className="space-y-4">
+            {/* From Group */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Current Group</Label>
+              <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2.5">
+                <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate font-medium">{group.name}</span>
+              </div>
+            </div>
+
+            {/* Arrow Icon */}
+            <div className="flex justify-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <ArrowRight className="h-4 w-4 text-primary" />
+              </div>
+            </div>
+
+            {/* To Group Select */}
+            <div className="space-y-2">
+              <Label htmlFor="bulk-target-group" className="text-sm font-medium">
+                Target Group
+              </Label>
+              <Select value={bulkTargetGroupId} onValueChange={setBulkTargetGroupId}>
+                <SelectTrigger id="bulk-target-group" className="h-11">
+                  <SelectValue placeholder="Select a group to transfer to..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableGroups.length === 0 ? (
+                    <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                      No other groups available
+                    </div>
+                  ) : (
+                    availableGroups.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{g.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {availableGroups.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Create another group first to enable transfers
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Info Message */}
+          <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200">
+            <div className="flex items-start gap-2">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="min-w-0 flex-1">
+                The selected member{selectedMemberIds.length === 1 ? '' : 's'} will be{' '}
+                <strong>removed</strong> from <strong>{group.name}</strong> and{' '}
+                <strong>added</strong> to the selected group. Their permissions will be updated
+                accordingly.
+              </div>
+            </div>
+          </div>
+        </div>
+      </MemberDialog>
+
+      {/* Remove Members Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={removeMembersDialog.isOpen}
+        onConfirm={handleRemoveMembersConfirm}
+        onCancel={() => {
+          removeMembersDialog.onClose();
+          setSelectedUserIds([]);
+        }}
+        title="Remove Members from Group"
+        message={
+          selectedUserIds.length > 0
+            ? `Are you sure you want to remove ${selectedUserIds.length} member${selectedUserIds.length === 1 ? '' : 's'} from "${group.name}"? This action cannot be undone.`
+            : 'Are you sure you want to remove these members?'
+        }
+        confirmLabel={isRemovingMembers ? 'Removing...' : 'Remove Members'}
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </DashboardLayout>
   );
 }
