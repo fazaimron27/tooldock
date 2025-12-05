@@ -93,8 +93,13 @@ class DashboardController extends Controller
             ->count();
 
         $inactive = DB::table('modules_statuses')
-            ->where('is_installed', true)
-            ->where('is_active', false)
+            ->where(function ($query) {
+                $query->where('is_installed', false)
+                    ->orWhere(function ($q) {
+                        $q->where('is_installed', true)
+                            ->where('is_active', false);
+                    });
+            })
             ->count();
 
         return [
