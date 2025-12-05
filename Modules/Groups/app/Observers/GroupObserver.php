@@ -39,14 +39,19 @@ class GroupObserver
     }
 
     /**
-     * Handle the Group "deleted" event.
+     * Handle the Group "deleting" event.
      *
      * Clear permission cache when a group is deleted.
      * Also clear menu cache for all users who were in this group.
+     *
+     * Note: We use "deleting" instead of "deleted" because we need to
+     * access the relationship before the pivot table entries are removed.
+     * The "deleting" event fires before deletion, so relationships are still accessible.
      */
-    public function deleted(Group $group): void
+    public function deleting(Group $group): void
     {
         $userIds = $group->users()->pluck('users.id')->toArray();
+
         if (! empty($userIds)) {
             $this->cacheService->clearForGroupDeletion($userIds);
         }
