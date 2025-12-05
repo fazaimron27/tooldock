@@ -69,6 +69,26 @@ export default function Index({ users, defaultPerPage = 20 }) {
         header: 'Email',
       },
       {
+        id: 'group',
+        header: 'Group',
+        cell: (info) => {
+          const user = info.row.original;
+          const groups = user.groups || [];
+          if (groups.length === 0) {
+            return <span className="text-muted-foreground text-sm">No group</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-2">
+              {groups.map((group) => (
+                <Badge key={group.id} variant="outline">
+                  {group.name}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         id: 'roles',
         header: 'Roles',
         cell: (info) => {
