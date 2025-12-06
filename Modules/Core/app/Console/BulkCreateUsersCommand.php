@@ -92,7 +92,7 @@ class BulkCreateUsersCommand extends Command
                 description: "Creating {$withObserver} users WITH observer (Guest assignment)..."
             );
 
-            $this->info("✓ Created {$withObserver} users with observer (Guest group assigned).");
+            $this->info("Created {$withObserver} users with observer (Guest group assigned).");
 
             /**
              * Optionally trigger audit log creation using direct bulk insertion.
@@ -118,7 +118,7 @@ class BulkCreateUsersCommand extends Command
                 description: "Creating {$withoutObserver} users WITHOUT observer..."
             );
 
-            $this->info("✓ Created {$withoutObserver} users without observer (no groups assigned).");
+            $this->info("Created {$withoutObserver} users without observer (no groups assigned).");
 
             /**
              * Optionally trigger audit log creation using direct bulk insertion.
@@ -187,7 +187,7 @@ class BulkCreateUsersCommand extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info('✓ Created audit logs directly for '.count($userIds).' users (no queue).');
+        $this->info('Created audit logs directly for '.count($userIds).' users (no queue).');
     }
 
     /**
