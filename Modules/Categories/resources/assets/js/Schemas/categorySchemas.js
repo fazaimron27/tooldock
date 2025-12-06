@@ -27,7 +27,7 @@ export const createCategorySchema = z.object({
     .max(50, 'Type must not exceed 50 characters')
     .regex(typeRegex, 'Type must contain only lowercase letters, numbers, underscores, or hyphens')
     .transform((val) => val.toLowerCase()),
-  parent_id: z.coerce.number().optional().or(z.literal('')),
+  parent_id: z.string().optional().or(z.literal('')),
   color: z
     .string()
     .regex(colorRegex, 'Color must be a valid hex color (e.g., #000000)')
@@ -48,7 +48,7 @@ export const updateCategorySchema = z.object({
     .max(50, 'Type must not exceed 50 characters')
     .regex(typeRegex, 'Type must contain only lowercase letters, numbers, underscores, or hyphens')
     .transform((val) => val.toLowerCase()),
-  parent_id: z.coerce.number().optional().or(z.literal('')),
+  parent_id: z.string().optional().or(z.literal('')),
   color: z
     .string()
     .regex(colorRegex, 'Color must be a valid hex color (e.g., #000000)')

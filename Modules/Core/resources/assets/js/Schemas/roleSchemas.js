@@ -13,7 +13,7 @@ export const createRoleSchema = z.object({
     .string()
     .min(1, 'Role name is required')
     .max(255, 'Role name must not exceed 255 characters'),
-  permissions: z.array(z.coerce.number()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 /**
@@ -24,7 +24,7 @@ export const updateRoleSchema = z.object({
     .string()
     .min(1, 'Role name is required')
     .max(255, 'Role name must not exceed 255 characters'),
-  permissions: z.array(z.coerce.number()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 /**

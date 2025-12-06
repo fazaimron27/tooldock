@@ -53,7 +53,7 @@ export default function UpdateProfileInformation({
                 label="Avatar"
                 value={avatar?.url || (field.value ? String(field.value) : null)}
                 onChange={(value) => {
-                  field.onChange(value ? parseInt(value) : null);
+                  field.onChange(value || null);
                 }}
                 accept="image/*"
                 directory="avatars"

@@ -15,7 +15,7 @@ export const createUserSchema = z
     email: emailSchema,
     password: passwordSchema,
     password_confirmation: z.string(),
-    roles: z.array(z.coerce.number()).optional(),
+    roles: z.array(z.string()).optional(),
   })
   .refine((data) => data.password === data.password_confirmation, {
     message: "Passwords don't match",
@@ -32,7 +32,7 @@ export const updateUserSchema = z
     email: emailSchema,
     password: z.string().optional().or(z.literal('')),
     password_confirmation: z.string().optional().or(z.literal('')),
-    roles: z.array(z.coerce.number()).optional(),
+    roles: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
