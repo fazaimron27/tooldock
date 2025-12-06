@@ -7,6 +7,7 @@ import { Link } from '@inertiajs/react';
 import { Quote } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { ModeToggle } from '@/Components/ModeToggle';
 
 export default function AuthLayout({ children }) {
   return (
@@ -48,6 +49,11 @@ export default function AuthLayout({ children }) {
       </div>
 
       <div className="flex flex-1 items-center justify-center bg-background p-6 lg:p-12">
+        {/* Fixed position in top-right corner of viewport */}
+        <div className="fixed top-4 right-4 z-50">
+          <ModeToggle />
+        </div>
+
         <div className="w-full max-w-md space-y-6">{children}</div>
       </div>
     </div>
