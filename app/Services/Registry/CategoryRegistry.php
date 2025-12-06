@@ -160,8 +160,14 @@ class CategoryRegistry
     public function seed(bool $strict = false): void
     {
         if (empty($this->categories)) {
+            Log::debug('CategoryRegistry: No categories registered to seed');
+
             return;
         }
+
+        Log::info('CategoryRegistry: Starting category seeding', [
+            'total_categories' => count($this->categories),
+        ]);
 
         DB::transaction(function () use ($strict) {
             $categoriesByType = [];
@@ -181,12 +187,14 @@ class CategoryRegistry
             }
 
             if ($totalCreated > 0 || $totalFound > 0 || $totalErrors > 0) {
-                Log::debug('CategoryRegistry: Seeding completed', [
+                Log::info('CategoryRegistry: Seeding completed', [
                     'created' => $totalCreated,
                     'found' => $totalFound,
                     'errors' => $totalErrors,
                     'total' => count($this->categories),
                 ]);
+            } else {
+                Log::debug('CategoryRegistry: No categories to seed or all already exist');
             }
         });
     }
@@ -234,6 +242,12 @@ class CategoryRegistry
                     $parentMap[$category['slug']] = $parentCategory;
                     $existingCategories->put("{$parentCategory->type}:{$parentCategory->slug}", $parentCategory);
                     $created++;
+                    Log::debug('CategoryRegistry: Created category', [
+                        'module' => $category['module'],
+                        'type' => $category['type'],
+                        'slug' => $category['slug'],
+                        'name' => $category['name'],
+                    ]);
                 } catch (\Exception $e) {
                     $errors++;
                     Log::error('CategoryRegistry: Failed to create category', [
@@ -299,6 +313,13 @@ class CategoryRegistry
                         $existingCategories->put("{$childCategory->type}:{$childCategory->slug}", $childCategory);
                         $created++;
                         $createdInThisPass = true;
+                        Log::debug('CategoryRegistry: Created child category', [
+                            'module' => $category['module'],
+                            'type' => $category['type'],
+                            'slug' => $category['slug'],
+                            'name' => $category['name'],
+                            'parent_slug' => $category['parent_slug'],
+                        ]);
                     } catch (\Exception $e) {
                         $errors++;
                         Log::error('CategoryRegistry: Failed to create child category', [
@@ -388,7 +409,7 @@ class CategoryRegistry
     /**
      * Recursively delete a category tree, only deleting children from the same module.
      *
-     * @param  array<int>  $categoryIds  Array of category IDs to delete
+     * @param  array<string>  $categoryIds  Array of category IDs to delete
      * @param  string  $moduleName  Module name to filter children by
      */
     private function deleteCategoryTree(array $categoryIds, string $moduleName): void
@@ -415,7 +436,7 @@ class CategoryRegistry
      * When a module's category is deleted, any children from other modules
      * will become orphaned (parent_id set to null by foreign key constraint).
      *
-     * @param  array<int>  $categoryIds  Array of category IDs being deleted
+     * @param  array<string>  $categoryIds  Array of category IDs being deleted
      * @param  string  $moduleName  Module name being uninstalled
      * @return int Number of orphaned categories detected
      */
@@ -451,7 +472,7 @@ class CategoryRegistry
     /**
      * Count total categories in a tree (including children) that belong to the same module.
      *
-     * @param  array<int>  $categoryIds  Array of category IDs to count
+     * @param  array<string>  $categoryIds  Array of category IDs to count
      * @param  string  $moduleName  Module name to filter children by
      * @return int Total count including all children
      */

@@ -70,11 +70,11 @@ class UpdateCategoryRequest extends FormRequest
      * For example, if C has parent B, and B has parent A, setting C's parent to A
      * is fine - it just makes C a direct child of A instead of a grandchild.
      *
-     * @param  int  $categoryId  The ID of the category being updated
-     * @param  int  $newParentId  The ID of the new parent
+     * @param  string  $categoryId  The ID of the category being updated
+     * @param  string  $newParentId  The ID of the new parent
      * @return bool True if it would create a circular reference
      */
-    private function wouldCreateCircularReference(int $categoryId, int $newParentId): bool
+    private function wouldCreateCircularReference(string $categoryId, string $newParentId): bool
     {
         if ($categoryId === $newParentId) {
             return true;
@@ -95,10 +95,10 @@ class UpdateCategoryRequest extends FormRequest
     /**
      * Get all ancestor IDs for a category recursively.
      *
-     * @param  int  $categoryId  The category ID
-     * @return array<int> Array of ancestor IDs
+     * @param  string  $categoryId  The category ID
+     * @return array<string> Array of ancestor IDs
      */
-    private function getAllAncestors(int $categoryId): array
+    private function getAllAncestors(string $categoryId): array
     {
         $ancestors = [];
         $visited = [];

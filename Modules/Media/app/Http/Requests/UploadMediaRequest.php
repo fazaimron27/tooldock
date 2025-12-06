@@ -35,7 +35,7 @@ class UploadMediaRequest extends FormRequest
             ],
             'directory' => ['sometimes', 'string', 'max:255'],
             'model_type' => ['sometimes', 'string', 'max:255'],
-            'model_id' => ['sometimes', 'integer', 'min:1'],
+            'model_id' => ['sometimes', 'string'],
         ];
     }
 
@@ -58,8 +58,7 @@ class UploadMediaRequest extends FormRequest
             'directory.max' => 'The directory name must not exceed 255 characters.',
             'model_type.string' => 'The model type must be a valid string.',
             'model_type.max' => 'The model type must not exceed 255 characters.',
-            'model_id.integer' => 'The model ID must be a valid number.',
-            'model_id.min' => 'The model ID must be at least 1.',
+            'model_id.string' => 'The model ID must be a valid UUID.',
         ];
     }
 }

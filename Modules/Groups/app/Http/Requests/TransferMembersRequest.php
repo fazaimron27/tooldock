@@ -42,13 +42,13 @@ class TransferMembersRequest extends FormRequest
             ],
             'user_ids.*' => [
                 'required',
-                'integer',
+                'string',
                 'exists:'.(config('permission.table_names.users') ?? 'users').',id',
                 Rule::exists('group_user', 'user_id')->where('group_id', $currentGroupId),
             ],
             'target_group_id' => [
                 'required',
-                'integer',
+                'string',
                 'exists:groups,id',
                 Rule::notIn([$currentGroupId]),
             ],

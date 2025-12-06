@@ -30,9 +30,9 @@ class PermissionCacheService
      * clears for all users. This method exists for future extensibility
      * if user-specific caching is implemented.
      *
-     * @param  int  $userId  User ID (currently unused, reserved for future use)
+     * @param  string  $userId  User ID (currently unused, reserved for future use)
      */
-    public function clearForUser(int $userId): void
+    public function clearForUser(string $userId): void
     {
         $this->clear();
     }

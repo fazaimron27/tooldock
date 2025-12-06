@@ -37,7 +37,7 @@ class AddMembersRequest extends FormRequest
             ],
             'user_ids.*' => [
                 'required',
-                'integer',
+                'string',
                 'exists:'.(config('permission.table_names.users') ?? 'users').',id',
             ],
         ];
@@ -55,7 +55,7 @@ class AddMembersRequest extends FormRequest
             'user_ids.array' => 'User IDs must be an array.',
             'user_ids.min' => 'At least one user must be selected.',
             'user_ids.*.required' => 'Each user ID is required.',
-            'user_ids.*.integer' => 'Each user ID must be an integer.',
+            'user_ids.*.string' => 'Each user ID must be a valid UUID.',
             'user_ids.*.exists' => 'One or more selected users do not exist.',
         ];
     }
