@@ -6,6 +6,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { Github } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { ModeToggle } from '@/Components/ModeToggle';
 import { Button } from '@/Components/ui/button';
 
 export default function LandingLayout({ children }) {
@@ -72,6 +73,7 @@ export default function LandingLayout({ children }) {
                 </Button>
               </>
             )}
+            <ModeToggle />
           </nav>
         </div>
       </header>
