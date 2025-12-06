@@ -14,8 +14,8 @@ return new class extends Migration
         $tableNames = config('permission.table_names');
 
         Schema::create('group_has_roles', function (Blueprint $table) use ($tableNames) {
-            $table->foreignId('group_id')->constrained('groups')->onDelete('cascade');
-            $table->foreignId('role_id')->constrained($tableNames['roles'])->onDelete('cascade');
+            $table->foreignUuid('group_id')->constrained('groups')->onDelete('cascade');
+            $table->foreignUuid('role_id')->constrained($tableNames['roles'])->onDelete('cascade');
 
             $table->timestamps();
             $table->primary(['group_id', 'role_id']);

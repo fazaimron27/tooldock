@@ -16,8 +16,8 @@ return new class extends Migration
         $pivotPermission = $columnNames['permission_pivot_key'] ?? 'permission_id';
 
         Schema::create('group_has_permissions', function (Blueprint $table) use ($tableNames, $pivotPermission) {
-            $table->foreignId('group_id')->constrained('groups')->onDelete('cascade');
-            $table->unsignedBigInteger($pivotPermission);
+            $table->foreignUuid('group_id')->constrained('groups')->onDelete('cascade');
+            $table->uuid($pivotPermission);
 
             $table->foreign($pivotPermission)
                 ->references('id')

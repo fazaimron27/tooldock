@@ -12,18 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('media_files', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('disk')->default('public');
             $table->string('path');
             $table->string('filename');
             $table->string('mime_type');
             $table->unsignedBigInteger('size');
-            $table->string('model_type')->nullable();
-            $table->unsignedBigInteger('model_id')->nullable();
+            $table->nullableUuidMorphs('model');
             $table->boolean('is_temporary')->default(false);
             $table->timestamps();
 
-            $table->index(['model_type', 'model_id']);
             $table->index('is_temporary');
             $table->index('created_at');
         });

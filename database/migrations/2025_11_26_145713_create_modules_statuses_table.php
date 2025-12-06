@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('modules_statuses', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name')->unique()->index();
             $table->boolean('is_active')->default(false);
             $table->boolean('is_installed')->default(false);
