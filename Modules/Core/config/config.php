@@ -50,4 +50,18 @@ return [
     */
     'super_admin_email' => env('SUPER_ADMIN_EMAIL', 'superadmin@example.com'),
     'super_admin_password' => env('SUPER_ADMIN_PASSWORD', 'password'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Search Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | Time-to-live (TTL) in seconds for user search results cache.
+    | This cache is used by the user search API endpoint for autocomplete/combobox.
+    |
+    | Default: 300 seconds (5 minutes)
+    | Set to 0 to disable caching.
+    |
+    */
+    'user_search_cache_ttl' => env('CORE_USER_SEARCH_CACHE_TTL', 300),
 ];
