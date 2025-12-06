@@ -3,16 +3,20 @@
 namespace Modules\AuditLog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\Cache\CacheService;
 use App\Services\Data\DatatableQueryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Models\AuditLog;
-use Modules\Core\App\Models\User;
 
 class AuditLogController extends Controller
 {
+    public function __construct(
+        private CacheService $cacheService
+    ) {}
+
     /**
      * Display a paginated listing of audit logs.
      *
@@ -22,7 +26,23 @@ class AuditLogController extends Controller
     {
         $this->authorize('viewAny', AuditLog::class);
 
-        $query = AuditLog::with(['user.avatar']);
+        /**
+         * Optimize query performance by selecting only required columns.
+         * Exclude large JSON fields (old_values, new_values) which can exceed 770KB each.
+         * These fields are only needed on the detail page and loaded separately via deferred props.
+         */
+        $query = AuditLog::with(['user:id,name', 'user.avatar:id,path'])
+            ->select([
+                'id',
+                'user_id',
+                'event',
+                'auditable_type',
+                'auditable_id',
+                'url',
+                'ip_address',
+                'user_agent',
+                'created_at',
+            ]);
         $this->applyFilters($query, $request);
 
         $defaultPerPage = 20;
@@ -39,59 +59,22 @@ class AuditLogController extends Controller
             ]
         );
 
+        /**
+         * Load auditable relationships only for items on the current page.
+         * Prevents loading relationships for all paginated items, reducing memory usage.
+         */
         $this->loadAuditableRelationshipsBatch($auditLogs->items());
 
-        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-
         /**
-         * Get event types dynamically from filtered query (excluding event filter itself).
-         * This ensures event types reflect what's available in the current filtered results.
-         *
-         * TODO: Consider adding caching with dynamic cache keys if performance becomes an issue.
-         * Cache key should include all filter parameters (except event) to maintain accuracy.
-         * Suggested TTL: 5-15 minutes for balance between performance and freshness.
+         * Load filter options with deferred execution and simplified caching.
+         * Filter options are only loaded when needed, and cache keys exclude unused filter params
+         * to improve cache hit rates.
          */
-        $eventTypesQuery = AuditLog::query();
-        $this->applyFiltersForOptions($eventTypesQuery, $request, excludeEvent: true);
-        $eventTypes = $eventTypesQuery
-            ->select('event')
-            ->distinct()
-            ->orderBy('event')
-            ->pluck('event')
-            ->map(function ($event) {
-                return [
-                    'value' => $event,
-                    'label' => ucfirst($event),
-                ];
-            })
-            ->toArray();
-
-        /**
-         * Get model types dynamically from filtered query (excluding auditable_type filter itself).
-         * This ensures model types reflect what's available in the current filtered results.
-         *
-         * TODO: Consider adding caching with dynamic cache keys if performance becomes an issue.
-         * Cache key should include all filter parameters (except auditable_type) to maintain accuracy.
-         * Suggested TTL: 5-15 minutes for balance between performance and freshness.
-         */
-        $modelTypesQuery = AuditLog::query();
-        $this->applyFiltersForOptions($modelTypesQuery, $request, excludeAuditableType: true);
-        $modelTypes = $modelTypesQuery
-            ->select('auditable_type')
-            ->distinct()
-            ->orderBy('auditable_type')
-            ->pluck('auditable_type')
-            ->map(function ($type) {
-                return [
-                    'value' => $type,
-                    'label' => class_basename($type),
-                ];
-            })
-            ->toArray();
+        $eventTypes = $this->getEventTypes($request);
+        $modelTypes = $this->getModelTypes($request);
 
         return Inertia::render('Modules::AuditLog/Index', [
             'auditLogs' => $auditLogs,
-            'users' => $users,
             'modelTypes' => $modelTypes,
             'eventTypes' => $eventTypes,
             'defaultPerPage' => $defaultPerPage,
@@ -108,16 +91,47 @@ class AuditLogController extends Controller
 
     /**
      * Display the specified audit log.
+     * Uses deferred props to load large old_values and new_values separately for better performance.
      */
     public function show(AuditLog $auditLog): Response
     {
         $this->authorize('view', $auditLog);
 
-        $auditLog->load(['user.avatar']);
+        /**
+         * Reload audit log excluding large JSON fields for faster initial page render.
+         * Route model binding loads all columns by default, so we explicitly select
+         * only needed columns to reduce initial payload size.
+         */
+        $auditLogId = $auditLog->id;
+        $auditLog = AuditLog::select([
+            'id',
+            'user_id',
+            'event',
+            'auditable_type',
+            'auditable_id',
+            'url',
+            'ip_address',
+            'user_agent',
+            'created_at',
+        ])
+            ->with(['user:id,name', 'user.avatar:id,path'])
+            ->findOrFail($auditLogId);
+
         $this->loadAuditableRelationshipsBatch([$auditLog]);
 
+        /**
+         * Defer loading of large JSON fields to improve initial page load performance.
+         * Fields exceeding 770KB each are loaded separately after the initial render
+         * using Inertia's deferred props feature.
+         */
         return Inertia::render('Modules::AuditLog/Show', [
             'auditLog' => $auditLog,
+            'oldValues' => Inertia::defer(function () use ($auditLogId) {
+                return AuditLog::where('id', $auditLogId)->value('old_values');
+            }),
+            'newValues' => Inertia::defer(function () use ($auditLogId) {
+                return AuditLog::where('id', $auditLogId)->value('new_values');
+            }),
         ]);
     }
 
@@ -235,9 +249,19 @@ class AuditLogController extends Controller
 
         foreach ($groupedByType as $type => $auditLogsByType) {
             try {
+                $ids = array_keys($auditLogsByType);
+                if (empty($ids)) {
+                    continue;
+                }
+
+                /**
+                 * Determine primary key by instantiating model temporarily.
+                 * Immediately unset to free memory, as we only need the key name.
+                 */
                 $modelInstance = new $type;
                 $primaryKey = $modelInstance->getKeyName();
-                $ids = array_keys($auditLogsByType);
+                unset($modelInstance);
+
                 $models = $type::whereIn($primaryKey, $ids)->get()->keyBy($primaryKey);
 
                 foreach ($auditLogsByType as $id => $auditLogsForId) {
@@ -293,11 +317,12 @@ class AuditLogController extends Controller
         bool $excludeEvent = false,
         bool $excludeAuditableType = false
     ): void {
+        /**
+         * Apply user filter directly without existence check.
+         * Foreign key constraint ensures user_id validity, making explicit check redundant.
+         */
         $query->when($request->filled('user_id'), function ($q) use ($request) {
-            $userId = $request->input('user_id');
-            if (User::where('id', $userId)->exists()) {
-                $q->where('user_id', $userId);
-            }
+            $q->where('user_id', $request->input('user_id'));
         });
 
         $query->when(
@@ -340,5 +365,107 @@ class AuditLogController extends Controller
                 $q->whereDate('created_at', '<=', $endDate);
             });
         }
+    }
+
+    /**
+     * Get event types for filter dropdown.
+     * Uses simplified caching strategy for better performance.
+     */
+    private function getEventTypes(Request $request): array
+    {
+        /**
+         * Generate cache key based only on active filters to improve cache hit rate.
+         * Excludes unused filter parameters from cache key generation.
+         */
+        $hasFilters = $request->filled('user_id') || $request->filled('system') ||
+            $request->filled('auditable_type') || $request->filled('start_date') ||
+            $request->filled('end_date');
+
+        $cacheKey = $hasFilters
+            ? 'audit_logs_event_types_'.md5(json_encode([
+                'user_id' => $request->input('user_id'),
+                'system' => $request->input('system'),
+                'auditable_type' => $request->input('auditable_type'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+            ]))
+            : 'audit_logs_event_types_all';
+
+        return $this->cacheService->rememberForever(
+            $cacheKey,
+            function () use ($request) {
+                $eventTypesQuery = AuditLog::query();
+                $this->applyFiltersForOptions($eventTypesQuery, $request, excludeEvent: true);
+
+                /**
+                 * Use raw SQL for distinct event selection to optimize performance on large tables.
+                 * Reduces overhead compared to Eloquent's distinct() method.
+                 */
+                return $eventTypesQuery
+                    ->selectRaw('DISTINCT event')
+                    ->orderBy('event')
+                    ->pluck('event')
+                    ->map(function ($event) {
+                        return [
+                            'value' => $event,
+                            'label' => ucfirst($event),
+                        ];
+                    })
+                    ->toArray();
+            },
+            'auditlog',
+            'AuditLogController'
+        );
+    }
+
+    /**
+     * Get model types for filter dropdown.
+     * Uses simplified caching strategy for better performance.
+     */
+    private function getModelTypes(Request $request): array
+    {
+        /**
+         * Generate cache key based only on active filters to improve cache hit rate.
+         * Excludes unused filter parameters from cache key generation.
+         */
+        $hasFilters = $request->filled('user_id') || $request->filled('system') ||
+            $request->filled('event') || $request->filled('start_date') ||
+            $request->filled('end_date');
+
+        $cacheKey = $hasFilters
+            ? 'audit_logs_model_types_'.md5(json_encode([
+                'user_id' => $request->input('user_id'),
+                'system' => $request->input('system'),
+                'event' => $request->input('event'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+            ]))
+            : 'audit_logs_model_types_all';
+
+        return $this->cacheService->rememberForever(
+            $cacheKey,
+            function () use ($request) {
+                $modelTypesQuery = AuditLog::query();
+                $this->applyFiltersForOptions($modelTypesQuery, $request, excludeAuditableType: true);
+
+                /**
+                 * Use raw SQL for distinct auditable_type selection to optimize performance on large tables.
+                 * Reduces overhead compared to Eloquent's distinct() method.
+                 */
+                return $modelTypesQuery
+                    ->selectRaw('DISTINCT auditable_type')
+                    ->orderBy('auditable_type')
+                    ->pluck('auditable_type')
+                    ->map(function ($type) {
+                        return [
+                            'value' => $type,
+                            'label' => class_basename($type),
+                        ];
+                    })
+                    ->toArray();
+            },
+            'auditlog',
+            'AuditLogController'
+        );
     }
 }

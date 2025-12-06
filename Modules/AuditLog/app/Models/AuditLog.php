@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -134,7 +135,7 @@ class AuditLog extends Model
             self::$tableExistenceCache[$type] = $exists;
 
             return $exists;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             self::$tableExistenceCache[$type] = false;
 
             return false;
@@ -184,7 +185,7 @@ class AuditLog extends Model
             self::$tableNameCache[$modelClass] = $tableName;
 
             return $tableName;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             self::$tableNameCache[$modelClass] = null;
 
             return null;
@@ -226,5 +227,86 @@ class AuditLog extends Model
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+    }
+
+    /**
+     * Create an audit log entry directly without queuing.
+     *
+     * Useful for bulk operations where queuing would be inefficient.
+     * This method bypasses the CreateAuditLogJob queue and inserts directly.
+     *
+     * @param  string  $event  The event type ('created', 'updated', 'deleted')
+     * @param  Model  $model  The model being audited
+     * @param  array|null  $oldValues  Old values (for updated/deleted events)
+     * @param  array|null  $newValues  New values (for created/updated events)
+     * @param  int|null  $userId  The user ID performing the action
+     * @param  string|null  $url  The request URL
+     * @param  string|null  $ipAddress  The request IP address
+     * @param  string|null  $userAgent  The request user agent
+     * @return self
+     */
+    public static function createDirect(
+        string $event,
+        Model $model,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?int $userId = null,
+        ?string $url = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null
+    ): self {
+        return self::create([
+            'user_id' => $userId ?? Auth::id(),
+            'event' => $event,
+            'auditable_type' => get_class($model),
+            'auditable_id' => $model->getKey(),
+            'old_values' => $oldValues,
+            'new_values' => $newValues,
+            'url' => $url ?? request()?->url(),
+            'ip_address' => $ipAddress ?? request()?->ip(),
+            'user_agent' => $userAgent ?? request()?->userAgent(),
+        ]);
+    }
+
+    /**
+     * Bulk insert audit logs directly without queuing.
+     *
+     * Much faster than individual creates for bulk operations.
+     * Uses raw insert() for maximum performance.
+     *
+     * @param  array<int, array{event: string, model: Model, oldValues?: array|null, newValues?: array|null, userId?: int|null, url?: string|null, ipAddress?: string|null, userAgent?: string|null}>  $entries  Array of audit log entries
+     * @return void
+     */
+    public static function bulkInsert(array $entries): void
+    {
+        if (empty($entries)) {
+            return;
+        }
+
+        $auditLogs = [];
+        $now = now();
+
+        foreach ($entries as $entry) {
+            $model = $entry['model'];
+            /**
+             * JSON encode arrays manually since raw insert() bypasses Eloquent casts.
+             * Eloquent's create() would handle this automatically, but bulk insert requires manual encoding.
+             */
+            $auditLogs[] = [
+                'user_id' => $entry['userId'] ?? Auth::id(),
+                'event' => $entry['event'],
+                'auditable_type' => get_class($model),
+                'auditable_id' => $model->getKey(),
+                'old_values' => $entry['oldValues'] !== null ? json_encode($entry['oldValues']) : null,
+                'new_values' => $entry['newValues'] !== null ? json_encode($entry['newValues']) : null,
+                'url' => $entry['url'] ?? request()?->url(),
+                'ip_address' => $entry['ipAddress'] ?? request()?->ip(),
+                'user_agent' => $entry['userAgent'] ?? request()?->userAgent(),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        self::insert($auditLogs);
     }
 }
