@@ -1,0 +1,18 @@
+{
+  "name": "Groups",
+  "alias": "groups",
+  "version": "1.0.0",
+  "description": "Group-Based Access Control (GBAC) module for managing user groups and group-level permissions.",
+  "keywords": ["groups", "gbac", "permissions", "access-control"],
+  "priority": -997,
+  "protected": true,
+  "active": 1,
+  "providers": [
+    "Modules\\Groups\\Providers\\GroupsServiceProvider",
+    "Modules\\Groups\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core"],
+  "icon": "UserPlus",
+  "author": "Tool Dock Team"
+}

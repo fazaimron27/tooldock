@@ -7,20 +7,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default User Role
+    | Default User Group
     |--------------------------------------------------------------------------
     |
-    | This value determines the default role assigned to newly registered users.
+    | This value determines the default group assigned to newly registered users.
     | Users created through the registration form will automatically receive
-    | this role. Users created by administrators can still be assigned
-    | different roles during creation.
+    | this group. Users created by administrators can still be assigned
+    | different groups during creation.
     |
-    | Available roles:
-    | - Roles::STAFF (default) - Basic user with minimal permissions
-    | - Roles::MANAGER - User with view users permission
-    | - Roles::AUDITOR - User with view users permission
-    | - Roles::ADMINISTRATOR - User with full user/role management
-    | - Roles::SUPER_ADMIN - Full system access (not recommended for auto-assignment)
+    | The default group is "Guest" which has no permissions and redirects users
+    | to a welcome page instead of the dashboard.
+    |
+    */
+    'default_group' => env('CORE_DEFAULT_GROUP', 'Guest'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default User Role (Deprecated)
+    |--------------------------------------------------------------------------
+    |
+    | DEPRECATED: This setting is kept for backward compatibility but is no
+    | longer used. New users are assigned to the default group instead.
+    |
+    | This value was previously used to assign a default role to newly registered
+    | users. The default group system has replaced this functionality.
     |
     */
     'default_role' => env('CORE_DEFAULT_ROLE', Roles::STAFF),
@@ -40,4 +50,18 @@ return [
     */
     'super_admin_email' => env('SUPER_ADMIN_EMAIL', 'superadmin@example.com'),
     'super_admin_password' => env('SUPER_ADMIN_PASSWORD', 'password'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Search Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | Time-to-live (TTL) in seconds for user search results cache.
+    | This cache is used by the user search API endpoint for autocomplete/combobox.
+    |
+    | Default: 300 seconds (5 minutes)
+    | Set to 0 to disable caching.
+    |
+    */
+    'user_search_cache_ttl' => env('CORE_USER_SEARCH_CACHE_TTL', 300),
 ];

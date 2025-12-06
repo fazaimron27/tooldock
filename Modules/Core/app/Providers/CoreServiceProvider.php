@@ -20,6 +20,7 @@ use Modules\Core\App\Services\CoreDashboardService;
 use Modules\Core\App\Services\CoreMenuRegistrar;
 use Modules\Core\App\Services\CorePermissionRegistrar;
 use Modules\Core\App\Services\SuperAdminService;
+use Modules\Core\Console\BulkCreateUsersCommand;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -75,7 +76,12 @@ class CoreServiceProvider extends ServiceProvider
     /**
      * Register commands in the format of Command::class
      */
-    protected function registerCommands(): void {}
+    protected function registerCommands(): void
+    {
+        $this->commands([
+            BulkCreateUsersCommand::class,
+        ]);
+    }
 
     /**
      * Register command Schedules.

@@ -25,6 +25,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['group', 'order']);
+            $table->index('is_active');
+            $table->index('parent_id');
         });
     }
 

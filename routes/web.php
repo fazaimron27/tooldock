@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Core\Http\Controllers\DashboardController;
+use Modules\Core\Http\Controllers\GuestController;
 use Modules\Core\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
@@ -22,6 +23,7 @@ Route::prefix('tooldock')->middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::prefix('tooldock')->middleware('auth')->group(function () {
+    Route::get('/welcome', [GuestController::class, 'index'])->name('guest.welcome');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

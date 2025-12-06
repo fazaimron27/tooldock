@@ -12,6 +12,7 @@ use App\Events\Modules\ModuleUninstalled;
 use App\Events\Modules\ModuleUninstalling;
 use App\Exceptions\MissingDependencyException;
 use App\Services\Registry\CategoryRegistry;
+use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
@@ -39,6 +40,7 @@ class ModuleLifecycleService
      * @param  MenuRegistry  $menuRegistry
      * @param  RoleRegistry  $roleRegistry
      * @param  PermissionRegistry  $permissionRegistry
+     * @param  GroupRegistry  $groupRegistry
      */
     public function __construct(
         private RepositoryInterface $moduleRepository,
@@ -53,7 +55,8 @@ class ModuleLifecycleService
         private CategoryRegistry $categoryRegistry,
         private MenuRegistry $menuRegistry,
         private RoleRegistry $roleRegistry,
-        private PermissionRegistry $permissionRegistry
+        private PermissionRegistry $permissionRegistry,
+        private GroupRegistry $groupRegistry
     ) {
         $this->discoveryService->setLifecycleService($this);
     }
@@ -314,7 +317,7 @@ class ModuleLifecycleService
     /**
      * Seed all registries for a module.
      *
-     * Centralized method to seed all registries (settings, roles, categories, permissions)
+     * Centralized method to seed all registries (settings, roles, categories, permissions, groups)
      * with error handling. Uses fail-open strategy - continues on errors to prevent
      * one registry failure from blocking the entire operation.
      *
@@ -373,6 +376,16 @@ class ModuleLifecycleService
         }
 
         try {
+            $this->groupRegistry->seed();
+            Log::info("ModuleLifecycleService: Seeded groups for '{$moduleName}'");
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Group seeding failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
             $this->dependencyValidator->clearCache();
             Log::debug("ModuleLifecycleService: Cleared module dependency cache after seeding '{$moduleName}'");
         } catch (\Exception $e) {
@@ -385,7 +398,7 @@ class ModuleLifecycleService
     /**
      * Cleanup all registries for a module.
      *
-     * Centralized method to cleanup all registries (permissions, roles, settings, categories)
+     * Centralized method to cleanup all registries (permissions, roles, settings, categories, groups)
      * with error handling. Uses fail-open strategy - continues on errors to prevent
      * one registry failure from blocking the entire operation.
      *
@@ -453,6 +466,19 @@ class ModuleLifecycleService
             ]);
         } catch (\Exception $e) {
             Log::warning("ModuleLifecycleService: Menu cleanup failed for '{$moduleName}'", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+
+        try {
+            $stats = $this->groupRegistry->cleanup($moduleName);
+            Log::info("ModuleLifecycleService: Cleaned up groups for '{$moduleName}'", [
+                'deleted' => $stats['deleted'],
+                'skipped' => $stats['skipped'],
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("ModuleLifecycleService: Group cleanup failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

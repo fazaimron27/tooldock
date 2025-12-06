@@ -4,6 +4,7 @@ namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -18,6 +19,10 @@ class UserController extends Controller
 {
     use SyncsRelationshipsWithAuditLog;
 
+    public function __construct(
+        private MenuRegistry $menuRegistry
+    ) {}
+
     /**
      * Display a paginated listing of users.
      */
@@ -28,7 +33,15 @@ class UserController extends Controller
         $defaultPerPage = 20;
 
         $users = $datatableService->build(
-            User::with(['roles', 'avatar']),
+            User::with([
+                'roles' => function ($query) {
+                    $query->select('id', 'name');
+                },
+                'avatar',
+                'groups' => function ($query) {
+                    $query->select('id', 'name');
+                },
+            ]),
             [
                 'searchFields' => ['name', 'email'],
                 'allowedSorts' => ['name', 'email', 'created_at', 'updated_at'],
@@ -156,5 +169,7 @@ class UserController extends Controller
             relatedModelClass: Role::class,
             relationshipDisplayName: 'roles'
         );
+
+        $this->menuRegistry->clearCacheForUser($user->id);
     }
 }

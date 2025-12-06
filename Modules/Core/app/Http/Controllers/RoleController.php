@@ -4,7 +4,9 @@ namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
@@ -20,7 +22,8 @@ class RoleController extends Controller
     use SyncsRelationshipsWithAuditLog;
 
     public function __construct(
-        private PermissionService $permissionService
+        private PermissionService $permissionService,
+        private MenuRegistry $menuRegistry
     ) {}
 
     /**
@@ -43,6 +46,28 @@ class RoleController extends Controller
                 'defaultPerPage' => $defaultPerPage,
             ]
         );
+
+        $roleIds = array_column($roles->items(), 'id');
+        if (! empty($roleIds)) {
+            $groupsByRole = \Modules\Groups\Models\Group::query()
+                ->join('group_has_roles', 'groups.id', '=', 'group_has_roles.group_id')
+                ->whereIn('group_has_roles.role_id', $roleIds)
+                ->select('groups.id', 'groups.name', 'group_has_roles.role_id')
+                ->get()
+                ->groupBy('role_id')
+                ->map(fn ($groups) => $groups->map(fn ($group) => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                ])->values());
+
+            foreach ($roles->items() as $role) {
+                $role->setAttribute('groups', $groupsByRole->get($role->id, []));
+            }
+        } else {
+            foreach ($roles->items() as $role) {
+                $role->setAttribute('groups', []);
+            }
+        }
 
         return Inertia::render('Modules::Core/Roles/Index', [
             'roles' => $roles,
@@ -153,7 +178,25 @@ class RoleController extends Controller
                 ->with('error', 'Cannot delete role that is assigned to users.');
         }
 
+        $groupCount = DB::table('group_has_roles')
+            ->where('role_id', $role->id)
+            ->count();
+
+        if ($groupCount > 0) {
+            return redirect()->route('core.roles.index')
+                ->with('error', "Cannot delete role. It is used as a base role in {$groupCount} ".
+                    ($groupCount === 1 ? 'group' : 'groups').
+                    '. Please remove the role from all groups first.');
+        }
+
+        $userIds = $role->users()->pluck('users.id')->toArray();
         $role->delete();
+
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $this->menuRegistry->clearCacheForUser($userId);
+            }
+        }
 
         return redirect()->route('core.roles.index')
             ->with('success', 'Role deleted successfully.');
@@ -175,5 +218,12 @@ class RoleController extends Controller
             relatedModelClass: Permission::class,
             relationshipDisplayName: 'permissions'
         );
+
+        $userIds = $role->users()->pluck('users.id')->toArray();
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $this->menuRegistry->clearCacheForUser($userId);
+            }
+        }
     }
 }

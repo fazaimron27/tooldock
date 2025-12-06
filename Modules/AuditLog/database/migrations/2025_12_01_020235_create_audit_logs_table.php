@@ -25,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['auditable_type', 'auditable_id']);
+            $table->index('auditable_type');
             $table->index('user_id');
             $table->index('created_at');
             $table->index(['event', 'created_at']);

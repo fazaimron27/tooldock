@@ -12,12 +12,16 @@ use Modules\Core\App\Models\Menu;
  */
 class MenuObserver
 {
+    public function __construct(
+        private MenuRegistry $menuRegistry
+    ) {}
+
     /**
      * Handle the Menu "created" event.
      */
     public function created(Menu $menu): void
     {
-        app(MenuRegistry::class)->clearCache();
+        $this->menuRegistry->clearCache();
     }
 
     /**
@@ -25,7 +29,7 @@ class MenuObserver
      */
     public function updated(Menu $menu): void
     {
-        app(MenuRegistry::class)->clearCache();
+        $this->menuRegistry->clearCache();
     }
 
     /**
@@ -33,6 +37,6 @@ class MenuObserver
      */
     public function deleted(Menu $menu): void
     {
-        app(MenuRegistry::class)->clearCache();
+        $this->menuRegistry->clearCache();
     }
 }

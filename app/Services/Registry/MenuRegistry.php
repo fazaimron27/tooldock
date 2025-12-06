@@ -573,4 +573,18 @@ class MenuRegistry
     {
         $this->cacheService->clearTag(self::CACHE_TAG, 'MenuRegistry');
     }
+
+    /**
+     * Clear menu cache for a specific user.
+     *
+     * Called when user roles, permissions, or groups are modified
+     * to ensure menu visibility updates immediately.
+     *
+     * @param  int  $userId  User ID
+     */
+    public function clearCacheForUser(int $userId): void
+    {
+        $cacheKey = "menus:user:{$userId}";
+        $this->cacheService->forget($cacheKey, self::CACHE_TAG);
+    }
 }

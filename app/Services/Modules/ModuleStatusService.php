@@ -9,10 +9,10 @@ class ModuleStatusService
     /**
      * In-memory cache for module statuses (request lifecycle)
      *
-     * Structure: ['moduleName' => ['is_installed' => bool, 'is_active' => bool]]
+     * Structure: ['moduleName' => ['is_installed' => bool, 'is_active' => bool, 'version' => string]]
      * Loaded lazily on first read operation to avoid unnecessary queries.
      *
-     * @var array<string, array{is_installed: bool, is_active: bool}>|null
+     * @var array<string, array{is_installed: bool, is_active: bool, version: string}>|null
      */
     private ?array $statusCache = null;
 
@@ -22,7 +22,7 @@ class ModuleStatusService
      * Called lazily on first read operation to avoid unnecessary queries.
      * Uses a single query to load all module statuses for efficient caching.
      *
-     * @return array<string, array{is_installed: bool, is_active: bool}>
+     * @return array<string, array{is_installed: bool, is_active: bool, version: string}>
      */
     private function loadStatusCache(): array
     {
@@ -31,7 +31,7 @@ class ModuleStatusService
         }
 
         $statuses = DB::table('modules_statuses')
-            ->select('name', 'is_installed', 'is_active')
+            ->select('name', 'is_installed', 'is_active', 'version')
             ->get();
 
         $this->statusCache = [];
@@ -40,6 +40,7 @@ class ModuleStatusService
             $this->statusCache[$status->name] = [
                 'is_installed' => (bool) $status->is_installed,
                 'is_active' => (bool) $status->is_active,
+                'version' => $status->version ?? '1.0.0',
             ];
         }
 
@@ -238,5 +239,18 @@ class ModuleStatusService
         }
 
         return $installed;
+    }
+
+    /**
+     * Get all module statuses with version
+     *
+     * Returns all module statuses including version information.
+     * Uses in-memory cache to avoid repeated database queries.
+     *
+     * @return array<string, array{is_installed: bool, is_active: bool, version: string}> Map of module name to status data
+     */
+    public function getAllStatusesWithVersion(): array
+    {
+        return $this->loadStatusCache();
     }
 }

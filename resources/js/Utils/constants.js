@@ -45,3 +45,13 @@ export const DATE_FORMATS = {
   },
   relative: 'relative',
 };
+
+/**
+ * Base URL for API endpoints.
+ */
+export const API_BASEURL = '/api';
+
+/**
+ * API version identifier.
+ */
+export const API_VERSION = 'v1';

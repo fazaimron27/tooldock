@@ -14,6 +14,7 @@ use App\Services\Media\MediaConfigService;
 use App\Services\Modules\ProtectedModuleMigrationService;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
@@ -48,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CategoryRegistry::class);
         $this->app->singleton(RoleRegistry::class);
         $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(GroupRegistry::class);
         $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);

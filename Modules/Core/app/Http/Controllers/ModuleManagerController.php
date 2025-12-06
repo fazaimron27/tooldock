@@ -8,7 +8,6 @@ use App\Services\Modules\ModuleRegistryHelper;
 use App\Services\Modules\ModuleStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,28 +29,36 @@ class ModuleManagerController extends Controller
     {
         Gate::authorize('core.modules.manage');
 
+        /**
+         * Synchronize module status caches after potential external database changes.
+         * Ensures DatabaseActivator and ModuleStatusService caches are aligned.
+         */
         $this->registryHelper->reloadStatuses();
 
-        Module::scan();
+        /**
+         * Conditionally scan modules only in development or when explicitly configured.
+         * Module::all() uses cached scan results, so scanning on every request is unnecessary in production.
+         */
+        if (app()->environment('local') || config('modules.force_scan', false)) {
+            Module::scan();
+        }
+
         $allModules = Module::all();
 
-        $statuses = DB::table('modules_statuses')
-            ->select('name', 'is_installed', 'is_active', 'version')
-            ->get()
-            ->keyBy('name');
+        $statuses = $this->statusService->getAllStatusesWithVersion();
 
         $modules = collect($allModules)->map(function ($module) use ($statuses) {
             $moduleName = $module->getName();
-            $status = $statuses->get($moduleName);
+            $status = $statuses[$moduleName] ?? null;
 
             return [
                 'name' => $moduleName,
                 'description' => $module->get('description', ''),
-                'version' => $module->get('version', '1.0.0'),
+                'version' => ($status !== null && isset($status['version'])) ? $status['version'] : $module->get('version', '1.0.0'),
                 'icon' => $module->get('icon', 'Package'),
                 'author' => $module->get('author', ''),
-                'is_installed' => $status ? (bool) $status->is_installed : false,
-                'is_active' => $status ? (bool) $status->is_active : false,
+                'is_installed' => ($status !== null && isset($status['is_installed'])) ? $status['is_installed'] : false,
+                'is_active' => ($status !== null && isset($status['is_active'])) ? $status['is_active'] : false,
                 'requires' => $module->get('requires', []),
                 'protected' => $module->get('protected', false),
                 'keywords' => $module->get('keywords', []),
@@ -91,7 +98,7 @@ class ModuleManagerController extends Controller
                 ->with('success', "Module '{$request->module}' installed successfully.")
                 ->with('module_route_url', $this->getModuleRouteUrl($request->module));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', "Failed to install module: {$e->getMessage()}");
+            return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'install'));
         }
     }
 
@@ -111,13 +118,7 @@ class ModuleManagerController extends Controller
 
             return redirect()->back()->with('success', "Module '{$request->module}' uninstalled successfully.");
         } catch (\Exception $e) {
-            $errorMessage = str_replace("\n", ' ', trim($e->getMessage()));
-
-            if (! str_starts_with($errorMessage, 'Cannot ')) {
-                $errorMessage = "Failed to uninstall module: {$errorMessage}";
-            }
-
-            return redirect()->back()->with('error', $errorMessage);
+            return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'uninstall'));
         }
     }
 
@@ -149,13 +150,7 @@ class ModuleManagerController extends Controller
                 return redirect()->back()->with('success', $message);
             }
         } catch (\Exception $e) {
-            $errorMessage = str_replace("\n", ' ', trim($e->getMessage()));
-
-            if (! str_starts_with($errorMessage, 'Cannot ')) {
-                $errorMessage = "Failed to toggle module: {$errorMessage}";
-            }
-
-            return redirect()->back()->with('error', $errorMessage);
+            return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'toggle'));
         }
     }
 
@@ -175,11 +170,35 @@ class ModuleManagerController extends Controller
             if (Route::has($routeName)) {
                 return route($routeName);
             }
-        } catch (\Exception $e) {
-            // Route doesn't exist, fall through to fallback
+        } catch (\Exception) {
+            // Route not found, use fallback URL construction
         }
 
-        // All module routes use the /tooldock prefix
+        /**
+         * Fallback: Construct URL manually using standard module route prefix.
+         * All module routes follow the /tooldock/{module-name} pattern.
+         */
         return "/tooldock/{$moduleNameLower}";
+    }
+
+    /**
+     * Format error message for display
+     *
+     * Normalizes error messages by removing newlines and adding operation context
+     * if the error doesn't already start with "Cannot ".
+     *
+     * @param  string  $message  The original error message
+     * @param  string  $operation  The operation being performed (install, uninstall, toggle)
+     * @return string Formatted error message
+     */
+    private function formatErrorMessage(string $message, string $operation): string
+    {
+        $errorMessage = str_replace("\n", ' ', trim($message));
+
+        if (! str_starts_with($errorMessage, 'Cannot ')) {
+            $errorMessage = "Failed to {$operation} module: {$errorMessage}";
+        }
+
+        return $errorMessage;
     }
 }

@@ -119,6 +119,12 @@ class CreateAuditLogJob implements ShouldQueue
                 'ip_address' => $this->ipAddress,
                 'user_agent' => $this->userAgent,
             ]);
+
+            /**
+             * Invalidate cached filter options when new audit logs are created.
+             * Ensures filter dropdowns reflect newly added model types and events.
+             */
+            AuditLog::invalidateModelTypesCache();
         } catch (Throwable $e) {
             Log::error('AuditLog: Failed to create audit log entry', [
                 'event' => $this->event,

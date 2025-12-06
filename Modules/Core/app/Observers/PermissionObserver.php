@@ -2,6 +2,7 @@
 
 namespace Modules\Core\App\Observers;
 
+use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\LogsActivity;
@@ -9,6 +10,10 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionObserver
 {
+    public function __construct(
+        private MenuRegistry $menuRegistry
+    ) {}
+
     /**
      * Handle the Permission "created" event.
      *
@@ -36,6 +41,7 @@ class PermissionObserver
      * Handle the Permission "updated" event.
      *
      * Prevents infinite loop if Permission model uses LogsActivity trait.
+     * Clears menu cache if permission name changed.
      */
     public function updated(Permission $permission): void
     {
@@ -66,12 +72,17 @@ class PermissionObserver
             ipAddress: request()?->ip(),
             userAgent: request()?->userAgent()
         );
+
+        if (isset($dirty['name'])) {
+            $this->menuRegistry->clearCache();
+        }
     }
 
     /**
      * Handle the Permission "deleted" event.
      *
      * Prevents infinite loop if Permission model uses LogsActivity trait.
+     * Clears all menu caches since any user/role/group could have had this permission.
      */
     public function deleted(Permission $permission): void
     {
@@ -89,5 +100,7 @@ class PermissionObserver
             ipAddress: request()?->ip(),
             userAgent: request()?->userAgent()
         );
+
+        $this->menuRegistry->clearCache();
     }
 }

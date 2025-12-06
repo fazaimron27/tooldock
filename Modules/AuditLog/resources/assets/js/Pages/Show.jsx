@@ -3,7 +3,7 @@
  * Shows old vs new values with diff visualization
  */
 import { formatDate, getInitials } from '@/Utils/format';
-import { Link } from '@inertiajs/react';
+import { Deferred, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
 import PageShell from '@/Components/Layouts/PageShell';
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-export default function Show({ auditLog }) {
+export default function Show({ auditLog, oldValues, newValues }) {
   if (!auditLog || !auditLog.id) {
     return (
       <DashboardLayout header="AuditLog">
@@ -101,7 +101,7 @@ export default function Show({ auditLog }) {
           <div>
             <h4 className="mb-2 font-semibold text-green-600 dark:text-green-400">New Values</h4>
             <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-4 dark:border-green-900/30 dark:bg-green-900/10">
-              {Object.entries(auditLog.new_values || {}).map(([key, value]) => (
+              {Object.entries(newValues || {}).map(([key, value]) => (
                 <div
                   key={key}
                   className="border-b border-green-200 pb-2 last:border-0 dark:border-green-900/30"
@@ -122,7 +122,7 @@ export default function Show({ auditLog }) {
           <div>
             <h4 className="mb-2 font-semibold text-red-600 dark:text-red-400">Deleted Values</h4>
             <div className="space-y-2 rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/30 dark:bg-red-900/10">
-              {Object.entries(auditLog.old_values || {}).map(([key, value]) => (
+              {Object.entries(oldValues || {}).map(([key, value]) => (
                 <div
                   key={key}
                   className="border-b border-red-200 pb-2 last:border-0 dark:border-red-900/30"
@@ -138,17 +138,18 @@ export default function Show({ auditLog }) {
     }
 
     /**
-     * Updated event - show diff between old and new values.
+     * Render diff view for updated events.
+     * Compares old and new values side-by-side, highlighting only changed fields.
      */
-    const oldValues = auditLog.old_values || {};
-    const newValues = auditLog.new_values || {};
-    const allKeys = new Set([...Object.keys(oldValues), ...Object.keys(newValues)]);
+    const oldVals = oldValues || {};
+    const newVals = newValues || {};
+    const allKeys = new Set([...Object.keys(oldVals), ...Object.keys(newVals)]);
 
     return (
       <div className="space-y-4">
         {Array.from(allKeys).map((key) => {
-          const oldValue = oldValues[key];
-          const newValue = newValues[key];
+          const oldValue = oldVals[key];
+          const newValue = newVals[key];
           const hasChanged = JSON.stringify(oldValue) !== JSON.stringify(newValue);
 
           if (!hasChanged) {
@@ -267,7 +268,18 @@ export default function Show({ auditLog }) {
             <CardHeader>
               <CardTitle>Changes</CardTitle>
             </CardHeader>
-            <CardContent>{renderDiff()}</CardContent>
+            <CardContent>
+              <Deferred
+                data={['oldValues', 'newValues']}
+                fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-muted-foreground">Loading changes...</div>
+                  </div>
+                }
+              >
+                {renderDiff()}
+              </Deferred>
+            </CardContent>
           </Card>
         </div>
       </PageShell>

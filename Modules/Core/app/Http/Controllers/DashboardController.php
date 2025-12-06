@@ -3,12 +3,13 @@
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\Modules\ModuleStatusService;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Core\App\Constants\Roles;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class DashboardController extends Controller
@@ -17,20 +18,64 @@ class DashboardController extends Controller
      * Display the dashboard.
      */
     public function index(
-        DashboardWidgetRegistry $widgetRegistry,
-        ModuleStatusService $moduleStatusService
-    ): Response {
-        Gate::authorize('core.dashboard.view');
+        DashboardWidgetRegistry $widgetRegistry
+    ): Response|RedirectResponse {
+        $user = request()->user();
+
+        if ($user && $this->isGuestOnly($user)) {
+            return redirect()->route('guest.welcome');
+        }
 
         $systemHealth = $this->calculateSystemHealth();
         $widgets = $widgetRegistry->getOverviewWidgets();
-        $modules = $this->getActiveModules($moduleStatusService);
+        $modules = $this->getActiveModules();
 
         return Inertia::render('Dashboard', [
             'systemHealth' => $systemHealth,
             'widgets' => $widgets,
             'modules' => $modules,
         ]);
+    }
+
+    /**
+     * Check if user is Guest-only (only has Guest group and no permissions).
+     *
+     * A user is considered Guest-only if:
+     * - They are not Super Admin
+     * - They have no permissions (direct or through roles, using Spatie's getAllPermissions)
+     * - AND they have no permissions through groups
+     * - AND they only have Guest group (or no groups)
+     *
+     * @param  \Modules\Core\App\Models\User  $user
+     * @return bool
+     */
+    private function isGuestOnly($user): bool
+    {
+        if ($user->hasRole(Roles::SUPER_ADMIN)) {
+            return false;
+        }
+
+        $allPermissions = $user->getAllPermissions();
+        if ($allPermissions->isNotEmpty()) {
+            return false;
+        }
+
+        if (method_exists($user, 'getGroupPermissions')) {
+            $groupPermissions = $user->getGroupPermissions();
+            if (! empty($groupPermissions)) {
+                return false;
+            }
+        }
+
+        $hasNonGuestGroup = $user->groups()
+            ->where('slug', '!=', 'guest')
+            ->exists();
+
+        if ($hasNonGuestGroup) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -48,8 +93,13 @@ class DashboardController extends Controller
             ->count();
 
         $inactive = DB::table('modules_statuses')
-            ->where('is_installed', true)
-            ->where('is_active', false)
+            ->where(function ($query) {
+                $query->where('is_installed', false)
+                    ->orWhere(function ($q) {
+                        $q->where('is_installed', true)
+                            ->where('is_active', false);
+                    });
+            })
             ->count();
 
         return [
@@ -76,10 +126,9 @@ class DashboardController extends Controller
     /**
      * Get list of active modules with their dashboard routes.
      *
-     * @param  ModuleStatusService  $moduleStatusService
      * @return array<int, array{name: string, route: string}>
      */
-    private function getActiveModules(ModuleStatusService $moduleStatusService): array
+    private function getActiveModules(): array
     {
         $statuses = DB::table('modules_statuses')
             ->where('is_installed', true)
