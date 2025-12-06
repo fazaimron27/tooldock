@@ -205,12 +205,6 @@ const Ziggy = {
       parameters: ['group'],
       bindings: { group: 'id' },
     },
-    'groups.transfer-user': {
-      uri: 'tooldock\/groups\/{group}\/transfer-user',
-      methods: ['POST'],
-      parameters: ['group'],
-      bindings: { group: 'id' },
-    },
     'groups.transfer-members': {
       uri: 'tooldock\/groups\/{group}\/transfer-members',
       methods: ['POST'],
@@ -226,6 +220,18 @@ const Ziggy = {
     'groups.remove-members': {
       uri: 'tooldock\/groups\/{group}\/remove-members',
       methods: ['POST'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
+    'groups.members': {
+      uri: 'tooldock\/groups\/{group}\/members',
+      methods: ['GET', 'HEAD'],
+      parameters: ['group'],
+      bindings: { group: 'id' },
+    },
+    'groups.available-users': {
+      uri: 'tooldock\/groups\/{group}\/available-users',
+      methods: ['GET', 'HEAD'],
       parameters: ['group'],
       bindings: { group: 'id' },
     },
