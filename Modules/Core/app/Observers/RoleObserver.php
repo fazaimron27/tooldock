@@ -4,6 +4,7 @@ namespace Modules\Core\App\Observers;
 
 use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Core\App\Models\Role;
@@ -26,14 +27,15 @@ class RoleObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'created',
+            event: AuditLogEvent::CREATED,
             model: $role,
             oldValues: null,
             newValues: $role->getAttributes(),
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'role,permission'
         );
     }
 
@@ -63,14 +65,15 @@ class RoleObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'updated',
+            event: AuditLogEvent::UPDATED,
             model: $role,
             oldValues: $oldValues,
             newValues: $dirty,
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'role,permission'
         );
 
         if (isset($dirty['name'])) {
@@ -94,14 +97,15 @@ class RoleObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'deleted',
+            event: AuditLogEvent::DELETED,
             model: $role,
             oldValues: $role->getAttributes(),
             newValues: null,
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'role,permission'
         );
 
         $this->menuRegistry->clearCache();
