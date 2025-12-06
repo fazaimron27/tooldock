@@ -19,8 +19,9 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useDebounce } from 'use-debounce';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -49,7 +50,9 @@ export default function Show({
   group,
   groupedPermissions = {},
   availableGroups = [],
-  allUsers = [],
+  members = null,
+  defaultPerPage = 10,
+  availableUsers = null,
 }) {
   const deleteDialog = useDisclosure();
   const bulkTransferDialog = useDisclosure();
@@ -62,6 +65,9 @@ export default function Show({
   const [usersToAdd, setUsersToAdd] = useState([]);
   const [isAddingMembers, setIsAddingMembers] = useState(false);
   const [isRemovingMembers, setIsRemovingMembers] = useState(false);
+  const [isLoadingAvailableUsers, setIsLoadingAvailableUsers] = useState(false);
+
+  const [debouncedSearch] = useDebounce(addMembersSearch, 300);
 
   const permissionCount = useMemo(() => {
     return Object.values(groupedPermissions).reduce(
@@ -72,27 +78,52 @@ export default function Show({
   }, [groupedPermissions]);
 
   /**
-   * Get available users that can be added to the group.
-   * Uses Set for O(1) lookup performance when filtering out existing members.
+   * Fetch available users from server when dialog opens or search changes.
+   * Uses debounced search to reduce server requests.
+   * Uses replace: true to prevent adding to browser history.
+   * Small delay ensures this request happens after dialog is fully open.
    */
-  const availableUsers = useMemo(() => {
-    const currentMemberIds = new Set(group.users?.map((u) => u.id) || []);
-    return allUsers.filter((user) => !currentMemberIds.has(user.id));
-  }, [allUsers, group.users]);
+  useEffect(() => {
+    if (!addMembersDialog.isOpen || !group?.id) {
+      return;
+    }
+
+    /**
+     * Delay request to ensure dialog is fully rendered before fetching data.
+     * Prevents race conditions and ensures smooth UI transitions.
+     */
+    const timeoutId = window.setTimeout(() => {
+      setIsLoadingAvailableUsers(true);
+      router.get(
+        route('groups.available-users', { group: group.id }),
+        {
+          search: debouncedSearch || undefined,
+          page: 1,
+          per_page: 20,
+        },
+        {
+          only: ['availableUsers', 'defaultPerPage'],
+          preserveState: true,
+          preserveScroll: true,
+          replace: true,
+          skipLoadingIndicator: true,
+          onFinish: () => {
+            setIsLoadingAvailableUsers(false);
+          },
+        }
+      );
+    }, 50);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [addMembersDialog.isOpen, debouncedSearch, group?.id]);
 
   /**
-   * Filter available users based on search query.
-   * Searches both name and email fields case-insensitively.
+   * Get available users from server response or empty array.
+   * Server-side search is already handled, so we use the data directly.
    */
   const filteredAvailableUsers = useMemo(() => {
-    if (!addMembersSearch.trim()) {
-      return availableUsers;
-    }
-    const query = addMembersSearch.toLowerCase();
-    return availableUsers.filter(
-      (user) => user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query)
-    );
-  }, [availableUsers, addMembersSearch]);
+    return availableUsers?.data || [];
+  }, [availableUsers?.data]);
 
   /**
    * Table column definitions for the members data table.
@@ -161,14 +192,52 @@ export default function Show({
     []
   );
 
-  const membersData = useMemo(() => group.users || [], [group.users]);
+  const pageCount = useMemo(() => {
+    if (members?.total !== undefined && members?.per_page) {
+      return Math.ceil(members.total / members.per_page);
+    }
+    return undefined;
+  }, [members?.total, members?.per_page]);
+
+  const membersData = useMemo(() => {
+    if (members?.data) {
+      return members.data;
+    }
+    return group?.users || [];
+  }, [members?.data, group?.users]);
+
   const { tableProps: memberTableProps } = useDatatable({
     data: membersData,
     columns: memberColumns,
-    serverSide: false,
-    pageSize: 10,
+    route: group?.id ? route('groups.members', { group: group.id }) : null,
+    serverSide: true,
+    pageSize: members?.per_page || defaultPerPage,
     initialSorting: [{ id: 'name', desc: false }],
+    pageCount: pageCount,
+    only: ['members', 'defaultPerPage'],
   });
+
+  useEffect(() => {
+    if (!memberTableProps.table || !members?.current_page) {
+      return;
+    }
+
+    const currentPageIndex = members.current_page - 1;
+    const currentPagination = memberTableProps.table.getState().pagination;
+    const serverPageSize = members.per_page || defaultPerPage;
+
+    if (
+      currentPagination.pageIndex !== currentPageIndex ||
+      currentPagination.pageSize !== serverPageSize
+    ) {
+      window.requestAnimationFrame(() => {
+        memberTableProps.table.setPagination({
+          pageIndex: currentPageIndex,
+          pageSize: serverPageSize,
+        });
+      });
+    }
+  }, [memberTableProps.table, members?.current_page, members?.per_page, defaultPerPage]);
 
   /**
    * Get currently selected rows from the members table.
@@ -176,6 +245,11 @@ export default function Show({
   const table = memberTableProps.table;
   const selectedRows = useMemo(() => {
     return table?.getSelectedRowModel().rows || [];
+    /**
+     * Disable exhaustive-deps warning: rowSelection is a nested object that changes reference
+     * on every state update. Including it would cause unnecessary recalculations.
+     * The table dependency is sufficient to track selection changes.
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, table?.getState().rowSelection]);
 
@@ -436,7 +510,8 @@ export default function Show({
                   <CardTitle>Members</CardTitle>
                 </div>
                 <Badge variant="secondary">
-                  {group.users?.length || 0} {group.users?.length === 1 ? 'member' : 'members'}
+                  {members?.total ?? group.users?.length ?? 0}{' '}
+                  {(members?.total ?? group.users?.length ?? 0) === 1 ? 'member' : 'members'}
                 </Badge>
               </div>
               <CardDescription>
@@ -445,7 +520,7 @@ export default function Show({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {!group.users || group.users.length === 0 ? (
+              {!members?.data?.length && !group.users?.length ? (
                 <div className="space-y-4">
                   <div className="py-8 text-center text-muted-foreground">
                     <Users className="mx-auto h-12 w-12 opacity-50" />
@@ -668,13 +743,20 @@ export default function Show({
           </div>
 
           {/* Users List */}
-          {filteredAvailableUsers.length === 0 ? (
+          {isLoadingAvailableUsers ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <Users className="mx-auto h-12 w-12 opacity-50 animate-pulse" />
+              <p className="mt-2">Loading users...</p>
+            </div>
+          ) : filteredAvailableUsers.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <Users className="mx-auto h-12 w-12 opacity-50" />
               <p className="mt-2">
-                {availableUsers.length === 0
-                  ? 'All users are already members of this group'
-                  : 'No users found matching your search'}
+                {debouncedSearch || addMembersSearch.trim()
+                  ? 'No users found matching your search'
+                  : availableUsers?.total === 0
+                    ? 'All users are already members of this group'
+                    : 'No users available'}
               </p>
             </div>
           ) : (

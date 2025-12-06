@@ -5,7 +5,6 @@
 import { useDatatable } from '@/Hooks/useDatatable';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
-// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Filter, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,9 +19,10 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+import UserCombobox from '../Components/UserCombobox';
+
 export default function Index({
   auditLogs,
-  users,
   modelTypes = [],
   eventTypes = [],
   defaultPerPage = 20,
@@ -305,22 +305,12 @@ export default function Index({
                 )}
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-                <div className="space-y-2">
-                  <Label htmlFor="user_id">User</Label>
-                  <select
-                    id="user_id"
-                    value={localFilters.user_id}
-                    onChange={(e) => handleFilterChange('user_id', e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">All Users</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <UserCombobox
+                  id="user_id"
+                  value={localFilters.user_id || ''}
+                  onChange={(value) => handleFilterChange('user_id', value)}
+                  label="User"
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="system">System</Label>

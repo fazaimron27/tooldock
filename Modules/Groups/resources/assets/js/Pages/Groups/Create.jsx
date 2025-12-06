@@ -25,7 +25,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import MemberSelect from '../../Components/MemberSelect';
 import { createGroupResolver } from '../../Schemas/groupSchemas';
 
-export default function Create({ users = [], roles = [], groupedPermissions = {} }) {
+export default function Create({ roles = [], groupedPermissions = {} }) {
   const availableRoles = useMemo(
     () => roles.filter((role) => role.name !== ROLES.SUPER_ADMIN),
     [roles]
@@ -65,14 +65,6 @@ export default function Create({ users = [], roles = [], groupedPermissions = {}
       [key]: !prev[key],
     }));
   };
-
-  const userOptions = useMemo(() => {
-    return users.map((user) => ({
-      label: user.name,
-      value: user.id,
-      email: user.email,
-    }));
-  }, [users]);
 
   const handlePermissionToggle = (permissionId) => {
     const currentPermissions = form.watch('permissions') || [];
@@ -182,7 +174,6 @@ export default function Create({ users = [], roles = [], groupedPermissions = {}
               <div className="space-y-4">
                 <Label>Members</Label>
                 <MemberSelect
-                  options={userOptions}
                   value={form.watch('members') || []}
                   onChange={(selected) =>
                     form.setValue('members', selected, { shouldValidate: false })
