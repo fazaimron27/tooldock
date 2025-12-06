@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
+use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\Permission;
@@ -748,8 +750,8 @@ class GroupsController extends Controller
         array $newMemberNames,
         array $newMemberIds
     ): void {
-        \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
-            event: 'updated',
+        CreateAuditLogJob::dispatch(
+            event: AuditLogEvent::UPDATED,
             model: $group,
             oldValues: [
                 'members' => $oldMemberNames,
@@ -762,7 +764,8 @@ class GroupsController extends Controller
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'group,members'
         );
     }
 
