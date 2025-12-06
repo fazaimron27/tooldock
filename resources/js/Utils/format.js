@@ -45,6 +45,7 @@ export function formatDate(date, format = 'short', locale = 'en-US') {
     short: { dateStyle: 'short' },
     long: { dateStyle: 'long' },
     datetime: { dateStyle: 'short', timeStyle: 'short' },
+    full: { dateStyle: 'long', timeStyle: 'short' },
   };
 
   const options = formatOptions[format] || formatOptions.short;

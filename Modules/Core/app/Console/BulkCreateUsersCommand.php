@@ -173,6 +173,7 @@ class BulkCreateUsersCommand extends Command
                     'url' => null,
                     'ipAddress' => null,
                     'userAgent' => null,
+                    'tags' => 'user,bulk,console',
                 ];
 
                 $bar->advance();
@@ -263,19 +264,52 @@ class BulkCreateUsersCommand extends Command
     }
 
     /**
-     * Filter sensitive fields from attributes (copied from LogsActivity trait).
+     * Filter and redact sensitive fields from attributes (aligned with LogsActivity trait).
+     * Uses the same logic as the trait for consistency.
      */
     protected function filterSensitiveFields(array $attributes, User $user): array
     {
-        $sensitiveFields = ['password', 'password_confirmation', 'remember_token', 'api_token', 'secret', 'token'];
-        $filtered = [];
+        $excludedFields = [];
+        $sensitiveFields = [
+            'password',
+            'password_confirmation',
+            'remember_token',
+            'api_token',
+            'secret',
+            'token',
+            'credit_card',
+            'credit_card_number',
+            'cvv',
+            'ssn',
+            'social_security_number',
+        ];
+
+        // Check for model-specific exclusions
+        if (property_exists($user, 'auditExclude') && is_array($user->auditExclude)) {
+            $excludedFields = array_merge($excludedFields, $user->auditExclude);
+        }
+
+        // Check for model-specific sensitive fields
+        if (property_exists($user, 'auditSensitive') && is_array($user->auditSensitive)) {
+            $sensitiveFields = array_merge($sensitiveFields, $user->auditSensitive);
+        }
+
+        $processed = [];
 
         foreach ($attributes as $key => $value) {
-            if (! in_array($key, $sensitiveFields, true)) {
-                $filtered[$key] = $value;
+            // Completely exclude fields
+            if (in_array($key, $excludedFields, true)) {
+                continue;
+            }
+
+            // Redact (mask) sensitive fields
+            if (in_array($key, $sensitiveFields, true)) {
+                $processed[$key] = '***REDACTED***';
+            } else {
+                $processed[$key] = $value;
             }
         }
 
-        return $filtered;
+        return $processed;
     }
 }

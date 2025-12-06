@@ -62,6 +62,7 @@ class SettingsService
      *
      * Updates an existing setting's value in the database, then immediately clears
      * the cache via Redis tags to force a reload on the next request.
+     * Only updates if the value has actually changed to avoid unnecessary audit logs.
      *
      * @param  string  $key  The setting key
      * @param  mixed  $value  The value to set
@@ -79,13 +80,41 @@ class SettingsService
             );
         }
 
-        $setting->update(['value' => $value]);
+        // Get current value (with type casting applied)
+        $currentValue = $setting->value;
 
-        $this->clearCache();
+        // Normalize values for comparison (handle type differences)
+        $normalizedCurrent = $this->normalizeValueForComparison($currentValue, $setting->type);
+        $normalizedNew = $this->normalizeValueForComparison($value, $setting->type);
+
+        // Only update if value has actually changed
+        if ($normalizedCurrent !== $normalizedNew) {
+            $setting->update(['value' => $value]);
+            $this->clearCache();
+        }
 
         if ($key === 'app_debug') {
             config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
         }
+    }
+
+    /**
+     * Normalize a value for comparison to handle type differences.
+     *
+     * Converts values to a consistent format for comparison, handling cases where
+     * the same logical value might be represented differently (e.g., true vs "1").
+     *
+     * @param  mixed  $value  The value to normalize
+     * @param  \Modules\Settings\Enums\SettingType  $type  The setting type
+     * @return mixed The normalized value
+     */
+    private function normalizeValueForComparison(mixed $value, \Modules\Settings\Enums\SettingType $type): mixed
+    {
+        return match ($type) {
+            \Modules\Settings\Enums\SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            \Modules\Settings\Enums\SettingType::Integer => (int) $value,
+            \Modules\Settings\Enums\SettingType::Text, \Modules\Settings\Enums\SettingType::Textarea => (string) $value,
+        };
     }
 
     /**
