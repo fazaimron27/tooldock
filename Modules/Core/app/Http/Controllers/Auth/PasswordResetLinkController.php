@@ -9,9 +9,14 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
+use Modules\AuditLog\App\Traits\DispatchAuditLog;
+use Modules\Core\App\Models\User;
 
 class PasswordResetLinkController extends Controller
 {
+    use DispatchAuditLog;
+
     /**
      * Display the password reset link request view.
      */
@@ -38,6 +43,22 @@ class PasswordResetLinkController extends Controller
         );
 
         if ($status == Password::RESET_LINK_SENT) {
+            $user = User::where('email', $request->email)->first();
+            if ($user) {
+                $this->dispatchAuditLog(
+                    event: AuditLogEvent::PASSWORD_RESET_REQUESTED,
+                    model: $user,
+                    oldValues: null,
+                    newValues: [
+                        'email' => $user->email,
+                        'requested_at' => now()->toIso8601String(),
+                    ],
+                    tags: 'authentication,password_reset',
+                    request: $request,
+                    userId: $user->id
+                );
+            }
+
             return back()->with('status', __($status));
         }
 

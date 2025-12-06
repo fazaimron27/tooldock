@@ -9,10 +9,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
+use Modules\AuditLog\App\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\Auth\LoginRequest;
 
 class AuthenticatedSessionController extends Controller
 {
+    use DispatchAuditLog;
+
     /**
      * Display the login view.
      */
@@ -33,6 +37,23 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+
+        if ($user) {
+            $this->dispatchAuditLog(
+                event: AuditLogEvent::LOGIN,
+                model: $user,
+                oldValues: null,
+                newValues: [
+                    'email' => $user->email,
+                    'logged_in_at' => now()->toIso8601String(),
+                ],
+                tags: 'authentication,login',
+                request: $request,
+                userId: $user->id
+            );
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -41,11 +62,28 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        if ($user) {
+            $this->dispatchAuditLog(
+                event: AuditLogEvent::LOGOUT,
+                model: $user,
+                oldValues: [
+                    'email' => $user->email,
+                    'logged_out_at' => now()->toIso8601String(),
+                ],
+                newValues: null,
+                tags: 'authentication,logout',
+                request: $request,
+                userId: $user->id
+            );
+        }
 
         return redirect('/');
     }
