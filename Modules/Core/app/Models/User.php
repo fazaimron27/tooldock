@@ -2,6 +2,7 @@
 
 namespace Modules\Core\App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,7 +16,21 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Modules\Core\Database\Factories\UserFactory> */
-    use HasFactory, HasGroups, HasRoles, LogsActivity, Notifiable;
+    use HasFactory, HasGroups, HasRoles, HasUuids, LogsActivity, Notifiable;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * Determine if the user has the given permission.

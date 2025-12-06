@@ -3,6 +3,7 @@
 namespace Modules\Media\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
@@ -10,7 +11,21 @@ use Modules\AuditLog\App\Traits\LogsActivity;
 
 class MediaFile extends Model
 {
-    use LogsActivity;
+    use HasUuids, LogsActivity;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     protected $fillable = [
         'disk',

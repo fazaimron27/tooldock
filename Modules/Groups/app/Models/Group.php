@@ -2,19 +2,34 @@
 
 namespace Modules\Groups\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 use Modules\AuditLog\App\Traits\LogsActivity;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Groups\Database\Factories\GroupFactory;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class Group extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, HasUuids, LogsActivity;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
@@ -85,15 +100,13 @@ class Group extends Model
     /**
      * Assign a role to this group.
      *
-     * @param  Role|int|string  $role  Role model, ID, or name
+     * @param  Role|string  $role  Role model, ID, or name
      * @return void
      */
     public function assignRole($role): void
     {
-        if (is_string($role)) {
-            $role = Role::findByName($role);
-        } elseif (is_int($role)) {
-            $role = Role::findById($role);
+        if (is_string($role) && ! $role instanceof Role) {
+            $role = Role::findByName($role) ?? Role::find($role);
         }
 
         if ($role && ! $this->roles()->where('roles.id', $role->id)->exists()) {
@@ -104,15 +117,13 @@ class Group extends Model
     /**
      * Remove a role from this group.
      *
-     * @param  Role|int|string  $role  Role model, ID, or name
+     * @param  Role|string  $role  Role model, ID, or name
      * @return void
      */
     public function removeRole($role): void
     {
-        if (is_string($role)) {
-            $role = Role::findByName($role);
-        } elseif (is_int($role)) {
-            $role = Role::findById($role);
+        if (is_string($role) && ! $role instanceof Role) {
+            $role = Role::findByName($role) ?? Role::find($role);
         }
 
         if ($role) {

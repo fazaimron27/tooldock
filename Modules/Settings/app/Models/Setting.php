@@ -2,6 +2,7 @@
 
 namespace Modules\Settings\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\AuditLog\App\Traits\LogsActivity;
@@ -9,7 +10,21 @@ use Modules\Settings\Enums\SettingType;
 
 class Setting extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, HasUuids, LogsActivity;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
