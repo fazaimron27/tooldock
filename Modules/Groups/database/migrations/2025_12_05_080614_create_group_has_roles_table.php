@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->timestamps();
             $table->primary(['group_id', 'role_id']);
+            $table->index('role_id');
         });
     }
 
