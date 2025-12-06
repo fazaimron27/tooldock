@@ -63,8 +63,7 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
 
   /**
    * Submit handler that integrates with Inertia router.
-   * Errors are handled in callbacks to prevent cross-form contamination.
-   * Inertia automatically calls onError when validation errors exist.
+   * Errors are scoped to prevent cross-form contamination.
    */
   const submitInertia = (method, url, submitOptions = {}) => {
     const errorBag = submitOptions.errorBag;
@@ -83,8 +82,17 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
         const httpMethod = method.toLowerCase();
 
         const isUpdateOperation = httpMethod === 'put' || httpMethod === 'patch';
+        /**
+         * Filter form data before submission:
+         * - Preserve empty string for avatar_id to signal deletion intent
+         * - Remove null/undefined values
+         * - Remove empty password fields in update operations (not changing password)
+         */
         const filteredData = Object.fromEntries(
           Object.entries(data).filter(([key, value]) => {
+            if (key === 'avatar_id' && value === '') {
+              return true;
+            }
             if (value === null || value === undefined) return false;
             if (
               isUpdateOperation &&
@@ -109,6 +117,11 @@ export function useInertiaForm(defaultValues = {}, options = {}) {
           originalOnSuccess?.(page);
         };
 
+        /**
+         * Handle form submission errors.
+         * Gets errors from errorBag if specified, otherwise from page props.
+         * Filters errors to only include fields relevant to this form.
+         */
         const handleError = (errors) => {
           const pageErrors = errorBag ? page?.props?.errors?.[errorBag] : page?.props?.errors;
           const errorData = errors || pageErrors || {};

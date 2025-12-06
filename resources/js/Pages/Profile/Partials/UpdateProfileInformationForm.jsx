@@ -53,7 +53,11 @@ export default function UpdateProfileInformation({
                 label="Avatar"
                 value={avatar?.url || (field.value ? String(field.value) : null)}
                 onChange={(value) => {
-                  field.onChange(value || null);
+                  /**
+                   * Convert null/undefined to empty string to signal deletion intent.
+                   * Empty string is preserved by useInertiaForm and sent to server.
+                   */
+                  field.onChange(value === null || value === undefined ? '' : value);
                 }}
                 accept="image/*"
                 directory="avatars"
