@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained($tableNames['users'] ?? 'users')->onDelete('cascade');
             $table->timestamps();
             $table->unique(['group_id', 'user_id']);
+            $table->index('user_id', 'idx_group_user_user_id');
         });
     }
 
