@@ -6,7 +6,7 @@ use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\LogsActivity;
-use Spatie\Permission\Models\Permission;
+use Modules\Core\App\Models\Permission;
 
 class PermissionObserver
 {

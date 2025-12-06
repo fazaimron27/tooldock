@@ -5,7 +5,7 @@ namespace App\Services\Registry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\App\Constants\Roles;
-use Spatie\Permission\Models\Role;
+use Modules\Core\App\Models\Role;
 
 /**
  * Registry for managing default role registration.

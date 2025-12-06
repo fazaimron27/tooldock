@@ -3,7 +3,7 @@
 namespace Modules\Core\App\Services;
 
 use Illuminate\Support\Collection;
-use Spatie\Permission\Models\Permission;
+use Modules\Core\App\Models\Permission;
 
 /**
  * Service for managing and organizing permissions.

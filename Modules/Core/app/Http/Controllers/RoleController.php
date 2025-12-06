@@ -11,11 +11,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles as RoleConstants;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Services\PermissionService;
 use Modules\Core\Http\Requests\StoreRoleRequest;
 use Modules\Core\Http\Requests\UpdateRoleRequest;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
