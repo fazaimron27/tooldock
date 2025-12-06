@@ -146,4 +146,26 @@ class Category extends Model
     {
         return \Modules\Categories\Database\Factories\CategoryFactory::new();
     }
+
+    /**
+     * Get audit tags for this category.
+     *
+     * Returns tags based on the category's type and module for better filtering.
+     *
+     * @return array<string>
+     */
+    public function getAuditTags(): array
+    {
+        $tags = ['category'];
+
+        if ($this->type) {
+            $tags[] = strtolower($this->type);
+        }
+
+        if ($this->module) {
+            $tags[] = strtolower($this->module);
+        }
+
+        return $tags;
+    }
 }

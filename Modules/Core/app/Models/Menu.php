@@ -105,4 +105,26 @@ class Menu extends Model
     {
         $this->attributes['module'] = $value ? strtolower($value) : null;
     }
+
+    /**
+     * Get audit tags for this menu.
+     *
+     * Returns tags based on the menu's module and group for better filtering.
+     *
+     * @return array<string>
+     */
+    public function getAuditTags(): array
+    {
+        $tags = ['menu'];
+
+        if ($this->module) {
+            $tags[] = strtolower($this->module);
+        }
+
+        if ($this->group) {
+            $tags[] = strtolower($this->group);
+        }
+
+        return $tags;
+    }
 }

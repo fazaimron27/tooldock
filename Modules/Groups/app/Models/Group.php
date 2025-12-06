@@ -163,4 +163,14 @@ class Group extends Model
 
         return false;
     }
+
+    /**
+     * Get audit tags for this group.
+     *
+     * @return array<string>
+     */
+    public function getAuditTags(): array
+    {
+        return ['group'];
+    }
 }
