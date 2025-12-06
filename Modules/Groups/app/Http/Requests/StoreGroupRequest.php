@@ -5,8 +5,8 @@ namespace Modules\Groups\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\Role;
 use Modules\Groups\Models\Group;
-use Spatie\Permission\Models\Role;
 
 class StoreGroupRequest extends FormRequest
 {
@@ -43,7 +43,7 @@ class StoreGroupRequest extends FormRequest
             'roles.*' => [
                 'exists:roles,id',
                 function ($attribute, $value, $fail) use ($superAdminRoleId) {
-                    if ($superAdminRoleId && (int) $value === $superAdminRoleId) {
+                    if ($superAdminRoleId && (string) $value === (string) $superAdminRoleId) {
                         $fail('The Super Admin role cannot be assigned to groups.');
                     }
                 },

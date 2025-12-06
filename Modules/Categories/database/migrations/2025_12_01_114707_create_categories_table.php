@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->uuid('parent_id')->nullable()->index();
             $table->string('name')->index();
             $table->string('slug');
             $table->string('type')->index();
@@ -23,6 +23,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['slug', 'type'], 'categories_slug_type_unique');
+        });
+
+        Schema::table('categories', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('categories')->nullOnDelete();
         });
     }
 

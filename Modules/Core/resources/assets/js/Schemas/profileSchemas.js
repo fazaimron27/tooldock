@@ -27,7 +27,7 @@ export const updatePasswordSchema = z
 export const updateProfileSchema = z.object({
   name: nameSchema,
   email: emailSchema,
-  avatar_id: z.number().nullable().optional(),
+  avatar_id: z.string().nullable().optional(),
 });
 
 /**

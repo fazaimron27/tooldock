@@ -25,7 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
-            'avatar_id' => ['nullable', 'integer', 'exists:media_files,id'],
+            'avatar_id' => ['nullable', 'string', 'exists:media_files,id'],
         ];
     }
 }

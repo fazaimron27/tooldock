@@ -159,7 +159,7 @@ trait LogsActivity
     /**
      * Get the current user ID, handling console contexts.
      */
-    protected static function getUserId(): ?int
+    protected static function getUserId(): ?string
     {
         if (app()->runningInConsole()) {
             return null;

@@ -19,9 +19,9 @@ export const createGroupSchema = z.object({
     .max(255, 'Group name must not exceed 255 characters'),
   slug: z.string().max(255, 'Slug must not exceed 255 characters').optional().or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
-  members: z.array(z.coerce.number()).optional(),
-  roles: z.array(z.coerce.number()).optional(),
-  permissions: z.array(z.coerce.number()).optional(),
+  members: z.array(z.string()).optional(),
+  roles: z.array(z.string()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 /**
@@ -38,8 +38,8 @@ export const updateGroupSchema = z.object({
     .max(255, 'Group name must not exceed 255 characters'),
   slug: z.string().max(255, 'Slug must not exceed 255 characters').optional().or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
-  roles: z.array(z.coerce.number()).optional(),
-  permissions: z.array(z.coerce.number()).optional(),
+  roles: z.array(z.string()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 /**

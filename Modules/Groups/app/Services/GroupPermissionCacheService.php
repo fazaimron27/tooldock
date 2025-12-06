@@ -23,10 +23,10 @@ class GroupPermissionCacheService
     /**
      * Get cached group permissions for a user.
      *
-     * @param  int  $userId  The user ID
+     * @param  string  $userId  The user ID
      * @return array<string>|null Array of permission names or null if not cached
      */
-    public function get(int $userId): ?array
+    public function get(string $userId): ?array
     {
         $cacheKey = $this->getCacheKey($userId);
 
@@ -36,11 +36,11 @@ class GroupPermissionCacheService
     /**
      * Cache group permissions for a user.
      *
-     * @param  int  $userId  The user ID
+     * @param  string  $userId  The user ID
      * @param  array<string>  $permissions  Array of permission names
      * @return bool Success status
      */
-    public function put(int $userId, array $permissions): bool
+    public function put(string $userId, array $permissions): bool
     {
         $cacheKey = $this->getCacheKey($userId);
 
@@ -56,10 +56,10 @@ class GroupPermissionCacheService
     /**
      * Clear cached group permissions for a specific user.
      *
-     * @param  int  $userId  The user ID
+     * @param  string  $userId  The user ID
      * @return void
      */
-    public function clearForUser(int $userId): void
+    public function clearForUser(string $userId): void
     {
         $cacheKey = $this->getCacheKey($userId);
         $this->cacheService->forget($cacheKey, self::CACHE_TAG, 'GroupPermissionCache');
@@ -78,10 +78,10 @@ class GroupPermissionCacheService
     /**
      * Get the cache key for a user.
      *
-     * @param  int  $userId  The user ID
+     * @param  string  $userId  The user ID
      * @return string
      */
-    private function getCacheKey(int $userId): string
+    private function getCacheKey(string $userId): string
     {
         return "group_permissions:user:{$userId}";
     }

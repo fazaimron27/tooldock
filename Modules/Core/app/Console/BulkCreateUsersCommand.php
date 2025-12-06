@@ -143,6 +143,8 @@ class BulkCreateUsersCommand extends Command
      * Manually trigger audit logs for created users using direct insertion.
      *
      * Uses bulk insert for better performance instead of queued jobs.
+     *
+     * @param  array<string>  $userIds  Array of user IDs
      */
     protected function triggerAuditLogs(array $userIds, int $chunkSize): void
     {
@@ -199,7 +201,7 @@ class BulkCreateUsersCommand extends Command
      * @param  int  $baseTimestamp  Base timestamp for unique emails
      * @param  bool  $useObserver  Whether to use observer (true) or disable events (false)
      * @param  string  $description  Description message for progress output
-     * @return array<int> Array of created user IDs
+     * @return array<string> Array of created user IDs
      */
     protected function createUsersBatch(
         int $count,

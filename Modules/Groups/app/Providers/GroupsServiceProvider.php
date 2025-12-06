@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Core\App\Models\Role;
 use Modules\Groups\App\Observers\GroupObserver;
 use Modules\Groups\Models\Group;
 use Modules\Groups\Services\GroupsGroupRegistrar;
@@ -17,7 +18,6 @@ use Modules\Groups\Services\GroupsPermissionRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Spatie\Permission\Models\Role;
 
 class GroupsServiceProvider extends ServiceProvider
 {

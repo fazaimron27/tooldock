@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Services\PermissionCacheService;
 use Modules\Groups\App\Services\GroupCacheService;
 use Modules\Groups\Models\Group;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class GroupsController extends Controller
 {
@@ -74,7 +74,7 @@ class GroupsController extends Controller
             'roles.*' => [
                 'exists:roles,id',
                 function ($attribute, $value, $fail) use ($superAdminRoleId) {
-                    if ($superAdminRoleId && (int) $value === $superAdminRoleId) {
+                    if ($superAdminRoleId && (string) $value === (string) $superAdminRoleId) {
                         $fail('The Super Admin role cannot be assigned to groups.');
                     }
                 },
@@ -143,7 +143,7 @@ class GroupsController extends Controller
             'roles.*' => [
                 'exists:roles,id',
                 function ($attribute, $value, $fail) use ($superAdminRoleId) {
-                    if ($superAdminRoleId && (int) $value === $superAdminRoleId) {
+                    if ($superAdminRoleId && (string) $value === (string) $superAdminRoleId) {
                         $fail('The Super Admin role cannot be assigned to groups.');
                     }
                 },
@@ -379,7 +379,7 @@ class GroupsController extends Controller
         if ($superAdminRoleId) {
             $newRoleIds = array_filter(
                 $newRoleIds,
-                fn ($roleId) => (int) $roleId !== $superAdminRoleId
+                fn ($roleId) => (string) $roleId !== (string) $superAdminRoleId
             );
         }
 

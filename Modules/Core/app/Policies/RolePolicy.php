@@ -3,9 +3,9 @@
 namespace Modules\Core\App\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Traits\HasSuperAdminBypass;
-use Spatie\Permission\Models\Role;
 
 class RolePolicy
 {

@@ -4,6 +4,7 @@ namespace App\Services\Modules;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Module;
 
@@ -88,10 +89,24 @@ class DatabaseActivator implements ActivatorInterface
             return;
         }
 
-        DB::table('modules_statuses')->updateOrInsert(
-            ['name' => $name],
-            ['is_active' => $status, 'updated_at' => now()]
-        );
+        $exists = DB::table('modules_statuses')->where('name', $name)->exists();
+
+        if ($exists) {
+            DB::table('modules_statuses')
+                ->where('name', $name)
+                ->update(['is_active' => $status, 'updated_at' => now()]);
+        } else {
+            DB::table('modules_statuses')->insert([
+                'id' => (string) Str::orderedUuid(),
+                'name' => $name,
+                'is_active' => $status,
+                'is_installed' => false,
+                'version' => '1.0.0',
+                'installed_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         $this->modulesStatuses[$name] = $status;
     }

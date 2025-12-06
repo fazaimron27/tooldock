@@ -3,6 +3,7 @@
 namespace Modules\AuditLog\App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,21 @@ use Modules\Core\App\Models\User;
 
 class AuditLog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * Cache tag name for audit log-related cache entries.
@@ -239,7 +254,7 @@ class AuditLog extends Model
      * @param  Model  $model  The model being audited
      * @param  array|null  $oldValues  Old values (for updated/deleted events)
      * @param  array|null  $newValues  New values (for created/updated events)
-     * @param  int|null  $userId  The user ID performing the action
+     * @param  string|null  $userId  The user ID performing the action
      * @param  string|null  $url  The request URL
      * @param  string|null  $ipAddress  The request IP address
      * @param  string|null  $userAgent  The request user agent
@@ -250,7 +265,7 @@ class AuditLog extends Model
         Model $model,
         ?array $oldValues = null,
         ?array $newValues = null,
-        ?int $userId = null,
+        ?string $userId = null,
         ?string $url = null,
         ?string $ipAddress = null,
         ?string $userAgent = null
@@ -274,7 +289,7 @@ class AuditLog extends Model
      * Much faster than individual creates for bulk operations.
      * Uses raw insert() for maximum performance.
      *
-     * @param  array<int, array{event: string, model: Model, oldValues?: array|null, newValues?: array|null, userId?: int|null, url?: string|null, ipAddress?: string|null, userAgent?: string|null}>  $entries  Array of audit log entries
+     * @param  array<int, array{event: string, model: Model, oldValues?: array|null, newValues?: array|null, userId?: string|null, url?: string|null, ipAddress?: string|null, userAgent?: string|null}>  $entries  Array of audit log entries
      * @return void
      */
     public static function bulkInsert(array $entries): void

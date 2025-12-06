@@ -3,6 +3,7 @@
 namespace Modules\Categories\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,21 @@ use Modules\AuditLog\App\Traits\LogsActivity;
 
 class Category extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, HasUuids, LogsActivity;
+
+    /**
+     * The data type of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
@@ -95,8 +110,11 @@ class Category extends Model
 
             $type = $this->attributes['type'] ?? $this->type ?? null;
 
-            $query = static::where('slug', $slug)
-                ->where('id', '!=', $this->id ?? 0);
+            $query = static::where('slug', $slug);
+
+            if ($this->id) {
+                $query->where('id', '!=', $this->id);
+            }
 
             if ($type) {
                 $query->where('type', $type);
@@ -106,8 +124,11 @@ class Category extends Model
                 $slug = $baseSlug.'-'.$counter;
                 $counter++;
 
-                $query = static::where('slug', $slug)
-                    ->where('id', '!=', $this->id ?? 0);
+                $query = static::where('slug', $slug);
+
+                if ($this->id) {
+                    $query->where('id', '!=', $this->id);
+                }
 
                 if ($type) {
                     $query->where('type', $type);

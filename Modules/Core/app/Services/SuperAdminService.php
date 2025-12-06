@@ -5,8 +5,8 @@ namespace Modules\Core\App\Services;
 use App\Services\Registry\RoleRegistry;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
-use Spatie\Permission\Models\Role;
 
 /**
  * Service for managing super admin user creation.
@@ -41,22 +41,6 @@ class SuperAdminService
                 return false;
             }
 
-            $existingUser = User::where('email', $superAdminEmail)->first();
-            if ($existingUser) {
-                if (! $existingUser->hasRole(Roles::SUPER_ADMIN)) {
-                    $superAdminRole = $this->getOrCreateSuperAdminRole($roleRegistry);
-                    if ($superAdminRole) {
-                        $existingUser->assignRole($superAdminRole);
-                        Log::info('SuperAdminService: Assigned Super Admin role to existing user', [
-                            'user_id' => $existingUser->id,
-                            'email' => $superAdminEmail,
-                        ]);
-                    }
-                }
-
-                return true;
-            }
-
             $superAdminRole = $this->getOrCreateSuperAdminRole($roleRegistry);
             if (! $superAdminRole) {
                 Log::error('SuperAdminService: Failed to get or create Super Admin role');
@@ -67,23 +51,48 @@ class SuperAdminService
                 return false;
             }
 
-            $superAdminUser = User::withoutEvents(function () use ($superAdminEmail, $superAdminPassword) {
-                return User::create([
-                    'name' => 'Super Administrator',
-                    'email' => $superAdminEmail,
-                    'password' => $superAdminPassword,
-                    'email_verified_at' => now(),
-                ]);
-            });
+            try {
+                $superAdminUser = User::withoutEvents(function () use ($superAdminEmail, $superAdminPassword) {
+                    return User::firstOrCreate(
+                        ['email' => $superAdminEmail],
+                        [
+                            'name' => 'Super Administrator',
+                            'password' => $superAdminPassword,
+                            'email_verified_at' => now(),
+                        ]
+                    );
+                });
 
-            if (! $superAdminUser->hasRole(Roles::SUPER_ADMIN)) {
-                $superAdminUser->assignRole($superAdminRole);
+                if (! $superAdminUser->hasRole(Roles::SUPER_ADMIN)) {
+                    $superAdminUser->assignRole($superAdminRole);
+                    Log::info('SuperAdminService: Assigned Super Admin role to user', [
+                        'user_id' => $superAdminUser->id,
+                        'email' => $superAdminEmail,
+                    ]);
+                } elseif ($superAdminUser->wasRecentlyCreated) {
+                    Log::info('SuperAdminService: Created super admin user', [
+                        'user_id' => $superAdminUser->id,
+                        'email' => $superAdminEmail,
+                    ]);
+                }
+            } catch (\Illuminate\Database\QueryException $e) {
+                if (str_contains($e->getMessage(), 'duplicate key') || str_contains($e->getMessage(), 'Unique violation')) {
+                    $existingUser = User::where('email', $superAdminEmail)->first();
+                    if ($existingUser) {
+                        if (! $existingUser->hasRole(Roles::SUPER_ADMIN)) {
+                            $existingUser->assignRole($superAdminRole);
+                            Log::info('SuperAdminService: Assigned Super Admin role to existing user (race condition)', [
+                                'user_id' => $existingUser->id,
+                                'email' => $superAdminEmail,
+                            ]);
+                        }
+
+                        return true;
+                    }
+                }
+
+                throw $e;
             }
-
-            Log::info('SuperAdminService: Created super admin user', [
-                'user_id' => $superAdminUser->id,
-                'email' => $superAdminEmail,
-            ]);
 
             return true;
         } catch (\Exception $e) {

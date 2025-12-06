@@ -351,7 +351,7 @@ class MenuRegistry
      */
     public function getMenus(?\Illuminate\Contracts\Auth\Authenticatable $user = null): array
     {
-        $userId = $user?->id ?? 0;
+        $userId = $user?->id ?? '';
         $cacheKey = "menus:user:{$userId}";
 
         return $this->cacheService->remember(
@@ -475,7 +475,7 @@ class MenuRegistry
     /**
      * Recursively delete a menu tree, only deleting children from the same module.
      *
-     * @param  array<int>  $menuIds  Array of menu IDs to delete
+     * @param  array<string>  $menuIds  Array of menu IDs to delete
      * @param  string  $moduleName  Module name to filter children by
      */
     private function deleteMenuTree(array $menuIds, string $moduleName): void
@@ -502,7 +502,7 @@ class MenuRegistry
      * When a module's menu is deleted, any children from other modules
      * will become orphaned (parent_id set to null by foreign key constraint).
      *
-     * @param  array<int>  $menuIds  Array of menu IDs being deleted
+     * @param  array<string>  $menuIds  Array of menu IDs being deleted
      * @param  string  $moduleName  Module name being uninstalled
      * @return int Number of orphaned menus detected
      */
@@ -538,7 +538,7 @@ class MenuRegistry
     /**
      * Count total menus in a tree (including children) that belong to the same module.
      *
-     * @param  array<int>  $menuIds  Array of menu IDs to count
+     * @param  array<string>  $menuIds  Array of menu IDs to count
      * @param  string  $moduleName  Module name to filter children by
      * @return int Total count including all children
      */
@@ -580,9 +580,9 @@ class MenuRegistry
      * Called when user roles, permissions, or groups are modified
      * to ensure menu visibility updates immediately.
      *
-     * @param  int  $userId  User ID
+     * @param  string  $userId  User ID
      */
-    public function clearCacheForUser(int $userId): void
+    public function clearCacheForUser(string $userId): void
     {
         $cacheKey = "menus:user:{$userId}";
         $this->cacheService->forget($cacheKey, self::CACHE_TAG);

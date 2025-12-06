@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Core\Http\Requests\StoreUserRequest;
 use Modules\Core\Http\Requests\UpdateUserRequest;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {

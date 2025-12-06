@@ -24,7 +24,7 @@ class CreateAuditLogJob implements ShouldQueue
     /**
      * The model's ID (captured before serialization).
      */
-    public ?int $auditableId;
+    public ?string $auditableId;
 
     /**
      * Create a new job instance.
@@ -34,7 +34,7 @@ class CreateAuditLogJob implements ShouldQueue
         public ?Model $model,
         public ?array $oldValues,
         public ?array $newValues,
-        public ?int $userId,
+        public ?string $userId,
         public ?string $url,
         public ?string $ipAddress,
         public ?string $userAgent

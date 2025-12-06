@@ -40,7 +40,7 @@ trait SyncsRelationshipsWithAuditLog
      *
      * @param  Model  $model  The model whose relationship is being synced
      * @param  string  $relationshipName  The name of the relationship method (e.g., 'roles', 'permissions')
-     * @param  array<int|string>  $newIds  Array of IDs to sync
+     * @param  array<string>  $newIds  Array of IDs to sync
      * @param  string  $relatedModelClass  Fully qualified class name of the related model
      * @param  string  $relationshipDisplayName  Display name for the relationship in audit log (e.g., 'roles', 'permissions')
      * @return void
@@ -56,7 +56,7 @@ trait SyncsRelationshipsWithAuditLog
         $oldIds = $relationship->pluck('id')->sort()->values()->toArray();
         $oldNames = $relationship->pluck('name')->sort()->values()->toArray();
 
-        $newIds = array_map('intval', $newIds);
+        $newIds = array_values(array_filter($newIds, fn ($id) => $id !== null && $id !== ''));
         sort($newIds);
         $newIds = array_values($newIds);
 
@@ -87,7 +87,7 @@ trait SyncsRelationshipsWithAuditLog
                     $relationshipDisplayName => $newNames,
                     $relationshipDisplayName.'_ids' => $newIds,
                 ],
-                userId: Auth::id(),
+                userId: Auth::id() ? (string) Auth::id() : null,
                 url: request()?->url(),
                 ipAddress: request()?->ip(),
                 userAgent: request()?->userAgent()

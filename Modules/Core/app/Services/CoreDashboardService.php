@@ -4,9 +4,9 @@ namespace Modules\Core\App\Services;
 
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 /**
  * Handles dashboard widget registration and data retrieval for the Core module.

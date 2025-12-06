@@ -11,6 +11,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Services\PermissionCacheService;
 use Modules\Core\App\Services\PermissionService;
@@ -21,8 +23,6 @@ use Modules\Groups\Http\Requests\StoreGroupRequest;
 use Modules\Groups\Http\Requests\TransferMembersRequest;
 use Modules\Groups\Http\Requests\UpdateGroupRequest;
 use Modules\Groups\Models\Group;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class GroupsController extends Controller
 {
@@ -372,7 +372,7 @@ class GroupsController extends Controller
         if ($superAdminRoleId) {
             $newRoleIds = array_filter(
                 $newRoleIds,
-                fn ($roleId) => (int) $roleId !== $superAdminRoleId
+                fn ($roleId) => (string) $roleId !== (string) $superAdminRoleId
             );
         }
 
@@ -633,8 +633,8 @@ class GroupsController extends Controller
      * data for a small subset of users, avoiding loading all group members.
      *
      * @param  Group  $group  The group to check
-     * @param  array<int>  $userIds  Specific user IDs to get data for
-     * @return array{ids: array<int>, names: array<string>} An associative array
+     * @param  array<string>  $userIds  Specific user IDs to get data for
+     * @return array{ids: array<string>, names: array<string>} An associative array
      */
     private function getMemberDataForUsers(Group $group, array $userIds): array
     {
@@ -661,12 +661,12 @@ class GroupsController extends Controller
      *
      * This avoids re-querying all members when we know what changed.
      *
-     * @param  array<int>  $oldIds  Previous member IDs
+     * @param  array<string>  $oldIds  Previous member IDs
      * @param  array<string>  $oldNames  Previous member names
-     * @param  array<int>  $removedIds  User IDs being removed
-     * @param  array<int>  $addedIds  User IDs being added
+     * @param  array<string>  $removedIds  User IDs being removed
+     * @param  array<string>  $addedIds  User IDs being added
      * @param  array<string>  $addedNames  Names for added users (must match addedIds order)
-     * @return array{ids: array<int>, names: array<string>} Updated member data
+     * @return array{ids: array<string>, names: array<string>} Updated member data
      */
     private function calculateNewMemberData(
         array $oldIds,

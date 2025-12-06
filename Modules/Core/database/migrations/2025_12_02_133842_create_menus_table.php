@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('menus', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('parent_id')->nullable()->constrained('menus')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->uuid('parent_id')->nullable();
             $table->string('group')->index();
             $table->string('label');
             $table->string('route')->index();
@@ -27,6 +27,10 @@ return new class extends Migration
             $table->index(['group', 'order']);
             $table->index('is_active');
             $table->index('parent_id');
+        });
+
+        Schema::table('menus', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('menus')->nullOnDelete();
         });
     }
 

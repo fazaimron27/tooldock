@@ -3,6 +3,7 @@
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ModuleStatusService
 {
@@ -78,15 +79,29 @@ class ModuleStatusService
      */
     public function markAsInstalled(string $moduleName, string $version): void
     {
-        DB::table('modules_statuses')->updateOrInsert(
-            ['name' => $moduleName],
-            [
+        $exists = DB::table('modules_statuses')->where('name', $moduleName)->exists();
+
+        if ($exists) {
+            DB::table('modules_statuses')
+                ->where('name', $moduleName)
+                ->update([
+                    'is_installed' => true,
+                    'installed_at' => now(),
+                    'version' => $version,
+                    'updated_at' => now(),
+                ]);
+        } else {
+            DB::table('modules_statuses')->insert([
+                'id' => (string) Str::orderedUuid(),
+                'name' => $moduleName,
                 'is_installed' => true,
+                'is_active' => false,
                 'installed_at' => now(),
                 'version' => $version,
+                'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         $this->clearCache();
     }
@@ -120,13 +135,27 @@ class ModuleStatusService
      */
     public function setActive(string $moduleName, bool $active): void
     {
-        DB::table('modules_statuses')->updateOrInsert(
-            ['name' => $moduleName],
-            [
+        $exists = DB::table('modules_statuses')->where('name', $moduleName)->exists();
+
+        if ($exists) {
+            DB::table('modules_statuses')
+                ->where('name', $moduleName)
+                ->update([
+                    'is_active' => $active,
+                    'updated_at' => now(),
+                ]);
+        } else {
+            DB::table('modules_statuses')->insert([
+                'id' => (string) Str::orderedUuid(),
+                'name' => $moduleName,
                 'is_active' => $active,
+                'is_installed' => false,
+                'version' => '1.0.0',
+                'installed_at' => null,
+                'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         $this->clearCache();
     }
@@ -172,6 +201,7 @@ class ModuleStatusService
     public function register(string $moduleName, string $version): void
     {
         DB::table('modules_statuses')->insert([
+            'id' => (string) Str::orderedUuid(),
             'name' => $moduleName,
             'is_active' => false,
             'is_installed' => false,

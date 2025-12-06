@@ -22,7 +22,7 @@ class GroupCacheService
     /**
      * Clear all caches when group membership changes.
      *
-     * @param  array<int>  $userIds  Array of user IDs affected
+     * @param  array<string>  $userIds  Array of user IDs affected
      * @return void
      */
     public function clearForMembershipChange(array $userIds): void
@@ -38,7 +38,7 @@ class GroupCacheService
     /**
      * Clear all caches when group permissions change.
      *
-     * @param  array<int>  $userIds  Array of user IDs in the group
+     * @param  array<string>  $userIds  Array of user IDs in the group
      * @return void
      */
     public function clearForPermissionChange(array $userIds): void
@@ -54,7 +54,7 @@ class GroupCacheService
     /**
      * Clear all caches when group roles change.
      *
-     * @param  array<int>  $userIds  Array of user IDs in the group
+     * @param  array<string>  $userIds  Array of user IDs in the group
      * @return void
      */
     public function clearForRoleChange(array $userIds): void
@@ -70,7 +70,7 @@ class GroupCacheService
     /**
      * Clear all caches when a group is deleted.
      *
-     * @param  array<int>  $userIds  Array of user IDs who were in the group
+     * @param  array<string>  $userIds  Array of user IDs who were in the group
      * @return void
      */
     public function clearForGroupDeletion(array $userIds): void

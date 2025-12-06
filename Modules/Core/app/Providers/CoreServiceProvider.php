@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\App\Constants\Roles;
 use Modules\Core\App\Models\Menu;
+use Modules\Core\App\Models\Permission;
+use Modules\Core\App\Models\Role;
 use Modules\Core\App\Models\User;
 use Modules\Core\App\Observers\MenuObserver;
 use Modules\Core\App\Observers\PermissionObserver;
@@ -24,8 +26,6 @@ use Modules\Core\Console\BulkCreateUsersCommand;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class CoreServiceProvider extends ServiceProvider
 {
