@@ -51,9 +51,21 @@ class AuditLogDashboardService
                         'label' => 'Deleted',
                         'color' => 'hsl(var(--chart-3))',
                     ],
+                    'registered' => [
+                        'label' => 'Registered',
+                        'color' => 'hsl(var(--chart-4))',
+                    ],
+                    'login' => [
+                        'label' => 'Login',
+                        'color' => 'hsl(var(--chart-5))',
+                    ],
+                    'logout' => [
+                        'label' => 'Logout',
+                        'color' => 'hsl(var(--chart-6))',
+                    ],
                 ],
                 xAxisKey: 'date',
-                dataKeys: ['created', 'updated', 'deleted'],
+                dataKeys: ['created', 'updated', 'deleted', 'registered', 'login', 'logout'],
                 order: 61,
                 scope: 'detail'
             )
@@ -91,7 +103,7 @@ class AuditLogDashboardService
                 COUNT(*) as count
             ')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('event', ['created', 'updated', 'deleted'])
+            ->whereIn('event', ['created', 'updated', 'deleted', 'registered', 'login', 'logout'])
             ->groupBy('date', 'event')
             ->orderBy('date')
             ->get()
@@ -113,6 +125,9 @@ class AuditLogDashboardService
                 'created' => $dayData['created'] ?? 0,
                 'updated' => $dayData['updated'] ?? 0,
                 'deleted' => $dayData['deleted'] ?? 0,
+                'registered' => $dayData['registered'] ?? 0,
+                'login' => $dayData['login'] ?? 0,
+                'logout' => $dayData['logout'] ?? 0,
             ];
         }
 
@@ -129,16 +144,20 @@ class AuditLogDashboardService
             ->get()
             ->map(function ($log) {
                 $eventIcon = match ($log->event) {
-                    'created' => 'Plus',
+                    'created', 'registered' => 'Plus',
                     'updated' => 'Edit',
                     'deleted' => 'Trash',
+                    'login' => 'LogIn',
+                    'logout' => 'LogOut',
                     default => 'Activity',
                 };
 
                 $eventColor = match ($log->event) {
-                    'created' => 'bg-green-500',
+                    'created', 'registered' => 'bg-green-500',
                     'updated' => 'bg-blue-500',
                     'deleted' => 'bg-red-500',
+                    'login' => 'bg-indigo-500',
+                    'logout' => 'bg-amber-500',
                     default => 'bg-gray-500',
                 };
 

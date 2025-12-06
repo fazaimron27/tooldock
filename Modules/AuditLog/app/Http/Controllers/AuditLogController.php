@@ -41,6 +41,7 @@ class AuditLogController extends Controller
                 'url',
                 'ip_address',
                 'user_agent',
+                'tags',
                 'created_at',
             ]);
         $this->applyFilters($query, $request);
@@ -85,6 +86,7 @@ class AuditLogController extends Controller
                 'auditable_type' => $request->input('auditable_type'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
+                'tags' => $request->input('tags'),
             ],
         ]);
     }
@@ -112,6 +114,7 @@ class AuditLogController extends Controller
             'url',
             'ip_address',
             'user_agent',
+            'tags',
             'created_at',
         ])
             ->with(['user:id,name', 'user.avatar:id,path'])
@@ -123,6 +126,10 @@ class AuditLogController extends Controller
          * Defer loading of large JSON fields to improve initial page load performance.
          * Fields exceeding 770KB each are loaded separately after the initial render
          * using Inertia's deferred props feature.
+         *
+         * Note: Each deferred prop executes independently. formattedDiff doesn't need
+         * user relationship, so it uses a simple find(). causerParams needs user data,
+         * so it eagerly loads the relationship.
          */
         return Inertia::render('Modules::AuditLog/Show', [
             'auditLog' => $auditLog,
@@ -131,6 +138,17 @@ class AuditLogController extends Controller
             }),
             'newValues' => Inertia::defer(function () use ($auditLogId) {
                 return AuditLog::where('id', $auditLogId)->value('new_values');
+            }),
+            'formattedDiff' => Inertia::defer(function () use ($auditLogId) {
+                $log = AuditLog::find($auditLogId);
+
+                return $log?->formatted_diff ?? [];
+            }),
+            'causerParams' => Inertia::defer(function () use ($auditLogId) {
+                $log = AuditLog::with('user:id,name,email')
+                    ->find($auditLogId);
+
+                return $log?->causer_params ?? 'Unknown';
             }),
         ]);
     }
@@ -148,6 +166,9 @@ class AuditLogController extends Controller
         $query = AuditLog::with(['user.avatar']);
         $this->applyFilters($query, $request);
 
+        // Count records before export
+        $recordCount = $query->count();
+
         $filename = 'audit-logs-'.now()->format('Y-m-d-His').'.csv';
 
         return response()->streamDownload(function () use ($query) {
@@ -164,6 +185,7 @@ class AuditLogController extends Controller
                 'URL',
                 'IP Address',
                 'User Agent',
+                'Tags',
                 'Created At',
             ], ',', '"', '\\');
 
@@ -181,6 +203,7 @@ class AuditLogController extends Controller
                         $log->url ?? '',
                         $log->ip_address ?? '',
                         $log->user_agent ?? '',
+                        $log->tags ?? '',
                         $log->created_at->format('Y-m-d H:i:s'),
                     ], ',', '"', '\\');
                 }
@@ -191,6 +214,24 @@ class AuditLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+
+        // Log export event after successful export
+        \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
+            event: \Modules\AuditLog\App\Enums\AuditLogEvent::EXPORT,
+            model: null, // Export doesn't have a specific model
+            oldValues: null,
+            newValues: [
+                'format' => 'CSV',
+                'record_count' => $recordCount,
+                'exported_at' => now()->toIso8601String(),
+                'filename' => $filename,
+            ],
+            userId: auth()->id(),
+            url: $request->url(),
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            tags: 'auditlog,export'
+        );
     }
 
     /**
@@ -318,11 +359,15 @@ class AuditLogController extends Controller
         bool $excludeAuditableType = false
     ): void {
         /**
-         * Apply user filter directly without existence check.
-         * Foreign key constraint ensures user_id validity, making explicit check redundant.
+         * Apply user filter with validation.
+         * Validate UUID format to prevent invalid queries.
          */
         $query->when($request->filled('user_id'), function ($q) use ($request) {
-            $q->where('user_id', $request->input('user_id'));
+            $userId = $request->input('user_id');
+            // Validate UUID format (36 characters with dashes)
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $userId)) {
+                $q->where('user_id', $userId);
+            }
         });
 
         $query->when(
@@ -341,30 +386,61 @@ class AuditLogController extends Controller
 
         if (! $excludeEvent) {
             $query->when($request->filled('event'), function ($q) use ($request) {
-                $q->where('event', $request->input('event'));
+                $event = $request->input('event');
+                // Validate event is one of the allowed values
+                if (in_array($event, ['created', 'updated', 'deleted', 'registered', 'login', 'logout'], true)) {
+                    $q->where('event', $event);
+                }
             });
         }
 
         if (! $excludeAuditableType) {
             $query->when($request->filled('auditable_type'), function ($q) use ($request) {
-                $q->where('auditable_type', $request->input('auditable_type'));
+                $auditableType = $request->input('auditable_type');
+                // Validate class name format (namespace with backslashes)
+                if (is_string($auditableType) && preg_match('/^[a-zA-Z0-9\\\\]+$/', $auditableType) && strlen($auditableType) <= 255) {
+                    $q->where('auditable_type', $auditableType);
+                }
             });
         }
 
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        if ($startDate && $endDate && $startDate > $endDate) {
-            $query->whereDate('created_at', '>=', $startDate);
-        } else {
-            $query->when($startDate, function ($q) use ($startDate) {
-                $q->whereDate('created_at', '>=', $startDate);
-            });
-
-            $query->when($endDate, function ($q) use ($endDate) {
-                $q->whereDate('created_at', '<=', $endDate);
-            });
+        // Validate date format (YYYY-MM-DD)
+        if ($startDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+            if ($endDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate) && $startDate > $endDate) {
+                // Invalid date range - only apply start date
+                $query->whereDate('created_at', '>=', $startDate);
+            } else {
+                $query->whereDate('created_at', '>=', $startDate);
+            }
         }
+
+        if ($endDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        $query->when($request->filled('tags'), function ($q) use ($request) {
+            $tagsInput = $request->input('tags');
+            // Validate tags input length and sanitize
+            if (is_string($tagsInput) && strlen($tagsInput) <= 500) {
+                $tags = array_filter(array_map('trim', explode(',', $tagsInput)));
+                // Limit number of tags and validate each tag
+                $tags = array_slice($tags, 0, 20); // Max 20 tags
+                $tags = array_filter($tags, function ($tag) {
+                    return strlen($tag) <= 50 && preg_match('/^[a-zA-Z0-9_-]+$/', $tag);
+                });
+
+                if (! empty($tags)) {
+                    $q->where(function ($subQuery) use ($tags) {
+                        foreach ($tags as $tag) {
+                            $subQuery->orWhere('tags', 'like', '%'.$tag.'%');
+                        }
+                    });
+                }
+            }
+        });
     }
 
     /**
