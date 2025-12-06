@@ -50,4 +50,28 @@ class GroupPolicy
     {
         return $user->hasPermissionTo('groups.group.delete');
     }
+
+    /**
+     * Determine whether the user can add members to the group.
+     */
+    public function addMembers(User $user, Group $group): bool
+    {
+        return $user->hasPermissionTo('groups.group.add-members');
+    }
+
+    /**
+     * Determine whether the user can remove members from the group.
+     */
+    public function removeMembers(User $user, Group $group): bool
+    {
+        return $user->hasPermissionTo('groups.group.remove-members');
+    }
+
+    /**
+     * Determine whether the user can transfer members between groups.
+     */
+    public function transferMembers(User $user, Group $group): bool
+    {
+        return $user->hasPermissionTo('groups.group.transfer-members');
+    }
 }

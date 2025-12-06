@@ -19,6 +19,9 @@ class GroupsPermissionRegistrar
             'group.create',
             'group.edit',
             'group.delete',
+            'group.add-members',
+            'group.remove-members',
+            'group.transfer-members',
         ], [
             'Administrator' => ['group.*'],
         ]);
