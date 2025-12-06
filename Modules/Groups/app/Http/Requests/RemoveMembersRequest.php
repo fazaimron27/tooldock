@@ -10,13 +10,13 @@ class RemoveMembersRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      *
-     * Requires the user to have permission to update the group.
+     * Requires the user to have permission to remove members from the group.
      */
     public function authorize(): bool
     {
         $group = $this->route('group');
 
-        return Gate::allows('update', $group);
+        return Gate::allows('removeMembers', $group);
     }
 
     /**

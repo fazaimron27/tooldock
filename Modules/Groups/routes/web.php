@@ -22,4 +22,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('groups/{group}/remove-members', [GroupsController::class, 'removeMembers'])
         ->name('groups.remove-members');
+
+    Route::get('groups/{group}/members', [GroupsController::class, 'members'])
+        ->name('groups.members');
+
+    Route::get('groups/{group}/available-users', [GroupsController::class, 'availableUsers'])
+        ->name('groups.available-users');
 });

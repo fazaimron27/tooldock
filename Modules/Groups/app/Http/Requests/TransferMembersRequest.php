@@ -11,13 +11,13 @@ class TransferMembersRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      *
-     * Requires the user to have permission to update the group.
+     * Requires the user to have permission to transfer members from the group.
      */
     public function authorize(): bool
     {
         $group = $this->route('group');
 
-        return Gate::allows('update', $group);
+        return Gate::allows('transferMembers', $group);
     }
 
     /**
