@@ -1,11 +1,14 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { usePage } from '@inertiajs/react';
 import { updatePasswordResolver } from '@modules/Core/resources/assets/js/Schemas/profileSchemas.js';
+import { useEffect } from 'react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
 import { Button } from '@/Components/ui/button';
 
 export default function UpdatePasswordForm({ className = '' }) {
+  const page = usePage();
   const form = useInertiaForm(
     {
       current_password: '',
@@ -20,6 +23,34 @@ export default function UpdatePasswordForm({ className = '' }) {
       },
     }
   );
+
+  useEffect(() => {
+    const pageErrors = page?.props?.errors;
+    if (pageErrors && Object.keys(pageErrors).length > 0) {
+      const formFields = ['current_password', 'password', 'password_confirmation'];
+      const relevantErrors = Object.keys(pageErrors)
+        .filter((field) => formFields.includes(field))
+        .reduce((acc, field) => {
+          acc[field] = pageErrors[field];
+          return acc;
+        }, {});
+
+      if (Object.keys(relevantErrors).length > 0) {
+        Object.keys(relevantErrors).forEach((field) => {
+          const errorValue = relevantErrors[field];
+          const errorMessages = Array.isArray(errorValue) ? errorValue : [errorValue];
+          const firstError = errorMessages[0];
+
+          if (firstError) {
+            form.setError(field, {
+              type: 'server',
+              message: String(firstError),
+            });
+          }
+        });
+      }
+    }
+  }, [page?.props?.errors, form]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
