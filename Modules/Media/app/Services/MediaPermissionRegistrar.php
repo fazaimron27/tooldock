@@ -23,6 +23,7 @@ class MediaPermissionRegistrar
         ], [
             'Administrator' => ['dashboard.view', 'files.*'],
             'Staff' => ['dashboard.view', 'files.view', 'files.upload'],
+            'Guest' => ['files.upload'],
         ]);
     }
 }

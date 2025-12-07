@@ -19,7 +19,7 @@ class CategoriesMenuRegistrar
             label: 'Categories',
             route: 'categories.index',
             icon: 'Tag',
-            order: 10,
+            order: 30,
             permission: 'categories.category.view',
             parentKey: null,
             module: $moduleName

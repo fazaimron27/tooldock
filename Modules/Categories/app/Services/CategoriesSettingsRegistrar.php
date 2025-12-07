@@ -50,16 +50,6 @@ class CategoriesSettingsRegistrar
         $registry->register(
             module: $moduleName,
             group: 'categories',
-            key: 'categories_default_type',
-            value: '',
-            type: SettingType::Text,
-            label: 'Default Type Filter',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: $moduleName,
-            group: 'categories',
             key: 'categories_default_types',
             value: 'product,finance,project,inventory,expense,department',
             type: SettingType::Text,
