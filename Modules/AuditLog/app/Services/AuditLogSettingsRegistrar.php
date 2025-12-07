@@ -38,16 +38,6 @@ class AuditLogSettingsRegistrar
         $registry->register(
             module: $moduleName,
             group: 'auditlog',
-            key: 'model_types_cache_ttl',
-            value: '3600',
-            type: SettingType::Integer,
-            label: 'Model Types Cache TTL (Seconds)',
-            isSystem: false
-        );
-
-        $registry->register(
-            module: $moduleName,
-            group: 'auditlog',
             key: 'export_chunk_size',
             value: '500',
             type: SettingType::Integer,

@@ -19,7 +19,7 @@ class AuditLogMenuRegistrar
             label: 'Audit Logs',
             route: 'auditlog.index',
             icon: 'FileText',
-            order: 30,
+            order: 60,
             permission: 'auditlog.view',
             parentKey: null,
             module: $moduleName

@@ -1,9 +1,10 @@
 <?php
 
-namespace Modules\AuditLog\Services;
+namespace Modules\AuditLog\App\Services;
 
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Models\AuditLog;
 
 /**
@@ -38,34 +39,9 @@ class AuditLogDashboardService
                 description: 'Audit events over the last 7 days',
                 chartType: 'area',
                 data: fn () => $this->getAuditEventsData(),
-                config: [
-                    'created' => [
-                        'label' => 'Created',
-                        'color' => 'hsl(var(--chart-1))',
-                    ],
-                    'updated' => [
-                        'label' => 'Updated',
-                        'color' => 'hsl(var(--chart-2))',
-                    ],
-                    'deleted' => [
-                        'label' => 'Deleted',
-                        'color' => 'hsl(var(--chart-3))',
-                    ],
-                    'registered' => [
-                        'label' => 'Registered',
-                        'color' => 'hsl(var(--chart-4))',
-                    ],
-                    'login' => [
-                        'label' => 'Login',
-                        'color' => 'hsl(var(--chart-5))',
-                    ],
-                    'logout' => [
-                        'label' => 'Logout',
-                        'color' => 'hsl(var(--chart-6))',
-                    ],
-                ],
+                config: $this->getChartConfig(),
                 xAxisKey: 'date',
-                dataKeys: ['created', 'updated', 'deleted', 'registered', 'login', 'logout'],
+                dataKeys: AuditLogEvent::allEvents(),
                 order: 61,
                 scope: 'detail'
             )
@@ -87,15 +63,52 @@ class AuditLogDashboardService
     }
 
     /**
+     * Get chart configuration for all possible audit events.
+     *
+     * @return array<string, array{label: string, color: string}>
+     */
+    private function getChartConfig(): array
+    {
+        $chartColors = [
+            'hsl(var(--chart-1))',
+            'hsl(var(--chart-2))',
+            'hsl(var(--chart-3))',
+            'hsl(var(--chart-4))',
+            'hsl(var(--chart-5))',
+            'hsl(var(--chart-6))',
+            'hsl(var(--chart-7))',
+            'hsl(var(--chart-8))',
+            'hsl(var(--chart-9))',
+            'hsl(var(--chart-10))',
+            'hsl(var(--chart-11))',
+            'hsl(var(--chart-12))',
+        ];
+
+        $allEvents = AuditLogEvent::allEvents();
+        $config = [];
+
+        foreach ($allEvents as $index => $event) {
+            $config[$event] = [
+                'label' => ucfirst(str_replace('_', ' ', $event)),
+                'color' => $chartColors[$index % count($chartColors)],
+            ];
+        }
+
+        return $config;
+    }
+
+    /**
      * Get audit events data for chart widget.
      *
      * Uses a single query with GROUP BY instead of multiple separate queries.
+     * Includes all events (with 0 for events that didn't occur).
      */
     private function getAuditEventsData(): array
     {
         $now = now();
         $startDate = $now->copy()->subDays(6)->startOfDay();
         $endDate = $now->copy()->endOfDay();
+        $allEvents = AuditLogEvent::allEvents();
 
         $results = AuditLog::selectRaw('
                 DATE(created_at) as date,
@@ -103,7 +116,7 @@ class AuditLogDashboardService
                 COUNT(*) as count
             ')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('event', ['created', 'updated', 'deleted', 'registered', 'login', 'logout'])
+            ->whereIn('event', $allEvents)
             ->groupBy('date', 'event')
             ->orderBy('date')
             ->get()
@@ -117,18 +130,13 @@ class AuditLogDashboardService
         for ($i = 6; $i >= 0; $i--) {
             $day = $now->copy()->subDays($i);
             $dateKey = $day->format('Y-m-d');
-
             $dayData = $results[$dateKey] ?? [];
 
-            $days[] = [
-                'date' => $day->format('M d'),
-                'created' => $dayData['created'] ?? 0,
-                'updated' => $dayData['updated'] ?? 0,
-                'deleted' => $dayData['deleted'] ?? 0,
-                'registered' => $dayData['registered'] ?? 0,
-                'login' => $dayData['login'] ?? 0,
-                'logout' => $dayData['logout'] ?? 0,
-            ];
+            $dayRow = ['date' => $day->format('M d')];
+            foreach ($allEvents as $event) {
+                $dayRow[$event] = $dayData[$event] ?? 0;
+            }
+            $days[] = $dayRow;
         }
 
         return $days;
@@ -139,36 +147,19 @@ class AuditLogDashboardService
      */
     private function getRecentAuditLogsActivity(): array
     {
-        return AuditLog::latest('created_at')
+        return AuditLog::with('user:id,name')
+            ->latest('created_at')
             ->limit(5)
             ->get()
             ->map(function ($log) {
-                $eventIcon = match ($log->event) {
-                    'created', 'registered' => 'Plus',
-                    'updated' => 'Edit',
-                    'deleted' => 'Trash',
-                    'login' => 'LogIn',
-                    'logout' => 'LogOut',
-                    default => 'Activity',
-                };
-
-                $eventColor = match ($log->event) {
-                    'created', 'registered' => 'bg-green-500',
-                    'updated' => 'bg-blue-500',
-                    'deleted' => 'bg-red-500',
-                    'login' => 'bg-indigo-500',
-                    'logout' => 'bg-amber-500',
-                    default => 'bg-gray-500',
-                };
-
                 $modelName = class_basename($log->auditable_type ?? 'Unknown');
 
                 return [
                     'id' => $log->id,
-                    'title' => ucfirst($log->event)." {$modelName}",
+                    'title' => ucfirst(str_replace('_', ' ', $log->event))." {$modelName}",
                     'timestamp' => $log->created_at->diffForHumans(),
-                    'icon' => $eventIcon,
-                    'iconColor' => $eventColor,
+                    'icon' => AuditLogEvent::getIcon($log->event),
+                    'iconColor' => AuditLogEvent::getColor($log->event),
                 ];
             })
             ->toArray();
