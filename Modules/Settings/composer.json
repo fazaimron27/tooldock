@@ -1,6 +1,6 @@
 {
   "name": "fazaimron27/settings",
-  "description": "",
+  "description": "Database-driven settings management system.",
   "authors": [
     {
       "name": "Faza Iman Imron",
@@ -15,7 +15,6 @@
   },
   "autoload": {
     "psr-4": {
-      "Modules\\Settings\\App\\": "app/",
       "Modules\\Settings\\": "app/",
       "Modules\\Settings\\Database\\Factories\\": "database/factories/",
       "Modules\\Settings\\Database\\Seeders\\": "database/seeders/"
