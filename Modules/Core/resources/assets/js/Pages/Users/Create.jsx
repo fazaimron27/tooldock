@@ -8,6 +8,7 @@ import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import PasswordFieldRHF from '@/Components/Common/PasswordFieldRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
@@ -76,22 +77,22 @@ export default function Create({ roles = [] }) {
                 placeholder="Enter email address"
               />
 
-              <FormFieldRHF
+              <PasswordFieldRHF
                 name="password"
                 control={form.control}
                 label="Password"
-                type="password"
                 required
                 placeholder="Enter password"
+                autoComplete="new-password"
               />
 
-              <FormFieldRHF
+              <PasswordFieldRHF
                 name="password_confirmation"
                 control={form.control}
                 label="Confirm Password"
-                type="password"
                 required
                 placeholder="Confirm password"
+                autoComplete="new-password"
               />
 
               <div className="space-y-4">
@@ -122,15 +123,15 @@ export default function Create({ roles = [] }) {
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Creating...' : 'Create User'}
-                </Button>
+              <div className="flex items-center justify-end gap-4">
                 <Link href={route('core.users.index')}>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </Link>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Creating...' : 'Create User'}
+                </Button>
               </div>
             </form>
           </FormCard>
