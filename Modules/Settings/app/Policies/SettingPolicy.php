@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Settings\App\Policies;
+namespace Modules\Settings\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 use Modules\Settings\Models\Setting;
 
 class SettingPolicy
