@@ -7,17 +7,17 @@ use App\Services\Data\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\Permission;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Services\PermissionCacheService;
-use Modules\Core\App\Services\PermissionService;
-use Modules\Groups\App\Services\GroupCacheService;
+use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\Permission;
+use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
+use Modules\Core\Services\PermissionCacheService;
+use Modules\Core\Services\PermissionService;
 use Modules\Groups\Http\Requests\StoreGroupRequest;
 use Modules\Groups\Http\Requests\UpdateGroupRequest;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupCacheService;
 
 class GroupsController extends Controller
 {

@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Groups\App\Services;
+namespace Modules\Groups\Services;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
+use Modules\Core\Models\User;
 use Modules\Groups\Models\Group;
 
 /**

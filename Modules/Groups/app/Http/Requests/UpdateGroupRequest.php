@@ -5,8 +5,8 @@ namespace Modules\Groups\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\Role;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\Role;
 use Modules\Groups\Models\Group;
 
 class UpdateGroupRequest extends FormRequest

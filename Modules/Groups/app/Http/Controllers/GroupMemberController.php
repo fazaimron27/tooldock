@@ -7,12 +7,12 @@ use App\Services\Data\DatatableQueryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Core\App\Models\User;
-use Modules\Groups\App\Services\GroupMemberService;
+use Modules\Core\Models\User;
 use Modules\Groups\Http\Requests\AddMembersRequest;
 use Modules\Groups\Http\Requests\RemoveMembersRequest;
 use Modules\Groups\Http\Requests\TransferMembersRequest;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupMemberService;
 
 /**
  * Controller for managing group members.

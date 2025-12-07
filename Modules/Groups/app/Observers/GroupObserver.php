@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Groups\App\Observers;
+namespace Modules\Groups\Observers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
-use Modules\Groups\App\Services\GroupCacheService;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupCacheService;
 
 class GroupObserver
 {
