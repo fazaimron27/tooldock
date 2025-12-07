@@ -4,7 +4,7 @@ import { updatePasswordResolver } from '@modules/Core/resources/assets/js/Schema
 import { useEffect } from 'react';
 
 import FormCard from '@/Components/Common/FormCard';
-import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import PasswordFieldRHF from '@/Components/Common/PasswordFieldRHF';
 import { Button } from '@/Components/ui/button';
 
 export default function UpdatePasswordForm({ className = '' }) {
@@ -69,34 +69,31 @@ export default function UpdatePasswordForm({ className = '' }) {
       className={className}
     >
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        <FormFieldRHF
+        <PasswordFieldRHF
           name="current_password"
           control={form.control}
           label="Current Password"
-          type="password"
           required
           autoComplete="current-password"
         />
 
-        <FormFieldRHF
+        <PasswordFieldRHF
           name="password"
           control={form.control}
           label="New Password"
-          type="password"
           required
           autoComplete="new-password"
         />
 
-        <FormFieldRHF
+        <PasswordFieldRHF
           name="password_confirmation"
           control={form.control}
           label="Confirm Password"
-          type="password"
           required
           autoComplete="new-password"
         />
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-end gap-4">
           <Button type="submit" disabled={form.processing}>
             {form.processing ? 'Saving...' : 'Save'}
           </Button>

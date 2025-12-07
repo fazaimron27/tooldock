@@ -13,13 +13,12 @@ return new class extends Migration
     {
         $tableNames = config('permission.table_names');
 
-        Schema::create('group_has_roles', function (Blueprint $table) use ($tableNames) {
+        Schema::create('groups_users', function (Blueprint $table) use ($tableNames) {
             $table->foreignUuid('group_id')->constrained('groups')->onDelete('cascade');
-            $table->foreignUuid('role_id')->constrained($tableNames['roles'])->onDelete('cascade');
-
+            $table->foreignUuid('user_id')->constrained($tableNames['users'] ?? 'users')->onDelete('cascade');
             $table->timestamps();
-            $table->primary(['group_id', 'role_id']);
-            $table->index('role_id');
+            $table->unique(['group_id', 'user_id']);
+            $table->index('user_id', 'idx_groups_users_user_id');
         });
     }
 
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('group_has_roles');
+        Schema::dropIfExists('groups_users');
     }
 };

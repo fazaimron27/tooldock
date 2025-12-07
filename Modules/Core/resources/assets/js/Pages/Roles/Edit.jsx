@@ -310,15 +310,15 @@ export default function Edit({ role, groupedPermissions = {} }) {
                 </div>
               )}
 
-              <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Updating...' : 'Update Role'}
-                </Button>
+              <div className="flex items-center justify-end gap-4">
                 <Link href={route('core.roles.index')}>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </Link>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Updating...' : 'Update Role'}
+                </Button>
               </div>
             </form>
           </FormCard>

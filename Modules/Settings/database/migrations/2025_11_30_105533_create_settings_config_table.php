@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('settings_config', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('module')->nullable()->index();
             $table->string('group')->index();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('settings_config');
     }
 };

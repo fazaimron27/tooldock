@@ -460,14 +460,14 @@ class AuditLogController extends Controller
             $request->filled('end_date');
 
         $cacheKey = $hasFilters
-            ? 'audit_logs_event_types_'.md5(json_encode([
+            ? 'auditlog_entries_event_types_'.md5(json_encode([
                 'user_id' => $request->input('user_id'),
                 'system' => $request->input('system'),
                 'auditable_type' => $request->input('auditable_type'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
             ]))
-            : 'audit_logs_event_types_all';
+            : 'auditlog_entries_event_types_all';
 
         return $this->cacheService->rememberForever(
             $cacheKey,
@@ -511,14 +511,14 @@ class AuditLogController extends Controller
             $request->filled('end_date');
 
         $cacheKey = $hasFilters
-            ? 'audit_logs_model_types_'.md5(json_encode([
+            ? 'auditlog_entries_model_types_'.md5(json_encode([
                 'user_id' => $request->input('user_id'),
                 'system' => $request->input('system'),
                 'event' => $request->input('event'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
             ]))
-            : 'audit_logs_model_types_all';
+            : 'auditlog_entries_model_types_all';
 
         return $this->cacheService->rememberForever(
             $cacheKey,

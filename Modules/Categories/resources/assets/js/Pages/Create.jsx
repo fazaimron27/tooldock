@@ -250,15 +250,15 @@ export default function Create({ parentCategories = {}, types = [] }) {
                 placeholder="Enter category description (optional)"
               />
 
-              <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Creating...' : 'Create Category'}
-                </Button>
+              <div className="flex items-center justify-end gap-4">
                 <Link href={route('categories.index')}>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </Link>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Creating...' : 'Create Category'}
+                </Button>
               </div>
             </form>
           </FormCard>

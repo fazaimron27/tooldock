@@ -50,9 +50,9 @@ class RoleController extends Controller
         $roleIds = array_column($roles->items(), 'id');
         if (! empty($roleIds)) {
             $groupsByRole = \Modules\Groups\Models\Group::query()
-                ->join('group_has_roles', 'groups.id', '=', 'group_has_roles.group_id')
-                ->whereIn('group_has_roles.role_id', $roleIds)
-                ->select('groups.id', 'groups.name', 'group_has_roles.role_id')
+                ->join('groups_roles', 'groups.id', '=', 'groups_roles.group_id')
+                ->whereIn('groups_roles.role_id', $roleIds)
+                ->select('groups.id', 'groups.name', 'groups_roles.role_id')
                 ->get()
                 ->groupBy('role_id')
                 ->map(fn ($groups) => $groups->map(fn ($group) => [
@@ -178,7 +178,7 @@ class RoleController extends Controller
                 ->with('error', 'Cannot delete role that is assigned to users.');
         }
 
-        $groupCount = DB::table('group_has_roles')
+        $groupCount = DB::table('groups_roles')
             ->where('role_id', $role->id)
             ->count();
 

@@ -37,7 +37,7 @@ class GroupMemberService
         return DB::transaction(function () use ($group, $userIds) {
             $largeGroupThreshold = (int) settings('groups_large_group_threshold', 100);
 
-            $existingInGroup = DB::table('group_user')
+            $existingInGroup = DB::table('groups_users')
                 ->where('group_id', $group->id)
                 ->whereIn('user_id', $userIds)
                 ->pluck('user_id')
@@ -70,7 +70,7 @@ class GroupMemberService
                 'updated_at' => now(),
             ], $newUserIds);
 
-            DB::table('group_user')->insert($insertData);
+            DB::table('groups_users')->insert($insertData);
 
             if ($oldCount <= $largeGroupThreshold) {
                 $newMemberData = $this->calculateNewMemberData(
@@ -130,7 +130,7 @@ class GroupMemberService
         return DB::transaction(function () use ($group, $userIds) {
             $largeGroupThreshold = (int) settings('groups_large_group_threshold', 100);
 
-            $existingInGroup = DB::table('group_user')
+            $existingInGroup = DB::table('groups_users')
                 ->where('group_id', $group->id)
                 ->whereIn('user_id', $userIds)
                 ->pluck('user_id')
@@ -150,7 +150,7 @@ class GroupMemberService
             $oldMemberNames = $auditData['oldNames'];
             $oldCount = $auditData['oldCount'];
 
-            DB::table('group_user')
+            DB::table('groups_users')
                 ->where('group_id', $group->id)
                 ->whereIn('user_id', $usersToRemove)
                 ->delete();
@@ -214,7 +214,7 @@ class GroupMemberService
                 ->get()
                 ->keyBy('id');
 
-            $existingInTarget = DB::table('group_user')
+            $existingInTarget = DB::table('groups_users')
                 ->where('group_id', $targetGroup->id)
                 ->whereIn('user_id', $userIds)
                 ->pluck('user_id')
@@ -232,7 +232,7 @@ class GroupMemberService
             $oldTargetMemberNames = $targetAuditData['oldNames'];
             $oldTargetCount = $targetAuditData['oldCount'];
 
-            DB::table('group_user')
+            DB::table('groups_users')
                 ->where('group_id', $sourceGroup->id)
                 ->whereIn('user_id', $userIds)
                 ->delete();
@@ -245,7 +245,7 @@ class GroupMemberService
                     'updated_at' => now(),
                 ], $usersToAdd);
 
-                DB::table('group_user')->insert($insertData);
+                DB::table('groups_users')->insert($insertData);
             }
 
             if ($oldSourceCount <= $largeGroupThreshold) {
@@ -409,7 +409,7 @@ class GroupMemberService
     {
         $largeGroupThreshold = $largeGroupThreshold ?? (int) settings('groups_large_group_threshold', 100);
 
-        $oldCount = DB::table('group_user')
+        $oldCount = DB::table('groups_users')
             ->where('group_id', $group->id)
             ->count();
 

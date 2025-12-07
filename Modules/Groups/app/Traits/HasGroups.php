@@ -13,7 +13,7 @@ trait HasGroups
      */
     public function groups(): BelongsToMany
     {
-        return $this->belongsToMany(Group::class, 'group_user')
+        return $this->belongsToMany(Group::class, 'groups_users')
             ->withTimestamps();
     }
 

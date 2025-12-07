@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormDialog from '@/Components/Common/FormDialog';
-import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import PasswordFieldRHF from '@/Components/Common/PasswordFieldRHF';
 import { Button } from '@/Components/ui/button';
 
 export default function DeleteUserForm({ className = '' }) {
@@ -95,15 +95,15 @@ export default function DeleteUserForm({ className = '' }) {
         formId="delete-account-form"
       >
         <form id="delete-account-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <FormFieldRHF
+          <PasswordFieldRHF
             name="password"
             control={formHook.control}
             label="Password"
-            type="password"
             required
             placeholder="Enter your password"
             autoFocus
             id="delete-account-password"
+            autoComplete="current-password"
             rules={{
               required: 'Password is required to confirm account deletion',
             }}

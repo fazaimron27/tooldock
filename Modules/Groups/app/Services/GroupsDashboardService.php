@@ -125,7 +125,7 @@ class GroupsDashboardService
             return '0';
         }
 
-        $totalMemberships = (int) DB::table('group_user')->count();
+        $totalMemberships = (int) DB::table('groups_users')->count();
 
         $average = round($totalMemberships / $totalGroups, 1);
 

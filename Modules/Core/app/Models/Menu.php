@@ -29,6 +29,13 @@ class Menu extends Model
     public $incrementing = false;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'core_menus';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
