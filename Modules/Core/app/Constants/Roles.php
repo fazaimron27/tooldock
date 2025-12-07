@@ -37,4 +37,9 @@ class Roles
      * Auditor role name.
      */
     public const AUDITOR = 'Auditor';
+
+    /**
+     * Guest role name.
+     */
+    public const GUEST = 'Guest';
 }

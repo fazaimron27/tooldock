@@ -21,6 +21,7 @@ class CorePermissionRegistrar
         $registry->register('core', Roles::MANAGER);
         $registry->register('core', Roles::STAFF);
         $registry->register('core', Roles::AUDITOR);
+        $registry->register('core', Roles::GUEST);
     }
 
     /**

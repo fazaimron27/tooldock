@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Core\App\Constants\Roles;
+use Modules\Core\App\Traits\ChecksGuestUser;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class DashboardController extends Controller
 {
+    use ChecksGuestUser;
+
     /**
      * Display the dashboard.
      */
@@ -35,47 +37,6 @@ class DashboardController extends Controller
             'widgets' => $widgets,
             'modules' => $modules,
         ]);
-    }
-
-    /**
-     * Check if user is Guest-only (only has Guest group and no permissions).
-     *
-     * A user is considered Guest-only if:
-     * - They are not Super Admin
-     * - They have no permissions (direct or through roles, using Spatie's getAllPermissions)
-     * - AND they have no permissions through groups
-     * - AND they only have Guest group (or no groups)
-     *
-     * @param  \Modules\Core\App\Models\User  $user
-     * @return bool
-     */
-    private function isGuestOnly($user): bool
-    {
-        if ($user->hasRole(Roles::SUPER_ADMIN)) {
-            return false;
-        }
-
-        $allPermissions = $user->getAllPermissions();
-        if ($allPermissions->isNotEmpty()) {
-            return false;
-        }
-
-        if (method_exists($user, 'getGroupPermissions')) {
-            $groupPermissions = $user->getGroupPermissions();
-            if (! empty($groupPermissions)) {
-                return false;
-            }
-        }
-
-        $hasNonGuestGroup = $user->groups()
-            ->where('slug', '!=', 'guest')
-            ->exists();
-
-        if ($hasNonGuestGroup) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
