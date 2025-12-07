@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Modules\AuditLog\App\Traits\LogsActivity;
+use Modules\AuditLog\Traits\LogsActivity;
 
 class Category extends Model
 {

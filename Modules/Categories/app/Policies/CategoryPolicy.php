@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Categories\App\Policies;
+namespace Modules\Categories\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Modules\Categories\Models\Category;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 
 class CategoryPolicy
 {

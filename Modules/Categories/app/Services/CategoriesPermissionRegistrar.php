@@ -3,7 +3,7 @@
 namespace Modules\Categories\Services;
 
 use App\Services\Registry\PermissionRegistry;
-use Modules\Core\App\Constants\Roles as RoleConstants;
+use Modules\Core\Constants\Roles as RoleConstants;
 
 /**
  * Handles permission registration for the Categories module.
