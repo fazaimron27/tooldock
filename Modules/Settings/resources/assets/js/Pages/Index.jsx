@@ -19,6 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/Components/ui/accordion';
+import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Label } from '@/Components/ui/label';
@@ -122,8 +123,6 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
   };
 
   const renderField = (setting) => {
-    const error = form.formState.errors[setting.key];
-
     switch (setting.type) {
       case 'boolean':
         return (
@@ -131,19 +130,22 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
             key={setting.key}
             name={setting.key}
             control={form.control}
-            render={({ field }) => (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={setting.key}>{setting.label}</Label>
-                  <Switch
-                    id={setting.key}
-                    checked={field.value === true || field.value === '1' || field.value === 1}
-                    onCheckedChange={field.onChange}
-                  />
+            render={({ field }) => {
+              const error = form.formState.errors[setting.key];
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={setting.key}>{setting.label}</Label>
+                    <Switch
+                      id={setting.key}
+                      checked={field.value === true || field.value === '1' || field.value === 1}
+                      onCheckedChange={field.onChange}
+                    />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error.message}</p>}
                 </div>
-                {error && <p className="text-sm text-destructive">{error.message}</p>}
-              </div>
-            )}
+              );
+            }}
           />
         );
 
@@ -214,6 +216,9 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
                 <Card className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-2xl">Application Settings</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Core application and system settings
+                    </p>
                   </CardHeader>
                   <CardContent className="flex-1">
                     <Accordion
@@ -231,7 +236,16 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
 
                         return (
                           <AccordionItem key={group} value={group}>
-                            <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                            <AccordionTrigger className="capitalize">
+                              <div className="flex items-center gap-2">
+                                <span>{group}</span>
+                                {moduleLabel && (
+                                  <Badge variant="outline" className="text-xs font-normal">
+                                    {moduleLabel}
+                                  </Badge>
+                                )}
+                              </div>
+                            </AccordionTrigger>
                             <AccordionContent className="space-y-6">
                               <FormCard
                                 title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
@@ -261,6 +275,9 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
                 <Card className="flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-2xl">Modules Settings</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Settings from installed modules
+                    </p>
                   </CardHeader>
                   <CardContent className="flex-1">
                     <Accordion
@@ -278,7 +295,16 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
 
                         return (
                           <AccordionItem key={group} value={group}>
-                            <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                            <AccordionTrigger className="capitalize">
+                              <div className="flex items-center gap-2">
+                                <span>{group}</span>
+                                {moduleLabel && (
+                                  <Badge variant="outline" className="text-xs font-normal">
+                                    {moduleLabel}
+                                  </Badge>
+                                )}
+                              </div>
+                            </AccordionTrigger>
                             <AccordionContent className="space-y-6">
                               <FormCard
                                 title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
