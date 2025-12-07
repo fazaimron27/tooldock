@@ -23,7 +23,7 @@ use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Modules\Core\App\Services\SuperAdminService;
+use Modules\Core\Services\SuperAdminService;
 
 /**
  * Application service provider

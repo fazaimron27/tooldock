@@ -4,9 +4,9 @@ namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Models\Permission;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Services\PermissionCacheService;
+use Modules\Core\Models\Permission;
+use Modules\Core\Models\Role;
+use Modules\Core\Services\PermissionCacheService;
 
 /**
  * Centralized service for registering module permissions.

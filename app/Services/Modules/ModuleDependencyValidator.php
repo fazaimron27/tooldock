@@ -29,7 +29,7 @@ class ModuleDependencyValidator
      * Validate that all cross-module class references are declared as dependencies
      *
      * Scans PHP files in the module's app directory to find references to other modules
-     * (e.g., `Modules\Core\App\Models\User`) and ensures they are declared in module.json.
+     * (e.g., `Modules\Core\Models\User`) and ensures they are declared in module.json.
      * Also validates that all declared dependencies exist as modules.
      *
      * @param  Module  $module  The module to validate
