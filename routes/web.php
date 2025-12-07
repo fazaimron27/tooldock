@@ -1,20 +1,11 @@
 <?php
 
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Core\Http\Controllers\GuestController;
 use Modules\Core\Http\Controllers\ProfileController;
+use Modules\Core\Http\Controllers\WelcomeController;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [WelcomeController::class, 'index']);
 
 // All authenticated routes with /tooldock prefix
 Route::prefix('tooldock')->middleware(['auth', 'verified'])->group(function () {

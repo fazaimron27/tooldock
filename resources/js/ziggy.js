@@ -179,6 +179,7 @@ const Ziggy = {
       uri: 'api\/v1\/groups\/bulk\/remove-users',
       methods: ['POST'],
     },
+    'groups.dashboard': { uri: 'tooldock\/groups\/dashboard', methods: ['GET', 'HEAD'] },
     'groups.groups.index': { uri: 'tooldock\/groups', methods: ['GET', 'HEAD'] },
     'groups.groups.create': { uri: 'tooldock\/groups\/create', methods: ['GET', 'HEAD'] },
     'groups.groups.store': { uri: 'tooldock\/groups', methods: ['POST'] },

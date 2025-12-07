@@ -54,6 +54,8 @@ class InertiaSharedDataService
             ],
             'app_name' => settings('app_name', config('app.name')),
             'app_logo' => settings('app_logo', 'Cog'),
+            'date_format' => settings('date_format', 'd/m/Y'),
+            'currency_symbol' => settings('currency_symbol', 'Rp'),
             'csrf' => csrf_token(),
             'media' => [
                 'max_file_size_kb' => $fileSizeInfo['effective_kb'],
