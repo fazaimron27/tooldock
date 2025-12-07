@@ -35,6 +35,13 @@ class AuditLog extends Model
     public $incrementing = false;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'auditlog_entries';
+
+    /**
      * Cache tag name for audit log-related cache entries.
      * Used for efficient bulk invalidation via Redis tags.
      */
