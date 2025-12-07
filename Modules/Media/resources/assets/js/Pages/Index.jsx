@@ -4,9 +4,11 @@
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { router } from '@inertiajs/react';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
+import { formatDate, formatFileSize } from '@/Utils/format';
+import { router, usePage } from '@inertiajs/react';
 import { Download, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -23,6 +25,7 @@ import {
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Index({ mediaFiles, defaultPerPage = 20 }) {
+  const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
   const imagePreviewDialog = useDisclosure();
   const [fileToDelete, setFileToDelete] = useState(null);
@@ -56,16 +59,6 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
     },
     [imagePreviewDialog]
   );
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) {
-      return '0 Bytes';
-    }
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-  };
 
   const columns = useMemo(
     () => [
@@ -139,7 +132,11 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
         header: 'Uploaded',
         cell: (info) => {
           const file = info.row.original;
-          return <span>{new Date(file.created_at).toLocaleDateString()}</span>;
+          return (
+            <span className="text-sm">
+              {formatDate(file.created_at, 'short', 'en-US', date_format)}
+            </span>
+          );
         },
       },
       {
@@ -169,7 +166,7 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
         },
       },
     ],
-    [handleDeleteClick, handleImageClick]
+    [handleDeleteClick, handleImageClick, date_format]
   );
 
   const pageCount = useMemo(() => {
@@ -190,27 +187,7 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
     only: ['mediaFiles'],
   });
 
-  useEffect(() => {
-    if (!tableProps.table || mediaFiles.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = mediaFiles.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = mediaFiles.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, mediaFiles.current_page, mediaFiles.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, mediaFiles, defaultPerPage);
 
   return (
     <DashboardLayout header="Media">

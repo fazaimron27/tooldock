@@ -4,9 +4,11 @@
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { Link, router } from '@inertiajs/react';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
+import { formatDate } from '@/Utils/format';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Tag, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -18,7 +20,31 @@ import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+const getTypeColor = (type) => {
+  if (!type)
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800';
+
+  let hash = 0;
+  for (let i = 0; i < type.length; i++) {
+    hash = type.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const colors = [
+    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800 dark:hover:text-blue-100',
+    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 hover:text-green-900 dark:hover:bg-green-800 dark:hover:text-green-100',
+    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 hover:bg-purple-200 hover:text-purple-900 dark:hover:bg-purple-800 dark:hover:text-purple-100',
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 hover:bg-orange-200 hover:text-orange-900 dark:hover:bg-orange-800 dark:hover:text-orange-100',
+    'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200 hover:bg-pink-200 hover:text-pink-900 dark:hover:bg-pink-800 dark:hover:text-pink-100',
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 hover:bg-indigo-200 hover:text-indigo-900 dark:hover:bg-indigo-800 dark:hover:text-indigo-100',
+    'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 hover:bg-teal-200 hover:text-teal-900 dark:hover:bg-teal-800 dark:hover:text-teal-100',
+    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 hover:bg-red-200 hover:text-red-900 dark:hover:bg-red-800 dark:hover:text-red-100',
+  ];
+
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export default function Index({ categories, defaultPerPage = 20, types = [] }) {
+  const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [typeFilter, setTypeFilter] = useState('');
@@ -114,28 +140,6 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         header: 'Type',
         cell: (info) => {
           const category = info.row.original;
-          const getTypeColor = (type) => {
-            if (!type) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-
-            let hash = 0;
-            for (let i = 0; i < type.length; i++) {
-              hash = type.charCodeAt(i) + ((hash << 5) - hash);
-            }
-
-            const colors = [
-              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-              'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-              'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-              'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-              'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
-              'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-            ];
-
-            return colors[Math.abs(hash) % colors.length];
-          };
-
           return (
             <Badge className={getTypeColor(category.type)}>
               {category.type?.charAt(0).toUpperCase() + category.type?.slice(1)}
@@ -149,7 +153,9 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         cell: (info) => {
           const category = info.row.original;
           return category.parent ? (
-            <span className="text-sm">{category.parent.name}</span>
+            <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-slate-100">
+              {category.parent.name}
+            </Badge>
           ) : (
             <span className="text-sm text-muted-foreground">—</span>
           );
@@ -175,7 +181,9 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         cell: (info) => {
           const category = info.row.original;
           return (
-            <span className="text-sm">{new Date(category.created_at).toLocaleDateString()}</span>
+            <span className="text-sm">
+              {formatDate(category.created_at, 'short', 'en-US', date_format)}
+            </span>
           );
         },
       },
@@ -206,7 +214,7 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         },
       },
     ],
-    [handleDeleteClick]
+    [handleDeleteClick, date_format]
   );
 
   const pageCount = useMemo(() => {
@@ -228,27 +236,7 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
     initialFilters: typeFilter ? { type: typeFilter } : {},
   });
 
-  useEffect(() => {
-    if (!tableProps.table || categories.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = categories.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = categories.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, categories.current_page, categories.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, categories, defaultPerPage);
 
   return (
     <DashboardLayout header="Categories">

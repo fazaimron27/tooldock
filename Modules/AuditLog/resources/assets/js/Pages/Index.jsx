@@ -3,11 +3,13 @@
  * Displays audit logs with user avatars, event badges, model information, and time ago dates
  */
 import { useDatatable } from '@/Hooks/useDatatable';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Filter, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import DataTable from '@/Components/DataDisplay/DataTable';
 import DatePicker from '@/Components/Form/DatePicker';
@@ -181,7 +183,7 @@ export default function Index({
           const auditLog = info.row.original;
           return (
             <span className="text-sm text-muted-foreground">
-              {formatDate(auditLog.created_at, 'datetime')}
+              {formatDate(auditLog.created_at, 'datetime', 'en-US', 'n/j/y, g:i A')}
             </span>
           );
         },
@@ -209,31 +211,7 @@ export default function Index({
     initialFilters: localFilters,
   });
 
-  /**
-   * Sync table pagination with server-side pagination state.
-   * Updates table pagination if it's out of sync with server state.
-   */
-  useEffect(() => {
-    if (!tableProps.table || auditLogs.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = auditLogs.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = auditLogs.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, auditLogs.current_page, auditLogs.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, auditLogs, defaultPerPage);
 
   const hasActiveFilters = useMemo(() => {
     return Object.values(localFilters).some((value) => value !== '' && value !== null);

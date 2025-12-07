@@ -4,9 +4,11 @@
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { Link, router } from '@inertiajs/react';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
+import { formatDate } from '@/Utils/format';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Eye, Pencil, Plus, Trash2, Users } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -17,6 +19,7 @@ import { Button } from '@/Components/ui/button';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Index({ groups, defaultPerPage = 20 }) {
+  const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
   const [groupToDelete, setGroupToDelete] = useState(null);
 
@@ -124,7 +127,11 @@ export default function Index({ groups, defaultPerPage = 20 }) {
         header: 'Created',
         cell: (info) => {
           const group = info.row.original;
-          return <span>{new Date(group.created_at).toLocaleDateString()}</span>;
+          return (
+            <span className="text-sm">
+              {formatDate(group.created_at, 'short', 'en-US', date_format)}
+            </span>
+          );
         },
       },
       {
@@ -160,7 +167,7 @@ export default function Index({ groups, defaultPerPage = 20 }) {
         },
       },
     ],
-    [handleDeleteClick]
+    [handleDeleteClick, date_format]
   );
 
   const pageCount = useMemo(() => {
@@ -181,27 +188,7 @@ export default function Index({ groups, defaultPerPage = 20 }) {
     only: ['groups'],
   });
 
-  useEffect(() => {
-    if (!tableProps.table || groups.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = groups.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = groups.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, groups.current_page, groups.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, groups, defaultPerPage);
 
   return (
     <DashboardLayout header="Groups">
