@@ -3,6 +3,7 @@
 namespace Modules\AuditLog\App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Modules\AuditLog\App\Services\AuditLogFormatterFactory;
 use Modules\Core\App\Models\User;
 
 class AuditLog extends Model
@@ -53,6 +55,7 @@ class AuditLog extends Model
         'url',
         'ip_address',
         'user_agent',
+        'tags',
     ];
 
     /**
@@ -76,6 +79,126 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get tags as an array.
+     *
+     * @return Attribute
+     */
+    protected function tagsArray(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value ? array_filter(explode(',', $value)) : []
+        );
+    }
+
+    /**
+     * Get a human-readable formatted diff of old_values vs new_values.
+     *
+     * Uses the formatter factory to select the appropriate formatter
+     * based on the event type.
+     *
+     * @return Attribute
+     */
+    protected function formattedDiff(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                // Ensure values are arrays (handle JSON strings or null values)
+                // Use casts if available, otherwise fall back to ensureArray
+                $oldValues = is_array($attributes['old_values'] ?? null)
+                    ? ($attributes['old_values'] ?? [])
+                    : $this->ensureArray($attributes['old_values'] ?? []);
+                $newValues = is_array($attributes['new_values'] ?? null)
+                    ? ($attributes['new_values'] ?? [])
+                    : $this->ensureArray($attributes['new_values'] ?? []);
+                $event = $attributes['event'] ?? 'updated';
+
+                // Use factory to get appropriate formatter
+                $formatter = AuditLogFormatterFactory::make($event);
+
+                return $formatter->format($oldValues, $newValues, $event);
+            }
+        );
+    }
+
+    /**
+     * Ensure a value is an array.
+     *
+     * Handles cases where the value might be a JSON string or null.
+     *
+     * @param  mixed  $value
+     * @return array<string, mixed>
+     */
+    protected function ensureArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Get human-readable causer information.
+     *
+     * @return Attribute
+     */
+    protected function causerParams(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                $userId = $attributes['user_id'] ?? null;
+
+                if (! $userId) {
+                    return app()->runningInConsole() ? 'Console' : 'System';
+                }
+
+                try {
+                    $user = $this->user;
+
+                    if (! $user) {
+                        return "User ID: {$userId}";
+                    }
+
+                    // Try to get a readable name (name, email)
+                    $name = $user->name ?? $user->email ?? null;
+
+                    if ($name) {
+                        return "User: {$name}";
+                    }
+
+                    return "User ID: {$userId}";
+                } catch (\Throwable) {
+                    return "User ID: {$userId}";
+                }
+            }
+        );
+    }
+
+    /**
+     * Normalize user agent string.
+     *
+     * Returns null if user agent is "Symfony" (default when no User-Agent header is present).
+     *
+     * @param  string|null  $userAgent
+     * @return string|null
+     */
+    public static function normalizeUserAgent(?string $userAgent): ?string
+    {
+        if ($userAgent === null || $userAgent === 'Symfony') {
+            return null;
+        }
+
+        return $userAgent;
     }
 
     /**
@@ -268,7 +391,8 @@ class AuditLog extends Model
         ?string $userId = null,
         ?string $url = null,
         ?string $ipAddress = null,
-        ?string $userAgent = null
+        ?string $userAgent = null,
+        ?string $tags = null
     ): self {
         return self::create([
             'user_id' => $userId ?? Auth::id(),
@@ -279,7 +403,8 @@ class AuditLog extends Model
             'new_values' => $newValues,
             'url' => $url ?? request()?->url(),
             'ip_address' => $ipAddress ?? request()?->ip(),
-            'user_agent' => $userAgent ?? request()?->userAgent(),
+            'user_agent' => $userAgent ?? self::normalizeUserAgent(request()?->userAgent()),
+            'tags' => $tags,
         ]);
     }
 
@@ -289,7 +414,7 @@ class AuditLog extends Model
      * Much faster than individual creates for bulk operations.
      * Uses raw insert() for maximum performance.
      *
-     * @param  array<int, array{event: string, model: Model, oldValues?: array|null, newValues?: array|null, userId?: string|null, url?: string|null, ipAddress?: string|null, userAgent?: string|null}>  $entries  Array of audit log entries
+     * @param  array<int, array{event: string, model: Model, oldValues?: array|null, newValues?: array|null, userId?: string|null, url?: string|null, ipAddress?: string|null, userAgent?: string|null, tags?: string|array|null}>  $entries  Array of audit log entries
      * @return void
      */
     public static function bulkInsert(array $entries): void
@@ -316,7 +441,8 @@ class AuditLog extends Model
                 'new_values' => $entry['newValues'] !== null ? json_encode($entry['newValues']) : null,
                 'url' => $entry['url'] ?? request()?->url(),
                 'ip_address' => $entry['ipAddress'] ?? request()?->ip(),
-                'user_agent' => $entry['userAgent'] ?? request()?->userAgent(),
+                'user_agent' => $entry['userAgent'] ?? self::normalizeUserAgent(request()?->userAgent()),
+                'tags' => isset($entry['tags']) && is_array($entry['tags']) ? implode(',', $entry['tags']) : ($entry['tags'] ?? null),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

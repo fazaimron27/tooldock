@@ -130,4 +130,14 @@ class User extends Authenticatable
     {
         return $this->morphOne(MediaFile::class, 'model');
     }
+
+    /**
+     * Get audit tags for this user.
+     *
+     * @return array<string>
+     */
+    public function getAuditTags(): array
+    {
+        return ['user'];
+    }
 }

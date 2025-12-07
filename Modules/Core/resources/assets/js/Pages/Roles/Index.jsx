@@ -4,9 +4,11 @@
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { Link, router } from '@inertiajs/react';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
+import { formatDate } from '@/Utils/format';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Shield, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -19,6 +21,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ROLES } from '../../constants';
 
 export default function Index({ roles, defaultPerPage = 20 }) {
+  const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
   const [roleToDelete, setRoleToDelete] = useState(null);
 
@@ -109,7 +112,11 @@ export default function Index({ roles, defaultPerPage = 20 }) {
         header: 'Created',
         cell: (info) => {
           const role = info.row.original;
-          return <span>{new Date(role.created_at).toLocaleDateString()}</span>;
+          return (
+            <span className="text-sm">
+              {formatDate(role.created_at, 'short', 'en-US', date_format)}
+            </span>
+          );
         },
       },
       {
@@ -143,7 +150,7 @@ export default function Index({ roles, defaultPerPage = 20 }) {
         },
       },
     ],
-    [handleDeleteClick]
+    [handleDeleteClick, date_format]
   );
 
   const pageCount = useMemo(() => {
@@ -164,27 +171,7 @@ export default function Index({ roles, defaultPerPage = 20 }) {
     only: ['roles'],
   });
 
-  useEffect(() => {
-    if (!tableProps.table || roles.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = roles.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = roles.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, roles.current_page, roles.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, roles, defaultPerPage);
 
   return (
     <DashboardLayout header="Roles">

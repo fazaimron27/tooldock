@@ -16,7 +16,7 @@ class CoreMenuRegistrar
     {
         $menuRegistry->registerItem(
             group: 'Dashboard',
-            label: 'Core Dashboard',
+            label: 'User Management Dashboard',
             route: 'core.dashboard',
             icon: 'LayoutDashboard',
             order: 10,
@@ -59,11 +59,11 @@ class CoreMenuRegistrar
         );
 
         $menuRegistry->registerItem(
-            group: 'System',
+            group: 'Platform',
             label: 'Modules',
             route: 'core.modules.index',
             icon: 'Package',
-            order: 100,
+            order: 10,
             permission: 'core.modules.manage',
             parentKey: null,
             module: $moduleName

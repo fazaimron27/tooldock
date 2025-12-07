@@ -32,9 +32,13 @@ export default function ModuleDashboardPage({ moduleName, widgets }) {
 
   const hasWidgets = groupNames.length > 0;
 
+  // Use custom title for Core module dashboard
+  const dashboardTitle =
+    moduleName === 'Core' ? 'User Management Dashboard' : `${moduleName} Dashboard`;
+
   return (
     <DashboardLayout>
-      <PageShell title={`${moduleName} Dashboard`}>
+      <PageShell title={dashboardTitle}>
         <div className="mb-6">
           <Link href={route('dashboard')}>
             <Button variant="ghost" size="sm" className="gap-2">

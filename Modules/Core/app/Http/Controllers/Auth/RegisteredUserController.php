@@ -11,10 +11,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
+use Modules\AuditLog\App\Traits\DispatchAuditLog;
 use Modules\Core\App\Models\User;
 
 class RegisteredUserController extends Controller
 {
+    use DispatchAuditLog;
+
     /**
      * Display the registration view.
      */
@@ -36,11 +40,30 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        /**
+         * Disable automatic logging to prevent duplicate created event.
+         * We'll log a specific registered event instead.
+         */
+        $user = User::withoutLoggingActivity(function () use ($request) {
+            return User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+        });
+
+        $this->dispatchAuditLog(
+            event: AuditLogEvent::REGISTERED,
+            model: $user,
+            oldValues: null,
+            newValues: [
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            tags: 'authentication,registration',
+            request: $request,
+            userId: null
+        );
 
         event(new Registered($user));
 

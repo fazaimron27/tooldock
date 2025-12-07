@@ -4,6 +4,7 @@ namespace Modules\Core\App\Observers;
 
 use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\LogsActivity;
 use Modules\Core\App\Models\Permission;
@@ -26,14 +27,15 @@ class PermissionObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'created',
+            event: AuditLogEvent::CREATED,
             model: $permission,
             oldValues: null,
             newValues: $permission->getAttributes(),
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'permission'
         );
     }
 
@@ -63,14 +65,15 @@ class PermissionObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'updated',
+            event: AuditLogEvent::UPDATED,
             model: $permission,
             oldValues: $oldValues,
             newValues: $dirty,
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'permission'
         );
 
         if (isset($dirty['name'])) {
@@ -91,14 +94,15 @@ class PermissionObserver
         }
 
         CreateAuditLogJob::dispatch(
-            event: 'deleted',
+            event: AuditLogEvent::DELETED,
             model: $permission,
             oldValues: $permission->getAttributes(),
             newValues: null,
             userId: Auth::id(),
             url: request()?->url(),
             ipAddress: request()?->ip(),
-            userAgent: request()?->userAgent()
+            userAgent: request()?->userAgent(),
+            tags: 'permission'
         );
 
         $this->menuRegistry->clearCache();

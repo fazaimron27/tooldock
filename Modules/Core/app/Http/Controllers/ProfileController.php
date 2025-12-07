@@ -10,18 +10,25 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
+use Modules\AuditLog\App\Traits\DispatchAuditLog;
+use Modules\Core\App\Models\User;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
 use Modules\Media\Models\MediaFile;
 
 class ProfileController extends Controller
 {
+    use DispatchAuditLog;
+
     /**
      * Display the user's profile form.
      */
     public function edit(Request $request): Response
     {
         $user = $request->user();
-        $user->load('avatar');
+        if (! $user->relationLoaded('avatar')) {
+            $user->load('avatar');
+        }
 
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
@@ -41,37 +48,137 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->fill($request->validated());
 
-        if ($user->isDirty('email')) {
+        $emailChanged = $user->isDirty('email');
+        $dirtyFields = $user->getDirty();
+        $original = $user->getOriginal();
+
+        if ($emailChanged) {
             $user->email_verified_at = null;
+            $dirtyFields = $user->getDirty();
         }
 
-        $user->save();
+        $otherFieldsChanged = ! empty(array_diff_key($dirtyFields, ['email' => true, 'email_verified_at' => true]));
 
-        if ($request->has('avatar_id')) {
-            $avatarId = $request->input('avatar_id');
-
-            $user->load('avatar');
-
-            if ($user->avatar) {
-                $oldAvatarId = $user->avatar->id;
-                if ($avatarId != $oldAvatarId || ! $avatarId) {
-                    $user->avatar->delete();
-                }
-            }
-
-            if ($avatarId) {
-                $avatar = MediaFile::find($avatarId);
-                if ($avatar) {
-                    $avatar->update([
-                        'model_type' => $user::class,
-                        'model_id' => $user->id,
-                        'is_temporary' => false,
-                    ]);
-                }
-            }
+        /**
+         * Disable automatic logging to prevent duplicate events.
+         * We'll log custom events (email_changed, updated) instead.
+         */
+        if ($emailChanged || $otherFieldsChanged) {
+            \Modules\Core\App\Models\User::withoutLoggingActivity(function () use ($user) {
+                $user->save();
+            });
+        } else {
+            $user->save();
         }
+
+        $this->logEmailChange($request, $user, $emailChanged, $original['email'] ?? null);
+        $this->logOtherFieldChanges($request, $user, $otherFieldsChanged, $dirtyFields, $original);
+        $this->handleAvatarChange($request, $user);
 
         return Redirect::route('profile.edit')->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Log email change event.
+     */
+    private function logEmailChange(Request $request, User $user, bool $emailChanged, ?string $oldEmail): void
+    {
+        if (! $emailChanged) {
+            return;
+        }
+
+        $this->dispatchAuditLog(
+            event: AuditLogEvent::EMAIL_CHANGED,
+            model: $user,
+            oldValues: [
+                'email' => $oldEmail,
+            ],
+            newValues: [
+                'email' => $user->email,
+                'changed_at' => now()->toIso8601String(),
+            ],
+            tags: 'profile,email_change',
+            request: $request,
+            userId: $user->id
+        );
+    }
+
+    /**
+     * Log other field changes (like name) as updated event.
+     */
+    private function logOtherFieldChanges(Request $request, User $user, bool $otherFieldsChanged, array $dirtyFields, array $original): void
+    {
+        if (! $otherFieldsChanged) {
+            return;
+        }
+
+        $otherFieldsOldValues = [];
+        $otherFieldsNewValues = [];
+
+        foreach ($dirtyFields as $key => $value) {
+            if (in_array($key, ['email', 'email_verified_at'], true)) {
+                continue;
+            }
+            $otherFieldsOldValues[$key] = $original[$key] ?? null;
+            $otherFieldsNewValues[$key] = $value;
+        }
+
+        if (empty($otherFieldsOldValues)) {
+            return;
+        }
+
+        $this->dispatchAuditLog(
+            event: AuditLogEvent::UPDATED,
+            model: $user,
+            oldValues: $otherFieldsOldValues,
+            newValues: $otherFieldsNewValues,
+            tags: 'profile,update',
+            request: $request,
+            userId: $user->id
+        );
+    }
+
+    /**
+     * Handle avatar changes (attach, update, or delete).
+     */
+    private function handleAvatarChange(Request $request, User $user): void
+    {
+        if (! $request->has('avatar_id')) {
+            return;
+        }
+
+        $avatarId = $request->input('avatar_id');
+        $avatarId = ($avatarId === '' || $avatarId === null) ? null : $avatarId;
+
+        if (! $user->relationLoaded('avatar')) {
+            $user->load('avatar');
+        }
+
+        /**
+         * Handle avatar deletion or replacement.
+         * Removes current avatar if empty ID provided.
+         * Replaces existing avatar if a different one is provided.
+         */
+        if (empty($avatarId)) {
+            if ($user->avatar) {
+                $user->avatar->delete();
+            }
+
+            return;
+        }
+
+        if ($user->avatar && $avatarId != $user->avatar->id) {
+            $user->avatar->delete();
+        }
+
+        $avatar = MediaFile::find($avatarId);
+        if ($avatar) {
+            $avatar->update([
+                'model_type' => $user::class,
+                'model_id' => $user->id,
+                'is_temporary' => false,
+            ]);
+        }
     }
 
     /**
@@ -86,18 +193,49 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $userId = $user->id;
+        $userEmail = $user->email;
+        $userName = $user->name;
+        $url = $request->url();
+        $ipAddress = $request->ip();
+        $userAgent = $request->userAgent();
+
+        /**
+         * Log account deletion synchronously before user deletion.
+         * This ensures user_id is preserved in the audit log.
+         */
+        \Modules\AuditLog\App\Models\AuditLog::createDirect(
+            event: AuditLogEvent::ACCOUNT_DELETED,
+            model: $user,
+            oldValues: [
+                'email' => $userEmail,
+                'name' => $userName,
+                'deleted_at' => now()->toIso8601String(),
+            ],
+            newValues: null,
+            userId: $userId,
+            url: $url,
+            ipAddress: $ipAddress,
+            userAgent: $userAgent,
+            tags: 'profile,account_deletion'
+        );
 
         Auth::logout();
 
-        $user->delete();
+        /**
+         * Disable automatic logging to prevent duplicate deleted event.
+         * Account deletion is already logged above.
+         */
+        \Modules\Core\App\Models\User::withoutLoggingActivity(function () use ($user) {
+            $user->delete();
+        });
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         /**
-         * For Inertia requests, return 409 with X-Inertia-Location header.
-         * This forces a full page reload, which is necessary after session invalidation.
-         * Note: Flash messages cannot be used here since the session is invalidated.
+         * Force full page reload for Inertia requests after session invalidation.
+         * Flash messages cannot be used since session is already invalidated.
          */
         if ($request->header('X-Inertia')) {
             return response('', 409)

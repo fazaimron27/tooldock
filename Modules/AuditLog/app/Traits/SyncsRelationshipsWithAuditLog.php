@@ -4,6 +4,7 @@ namespace Modules\AuditLog\App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 
 /**
@@ -76,8 +77,8 @@ trait SyncsRelationshipsWithAuditLog
                 ->values()
                 ->toArray();
 
-            CreateAuditLogJob::dispatch(
-                event: 'updated',
+            static::dispatchAuditLogForRelationship(
+                event: AuditLogEvent::RELATIONSHIP_SYNCED,
                 model: $model,
                 oldValues: [
                     $relationshipDisplayName => $oldNames,
@@ -87,11 +88,41 @@ trait SyncsRelationshipsWithAuditLog
                     $relationshipDisplayName => $newNames,
                     $relationshipDisplayName.'_ids' => $newIds,
                 ],
-                userId: Auth::id() ? (string) Auth::id() : null,
-                url: request()?->url(),
-                ipAddress: request()?->ip(),
-                userAgent: request()?->userAgent()
+                tags: "relationship,sync,{$relationshipDisplayName}"
             );
         }
+    }
+
+    /**
+     * Dispatch an audit log job for relationship changes.
+     *
+     * Helper method to reduce duplication when dispatching audit log jobs from this trait.
+     * Automatically includes user ID, URL, IP address, and user agent.
+     *
+     * @param  string  $event  The audit log event type
+     * @param  Model  $model  The model being audited
+     * @param  array|null  $oldValues  Old values
+     * @param  array|null  $newValues  New values
+     * @param  string|null  $tags  Optional tags
+     * @return void
+     */
+    protected static function dispatchAuditLogForRelationship(
+        string $event,
+        Model $model,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?string $tags = null
+    ): void {
+        CreateAuditLogJob::dispatch(
+            event: $event,
+            model: $model,
+            oldValues: $oldValues,
+            newValues: $newValues,
+            userId: Auth::id() ? (string) Auth::id() : null,
+            url: request()?->url(),
+            ipAddress: request()?->ip(),
+            userAgent: request()?->userAgent(),
+            tags: $tags
+        );
     }
 }

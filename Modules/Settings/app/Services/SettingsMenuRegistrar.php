@@ -19,7 +19,7 @@ class SettingsMenuRegistrar
             label: 'Settings',
             route: 'settings.index',
             icon: 'Settings',
-            order: 30,
+            order: 70,
             permission: 'settings.config.view',
             parentKey: null,
             module: $moduleName

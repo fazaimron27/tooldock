@@ -2,6 +2,7 @@
 
 namespace Modules\Groups\App\Observers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use Modules\Groups\App\Services\GroupCacheService;
 use Modules\Groups\Models\Group;
@@ -36,6 +37,8 @@ class GroupObserver
                 }
             }
         }
+
+        $this->clearWidgetCache();
     }
 
     /**
@@ -55,5 +58,15 @@ class GroupObserver
         if (! empty($userIds)) {
             $this->cacheService->clearForGroupDeletion($userIds);
         }
+
+        $this->clearWidgetCache();
+    }
+
+    /**
+     * Clear Groups module widget cache.
+     */
+    private function clearWidgetCache(): void
+    {
+        app(DashboardWidgetRegistry::class)->clearCache(null, 'Groups');
     }
 }

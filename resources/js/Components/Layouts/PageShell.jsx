@@ -100,14 +100,38 @@ function generateBreadcrumbsFromRoute(title, appName) {
     const resourceParts = routeParts.slice(0, -1);
     const action = routeParts[routeParts.length - 1];
 
-    resourceParts.forEach((part, index) => {
-      const partLabel = capitalizeLabel(part);
-      const parentRoute = `${resourceParts.slice(0, index + 1).join('.')}.index`;
+    // Skip "core" module name in breadcrumbs
+    const isCoreModule = resourceParts[0] === 'core';
+    const partsToProcess = isCoreModule ? resourceParts.slice(1) : resourceParts;
 
-      if (route().has(parentRoute)) {
+    // Remove consecutive duplicate parts to avoid "Groups > Groups" breadcrumbs
+    const uniqueResourceParts = [];
+    partsToProcess.forEach((part, index) => {
+      if (index === 0 || part !== partsToProcess[index - 1]) {
+        uniqueResourceParts.push(part);
+      }
+    });
+
+    uniqueResourceParts.forEach((part, index) => {
+      const partLabel = capitalizeLabel(part);
+      // Find the actual route that exists for this part
+      const fullRoutePrefix = isCoreModule
+        ? `core.${uniqueResourceParts.slice(0, index + 1).join('.')}`
+        : uniqueResourceParts.slice(0, index + 1).join('.');
+      const possibleRoutes = [`${fullRoutePrefix}.index`, `${part}.index`];
+
+      let foundRoute = null;
+      for (const possibleRoute of possibleRoutes) {
+        if (route().has(possibleRoute)) {
+          foundRoute = possibleRoute;
+          break;
+        }
+      }
+
+      if (foundRoute) {
         breadcrumbs.push({
           label: partLabel,
-          href: route(parentRoute),
+          href: route(foundRoute),
         });
       } else {
         breadcrumbs.push({ label: partLabel });
@@ -118,7 +142,7 @@ function generateBreadcrumbsFromRoute(title, appName) {
       return breadcrumbs;
     }
 
-    const lastResourceLabel = capitalizeLabel(resourceParts[resourceParts.length - 1]);
+    const lastResourceLabel = capitalizeLabel(uniqueResourceParts[uniqueResourceParts.length - 1]);
     const actionLabel = actionLabels[action];
     if (actionLabel && action !== 'show') {
       breadcrumbs.push({ label: actionLabel });
@@ -139,7 +163,10 @@ function generateBreadcrumbsFromRoute(title, appName) {
   const resourceName = routeParts[0];
   const action = routeParts[1];
   const actionLabel = actionLabels[action];
-  const resourceLabel = capitalizeLabel(resourceName);
+
+  // Skip "core" module name in breadcrumbs - show resource directly
+  const isCoreModule = resourceName === 'core';
+  const resourceLabel = isCoreModule ? null : capitalizeLabel(resourceName);
   const resourceIndexRoute = `${resourceName}.index`;
   const hasIndexRoute = route().has(resourceIndexRoute);
 
@@ -148,10 +175,48 @@ function generateBreadcrumbsFromRoute(title, appName) {
   const dashboardRoute = `${resourceName}.dashboard`;
   const hasDashboardRoute = route().has(dashboardRoute);
 
-  if ((hasIndexRoute || (isDashboardRoute && hasDashboardRoute)) && action !== 'index') {
+  // Try alternative nested index routes (e.g., groups.groups.index instead of groups.index)
+  let actualIndexRoute = null;
+  if (!hasIndexRoute && resourceName) {
+    const alternativeRoute = `${resourceName}.${resourceName}.index`;
+    if (route().has(alternativeRoute)) {
+      actualIndexRoute = alternativeRoute;
+    }
+  }
+
+  // For core module, skip the module name and show resource directly
+  if (isCoreModule) {
+    if (isDashboardRoute) {
+      // Use title if provided, otherwise capitalize the action
+      const dashboardLabel = title && title.trim() ? title : capitalizeLabel(action);
+      breadcrumbs.push({ label: dashboardLabel });
+      return breadcrumbs;
+    }
+
+    // For 2-part core routes (shouldn't happen for users/roles as they're 3-part),
+    // but handle gracefully
+    if (action === 'index') {
+      // This shouldn't happen for core routes, but handle it
+      return breadcrumbs;
+    }
+
+    // For other actions, this shouldn't typically happen for core module
+    // as most routes are 3+ parts, but handle it
+    const coreActionLabel = actionLabels[action];
+    if (coreActionLabel) {
+      breadcrumbs.push({ label: coreActionLabel });
+    }
+    return breadcrumbs;
+  }
+
+  if (
+    (hasIndexRoute || actualIndexRoute || (isDashboardRoute && hasDashboardRoute)) &&
+    action !== 'index'
+  ) {
+    const indexRouteToUse = hasIndexRoute ? resourceIndexRoute : actualIndexRoute || dashboardRoute;
     breadcrumbs.push({
       label: resourceLabel,
-      href: hasIndexRoute ? route(resourceIndexRoute) : route(dashboardRoute),
+      href: route(indexRouteToUse),
     });
   } else if (action === 'index') {
     breadcrumbs.push({ label: resourceLabel });

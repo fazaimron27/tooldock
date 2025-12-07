@@ -3,11 +3,13 @@
  * Displays audit logs with user avatars, event badges, model information, and time ago dates
  */
 import { useDatatable } from '@/Hooks/useDatatable';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
 import { formatDate, getInitials } from '@/Utils/format';
 import { Link, router } from '@inertiajs/react';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { Download, Filter, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import DataTable from '@/Components/DataDisplay/DataTable';
 import DatePicker from '@/Components/Form/DatePicker';
@@ -20,6 +22,7 @@ import { Label } from '@/Components/ui/label';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 import UserCombobox from '../Components/UserCombobox';
+import { getEventBadge, getModelDisplayName, parseTags } from '../Utils/auditLogHelpers.jsx';
 
 export default function Index({
   auditLogs,
@@ -36,12 +39,16 @@ export default function Index({
     auditable_type: filters.auditable_type || '',
     start_date: filters.start_date || '',
     end_date: filters.end_date || '',
+    tags: filters.tags || '',
   });
 
   const handleFilterChange = useCallback((key, value) => {
     setLocalFilters((prev) => {
       const newFilters = { ...prev, [key]: value };
 
+      /**
+       * Clear system filter when a specific user is selected.
+       */
       if (key === 'user_id' && value) {
         newFilters.system = '';
       }
@@ -51,6 +58,9 @@ export default function Index({
         page: 1,
       };
 
+      /**
+       * Remove empty/null/undefined values from query parameters.
+       */
       Object.keys(params).forEach((k) => {
         if (params[k] === '' || params[k] === null || params[k] === undefined) {
           delete params[k];
@@ -75,6 +85,7 @@ export default function Index({
       auditable_type: '',
       start_date: '',
       end_date: '',
+      tags: '',
     });
     router.get(
       route('auditlog.index'),
@@ -86,47 +97,6 @@ export default function Index({
       }
     );
   }, []);
-
-  const getEventBadge = (event) => {
-    const config = {
-      created: {
-        variant: 'default',
-        className:
-          'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/60 dark:hover:text-green-200',
-        label: 'Created',
-      },
-      updated: {
-        variant: 'default',
-        className:
-          'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-800/60 dark:hover:text-blue-200',
-        label: 'Updated',
-      },
-      deleted: {
-        variant: 'default',
-        className:
-          'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-800/60 dark:hover:text-red-200',
-        label: 'Deleted',
-      },
-    };
-
-    const eventConfig = config[event] || config.updated;
-
-    return (
-      <Badge className={eventConfig.className} variant={eventConfig.variant}>
-        {eventConfig.label}
-      </Badge>
-    );
-  };
-
-  const getModelDisplayName = (auditableType, auditableId) => {
-    if (!auditableType || !auditableId) {
-      return 'N/A';
-    }
-
-    const className = auditableType.split('\\').pop();
-
-    return `${className} #${auditableId}`;
-  };
 
   const columns = useMemo(
     () => [
@@ -162,6 +132,28 @@ export default function Index({
         },
       },
       {
+        id: 'tags',
+        header: 'Tags',
+        cell: (info) => {
+          const auditLog = info.row.original;
+          const tags = parseTags(auditLog.tags);
+
+          if (tags.length === 0) {
+            return <span className="text-muted-foreground text-xs">—</span>;
+          }
+
+          return (
+            <div className="flex flex-wrap gap-1">
+              {tags.map((tag, index) => (
+                <Badge key={index} variant="outline" className="text-xs bg-muted/50 hover:bg-muted">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'event',
         header: 'Event',
         cell: (info) => {
@@ -191,7 +183,7 @@ export default function Index({
           const auditLog = info.row.original;
           return (
             <span className="text-sm text-muted-foreground">
-              {formatDate(auditLog.created_at, 'relative')}
+              {formatDate(auditLog.created_at, 'datetime', 'en-US', 'n/j/y, g:i A')}
             </span>
           );
         },
@@ -219,27 +211,7 @@ export default function Index({
     initialFilters: localFilters,
   });
 
-  useEffect(() => {
-    if (!tableProps.table || auditLogs.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = auditLogs.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = auditLogs.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, auditLogs.current_page, auditLogs.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, auditLogs, defaultPerPage);
 
   const hasActiveFilters = useMemo(() => {
     return Object.values(localFilters).some((value) => value !== '' && value !== null);
@@ -262,14 +234,27 @@ export default function Index({
             <Button
               variant="outline"
               onClick={() => {
-                const queryParams = [];
+                /**
+                 * Use form submission to preserve current filters in export.
+                 * More reliable than window.location.href for passing query parameters.
+                 */
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = route('auditlog.export');
+
                 Object.entries(localFilters).forEach(([key, value]) => {
                   if (value && value !== '') {
-                    queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
                   }
                 });
-                const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-                window.location.href = route('auditlog.export') + queryString;
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
               }}
             >
               <Download className="mr-2 h-4 w-4" />
@@ -393,6 +378,18 @@ export default function Index({
                   {hasInvalidDateRange && (
                     <p className="text-xs text-destructive">End date must be after start date</p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <input
+                    id="tags"
+                    type="text"
+                    value={localFilters.tags || ''}
+                    onChange={(e) => handleFilterChange('tags', e.target.value)}
+                    placeholder="Filter by tags (comma-separated)"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
                 </div>
               </div>
             </motion.div>

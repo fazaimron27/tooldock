@@ -4,9 +4,11 @@
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
-import { Link, router } from '@inertiajs/react';
+import { usePaginationSync } from '@/Hooks/usePaginationSync';
+import { formatDate, getInitials } from '@/Utils/format';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -18,6 +20,7 @@ import { Button } from '@/Components/ui/button';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
 export default function Index({ users, defaultPerPage = 20 }) {
+  const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -47,12 +50,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
         header: 'Name',
         cell: (info) => {
           const user = info.row.original;
-          const initials = user.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
+          const initials = getInitials(user.name);
           return (
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
@@ -113,7 +111,11 @@ export default function Index({ users, defaultPerPage = 20 }) {
         header: 'Created',
         cell: (info) => {
           const user = info.row.original;
-          return <span>{new Date(user.created_at).toLocaleDateString()}</span>;
+          return (
+            <span className="text-sm">
+              {formatDate(user.created_at, 'short', 'en-US', date_format)}
+            </span>
+          );
         },
       },
       {
@@ -143,7 +145,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
         },
       },
     ],
-    [handleDeleteClick]
+    [handleDeleteClick, date_format]
   );
 
   const pageCount = useMemo(() => {
@@ -164,27 +166,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
     only: ['users'],
   });
 
-  useEffect(() => {
-    if (!tableProps.table || users.current_page === undefined) {
-      return;
-    }
-
-    const currentPageIndex = users.current_page - 1;
-    const currentPagination = tableProps.table.getState().pagination;
-    const serverPageSize = users.per_page || defaultPerPage;
-
-    if (
-      currentPagination.pageIndex !== currentPageIndex ||
-      currentPagination.pageSize !== serverPageSize
-    ) {
-      window.requestAnimationFrame(() => {
-        tableProps.table.setPagination({
-          pageIndex: currentPageIndex,
-          pageSize: serverPageSize,
-        });
-      });
-    }
-  }, [tableProps.table, users.current_page, users.per_page, defaultPerPage]);
+  usePaginationSync(tableProps, users, defaultPerPage);
 
   return (
     <DashboardLayout header="Users">

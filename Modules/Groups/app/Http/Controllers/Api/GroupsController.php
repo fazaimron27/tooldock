@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\App\Constants\Roles;
@@ -43,7 +44,7 @@ class GroupsController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 20);
+        $perPage = $request->get('per_page', (int) settings('groups_per_page', 20));
         $groups = $query->paginate($perPage);
 
         return response()->json($groups);
@@ -241,7 +242,7 @@ class GroupsController extends Controller
                 $newMemberNames = $group->users()->pluck('name')->sort()->values()->toArray();
 
                 CreateAuditLogJob::dispatch(
-                    event: 'updated',
+                    event: AuditLogEvent::UPDATED,
                     model: $group,
                     oldValues: [
                         'members' => $oldMemberNames,
@@ -254,7 +255,8 @@ class GroupsController extends Controller
                     userId: Auth::id(),
                     url: $request->url(),
                     ipAddress: $request->ip(),
-                    userAgent: $request->userAgent()
+                    userAgent: $request->userAgent(),
+                    tags: 'group,members,api'
                 );
             }
         }
@@ -304,7 +306,7 @@ class GroupsController extends Controller
                 $newMemberNames = $group->users()->pluck('name')->sort()->values()->toArray();
 
                 CreateAuditLogJob::dispatch(
-                    event: 'updated',
+                    event: AuditLogEvent::UPDATED,
                     model: $group,
                     oldValues: [
                         'members' => $oldMemberNames,
@@ -317,7 +319,8 @@ class GroupsController extends Controller
                     userId: Auth::id(),
                     url: $request->url(),
                     ipAddress: $request->ip(),
-                    userAgent: $request->userAgent()
+                    userAgent: $request->userAgent(),
+                    tags: 'group,members,api'
                 );
             }
         }

@@ -30,18 +30,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Model Types Cache TTL
-    |--------------------------------------------------------------------------
-    |
-    | The time-to-live for the cached model types list in seconds.
-    | This cache is used to avoid querying the database on every index load.
-    |
-    */
-
-    'model_types_cache_ttl' => env('AUDITLOG_MODEL_TYPES_CACHE_TTL', 3600),
-
-    /*
-    |--------------------------------------------------------------------------
     | Export Chunk Size
     |--------------------------------------------------------------------------
     |

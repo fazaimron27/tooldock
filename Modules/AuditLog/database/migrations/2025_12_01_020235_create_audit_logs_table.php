@@ -14,19 +14,21 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->enum('event', ['created', 'updated', 'deleted']);
+            $table->string('event', 50);
             $table->uuidMorphs('auditable');
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->string('url')->nullable();
             $table->string('ip_address')->nullable();
             $table->text('user_agent')->nullable();
+            $table->string('tags')->nullable();
             $table->timestamps();
 
             $table->index('auditable_type');
             $table->index('user_id');
             $table->index('created_at');
             $table->index(['event', 'created_at']);
+            $table->index('tags');
         });
     }
 

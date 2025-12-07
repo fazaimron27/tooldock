@@ -74,4 +74,26 @@ class Setting extends Model
             SettingType::Text, SettingType::Textarea => (string) $value,
         };
     }
+
+    /**
+     * Get audit tags for this setting.
+     *
+     * Returns tags based on the setting's module and group for better filtering.
+     *
+     * @return array<string>
+     */
+    public function getAuditTags(): array
+    {
+        $tags = ['setting'];
+
+        if ($this->module) {
+            $tags[] = strtolower($this->module);
+        }
+
+        if ($this->group) {
+            $tags[] = strtolower($this->group);
+        }
+
+        return $tags;
+    }
 }

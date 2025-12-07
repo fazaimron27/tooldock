@@ -21,4 +21,14 @@ class GroupsGroupRegistrar
             slug: 'guest'
         );
     }
+
+    /**
+     * Attach roles to groups after seeding.
+     *
+     * This is called after groups and roles are seeded to establish relationships.
+     */
+    public function attachRolesToGroups(GroupsRoleService $roleService): void
+    {
+        $roleService->ensureGuestRoleAttached();
+    }
 }

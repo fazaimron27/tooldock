@@ -5,6 +5,42 @@
 import WidgetRenderer from '@/Components/Dashboard/WidgetRenderer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 
+/**
+ * Renders widgets in a grid layout (up to 3 columns).
+ * Widgets are grouped into rows of 3 for responsive display.
+ */
+function renderWidgetGrid(widgets, widgetType) {
+  if (widgets.length === 0) {
+    return null;
+  }
+
+  const rows = [];
+  for (let i = 0; i < widgets.length; i += 3) {
+    rows.push(widgets.slice(i, i + 3));
+  }
+
+  const getRowClass = (rowLength) => {
+    if (rowLength === 1) return 'grid gap-4 items-start grid-cols-1';
+    if (rowLength === 2) return 'grid gap-4 items-start md:grid-cols-2';
+    return 'grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3';
+  };
+
+  return (
+    <div className="space-y-4">
+      {rows.map((row, rowIndex) => (
+        <div key={rowIndex} className={getRowClass(row.length)}>
+          {row.map((widget, index) => (
+            <WidgetRenderer
+              key={`${widget.module}-${widget.title}-${widgetType}-${rowIndex}-${index}`}
+              widget={widget}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function WidgetGroup({
   groupName,
   statWidgets,
@@ -34,43 +70,18 @@ function WidgetGroup({
         </div>
       )}
 
-      {statWidgets.length > 0 && (
-        <div
-          className={
-            statWidgets.length === 2
-              ? 'grid gap-4 items-start md:grid-cols-2'
-              : 'grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3'
-          }
-        >
-          {statWidgets.map((widget, index) => (
-            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
-          ))}
-        </div>
-      )}
-
-      {chartWidgets.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 items-start">
-          {chartWidgets.map((widget, index) => (
-            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
-          ))}
-        </div>
-      )}
-
-      {(activityWidgets.length > 0 || systemWidgets.length > 0) && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
-          {activityWidgets.map((widget, index) => (
-            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
-          ))}
-          {systemWidgets.map((widget, index) => (
-            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
-          ))}
-        </div>
-      )}
+      {renderWidgetGrid(statWidgets, 'stat')}
+      {renderWidgetGrid(chartWidgets, 'chart')}
+      {renderWidgetGrid(activityWidgets, 'activity')}
+      {renderWidgetGrid(systemWidgets, 'system')}
 
       {tableWidgets.length > 0 && (
         <div className="space-y-4">
           {tableWidgets.map((widget, index) => (
-            <WidgetRenderer key={`${widget.module}-${widget.title}-${index}`} widget={widget} />
+            <WidgetRenderer
+              key={`${widget.module}-${widget.title}-table-${index}`}
+              widget={widget}
+            />
           ))}
         </div>
       )}
