@@ -9,6 +9,7 @@
   "active": 1,
   "providers": [
     "Modules\\Media\\Providers\\MediaServiceProvider",
+    "Modules\\Media\\Providers\\RouteServiceProvider",
     "Modules\\Media\\Providers\\AuthServiceProvider"
   ],
   "files": [],
