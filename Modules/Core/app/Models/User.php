@@ -19,6 +19,13 @@ class User extends Authenticatable
     use HasFactory, HasGroups, HasRoles, HasUuids, LogsActivity, Notifiable;
 
     /**
+     * The guard name for the model.
+     *
+     * @var string
+     */
+    protected $guard_name = 'web';
+
+    /**
      * The data type of the primary key ID.
      *
      * @var string

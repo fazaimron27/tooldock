@@ -63,6 +63,7 @@ class SettingsService
      * Updates an existing setting's value in the database, then immediately clears
      * the cache via Redis tags to force a reload on the next request.
      * Only updates if the value has actually changed to avoid unnecessary audit logs.
+     * Automatically syncs config for settings that affect Laravel configuration.
      *
      * @param  string  $key  The setting key
      * @param  mixed  $value  The value to set
@@ -80,22 +81,27 @@ class SettingsService
             );
         }
 
-        // Get current value (with type casting applied)
         $currentValue = $setting->value;
 
-        // Normalize values for comparison (handle type differences)
         $normalizedCurrent = $this->normalizeValueForComparison($currentValue, $setting->type);
         $normalizedNew = $this->normalizeValueForComparison($value, $setting->type);
 
-        // Only update if value has actually changed
         if ($normalizedCurrent !== $normalizedNew) {
             $setting->update(['value' => $value]);
             $this->clearCache();
         }
 
-        if ($key === 'app_debug') {
-            config(['app.debug' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]);
-        }
+        match ($key) {
+            'app_name' => config(['app.name' => (string) $value]),
+            'app_timezone' => config(['app.timezone' => (string) $value]),
+            'app_locale' => config(['app.locale' => (string) $value]),
+            'app_fallback_locale' => config(['app.fallback_locale' => (string) $value]),
+            'mail_from_address' => config(['mail.from.address' => (string) $value]),
+            'mail_from_name' => config(['mail.from.name' => (string) $value]),
+            'session_lifetime' => config(['session.lifetime' => (int) $value]),
+            'session_expire_on_close' => config(['session.expire_on_close' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]),
+            default => null,
+        };
     }
 
     /**
@@ -177,6 +183,7 @@ class SettingsService
      * Optimized for Redis with cache tags for efficient invalidation.
      * Uses Cache::rememberForever to cache all settings.
      * Cache is invalidated when settings are updated via set().
+     * Loads from cache without auto-seeding - seeding should only happen explicitly.
      *
      * Note: Settings seeding should only happen explicitly via:
      * - SettingsService::sync() method
@@ -191,8 +198,6 @@ class SettingsService
             return $this->setting->all();
         }
 
-        // Load from cache without auto-seeding
-        // Seeding should only happen explicitly, not automatically on cache miss
         return $this->cacheService->rememberForever(
             self::CACHE_KEY,
             fn () => $this->setting->all(),
@@ -204,16 +209,16 @@ class SettingsService
      * Check if we should skip using cache.
      *
      * Returns true during migrations or when running in console without database setup.
+     * Checks full command line to catch optimize:clear and sub-commands.
+     * Skips cache during migrations or optimize commands to prevent automatic seeding.
      */
     private function shouldSkipCache(): bool
     {
         if (app()->runningInConsole() && ! app()->runningUnitTests()) {
             $argv = $_SERVER['argv'] ?? [];
-            // Check full command line to catch optimize:clear and sub-commands
             $commandLine = implode(' ', array_slice($argv, 1));
             $command = $argv[1] ?? '';
 
-            // Skip cache during migrations or optimize commands to prevent automatic seeding
             if (
                 str_contains($command, 'migrate') ||
                 str_contains($command, 'optimize') ||

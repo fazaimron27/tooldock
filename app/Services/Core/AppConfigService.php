@@ -13,8 +13,9 @@ class AppConfigService
     /**
      * Sync application configuration from settings.
      *
-     * Updates app.name and app.debug from the settings system.
+     * Updates application and mail settings from the settings system.
      * Safely handles cases where settings table doesn't exist (during migrations).
+     * Silently fails if settings table doesn't exist or other errors occur.
      *
      * @return void
      */
@@ -28,10 +29,22 @@ class AppConfigService
             $appName = settings('app_name', config('app.name'));
             config(['app.name' => $appName]);
 
-            $appDebug = settings('app_debug', config('app.debug'));
-            config(['app.debug' => filter_var($appDebug, FILTER_VALIDATE_BOOLEAN)]);
+            $appTimezone = settings('app_timezone', config('app.timezone'));
+            config(['app.timezone' => $appTimezone]);
+
+            $appLocale = settings('app_locale', config('app.locale'));
+            config(['app.locale' => $appLocale]);
+
+            $appFallbackLocale = settings('app_fallback_locale', config('app.fallback_locale'));
+            config(['app.fallback_locale' => $appFallbackLocale]);
+
+            $mailFromAddress = settings('mail_from_address', config('mail.from.address'));
+            $mailFromName = settings('mail_from_name', config('mail.from.name'));
+            config([
+                'mail.from.address' => $mailFromAddress,
+                'mail.from.name' => $mailFromName,
+            ]);
         } catch (\Throwable $e) {
-            // Silently fail if settings table doesn't exist or other errors occur
         }
     }
 }
