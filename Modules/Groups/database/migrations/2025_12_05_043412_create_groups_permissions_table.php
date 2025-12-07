@@ -15,7 +15,7 @@ return new class extends Migration
         $columnNames = config('permission.column_names');
         $pivotPermission = $columnNames['permission_pivot_key'] ?? 'permission_id';
 
-        Schema::create('group_has_permissions', function (Blueprint $table) use ($tableNames, $pivotPermission) {
+        Schema::create('groups_permissions', function (Blueprint $table) use ($tableNames, $pivotPermission) {
             $table->foreignUuid('group_id')->constrained('groups')->onDelete('cascade');
             $table->uuid($pivotPermission);
 
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('group_has_permissions');
+        Schema::dropIfExists('groups_permissions');
     }
 };

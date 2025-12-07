@@ -229,14 +229,14 @@ class GroupsServiceProvider extends ServiceProvider
      * Register relationship macro for Role model to access groups.
      *
      * This allows Role models to access their associated groups through
-     * the group_has_roles pivot table, enabling efficient eager loading.
+     * the groups_roles pivot table, enabling efficient eager loading.
      */
     private function registerRoleGroupsRelationship(): void
     {
         if (! Role::hasMacro('groups')) {
             Role::macro('groups', function (): BelongsToMany {
                 /** @var Role $this */
-                return $this->belongsToMany(Group::class, 'group_has_roles')
+                return $this->belongsToMany(Group::class, 'groups_roles')
                     ->withTimestamps();
             });
         }

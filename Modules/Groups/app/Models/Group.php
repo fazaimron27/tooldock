@@ -75,7 +75,7 @@ class Group extends Model
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'group_user')
+        return $this->belongsToMany(User::class, 'groups_users')
             ->withTimestamps();
     }
 
@@ -84,7 +84,7 @@ class Group extends Model
      */
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'group_has_permissions')
+        return $this->belongsToMany(Permission::class, 'groups_permissions')
             ->withTimestamps();
     }
 
@@ -93,7 +93,7 @@ class Group extends Model
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'group_has_roles')
+        return $this->belongsToMany(Role::class, 'groups_roles')
             ->withTimestamps();
     }
 

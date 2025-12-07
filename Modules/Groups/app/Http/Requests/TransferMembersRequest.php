@@ -44,7 +44,7 @@ class TransferMembersRequest extends FormRequest
                 'required',
                 'string',
                 'exists:'.(config('permission.table_names.users') ?? 'users').',id',
-                Rule::exists('group_user', 'user_id')->where('group_id', $currentGroupId),
+                Rule::exists('groups_users', 'user_id')->where('group_id', $currentGroupId),
             ],
             'target_group_id' => [
                 'required',
