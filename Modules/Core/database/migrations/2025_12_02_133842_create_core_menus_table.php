@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('menus', function (Blueprint $table) {
+        Schema::create('core_menus', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('parent_id')->nullable();
             $table->string('group')->index();
@@ -29,8 +29,8 @@ return new class extends Migration
             $table->index('parent_id');
         });
 
-        Schema::table('menus', function (Blueprint $table) {
-            $table->foreign('parent_id')->references('id')->on('menus')->nullOnDelete();
+        Schema::table('core_menus', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('core_menus')->nullOnDelete();
         });
     }
 
@@ -39,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('menus');
+        Schema::dropIfExists('core_menus');
     }
 };
