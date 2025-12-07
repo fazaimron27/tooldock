@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Traits\LogsActivity;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Traits\LogsActivity;
 
 class MediaFile extends Model
 {
