@@ -1,6 +1,6 @@
 <?php
 
-use Modules\Core\App\Constants\Roles;
+use Modules\Core\Constants\Roles;
 
 return [
     'name' => 'Core',

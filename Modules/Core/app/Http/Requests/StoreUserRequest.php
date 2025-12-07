@@ -4,7 +4,7 @@ namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules;
-use Modules\Core\App\Models\User;
+use Modules\Core\Models\User;
 
 class StoreUserRequest extends FormRequest
 {

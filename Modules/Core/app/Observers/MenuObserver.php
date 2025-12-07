@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Core\App\Observers;
+namespace Modules\Core\Observers;
 
 use App\Services\Registry\MenuRegistry;
-use Modules\Core\App\Models\Menu;
+use Modules\Core\Models\Menu;
 
 /**
  * Observer for Menu model events.

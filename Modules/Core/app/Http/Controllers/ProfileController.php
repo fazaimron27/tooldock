@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Traits\DispatchAuditLog;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
+use Modules\Core\Models\User;
 use Modules\Media\Models\MediaFile;
 
 class ProfileController extends Controller
@@ -64,7 +64,7 @@ class ProfileController extends Controller
          * We'll log custom events (email_changed, updated) instead.
          */
         if ($emailChanged || $otherFieldsChanged) {
-            \Modules\Core\App\Models\User::withoutLoggingActivity(function () use ($user) {
+            \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user) {
                 $user->save();
             });
         } else {
@@ -204,7 +204,7 @@ class ProfileController extends Controller
          * Log account deletion synchronously before user deletion.
          * This ensures user_id is preserved in the audit log.
          */
-        \Modules\AuditLog\App\Models\AuditLog::createDirect(
+        \Modules\AuditLog\Models\AuditLog::createDirect(
             event: AuditLogEvent::ACCOUNT_DELETED,
             model: $user,
             oldValues: [
@@ -226,7 +226,7 @@ class ProfileController extends Controller
          * Disable automatic logging to prevent duplicate deleted event.
          * Account deletion is already logged above.
          */
-        \Modules\Core\App\Models\User::withoutLoggingActivity(function () use ($user) {
+        \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user) {
             $user->delete();
         });
 

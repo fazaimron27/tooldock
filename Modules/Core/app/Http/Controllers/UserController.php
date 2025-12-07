@@ -9,11 +9,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
 use Modules\Core\Http\Requests\StoreUserRequest;
 use Modules\Core\Http\Requests\UpdateUserRequest;
+use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
 
 class UserController extends Controller
 {

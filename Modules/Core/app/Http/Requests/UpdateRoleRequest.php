@@ -5,7 +5,7 @@ namespace Modules\Core\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use Modules\Core\App\Models\Role;
+use Modules\Core\Models\Role;
 
 class UpdateRoleRequest extends FormRequest
 {

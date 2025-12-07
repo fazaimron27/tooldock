@@ -5,8 +5,8 @@ namespace Modules\Core\Console;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\AuditLog\App\Models\AuditLog;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Models\AuditLog;
+use Modules\Core\Models\User;
 
 class BulkCreateUsersCommand extends Command
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\Core\App\Traits;
+namespace Modules\Core\Traits;
 
-use Modules\Core\App\Constants\Roles;
+use Modules\Core\Constants\Roles;
 
 trait ChecksGuestUser
 {
@@ -20,7 +20,7 @@ trait ChecksGuestUser
      * the Guest group may have basic permissions (like file upload) that
      * don't grant real system access.
      *
-     * @param  \Modules\Core\App\Models\User  $user
+     * @param  \Modules\Core\Models\User  $user
      * @return bool
      */
     protected function isGuestOnly($user): bool

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Core\App\Models;
+namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\AuditLog\App\Traits\LogsActivity;
+use Modules\AuditLog\Traits\LogsActivity;
 
 class Menu extends Model
 {
