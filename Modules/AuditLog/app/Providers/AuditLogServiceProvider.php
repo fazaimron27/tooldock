@@ -9,7 +9,7 @@ use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Modules\AuditLog\Services\AuditLogDashboardService;
+use Modules\AuditLog\App\Services\AuditLogDashboardService;
 use Modules\AuditLog\Services\AuditLogMenuRegistrar;
 use Modules\AuditLog\Services\AuditLogPermissionRegistrar;
 use Modules\AuditLog\Services\AuditLogSettingsRegistrar;

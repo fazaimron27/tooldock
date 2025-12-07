@@ -7,8 +7,10 @@ use App\Services\Cache\CacheService;
 use App\Services\Data\DatatableQueryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\AuditLog\App\Enums\AuditLogEvent;
 use Modules\AuditLog\App\Models\AuditLog;
 
 class AuditLogController extends Controller
@@ -226,7 +228,7 @@ class AuditLogController extends Controller
                 'exported_at' => now()->toIso8601String(),
                 'filename' => $filename,
             ],
-            userId: auth()->id(),
+            userId: Auth::id() ? (string) Auth::id() : null,
             url: $request->url(),
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
@@ -388,7 +390,7 @@ class AuditLogController extends Controller
             $query->when($request->filled('event'), function ($q) use ($request) {
                 $event = $request->input('event');
                 // Validate event is one of the allowed values
-                if (in_array($event, ['created', 'updated', 'deleted', 'registered', 'login', 'logout'], true)) {
+                if (in_array($event, AuditLogEvent::allEvents(), true)) {
                     $q->where('event', $event);
                 }
             });
