@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Core\App\Traits\ChecksGuestUser;
+use Modules\Core\Traits\ChecksGuestUser;
 
 class WelcomeController extends Controller
 {

@@ -9,10 +9,11 @@
   "active": 1,
   "providers": [
     "Modules\\Groups\\Providers\\GroupsServiceProvider",
+    "Modules\\Groups\\Providers\\RouteServiceProvider",
     "Modules\\Groups\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core"],
+  "requires": ["Core", "Settings"],
   "icon": "UserPlus",
   "author": "Tool Dock Team"
 }

@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\AuditLog\App\Policies;
+namespace Modules\AuditLog\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\AuditLog\App\Models\AuditLog;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\AuditLog\Models\AuditLog;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 
 class AuditLogPolicy
 {

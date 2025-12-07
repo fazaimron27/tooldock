@@ -3,8 +3,8 @@
 namespace Modules\Media\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 use Modules\Media\Models\MediaFile;
 
 class MediaFilePolicy

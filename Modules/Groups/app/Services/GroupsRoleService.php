@@ -3,8 +3,8 @@
 namespace Modules\Groups\Services;
 
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\Role;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\Role;
 use Modules\Groups\Models\Group;
 
 /**

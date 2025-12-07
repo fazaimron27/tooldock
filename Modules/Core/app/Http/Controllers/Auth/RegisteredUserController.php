@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Traits\DispatchAuditLog;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Traits\DispatchAuditLog;
+use Modules\Core\Models\User;
 
 class RegisteredUserController extends Controller
 {

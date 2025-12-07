@@ -6,7 +6,7 @@ use App\Services\Cache\CacheService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Models\Menu;
+use Modules\Core\Models\Menu;
 
 /**
  * Registry for managing application menu registration.

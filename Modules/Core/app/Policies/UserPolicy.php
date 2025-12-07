@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Core\App\Policies;
+namespace Modules\Core\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 
 class UserPolicy
 {

@@ -1,6 +1,6 @@
 {
   "name": "fazaimron27/core",
-  "description": "",
+  "description": "Core module handling Users, Authentication, and Permissions.",
   "authors": [
     {
       "name": "Faza Iman Imron",
@@ -15,7 +15,6 @@
   },
   "autoload": {
     "psr-4": {
-      "Modules\\Core\\App\\": "app/",
       "Modules\\Core\\": "app/",
       "Modules\\Core\\Database\\Factories\\": "database/factories/",
       "Modules\\Core\\Database\\Seeders\\": "database/seeders/"

@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Groups\App\Services;
+namespace Modules\Groups\Services;
 
 use App\Services\Registry\MenuRegistry;
-use Modules\Core\App\Services\PermissionCacheService;
+use Modules\Core\Services\PermissionCacheService;
 
 /**
  * Centralized service for clearing caches related to groups.

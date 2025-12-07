@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AuditLog\App\Services\Formatters;
+namespace Modules\AuditLog\Services\Formatters;
 
 /**
  * Formatter for relationship synchronization events.

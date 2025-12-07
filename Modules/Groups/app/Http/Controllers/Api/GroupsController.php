@@ -6,16 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
-use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\Permission;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Services\PermissionCacheService;
-use Modules\Groups\App\Services\GroupCacheService;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\Permission;
+use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
+use Modules\Core\Services\PermissionCacheService;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupCacheService;
 
 class GroupsController extends Controller
 {

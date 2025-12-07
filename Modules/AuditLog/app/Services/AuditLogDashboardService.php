@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\AuditLog\App\Services;
+namespace Modules\AuditLog\Services;
 
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Models\AuditLog;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Models\AuditLog;
 
 /**
  * Handles dashboard widget registration and data retrieval for the AuditLog module.

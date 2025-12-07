@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\AuditLog\App\Services\Formatters;
+namespace Modules\AuditLog\Services\Formatters;
 
-use Modules\AuditLog\App\Services\AuditLogFormattingHelper;
+use Modules\AuditLog\Services\AuditLogFormattingHelper;
 
 /**
  * Base abstract class for audit log formatters.

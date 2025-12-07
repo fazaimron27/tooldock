@@ -7,8 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Traits\DispatchAuditLog;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Traits\DispatchAuditLog;
 
 class PasswordController extends Controller
 {
@@ -30,7 +30,7 @@ class PasswordController extends Controller
          * Disable automatic logging to prevent duplicate updated event.
          * We'll log a specific password_changed event instead.
          */
-        \Modules\Core\App\Models\User::withoutLoggingActivity(function () use ($user, $validated) {
+        \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user, $validated) {
             $user->update([
                 'password' => Hash::make($validated['password']),
             ]);

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Groups\App\Services;
+namespace Modules\Groups\Services;
 
 use App\Services\Cache\CacheService;
 

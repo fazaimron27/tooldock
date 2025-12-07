@@ -3,7 +3,7 @@
 namespace Modules\AuditLog\Services;
 
 use App\Services\Registry\PermissionRegistry;
-use Modules\Core\App\Constants\Roles;
+use Modules\Core\Constants\Roles;
 
 /**
  * Handles permission registration for the AuditLog module.

@@ -1,14 +1,14 @@
 <?php
 
-namespace Modules\Core\App\Observers;
+namespace Modules\Core\Observers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Services\PermissionCacheService;
+use Modules\Core\Models\User;
+use Modules\Core\Services\PermissionCacheService;
 
 /**
  * Observer for User model events.

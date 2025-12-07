@@ -5,7 +5,7 @@ namespace Modules\Groups\Services;
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Support\Facades\DB;
-use Modules\Core\App\Models\User;
+use Modules\Core\Models\User;
 use Modules\Groups\Models\Group;
 
 /**

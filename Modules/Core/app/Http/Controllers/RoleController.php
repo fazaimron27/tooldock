@@ -9,13 +9,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Traits\SyncsRelationshipsWithAuditLog;
-use Modules\Core\App\Constants\Roles as RoleConstants;
-use Modules\Core\App\Models\Permission;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Services\PermissionService;
+use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
+use Modules\Core\Constants\Roles as RoleConstants;
 use Modules\Core\Http\Requests\StoreRoleRequest;
 use Modules\Core\Http\Requests\UpdateRoleRequest;
+use Modules\Core\Models\Permission;
+use Modules\Core\Models\Role;
+use Modules\Core\Services\PermissionService;
 
 class RoleController extends Controller
 {

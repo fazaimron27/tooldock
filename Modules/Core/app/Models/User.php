@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Core\App\Models;
+namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Modules\AuditLog\App\Traits\LogsActivity;
+use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Database\Factories\UserFactory;
-use Modules\Groups\App\Traits\HasGroups;
+use Modules\Groups\Traits\HasGroups;
 use Modules\Media\Models\MediaFile;
 use Spatie\Permission\Traits\HasRoles;
 

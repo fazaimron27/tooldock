@@ -9,6 +9,7 @@
   "active": 1,
   "providers": [
     "Modules\\Settings\\Providers\\SettingsServiceProvider",
+    "Modules\\Settings\\Providers\\RouteServiceProvider",
     "Modules\\Settings\\Providers\\AuthServiceProvider"
   ],
   "files": [],

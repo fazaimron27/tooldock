@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\Core\App\Services;
+namespace Modules\Core\Services;
 
 use Illuminate\Support\Collection;
-use Modules\Core\App\Models\Permission;
+use Modules\Core\Models\Permission;
 
 /**
  * Service for managing and organizing permissions.

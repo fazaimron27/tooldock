@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AuditLog\App\Enums;
+namespace Modules\AuditLog\Enums;
 
 /**
  * Audit log event type constants.

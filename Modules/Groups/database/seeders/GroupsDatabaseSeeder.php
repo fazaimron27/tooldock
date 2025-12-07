@@ -4,7 +4,7 @@ namespace Modules\Groups\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Modules\Core\App\Models\User;
+use Modules\Core\Models\User;
 use Modules\Groups\Models\Group;
 
 class GroupsDatabaseSeeder extends Seeder

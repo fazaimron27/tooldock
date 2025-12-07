@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AuditLog\App\Models;
+namespace Modules\AuditLog\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Modules\AuditLog\App\Services\AuditLogFormatterFactory;
-use Modules\Core\App\Models\User;
+use Modules\AuditLog\Services\AuditLogFormatterFactory;
+use Modules\Core\Models\User;
 
 class AuditLog extends Model
 {

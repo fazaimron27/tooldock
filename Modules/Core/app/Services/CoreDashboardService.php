@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Core\App\Services;
+namespace Modules\Core\Services;
 
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
-use Modules\Core\App\Models\Permission;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Models\User;
+use Modules\Core\Models\Permission;
+use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
 
 /**
  * Handles dashboard widget registration and data retrieval for the Core module.

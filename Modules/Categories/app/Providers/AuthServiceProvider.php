@@ -3,8 +3,8 @@
 namespace Modules\Categories\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Modules\Categories\App\Policies\CategoryPolicy;
 use Modules\Categories\Models\Category;
+use Modules\Categories\Policies\CategoryPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {

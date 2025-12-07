@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Groups\App\Policies;
+namespace Modules\Groups\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Modules\Core\App\Models\User;
-use Modules\Core\App\Traits\HasSuperAdminBypass;
+use Modules\Core\Models\User;
+use Modules\Core\Traits\HasSuperAdminBypass;
 use Modules\Groups\Models\Group;
 
 class GroupPolicy

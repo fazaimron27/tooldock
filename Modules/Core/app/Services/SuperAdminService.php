@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Core\App\Services;
+namespace Modules\Core\Services;
 
 use App\Services\Registry\RoleRegistry;
 use Illuminate\Support\Facades\Log;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\Role;
-use Modules\Core\App\Models\User;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
 
 /**
  * Service for managing super admin user creation.

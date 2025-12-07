@@ -5,7 +5,7 @@ namespace Modules\Core\Database\Seeders;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
 use Illuminate\Database\Seeder;
-use Modules\Core\App\Services\SuperAdminService;
+use Modules\Core\Services\SuperAdminService;
 
 class CorePermissionSeeder extends Seeder
 {

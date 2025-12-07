@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Core\App\Traits\ChecksGuestUser;
+use Modules\Core\Traits\ChecksGuestUser;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class DashboardController extends Controller

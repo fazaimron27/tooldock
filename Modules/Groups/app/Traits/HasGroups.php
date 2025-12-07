@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Groups\App\Traits;
+namespace Modules\Groups\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Modules\Groups\App\Services\GroupPermissionCacheService;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupPermissionCacheService;
 
 trait HasGroups
 {

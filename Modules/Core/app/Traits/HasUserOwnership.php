@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Core\App\Traits;
+namespace Modules\Core\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
-use Modules\Core\App\Constants\Roles;
-use Modules\Core\App\Models\User;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
 
 /**
  * Trait for models that have user ownership.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Core\App\Constants;
+namespace Modules\Core\Constants;
 
 /**
  * Role name constants.

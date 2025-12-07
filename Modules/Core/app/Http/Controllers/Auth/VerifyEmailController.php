@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Traits\DispatchAuditLog;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Traits\DispatchAuditLog;
 
 class VerifyEmailController extends Controller
 {

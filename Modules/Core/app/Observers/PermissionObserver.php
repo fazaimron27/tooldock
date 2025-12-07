@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\Core\App\Observers;
+namespace Modules\Core\Observers;
 
 use App\Services\Registry\MenuRegistry;
 use Illuminate\Support\Facades\Auth;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
-use Modules\AuditLog\App\Traits\LogsActivity;
-use Modules\Core\App\Models\Permission;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Traits\LogsActivity;
+use Modules\Core\Models\Permission;
 
 class PermissionObserver
 {

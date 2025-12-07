@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Core\App\Services;
+namespace Modules\Core\Services;
 
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
-use Modules\Core\App\Constants\Roles;
+use Modules\Core\Constants\Roles;
 
 /**
  * Handles role and permission registration for the Core module.
