@@ -3,8 +3,8 @@
 namespace Modules\AuditLog\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Modules\AuditLog\App\Models\AuditLog;
-use Modules\AuditLog\App\Policies\AuditLogPolicy;
+use Modules\AuditLog\Models\AuditLog;
+use Modules\AuditLog\Policies\AuditLogPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {

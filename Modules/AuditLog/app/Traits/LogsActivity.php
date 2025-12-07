@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\AuditLog\App\Traits;
+namespace Modules\AuditLog\Traits;
 
 use App\Services\Cache\CacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
 
 trait LogsActivity
 {
@@ -384,7 +384,7 @@ trait LogsActivity
             return null;
         }
 
-        return \Modules\AuditLog\App\Models\AuditLog::normalizeUserAgent(request()->userAgent());
+        return \Modules\AuditLog\Models\AuditLog::normalizeUserAgent(request()->userAgent());
     }
 
     /**

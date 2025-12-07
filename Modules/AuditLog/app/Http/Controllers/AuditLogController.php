@@ -10,8 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Models\AuditLog;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Models\AuditLog;
 
 class AuditLogController extends Controller
 {
@@ -218,8 +219,8 @@ class AuditLogController extends Controller
         ]);
 
         // Log export event after successful export
-        \Modules\AuditLog\App\Jobs\CreateAuditLogJob::dispatch(
-            event: \Modules\AuditLog\App\Enums\AuditLogEvent::EXPORT,
+        CreateAuditLogJob::dispatch(
+            event: \Modules\AuditLog\Enums\AuditLogEvent::EXPORT,
             model: null, // Export doesn't have a specific model
             oldValues: null,
             newValues: [

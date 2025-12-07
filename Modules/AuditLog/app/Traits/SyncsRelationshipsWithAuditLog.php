@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\AuditLog\App\Traits;
+namespace Modules\AuditLog\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Jobs\CreateAuditLogJob;
 
 /**
  * Trait for syncing relationships with audit logging.

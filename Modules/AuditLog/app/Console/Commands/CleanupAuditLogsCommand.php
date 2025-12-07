@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\AuditLog\App\Console\Commands;
+namespace Modules\AuditLog\Console\Commands;
 
 use Illuminate\Console\Command;
-use Modules\AuditLog\App\Models\AuditLog;
+use Modules\AuditLog\Models\AuditLog;
 
 class CleanupAuditLogsCommand extends Command
 {

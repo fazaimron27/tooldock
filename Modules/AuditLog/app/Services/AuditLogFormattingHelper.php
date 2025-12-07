@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AuditLog\App\Services;
+namespace Modules\AuditLog\Services;
 
 use Carbon\Carbon;
 

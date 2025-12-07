@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\AuditLog\App\Jobs;
+namespace Modules\AuditLog\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,8 +9,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Modules\AuditLog\App\Enums\AuditLogEvent;
-use Modules\AuditLog\App\Models\AuditLog;
+use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Models\AuditLog;
 use Throwable;
 
 class CreateAuditLogJob implements ShouldQueue

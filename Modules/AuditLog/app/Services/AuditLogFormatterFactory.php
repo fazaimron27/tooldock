@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\AuditLog\App\Services;
+namespace Modules\AuditLog\Services;
 
-use Modules\AuditLog\App\Services\Formatters\AuthenticationEventFormatter;
-use Modules\AuditLog\App\Services\Formatters\FileEventFormatter;
-use Modules\AuditLog\App\Services\Formatters\GenericEventFormatter;
-use Modules\AuditLog\App\Services\Formatters\RelationshipEventFormatter;
-use Modules\AuditLog\App\Services\Formatters\UserEventFormatter;
+use Modules\AuditLog\Services\Formatters\AuthenticationEventFormatter;
+use Modules\AuditLog\Services\Formatters\FileEventFormatter;
+use Modules\AuditLog\Services\Formatters\GenericEventFormatter;
+use Modules\AuditLog\Services\Formatters\RelationshipEventFormatter;
+use Modules\AuditLog\Services\Formatters\UserEventFormatter;
 
 /**
  * Factory for creating appropriate audit log formatters based on event type.
