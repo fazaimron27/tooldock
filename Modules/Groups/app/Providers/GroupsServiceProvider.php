@@ -2,9 +2,11 @@
 
 namespace Modules\Groups\Providers;
 
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
+use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -12,9 +14,12 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Core\App\Models\Role;
 use Modules\Groups\App\Observers\GroupObserver;
 use Modules\Groups\Models\Group;
+use Modules\Groups\Services\GroupsDashboardService;
 use Modules\Groups\Services\GroupsGroupRegistrar;
 use Modules\Groups\Services\GroupsMenuRegistrar;
 use Modules\Groups\Services\GroupsPermissionRegistrar;
+use Modules\Groups\Services\GroupsRoleService;
+use Modules\Groups\Services\GroupsSettingsRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -32,9 +37,13 @@ class GroupsServiceProvider extends ServiceProvider
      */
     public function boot(
         MenuRegistry $menuRegistry,
+        SettingsRegistry $settingsRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
         PermissionRegistry $permissionRegistry,
         GroupRegistry $groupRegistry,
         GroupsMenuRegistrar $menuRegistrar,
+        GroupsSettingsRegistrar $settingsRegistrar,
+        GroupsDashboardService $dashboardService,
         GroupsPermissionRegistrar $permissionRegistrar,
         GroupsGroupRegistrar $groupRegistrar
     ): void {
@@ -45,11 +54,14 @@ class GroupsServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $menuRegistrar->register($menuRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $groupRegistrar->register($groupRegistry, $this->name);
         $this->registerAuthorization();
         $this->registerObservers();
         $this->registerRoleGroupsRelationship();
+        $this->attachRolesToGroups();
     }
 
     /**
@@ -228,5 +240,19 @@ class GroupsServiceProvider extends ServiceProvider
                     ->withTimestamps();
             });
         }
+    }
+
+    /**
+     * Attach roles to groups after all service providers have booted.
+     *
+     * This ensures roles and groups are seeded before attaching relationships.
+     */
+    private function attachRolesToGroups(): void
+    {
+        $this->app->booted(function () {
+            $roleService = app(GroupsRoleService::class);
+            $groupRegistrar = app(GroupsGroupRegistrar::class);
+            $groupRegistrar->attachRolesToGroups($roleService);
+        });
     }
 }
