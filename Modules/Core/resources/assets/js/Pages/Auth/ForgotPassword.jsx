@@ -1,3 +1,4 @@
+import AuthLayout from '@Core/Layouts/AuthLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Mail } from 'lucide-react';
 
@@ -6,8 +7,6 @@ import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Spinner } from '@/Components/ui/spinner';
-
-import AuthLayout from '../../Layouts/AuthLayout';
 
 export default function ForgotPassword({ status }) {
   const { data, setData, post, processing, errors } = useForm({

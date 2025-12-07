@@ -4,6 +4,7 @@
  * Allows installation, uninstallation, and enabling/disabling of modules
  * Supports filtering by keywords and search
  */
+import ModuleCard from '@Core/Components/ModuleCard';
 import { Filter, Search, Shield, Tag, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -14,8 +15,6 @@ import { Card, CardContent, CardHeader } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import ModuleCard from '../../Components/ModuleCard';
 
 export default function Index({ modules = [] }) {
   const [searchQuery, setSearchQuery] = useState('');

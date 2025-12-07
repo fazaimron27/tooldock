@@ -5,6 +5,8 @@
 import { useDatatable } from '@/Hooks/useDatatable';
 import { usePaginationSync } from '@/Hooks/usePaginationSync';
 import { formatDate, getInitials } from '@/Utils/format';
+import UserCombobox from '@AuditLog/Components/UserCombobox';
+import { getEventBadge, getModelDisplayName, parseTags } from '@AuditLog/Utils/auditLogHelpers.jsx';
 import { Link, router } from '@inertiajs/react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
@@ -20,9 +22,6 @@ import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import UserCombobox from '../Components/UserCombobox';
-import { getEventBadge, getModelDisplayName, parseTags } from '../Utils/auditLogHelpers.jsx';
 
 export default function Index({
   auditLogs,

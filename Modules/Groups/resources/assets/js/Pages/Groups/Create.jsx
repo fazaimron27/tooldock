@@ -5,8 +5,10 @@
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { cn } from '@/Utils/utils';
+import MemberSelect from '@Groups/Components/MemberSelect';
+import { createGroupResolver } from '@Groups/Schemas/groupSchemas';
+import { ROLES } from '@Modules/Core/resources/assets/js/constants';
 import { Link } from '@inertiajs/react';
-import { ROLES } from '@modules/Core/resources/assets/js/constants';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -21,9 +23,6 @@ import { Label } from '@/Components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import MemberSelect from '../../Components/MemberSelect';
-import { createGroupResolver } from '../../Schemas/groupSchemas';
 
 export default function Create({ roles = [], groupedPermissions = {} }) {
   const availableRoles = useMemo(

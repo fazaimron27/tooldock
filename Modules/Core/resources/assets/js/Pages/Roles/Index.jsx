@@ -6,6 +6,7 @@ import { useDatatable } from '@/Hooks/useDatatable';
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { usePaginationSync } from '@/Hooks/usePaginationSync';
 import { formatDate } from '@/Utils/format';
+import { ROLES } from '@Core/constants';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Shield, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -17,8 +18,6 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { ROLES } from '../../constants';
 
 export default function Index({ roles, defaultPerPage = 20 }) {
   const { date_format } = usePage().props;

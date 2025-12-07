@@ -3,6 +3,8 @@
  * Shows old vs new values with diff visualization
  */
 import { formatDate, getInitials } from '@/Utils/format';
+import { getEventBadge, getModelDisplayName, parseTags } from '@AuditLog/Utils/auditLogHelpers.jsx';
+import { MYSQL_DATETIME_REGEX, isDateString } from '@AuditLog/Utils/datePatterns';
 import { Deferred, Link } from '@inertiajs/react';
 import { ArrowLeft, Eye, EyeOff, Tag } from 'lucide-react';
 
@@ -13,9 +15,6 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { getEventBadge, getModelDisplayName, parseTags } from '../Utils/auditLogHelpers.jsx';
-import { MYSQL_DATETIME_REGEX, isDateString } from '../Utils/datePatterns';
 
 export default function Show({ auditLog, oldValues, newValues, formattedDiff, causerParams }) {
   if (!auditLog || !auditLog.id) {

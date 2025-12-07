@@ -4,6 +4,8 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { updateRoleResolver } from '@Core/Schemas/roleSchemas';
+import { ROLES } from '@Core/constants';
 import { Link } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -17,9 +19,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Component
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { updateRoleResolver } from '../../Schemas/roleSchemas';
-import { ROLES } from '../../constants';
 
 export default function Edit({ role, groupedPermissions = {} }) {
   const isSuperAdmin = role.name === ROLES.SUPER_ADMIN;

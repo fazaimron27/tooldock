@@ -4,6 +4,7 @@
  */
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { getInitials } from '@/Utils/format';
+import { isSuperAdmin } from '@Groups/Utils/userUtils';
 import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Shield, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -18,7 +19,6 @@ import { Checkbox } from '@/Components/ui/checkbox';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-import { isSuperAdmin } from '../../Utils/userUtils';
 import AddMembersDialog from './Components/AddMembersDialog';
 import GroupDetailsCard from './Components/GroupDetailsCard';
 import MembersCard from './Components/MembersCard';
