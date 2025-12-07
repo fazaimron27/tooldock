@@ -19,9 +19,20 @@ class GroupsMenuRegistrar
             label: 'Groups',
             route: 'groups.groups.index',
             icon: 'UserPlus',
-            order: 30,
+            order: 20,
             permission: 'groups.group.view',
             parentKey: 'core.user-management',
+            module: $moduleName
+        );
+
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Groups Dashboard',
+            route: 'groups.dashboard',
+            icon: 'LayoutDashboard',
+            order: 20,
+            permission: 'groups.dashboard.view',
+            parentKey: 'dashboard',
             module: $moduleName
         );
     }

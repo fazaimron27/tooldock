@@ -44,7 +44,7 @@ class GroupsController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 20);
+        $perPage = $request->get('per_page', (int) settings('groups_per_page', 20));
         $groups = $query->paginate($perPage);
 
         return response()->json($groups);
