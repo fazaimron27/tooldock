@@ -3,6 +3,7 @@
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
@@ -81,8 +82,49 @@ class ModuleRegistryHelper
                 }
             }
         } catch (\Exception $e) {
-            // Ziggy route generation is non-critical - log but don't fail module operations
             Log::warning('Failed to generate Ziggy routes', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Generate active modules JSON file for Vite configuration.
+     *
+     * Creates a JSON file listing all active modules so Vite can optimize
+     * alias generation by only processing active modules. This improves
+     * build performance by skipping inactive modules.
+     */
+    private function generateActiveModulesJson(): void
+    {
+        try {
+            if (! DB::getSchemaBuilder()->hasTable('modules_statuses')) {
+                return;
+            }
+
+            $activeModules = DB::table('modules_statuses')
+                ->select('name')
+                ->where('is_installed', true)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->pluck('name')
+                ->values()
+                ->toArray();
+
+            $jsonPath = storage_path('app/active-modules.json');
+            $jsonData = [
+                'active_modules' => $activeModules,
+                'generated_at' => now()->toIso8601String(),
+            ];
+
+            file_put_contents($jsonPath, json_encode($jsonData, JSON_PRETTY_PRINT));
+
+            Log::debug('ModuleRegistryHelper: Generated active-modules.json', [
+                'count' => count($activeModules),
+                'modules' => $activeModules,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('ModuleRegistryHelper: Failed to generate active-modules.json', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -97,6 +139,7 @@ class ModuleRegistryHelper
      * 2. Refreshing module registry (discover new modules)
      * 3. Clearing caches (config, routes)
      * 4. Regenerating Ziggy routes (for frontend route helpers)
+     * 5. Generating active-modules.json (for Vite optimization)
      */
     public function finalize(): void
     {
@@ -104,5 +147,6 @@ class ModuleRegistryHelper
         $this->refresh();
         $this->clearCaches();
         $this->generateZiggyRoutes();
+        $this->generateActiveModulesJson();
     }
 }

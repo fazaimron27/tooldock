@@ -1,4 +1,4 @@
-import { ROLES } from '@modules/Core/resources/assets/js/constants';
+import { ROLES } from '@Modules/Core/resources/assets/js/constants';
 
 /**
  * Check if a user has the Super Admin role.

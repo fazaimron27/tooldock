@@ -5,6 +5,7 @@
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import { cn } from '@/Utils/utils';
+import { updateCategoryResolver } from '@Categories/Schemas/categorySchemas';
 import { Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
@@ -16,8 +17,6 @@ import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { updateCategoryResolver } from '../Schemas/categorySchemas';
 
 export default function Edit({ category, parentCategories = {}, types = [] }) {
   /**

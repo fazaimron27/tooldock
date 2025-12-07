@@ -5,8 +5,9 @@
  * for adding new members to a group.
  */
 import { getInitials } from '@/Utils/format';
+import MemberDialog from '@Groups/Components/MemberDialog';
+import { isSuperAdmin } from '@Modules/Groups/resources/assets/js/Utils/userUtils';
 import { router } from '@inertiajs/react';
-import { isSuperAdmin } from '@modules/Groups/resources/assets/js/Utils/userUtils';
 import { Plus, Search, Shield, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -15,8 +16,6 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
-
-import MemberDialog from '../../../Components/MemberDialog';
 
 export default function AddMembersDialog({
   open,

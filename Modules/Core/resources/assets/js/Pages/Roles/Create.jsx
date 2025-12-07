@@ -4,6 +4,7 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { createRoleResolver } from '@Core/Schemas/roleSchemas';
 import { Link } from '@inertiajs/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -17,8 +18,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Component
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { createRoleResolver } from '../../Schemas/roleSchemas';
 
 export default function Create({ groupedPermissions = {} }) {
   const form = useInertiaForm(

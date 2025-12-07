@@ -36,7 +36,7 @@ export function useGroupMembers({ group, members, defaultPerPage = 10, columns =
   const table = memberTableProps.table;
   const selectedRows = useMemo(() => {
     return table?.getSelectedRowModel().rows || [];
-  }, [table, table?.getState().rowSelection]);
+  }, [table]);
 
   const selectedMemberIds = useMemo(() => {
     return selectedRows.map((row) => row.original.id);

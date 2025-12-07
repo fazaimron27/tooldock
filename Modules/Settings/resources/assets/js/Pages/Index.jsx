@@ -5,6 +5,7 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { updateSettingsResolver } from '@Settings/Schemas/settingsSchemas';
 import { router, usePage } from '@inertiajs/react';
 import { useCallback, useMemo } from 'react';
 import { Controller } from 'react-hook-form';
@@ -26,8 +27,6 @@ import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { updateSettingsResolver } from '../Schemas/settingsSchemas';
 
 export default function Index({ applicationSettings = {}, modulesSettings = {} }) {
   const { url } = usePage();

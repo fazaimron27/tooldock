@@ -5,8 +5,9 @@
  * to another target group.
  */
 import { getInitials } from '@/Utils/format';
+import MemberDialog from '@Groups/Components/MemberDialog';
+import { isSuperAdmin } from '@Modules/Groups/resources/assets/js/Utils/userUtils';
 import { router } from '@inertiajs/react';
-import { isSuperAdmin } from '@modules/Groups/resources/assets/js/Utils/userUtils';
 import { ArrowRight, ArrowRightLeft, Shield, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,8 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/Components/ui/select';
-
-import MemberDialog from '../../../Components/MemberDialog';
 
 export default function TransferMembersDialog({
   open,

@@ -1,10 +1,9 @@
+import AuthLayout from '@Core/Layouts/AuthLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle2, LogOut, Mail } from 'lucide-react';
 
 import { Button } from '@/Components/ui/button';
 import { Spinner } from '@/Components/ui/spinner';
-
-import AuthLayout from '../../Layouts/AuthLayout';
 
 export default function VerifyEmail({ status }) {
   const { post, processing } = useForm({});

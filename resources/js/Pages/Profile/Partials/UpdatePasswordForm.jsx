@@ -1,6 +1,6 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { updatePasswordResolver } from '@Modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 import { usePage } from '@inertiajs/react';
-import { updatePasswordResolver } from '@modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 import { useEffect } from 'react';
 
 import FormCard from '@/Components/Common/FormCard';

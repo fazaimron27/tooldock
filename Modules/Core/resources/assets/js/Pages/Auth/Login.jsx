@@ -1,3 +1,4 @@
+import AuthLayout from '@Core/Layouts/AuthLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -8,8 +9,6 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Spinner } from '@/Components/ui/spinner';
-
-import AuthLayout from '../../Layouts/AuthLayout';
 
 export default function Login({ status, canResetPassword }) {
   const [showPassword, setShowPassword] = useState(false);

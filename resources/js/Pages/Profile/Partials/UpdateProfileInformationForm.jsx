@@ -1,6 +1,6 @@
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { updateProfileResolver } from '@Modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 import { Link, usePage } from '@inertiajs/react';
-import { updateProfileResolver } from '@modules/Core/resources/assets/js/Schemas/profileSchemas.js';
 import { CheckCircle2 } from 'lucide-react';
 import { Controller } from 'react-hook-form';
 

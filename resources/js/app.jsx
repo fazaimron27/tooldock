@@ -100,4 +100,13 @@ createInertiaApp({
       setNavigationState(false);
     },
   },
+  /**
+   * Prefetch configuration for Inertia.js link prefetching.
+   * Enabled with 200ms delay to improve UX while avoiding excessive parallel requests.
+   * Links are prefetched after 200ms of hover, balancing performance and user experience.
+   */
+  prefetch: {
+    enabled: true,
+    delay: 200,
+  },
 });

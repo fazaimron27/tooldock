@@ -1,3 +1,4 @@
+import AuthLayout from '@Core/Layouts/AuthLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { useState } from 'react';
@@ -7,8 +8,6 @@ import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Spinner } from '@/Components/ui/spinner';
-
-import AuthLayout from '../../Layouts/AuthLayout';
 
 export default function ConfirmPassword() {
   const [showPassword, setShowPassword] = useState(false);

@@ -4,6 +4,7 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { createUserResolver } from '@Core/Schemas/userSchemas';
 import { Link } from '@inertiajs/react';
 
 import FormCard from '@/Components/Common/FormCard';
@@ -15,8 +16,6 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Label } from '@/Components/ui/label';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
-
-import { createUserResolver } from '../../Schemas/userSchemas';
 
 export default function Create({ roles = [] }) {
   const form = useInertiaForm(
