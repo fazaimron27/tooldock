@@ -413,15 +413,15 @@ export default function Create({ roles = [], groupedPermissions = {} }) {
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Creating...' : 'Create Group'}
-                </Button>
+              <div className="flex items-center justify-end gap-4">
                 <Link href={route('groups.groups.index')}>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </Link>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? 'Creating...' : 'Create Group'}
+                </Button>
               </div>
             </form>
           </FormCard>
