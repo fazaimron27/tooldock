@@ -27,6 +27,13 @@ class Setting extends Model
     public $incrementing = false;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'settings_config';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
