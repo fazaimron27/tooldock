@@ -13,7 +13,7 @@
     "Modules\\Groups\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core", "Settings"],
+  "requires": ["Core"],
   "icon": "UserPlus",
   "author": "Tool Dock Team"
 }

@@ -13,7 +13,7 @@
     "Modules\\Categories\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core", "Settings", "AuditLog"],
+  "requires": ["Core"],
   "icon": "Tag",
   "author": "Tool Dock Team"
 }
