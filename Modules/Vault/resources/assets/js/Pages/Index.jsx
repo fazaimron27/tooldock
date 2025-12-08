@@ -26,10 +26,12 @@ import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
+const ALL_CATEGORIES_VALUE = '__all__';
+
 export default function Index({ vaults, categories = [], types = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES_VALUE);
   const [showFavorites, setShowFavorites] = useState(false);
 
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
@@ -46,7 +48,7 @@ export default function Index({ vaults, categories = [], types = [] }) {
       {
         search: debouncedSearchQuery || null,
         type: selectedType || null,
-        category_id: selectedCategory || null,
+        category_id: selectedCategory !== ALL_CATEGORIES_VALUE ? selectedCategory : null,
         favorite: showFavorites || null,
       },
       {
@@ -77,7 +79,7 @@ export default function Index({ vaults, categories = [], types = [] }) {
   const clearFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedType('');
-    setSelectedCategory('');
+    setSelectedCategory(ALL_CATEGORIES_VALUE);
     setShowFavorites(false);
     router.get(
       route('vault.index'),
@@ -92,7 +94,12 @@ export default function Index({ vaults, categories = [], types = [] }) {
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return debouncedSearchQuery.trim() || selectedType || selectedCategory || showFavorites;
+    return (
+      debouncedSearchQuery.trim() ||
+      selectedType ||
+      (selectedCategory && selectedCategory !== ALL_CATEGORIES_VALUE) ||
+      showFavorites
+    );
   }, [debouncedSearchQuery, selectedType, selectedCategory, showFavorites]);
 
   const vaultItems = vaults?.data || [];
@@ -145,13 +152,14 @@ export default function Index({ vaults, categories = [], types = [] }) {
               </Tabs>
 
               <Select
-                value={selectedCategory || undefined}
-                onValueChange={(value) => handleCategoryChange(value || '')}
+                value={selectedCategory}
+                onValueChange={(value) => handleCategoryChange(value)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value={ALL_CATEGORIES_VALUE}>All Categories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -209,11 +217,11 @@ export default function Index({ vaults, categories = [], types = [] }) {
                         </button>
                       </Badge>
                     )}
-                    {selectedCategory && (
+                    {selectedCategory && selectedCategory !== ALL_CATEGORIES_VALUE && (
                       <Badge variant="secondary" className="gap-1.5 pr-1 pl-2.5">
                         Category: {categories.find((c) => c.id === selectedCategory)?.name}
                         <button
-                          onClick={() => handleCategoryChange('')}
+                          onClick={() => handleCategoryChange(ALL_CATEGORIES_VALUE)}
                           className="ml-1 rounded-full p-0.5 transition-colors hover:bg-destructive/20 hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
