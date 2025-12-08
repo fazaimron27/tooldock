@@ -179,7 +179,7 @@ export default function Index({ vaults, categories = [], types = [] }) {
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
-              <Card>
+              <Card className="w-fit">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     Active Filters
