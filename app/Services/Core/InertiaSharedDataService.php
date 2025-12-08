@@ -3,20 +3,18 @@
 namespace App\Services\Core;
 
 use App\Services\Registry\InertiaSharedDataRegistry;
-use App\Services\Registry\MenuRegistry;
 use Illuminate\Http\Request;
 
 /**
  * Service for preparing shared data for Inertia responses.
  *
  * Centralizes all logic for preparing data that should be shared
- * with every Inertia response, including auth, menus, flash messages,
- * app configuration, and media settings.
+ * with every Inertia response, including flash messages and CSRF token.
+ * Module-specific data (auth, menus, etc.) is registered via InertiaSharedDataRegistry.
  */
 class InertiaSharedDataService
 {
     public function __construct(
-        private MenuRegistry $menuRegistry,
         private InertiaSharedDataRegistry $sharedDataRegistry
     ) {}
 
@@ -31,21 +29,8 @@ class InertiaSharedDataService
      */
     public function getSharedData(Request $request): array
     {
-        $user = $request->user();
-
-        if ($user) {
-            $user->load(['avatar', 'roles']);
-        }
-
         return array_merge(
             [
-                'auth' => [
-                    'user' => $user ? [
-                        ...$user->toArray(),
-                        'avatar_url' => $user->avatar?->url,
-                    ] : null,
-                ],
-                'menus' => $this->menuRegistry->getMenus($user),
                 'flash' => [
                     'success' => $request->session()->pull('success'),
                     'error' => $request->session()->pull('error'),

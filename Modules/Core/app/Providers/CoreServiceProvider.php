@@ -3,6 +3,7 @@
 namespace Modules\Core\Providers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
@@ -39,6 +40,7 @@ class CoreServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
+        InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         RoleRegistry $roleRegistry,
@@ -60,6 +62,25 @@ class CoreServiceProvider extends ServiceProvider
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $superAdminService->ensureExists($roleRegistry);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+
+        $sharedDataRegistry->register($this->name, function ($request) use ($menuRegistry) {
+            $user = $request->user();
+
+            if ($user) {
+                $user->load(['avatar', 'roles']);
+            }
+
+            return [
+                'auth' => [
+                    'user' => $user ? [
+                        ...$user->toArray(),
+                        'avatar_url' => $user->avatar?->url,
+                    ] : null,
+                ],
+                'menus' => $menuRegistry->getMenus($user),
+            ];
+        });
+
         $this->registerAuthorization();
         $this->registerObservers();
     }
