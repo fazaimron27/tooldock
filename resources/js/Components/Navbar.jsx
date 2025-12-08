@@ -11,8 +11,10 @@
  */
 import { useScrollBlur } from '@/Hooks/useScrollBlur';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, LogOut, Mail, Search, Settings, User } from 'lucide-react';
+import { Bell, Info, LogOut, Mail, Search, Settings, User } from 'lucide-react';
+import { useState } from 'react';
 
+import InfoDialog from '@/Components/InfoDialog';
 import { ModeToggle } from '@/Components/ModeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
@@ -32,6 +34,7 @@ export default function Navbar({ scrollContainerRef }) {
   const { auth } = usePage().props;
   const user = auth?.user;
   const isScrolled = useScrollBlur(scrollContainerRef);
+  const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
 
   const getInitials = (name) => {
     return name
@@ -132,6 +135,13 @@ export default function Navbar({ scrollContainerRef }) {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setIsInfoDialogOpen(true)}
+              >
+                <Info className="mr-2 h-4 w-4" />
+                <span>Info</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
@@ -146,6 +156,7 @@ export default function Navbar({ scrollContainerRef }) {
           </DropdownMenu>
         </div>
       </div>
+      <InfoDialog open={isInfoDialogOpen} onOpenChange={setIsInfoDialogOpen} />
     </header>
   );
 }
