@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/vault",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Vault\\": "app/",
+            "Modules\\Vault\\Database\\Factories\\": "database/factories/",
+            "Modules\\Vault\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Vault\\Tests\\": "tests/"
+        }
+    }
+}

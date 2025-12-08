@@ -1,0 +1,19 @@
+{
+  "name": "Vault",
+  "alias": "vault",
+  "version": "1.0.0",
+  "description": "Secure digital vault for passwords, secure notes, and credit cards.",
+  "keywords": ["vault", "password", "secrets", "totp", "security"],
+  "priority": -995,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Vault\\Providers\\VaultServiceProvider",
+    "Modules\\Vault\\Providers\\RouteServiceProvider",
+    "Modules\\Vault\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Categories", "Settings", "AuditLog", "Media"],
+  "icon": "ShieldCheck",
+  "author": "Tool Dock Team"
+}
