@@ -6,6 +6,7 @@ use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\MiddlewareRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
@@ -35,6 +36,7 @@ class VaultServiceProvider extends ServiceProvider
         DashboardWidgetRegistry $widgetRegistry,
         InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
+        MiddlewareRegistry $middlewareRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
         VaultCategoryRegistrar $categoryRegistrar,
@@ -55,6 +57,8 @@ class VaultServiceProvider extends ServiceProvider
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+
+        $middlewareRegistry->register($this->name, \Modules\Vault\Http\Middleware\VaultLockMiddleware::class);
 
         $sharedDataRegistry->register($this->name, function ($request) {
             return [
