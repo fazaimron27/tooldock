@@ -57,6 +57,7 @@ class SettingsServiceProvider extends ServiceProvider
                 'app_logo' => settings('app_logo', 'Ship'),
                 'date_format' => settings('date_format', 'd/m/Y'),
                 'currency_symbol' => settings('currency_symbol', 'Rp'),
+                'repository_url' => env('REPOSITORY_URL', null),
             ];
         });
     }
