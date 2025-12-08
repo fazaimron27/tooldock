@@ -389,7 +389,7 @@ class MenuRegistry
         }
 
         $sorted = [];
-        $groupOrder = ['Main' => 0, 'Dashboard' => 1, 'Master Data' => 2, 'Platform' => 3, 'System' => 4];
+        $groupOrder = ['Main' => 0, 'Dashboard' => 1, 'Master Data' => 2, 'Platform' => 3, 'Utilities' => 4, 'System' => 5];
 
         foreach ($rootMenus as $menu) {
             $group = $menu->group;

@@ -53,7 +53,7 @@ class InertiaSharedDataService
                 'warning' => $request->session()->pull('warning'),
             ],
             'app_name' => settings('app_name', config('app.name')),
-            'app_logo' => settings('app_logo', 'Cog'),
+            'app_logo' => settings('app_logo', 'Ship'),
             'date_format' => settings('date_format', 'd/m/Y'),
             'currency_symbol' => settings('currency_symbol', 'Rp'),
             'csrf' => csrf_token(),
