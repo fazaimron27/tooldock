@@ -46,5 +46,15 @@ class VaultSettingsRegistrar
             label: 'TOTP Period (seconds)',
             isSystem: false
         );
+
+        $registry->register(
+            module: $moduleName,
+            group: 'vault',
+            key: 'vault_lock_enabled',
+            value: 'false',
+            type: SettingType::Boolean,
+            label: 'Enable Vault Lock',
+            isSystem: false
+        );
     }
 }
