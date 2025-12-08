@@ -6,7 +6,8 @@ namespace App\Services\Registry;
  * Registry for managing application middleware registration.
  *
  * Allows modules to register their middleware during service provider boot,
- * which are then automatically collected and applied in bootstrap/app.php.
+ * which are then automatically collected and applied to the web middleware group
+ * in AppServiceProvider after all service providers have booted.
  *
  * Uses a static array internally to allow access before service providers boot,
  * while maintaining singleton pattern for consistency with other registries.
