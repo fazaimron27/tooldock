@@ -56,5 +56,15 @@ class VaultSettingsRegistrar
             label: 'Enable Vault Lock',
             isSystem: false
         );
+
+        $registry->register(
+            module: $moduleName,
+            group: 'vault',
+            key: 'vault_lock_timeout',
+            value: '15',
+            type: SettingType::Integer,
+            label: 'Vault Lock Timeout (minutes)',
+            isSystem: false
+        );
     }
 }
