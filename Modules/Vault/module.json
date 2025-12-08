@@ -13,7 +13,7 @@
     "Modules\\Vault\\Providers\\AuthServiceProvider"
   ],
   "files": [],
-  "requires": ["Core", "Categories", "Settings", "AuditLog", "Media"],
+  "requires": ["Core", "Categories", "Settings", "AuditLog"],
   "icon": "ShieldCheck",
   "author": "Tool Dock Team"
 }
