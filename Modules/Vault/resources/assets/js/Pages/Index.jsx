@@ -3,6 +3,7 @@
  * Displays vault items in a responsive grid with search, filtering, and pagination
  */
 import VaultCard from '@Vault/Components/VaultCard';
+import VaultLockButton from '@Vault/Components/VaultLockButton';
 import { capitalizeType } from '@Vault/Utils/vaultUtils';
 import { Link, router } from '@inertiajs/react';
 import { Plus, Search, Star, X } from 'lucide-react';
@@ -102,12 +103,15 @@ export default function Index({ vaults, categories = [], types = [] }) {
       <PageShell
         title="Vault"
         actions={
-          <Link href={route('vault.create')}>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Item
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <VaultLockButton />
+            <Link href={route('vault.create')}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Item
+              </Button>
+            </Link>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -125,7 +129,6 @@ export default function Index({ vaults, categories = [], types = [] }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              {/* Type Tabs */}
               <Tabs
                 value={selectedType || 'all'}
                 onValueChange={handleTypeChange}
@@ -141,7 +144,6 @@ export default function Index({ vaults, categories = [], types = [] }) {
                 </TabsList>
               </Tabs>
 
-              {/* Category Filter */}
               <Select
                 value={selectedCategory || undefined}
                 onValueChange={(value) => handleCategoryChange(value || '')}
@@ -158,7 +160,6 @@ export default function Index({ vaults, categories = [], types = [] }) {
                 </SelectContent>
               </Select>
 
-              {/* Favorite Toggle */}
               <Button
                 variant={showFavorites ? 'default' : 'outline'}
                 size="sm"
@@ -168,7 +169,6 @@ export default function Index({ vaults, categories = [], types = [] }) {
                 Favorites
               </Button>
 
-              {/* Clear Filters */}
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X className="mr-2 h-4 w-4" />
