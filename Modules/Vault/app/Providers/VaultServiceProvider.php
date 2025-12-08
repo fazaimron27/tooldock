@@ -60,7 +60,9 @@ class VaultServiceProvider extends ServiceProvider
             return [
                 'vault_lock_settings' => [
                     'enabled' => settings('vault_lock_enabled', false),
+                    'timeout' => settings('vault_lock_timeout', 15),
                     'unlocked' => $request->session()->get('vault_unlocked', false),
+                    'unlocked_at' => $request->session()->get('vault_unlocked_at'),
                 ],
             ];
         });
