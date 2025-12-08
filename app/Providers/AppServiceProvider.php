@@ -17,10 +17,12 @@ use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\MiddlewareRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -52,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PermissionRegistry::class);
         $this->app->singleton(GroupRegistry::class);
         $this->app->singleton(InertiaSharedDataRegistry::class);
+        $this->app->singleton(MiddlewareRegistry::class);
         $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
@@ -70,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(
         ProtectedModuleMigrationService $migrationService,
         MenuRegistry $menuRegistry,
+        MiddlewareRegistry $middlewareRegistry,
         StorageLinkService $storageLinkService,
         AppConfigService $appConfigService
     ): void {
@@ -90,6 +94,17 @@ class AppServiceProvider extends ServiceProvider
             parentKey: null,
             module: null
         );
+
+        $this->app->booted(function () use ($middlewareRegistry) {
+            $moduleMiddleware = $middlewareRegistry->getAll();
+
+            if (! empty($moduleMiddleware)) {
+                $router = $this->app->make(Router::class);
+                foreach ($moduleMiddleware as $middleware) {
+                    $router->pushMiddlewareToGroup('web', $middleware);
+                }
+            }
+        });
 
         Event::listen(
             MigrationsEnded::class,
