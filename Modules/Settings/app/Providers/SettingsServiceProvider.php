@@ -3,6 +3,7 @@
 namespace Modules\Settings\Providers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -28,12 +29,13 @@ class SettingsServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
-        MenuRegistry $menuRegistry,
-        SettingsRegistry $settingsRegistry,
-        PermissionRegistry $permissionRegistry,
         DashboardWidgetRegistry $widgetRegistry,
-        SettingsMenuRegistrar $menuRegistrar,
+        InertiaSharedDataRegistry $sharedDataRegistry,
+        MenuRegistry $menuRegistry,
+        PermissionRegistry $permissionRegistry,
+        SettingsRegistry $settingsRegistry,
         SettingsDashboardService $dashboardService,
+        SettingsMenuRegistrar $menuRegistrar,
         SettingsPermissionRegistrar $permissionRegistrar,
         SettingsSettingsRegistrar $settingsRegistrar
     ): void {
@@ -48,6 +50,15 @@ class SettingsServiceProvider extends ServiceProvider
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+
+        $sharedDataRegistry->register($this->name, function ($request) {
+            return [
+                'app_name' => settings('app_name', config('app.name')),
+                'app_logo' => settings('app_logo', 'Ship'),
+                'date_format' => settings('date_format', 'd/m/Y'),
+                'currency_symbol' => settings('currency_symbol', 'Rp'),
+            ];
+        });
     }
 
     /**

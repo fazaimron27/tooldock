@@ -4,6 +4,7 @@ namespace Modules\Vault\Providers;
 
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -32,6 +33,7 @@ class VaultServiceProvider extends ServiceProvider
     public function boot(
         CategoryRegistry $categoryRegistry,
         DashboardWidgetRegistry $widgetRegistry,
+        InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
@@ -53,6 +55,15 @@ class VaultServiceProvider extends ServiceProvider
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+
+        $sharedDataRegistry->register($this->name, function ($request) {
+            return [
+                'vault_lock_settings' => [
+                    'enabled' => settings('vault_lock_enabled', false),
+                    'unlocked' => $request->session()->get('vault_unlocked', false),
+                ],
+            ];
+        });
     }
 
     /**

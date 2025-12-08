@@ -2,7 +2,9 @@
 
 namespace Modules\Media\Providers;
 
+use App\Services\Media\MediaConfigService;
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -34,12 +36,14 @@ class MediaServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
-        MenuRegistry $menuRegistry,
-        SettingsRegistry $settingsRegistry,
-        PermissionRegistry $permissionRegistry,
         DashboardWidgetRegistry $widgetRegistry,
-        MediaMenuRegistrar $menuRegistrar,
+        InertiaSharedDataRegistry $sharedDataRegistry,
+        MediaConfigService $mediaConfigService,
+        MenuRegistry $menuRegistry,
+        PermissionRegistry $permissionRegistry,
+        SettingsRegistry $settingsRegistry,
         MediaDashboardService $dashboardService,
+        MediaMenuRegistrar $menuRegistrar,
         MediaPermissionRegistrar $permissionRegistrar,
         MediaSettingsRegistrar $settingsRegistrar
     ): void {
@@ -56,6 +60,20 @@ class MediaServiceProvider extends ServiceProvider
         $this->registerRateLimiter();
         $this->bootObservers();
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+
+        $sharedDataRegistry->register($this->name, function ($request) use ($mediaConfigService) {
+            $fileSizeInfo = $mediaConfigService->getFileSizeInfo();
+
+            return [
+                'media' => [
+                    'max_file_size_kb' => $fileSizeInfo['effective_kb'],
+                    'max_file_size_mb' => $fileSizeInfo['effective_mb'],
+                    'php_upload_max_filesize_kb' => $fileSizeInfo['php_upload_max_kb'],
+                    'php_post_max_size_kb' => $fileSizeInfo['php_post_max_kb'],
+                    'is_php_limit' => $fileSizeInfo['is_php_limited'],
+                ],
+            ];
+        });
     }
 
     /**
