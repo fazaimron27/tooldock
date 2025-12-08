@@ -41,6 +41,7 @@ export default function FormTextareaRHF({
           <Textarea
             id={textareaId}
             {...field}
+            value={field.value ?? ''}
             required={required}
             placeholder={placeholder}
             rows={rows}
