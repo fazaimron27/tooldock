@@ -29,7 +29,7 @@ export default function InfoDialog({ open, onOpenChange }) {
     techStack: {
       backend: [
         { name: 'Laravel', version: '^12.0' },
-        { name: 'PHP', version: '^8.2' },
+        { name: 'PHP', version: '^8.4' },
         { name: 'Inertia.js', version: '^2.0' },
         { name: 'Sanctum', version: '^4.0' },
       ],
