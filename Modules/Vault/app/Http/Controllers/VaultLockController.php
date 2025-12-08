@@ -20,13 +20,12 @@ class VaultLockController extends Controller
      */
     public function show(): Response|RedirectResponse
     {
-        if (! settings('vault_lock_enabled', false)) {
+        if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
         }
 
-        $user = Auth::user();
-        $vaultLock = VaultLock::where('user_id', $user->id)->first();
+        $vaultLock = $this->getVaultLock();
 
         return Inertia::render('Modules::Vault/Lock', [
             'hasLock' => (bool) $vaultLock,
@@ -38,13 +37,12 @@ class VaultLockController extends Controller
      */
     public function unlock(Request $request): RedirectResponse
     {
-        if (! settings('vault_lock_enabled', false)) {
+        if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
         }
 
-        $user = Auth::user();
-        $vaultLock = VaultLock::where('user_id', $user->id)->first();
+        $vaultLock = $this->getVaultLock();
 
         if (! $vaultLock) {
             return redirect()->route('vault.index');
@@ -65,6 +63,10 @@ class VaultLockController extends Controller
 
         $intendedUrl = $request->session()->pull('vault_intended_url', route('vault.index'));
 
+        if (! is_string($intendedUrl) || empty($intendedUrl) || ! $this->isInternalUrl($intendedUrl)) {
+            $intendedUrl = route('vault.index');
+        }
+
         return redirect($intendedUrl);
     }
 
@@ -73,7 +75,7 @@ class VaultLockController extends Controller
      */
     public function lock(Request $request): RedirectResponse
     {
-        if (! settings('vault_lock_enabled', false)) {
+        if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
         }
@@ -89,7 +91,7 @@ class VaultLockController extends Controller
      */
     public function setPin(Request $request): RedirectResponse
     {
-        if (! settings('vault_lock_enabled', false)) {
+        if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled. Please enable it in settings first.');
         }
@@ -117,12 +119,77 @@ class VaultLockController extends Controller
      */
     public function status(Request $request): JsonResponse
     {
-        $unlocked = $request->session()->get('vault_unlocked', false);
+        if (! $this->isVaultLockEnabled()) {
+            return response()->json([
+                'unlocked' => true,
+                'unlocked_at' => null,
+            ]);
+        }
+
+        $unlocked = (bool) $request->session()->get('vault_unlocked', false);
         $unlockedAt = $request->session()->get('vault_unlocked_at');
 
         return response()->json([
             'unlocked' => $unlocked,
             'unlocked_at' => $unlockedAt,
         ]);
+    }
+
+    /**
+     * Check if vault lock feature is enabled.
+     */
+    private function isVaultLockEnabled(): bool
+    {
+        return settings('vault_lock_enabled', false);
+    }
+
+    /**
+     * Get the vault lock record for the authenticated user.
+     */
+    private function getVaultLock(): ?VaultLock
+    {
+        $userId = Auth::id();
+
+        if (! $userId) {
+            return null;
+        }
+
+        return VaultLock::where('user_id', $userId)->first();
+    }
+
+    /**
+     * Check if a URL is internal to prevent open redirect vulnerabilities.
+     *
+     * @param  string  $url
+     * @return bool
+     */
+    private function isInternalUrl(string $url): bool
+    {
+        try {
+            $parsed = parse_url($url);
+
+            if ($parsed === false) {
+                return false;
+            }
+
+            if (! isset($parsed['host'])) {
+                return true;
+            }
+
+            $appUrlString = config('app.url');
+            if (! $appUrlString || ! is_string($appUrlString)) {
+                return false;
+            }
+
+            $appUrl = parse_url($appUrlString);
+
+            if ($appUrl === false) {
+                return false;
+            }
+
+            return isset($appUrl['host']) && $parsed['host'] === $appUrl['host'];
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
