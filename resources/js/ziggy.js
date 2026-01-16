@@ -3,6 +3,7 @@ const Ziggy = {
   port: 8000,
   defaults: {},
   routes: {
+    'boost.browser-logs': { uri: '_boost\/browser-logs', methods: ['POST'] },
     'sanctum.csrf-cookie': { uri: 'sanctum\/csrf-cookie', methods: ['GET', 'HEAD'] },
     dashboard: { uri: 'tooldock\/dashboard', methods: ['GET', 'HEAD'] },
     'guest.welcome': { uri: 'tooldock\/welcome', methods: ['GET', 'HEAD'] },
