@@ -20,14 +20,21 @@ class VaultLockMiddleware
         'vault.lock.status',
     ];
 
+    private const AUTH_ROUTES = [
+        'login',
+        'register',
+        'password.request',
+        'password.email',
+        'password.reset',
+        'password.store',
+        'password.confirm',
+        'verification.notice',
+        'verification.verify',
+        'verification.send',
+    ];
+
     /**
-     * Handle an incoming request.
-     *
-     * Global middleware that runs on all requests. Checks timeout globally but redirects
-     * only when accessing vault routes. If timeout expires on non-vault pages, silently
-     * marks vault as locked and allows user to continue browsing.
-     *
-     * Safely handles cases where the Vault module is not installed or disabled.
+     * Enforce vault lock timeout and redirect to lock screen when expired.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -36,19 +43,19 @@ class VaultLockMiddleware
         }
 
         $routeName = $request->route()?->getName();
-        $path = $request->path();
 
-        $isLockRoute = ($routeName && in_array($routeName, self::EXCLUDED_ROUTES, true))
-            || str_contains($path, 'vault/lock');
+        if ($routeName && in_array($routeName, self::EXCLUDED_ROUTES, true)) {
+            return $next($request);
+        }
 
-        if ($isLockRoute) {
+        if ($this->isAuthRoute($routeName)) {
             return $next($request);
         }
 
         $user = Auth::user();
 
         if (! $user) {
-            return redirect()->route('login');
+            return $next($request);
         }
 
         $vaultLockEnabled = settings('vault_lock_enabled', false);
@@ -94,7 +101,7 @@ class VaultLockMiddleware
             $isLocked = true;
         }
 
-        if ($isLocked && $this->isVaultRoute($routeName, $path, $request)) {
+        if ($isLocked && $this->isVaultRoute($routeName)) {
             if ($request->method() === 'GET') {
                 $request->session()->put('vault_intended_url', $request->fullUrl());
             }
@@ -106,22 +113,12 @@ class VaultLockMiddleware
     }
 
     /**
-     * Check if the current request is for a vault route that requires lock protection.
-     *
-     * Excludes unlock routes (lock screen, unlock action, PIN setup, etc.)
-     *
-     * @param  string|null  $routeName
-     * @param  string  $path
-     * @param  Request  $request
-     * @return bool
+     * Check if route requires vault lock protection.
      */
-    private function isVaultRoute(?string $routeName, string $path, Request $request): bool
+    private function isVaultRoute(?string $routeName): bool
     {
         if (! $routeName) {
-            $prefix = $request->route()?->getPrefix() ?? 'tooldock';
-            $prefix = trim($prefix, '/');
-
-            return str_starts_with($path, "{$prefix}/vault") && ! str_contains($path, 'vault/lock');
+            return false;
         }
 
         if (in_array($routeName, self::EXCLUDED_ROUTES, true)) {
@@ -129,5 +126,17 @@ class VaultLockMiddleware
         }
 
         return str_starts_with($routeName, 'vault.');
+    }
+
+    /**
+     * Check if route should bypass vault lock.
+     */
+    private function isAuthRoute(?string $routeName): bool
+    {
+        if (! $routeName) {
+            return false;
+        }
+
+        return in_array($routeName, self::AUTH_ROUTES, true);
     }
 }
