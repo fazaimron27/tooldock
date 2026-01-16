@@ -14,7 +14,18 @@
         <!-- Scripts -->
         @routes
         @viteReactRefresh
-        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        @php
+            $component = $page['component'];
+            if (str_starts_with($component, 'Modules::')) {
+                $parts = explode('/', str_replace('Modules::', '', $component), 2);
+                $moduleName = $parts[0];
+                $pagePath = $parts[1] ?? 'Index';
+                $componentPath = "Modules/{$moduleName}/resources/assets/js/Pages/{$pagePath}.jsx";
+            } else {
+                $componentPath = "resources/js/Pages/{$component}.jsx";
+            }
+        @endphp
+        @vite(['resources/js/app.jsx', $componentPath])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

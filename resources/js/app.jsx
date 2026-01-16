@@ -10,13 +10,15 @@ import { QueryProvider } from './Providers/QueryProvider';
 import { generateInertiaTitle } from './Utils/inertiaTitle';
 import './bootstrap';
 
+/**
+ * Static map of module pages available at build time.
+ */
 const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/**/*.jsx', {
   eager: false,
 });
 
 /**
- * Wraps a page loader with React.lazy for better code splitting and Suspense support.
- * This enables React to create separate chunks and provides Suspense boundaries.
+ * Wrap a page loader with React.lazy for code splitting.
  */
 function lazyPage(loader) {
   return lazy(() =>
@@ -35,6 +37,20 @@ function lazyPage(loader) {
   );
 }
 
+/**
+ * Extract module pages manifest from Inertia's initial page props.
+ */
+function getServerModulePages() {
+  try {
+    const el = document.getElementById('app');
+    if (!el?.dataset?.page) return [];
+    const pageData = JSON.parse(el.dataset.page);
+    return pageData?.props?.modulePages || [];
+  } catch {
+    return [];
+  }
+}
+
 createInertiaApp({
   title: generateInertiaTitle,
   resolve: (name) => {
@@ -42,6 +58,7 @@ createInertiaApp({
       const parts = name.replace('Modules::', '').split('/');
       const moduleName = parts[0];
       const pagePath = parts.slice(1).join('/');
+      const pageIdentifier = `${moduleName}/${pagePath}`;
       const expectedPath = `../../Modules/${moduleName}/resources/assets/js/Pages/${pagePath}`;
 
       const modulePageKey = Object.keys(modulePages).find((key) => {
@@ -58,7 +75,25 @@ createInertiaApp({
         return lazyPage(moduleLoader);
       }
 
-      throw new Error(`Module page not found: ${name} (looked for: ${expectedPath}.jsx)`);
+      const serverModulePages = getServerModulePages();
+      const pageExistsOnServer = serverModulePages.includes(pageIdentifier);
+
+      if (pageExistsOnServer) {
+        console.info(
+          `[Inertia] Module page "${name}" exists on server but not in build. ` +
+            `This module was likely installed after the last build. Triggering full reload.`
+        );
+        window.location.reload();
+        // Return a never-resolving promise while reload happens
+        return lazy(() => new Promise(() => {}));
+      }
+
+      throw new Error(
+        `Module page not found: ${name}\n` +
+          `- Not in build-time glob (looked for: ${expectedPath}.jsx)\n` +
+          `- Not in server manifest (modulePages: ${serverModulePages.length} pages)\n` +
+          `If this module was just installed, try running 'npm run build'.`
+      );
     }
 
     const pageLoader = resolvePageComponent(
@@ -85,11 +120,6 @@ createInertiaApp({
     showSpinner: false,
     delay: 0,
     includeCSS: false,
-    /**
-     * Fallback navigation state handlers.
-     * Primary navigation state is managed by NavigationSpinner via router events.
-     * These callbacks serve as a safety net for edge cases.
-     */
     onStart: () => {
       setNavigationState(true);
     },
@@ -100,11 +130,6 @@ createInertiaApp({
       setNavigationState(false);
     },
   },
-  /**
-   * Prefetch configuration for Inertia.js link prefetching.
-   * Enabled with 200ms delay to improve UX while avoiding excessive parallel requests.
-   * Links are prefetched after 200ms of hover, balancing performance and user experience.
-   */
   prefetch: {
     enabled: true,
     delay: 200,

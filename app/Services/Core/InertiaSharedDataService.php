@@ -2,30 +2,22 @@
 
 namespace App\Services\Core;
 
+use App\Services\Modules\ModulePageManifestService;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use Illuminate\Http\Request;
 
 /**
- * Service for preparing shared data for Inertia responses.
- *
- * Centralizes all logic for preparing data that should be shared
- * with every Inertia response, including flash messages and CSRF token.
- * Module-specific data (auth, menus, etc.) is registered via InertiaSharedDataRegistry.
+ * Prepares shared props for all Inertia responses.
  */
 class InertiaSharedDataService
 {
     public function __construct(
-        private InertiaSharedDataRegistry $sharedDataRegistry
+        private InertiaSharedDataRegistry $sharedDataRegistry,
+        private ModulePageManifestService $modulePageManifest
     ) {}
 
     /**
-     * Get all shared data for Inertia responses.
-     *
-     * Prepares and returns the complete array of shared props that
-     * will be available to all Inertia components.
-     *
-     * @param  \Illuminate\Http\Request  $request  The current request
-     * @return array<string, mixed>
+     * Build shared props array including flash messages, CSRF, and module data.
      */
     public function getSharedData(Request $request): array
     {
@@ -37,6 +29,7 @@ class InertiaSharedDataService
                     'warning' => $request->session()->pull('warning'),
                 ],
                 'csrf' => csrf_token(),
+                'modulePages' => $this->modulePageManifest->getAvailablePages(),
             ],
             $this->sharedDataRegistry->getSharedData($request)
         );
