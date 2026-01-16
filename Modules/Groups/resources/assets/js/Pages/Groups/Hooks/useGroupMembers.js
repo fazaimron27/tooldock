@@ -1,5 +1,5 @@
 /**
- * Custom hook for managing group members data and table state.
+ * Manage group members table state and row selection.
  */
 import { useDatatable } from '@/Hooks/useDatatable';
 import { usePaginationSync } from '@/Hooks/usePaginationSync';
@@ -34,9 +34,11 @@ export function useGroupMembers({ group, members, defaultPerPage = 10, columns =
   usePaginationSync(memberTableProps, members, defaultPerPage);
 
   const table = memberTableProps.table;
+  const rowSelection = memberTableProps.rowSelection;
+
   const selectedRows = useMemo(() => {
     return table?.getSelectedRowModel().rows || [];
-  }, [table]);
+  }, [table, rowSelection]);
 
   const selectedMemberIds = useMemo(() => {
     return selectedRows.map((row) => row.original.id);
