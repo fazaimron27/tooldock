@@ -9,13 +9,9 @@ use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\Menu;
 
 /**
- * Registry for managing application menu registration.
+ * Manage module menu registration and database seeding.
  *
- * Allows modules to register their menu items during service provider boot,
- * which are then automatically seeded into the database.
- *
- * Supports hierarchical menus with parent/child relationships.
- * Optimized for Redis with cache tags for efficient invalidation.
+ * Supports hierarchical menus with permission-based visibility.
  */
 class MenuRegistry
 {
@@ -30,12 +26,7 @@ class MenuRegistry
     ) {}
 
     /**
-     * Cache TTL (Time To Live) for menu cache entries.
-     * Set to 24 hours as menus typically change infrequently.
-     * Cache is automatically invalidated when menus are seeded/updated.
-     *
-     * Note: Since we use Redis tags for manual invalidation, we could use
-     * rememberForever, but keeping TTL as a safety net for edge cases.
+     * Cache TTL for menu entries. Acts as safety net alongside tag-based invalidation.
      */
     private const CACHE_TTL_HOURS = 24;
 
@@ -165,13 +156,20 @@ class MenuRegistry
             $parentMap = [];
             $created = 0;
             $found = 0;
+            $reactivated = 0;
             $errors = 0;
 
             foreach ($this->menus as $menu) {
                 if (empty($menu['parent_key'])) {
                     if ($existingMenus->has($menu['route'])) {
-                        $parentMap[$menu['route']] = $existingMenus->get($menu['route']);
+                        $existingMenu = $existingMenus->get($menu['route']);
+                        $parentMap[$menu['route']] = $existingMenu;
                         $found++;
+
+                        if (! $existingMenu->is_active) {
+                            $existingMenu->update(['is_active' => true]);
+                            $reactivated++;
+                        }
 
                         continue;
                     }
@@ -215,9 +213,20 @@ class MenuRegistry
 
                 foreach ($this->menus as $menu) {
                     if (! empty($menu['parent_key'])) {
-                        if ($existingMenus->has($menu['route']) || isset($parentMap[$menu['route']])) {
+                        if ($existingMenus->has($menu['route'])) {
+                            $existingMenu = $existingMenus->get($menu['route']);
+
+                            if (! $existingMenu->is_active) {
+                                $existingMenu->update(['is_active' => true]);
+                                $reactivated++;
+                            }
+
                             $found++;
 
+                            continue;
+                        }
+
+                        if (isset($parentMap[$menu['route']])) {
                             continue;
                         }
 
@@ -272,10 +281,11 @@ class MenuRegistry
                 Log::warning('MenuRegistry: Maximum depth reached while seeding menus');
             }
 
-            if ($created > 0 || $found > 0 || $errors > 0) {
+            if ($created > 0 || $found > 0 || $reactivated > 0 || $errors > 0) {
                 Log::debug('MenuRegistry: Seeding completed', [
                     'created' => $created,
                     'found' => $found,
+                    'reactivated' => $reactivated,
                     'errors' => $errors,
                     'total' => count($this->menus),
                 ]);
@@ -557,6 +567,60 @@ class MenuRegistry
 
         if (! empty($childMenus)) {
             $count += $this->countMenuTree($childMenus, $moduleName);
+        }
+
+        return $count;
+    }
+
+    /**
+     * Deactivate all menus for a module.
+     *
+     * Sets is_active = false for all menus belonging to the specified module.
+     * Used when disabling a module to hide its menus without deleting them.
+     *
+     * @param  string  $moduleName  The module name (e.g., 'Vault', 'Media')
+     * @return int Number of menus deactivated
+     */
+    public function deactivateForModule(string $moduleName): int
+    {
+        $moduleName = strtolower($moduleName);
+
+        $count = Menu::where('module', $moduleName)
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        if ($count > 0) {
+            Log::info("MenuRegistry: Deactivated menus for module '{$moduleName}'", [
+                'count' => $count,
+            ]);
+            $this->clearCache();
+        }
+
+        return $count;
+    }
+
+    /**
+     * Activate all menus for a module.
+     *
+     * Sets is_active = true for all menus belonging to the specified module.
+     * Used when enabling a module to show its menus again.
+     *
+     * @param  string  $moduleName  The module name (e.g., 'Vault', 'Media')
+     * @return int Number of menus activated
+     */
+    public function activateForModule(string $moduleName): int
+    {
+        $moduleName = strtolower($moduleName);
+
+        $count = Menu::where('module', $moduleName)
+            ->where('is_active', false)
+            ->update(['is_active' => true]);
+
+        if ($count > 0) {
+            Log::info("MenuRegistry: Activated menus for module '{$moduleName}'", [
+                'count' => $count,
+            ]);
+            $this->clearCache();
         }
 
         return $count;

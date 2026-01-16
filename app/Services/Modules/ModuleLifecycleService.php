@@ -276,6 +276,8 @@ class ModuleLifecycleService
 
         $this->activator->disable($module);
 
+        $this->menuRegistry->deactivateForModule($moduleName);
+
         $this->registryHelper->finalize();
 
         $this->dispatchAfterEvent(new ModuleDisabled($module, $moduleName));

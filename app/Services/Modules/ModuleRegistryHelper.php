@@ -4,6 +4,7 @@ namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
@@ -15,13 +16,10 @@ class ModuleRegistryHelper
     ) {}
 
     /**
-     * Reload statuses if the activator is a DatabaseActivator
+     * Synchronize in-memory module status caches with the database.
      *
-     * DatabaseActivator and ModuleStatusService both cache module statuses in memory.
-     * After external database changes (like direct SQL updates), we need to reload
-     * both caches to keep them in sync.
-     *
-     * This is a no-op for other activator types (e.g., FileActivator).
+     * Reloads DatabaseActivator and ModuleStatusService caches to reflect
+     * the current database state. No-op for FileActivator.
      */
     public function reloadStatuses(): void
     {
@@ -33,42 +31,91 @@ class ModuleRegistryHelper
     }
 
     /**
-     * Refresh the module registry by scanning, registering, and booting modules
+     * Re-discover and boot all modules.
      *
-     * Ensures the nwidart/laravel-modules package discovers any new or changed modules
-     * after installation/enabling. This is necessary because:
-     * - scan() discovers modules in the filesystem
-     * - register() registers service providers
-     * - boot() boots registered providers
+     * Clears the static module cache, scans filesystem for modules,
+     * then registers and boots their service providers.
      */
     public function refresh(): void
     {
+        ModuleFacade::resetModules();
         ModuleFacade::scan();
         ModuleFacade::register();
         ModuleFacade::boot();
     }
 
     /**
-     * Clear application caches (config and routes)
+     * Rebuild route and config caches to include module changes.
      *
-     * Clears Laravel's cached configuration and routes to ensure changes from
-     * newly installed/enabled modules are picked up immediately.
+     * Routes are rebuilt synchronously to ensure immediate availability.
+     * Config is rebuilt after response to avoid breaking Vite resolution.
+     * Skipped if caches don't exist.
      */
-    public function clearCaches(): void
+    public function rebuildCachesIfNeeded(): void
     {
-        Artisan::call('config:clear');
-        Artisan::call('route:clear');
+        $configCached = file_exists(app()->getCachedConfigPath());
+        $routesCached = file_exists(app()->getCachedRoutesPath());
+
+        if (! $configCached && ! $routesCached) {
+            return;
+        }
+
+        $basePath = base_path();
+
+        if ($routesCached) {
+            Log::info('ModuleRegistryHelper: Rebuilding route cache (synchronous)');
+            $this->runArtisanInSubprocess('route:clear', $basePath, throwOnFailure: true);
+            $this->runArtisanInSubprocess('route:cache', $basePath, throwOnFailure: true);
+        }
+
+        if ($configCached) {
+            Log::info('ModuleRegistryHelper: Deferring config cache rebuild to after response');
+
+            app()->terminating(function () use ($basePath) {
+                Log::info('ModuleRegistryHelper: Rebuilding config cache (deferred)');
+                $this->runArtisanInSubprocess('config:clear', $basePath);
+                $this->runArtisanInSubprocess('config:cache', $basePath);
+            });
+        }
     }
 
     /**
-     * Generate Ziggy routes using the default Artisan command
+     * Execute an Artisan command in a fresh PHP process.
      *
-     * Regenerates the Ziggy route definitions file (resources/js/ziggy.js) to include
-     * routes from newly installed/enabled modules. This allows the frontend to use
-     * route() helper functions for module routes.
+     * @param  string  $command  The artisan command (e.g., 'route:cache')
+     * @param  string  $basePath  Laravel application base path
+     * @param  bool  $throwOnFailure  Throw exception on failure
      *
-     * If the command fails (e.g., Ziggy package not available), the error is logged
-     * but does not prevent the module operation from completing.
+     * @throws \RuntimeException When command fails and $throwOnFailure is true
+     */
+    private function runArtisanInSubprocess(string $command, string $basePath, bool $throwOnFailure = false): void
+    {
+        $artisanPath = $basePath.'/artisan';
+        $process = Process::path($basePath)->run("php {$artisanPath} {$command}");
+
+        if (! $process->successful()) {
+            $errorMessage = "ModuleRegistryHelper: {$command} failed";
+            $context = [
+                'exitCode' => $process->exitCode(),
+                'output' => $process->output(),
+                'errorOutput' => $process->errorOutput(),
+            ];
+
+            Log::error($errorMessage, $context);
+
+            if ($throwOnFailure) {
+                throw new \RuntimeException("{$errorMessage}: {$process->errorOutput()}");
+            }
+        } else {
+            Log::debug("ModuleRegistryHelper: {$command} completed successfully");
+        }
+    }
+
+    /**
+     * Regenerate Ziggy route definitions for frontend route() helpers.
+     *
+     * Updates resources/js/ziggy.js and invalidates its OPcache entry.
+     * Silently fails if Ziggy is not installed.
      */
     public function generateZiggyRoutes(): void
     {
@@ -76,8 +123,10 @@ class ModuleRegistryHelper
             $commands = Artisan::all();
             if (isset($commands['ziggy:generate'])) {
                 Artisan::call('ziggy:generate');
-                if (function_exists('opcache_reset')) {
-                    opcache_reset();
+
+                $ziggyPath = resource_path('js/ziggy.js');
+                if (function_exists('opcache_invalidate') && file_exists($ziggyPath)) {
+                    opcache_invalidate($ziggyPath, true);
                 }
             }
         } catch (\Exception $e) {
@@ -88,20 +137,16 @@ class ModuleRegistryHelper
     }
 
     /**
-     * Finalize a module operation by performing all cleanup steps
+     * Complete a module operation by synchronizing all caches and registries.
      *
-     * Centralized cleanup method called after enable/disable operations.
-     * Ensures consistency by:
-     * 1. Reloading activator statuses (if DatabaseActivator) and ModuleStatusService cache
-     * 2. Refreshing module registry (discover new modules)
-     * 3. Clearing caches (config, routes)
-     * 4. Regenerating Ziggy routes (for frontend route helpers)
+     * Reloads statuses, refreshes module registry, rebuilds Laravel caches,
+     * and regenerates Ziggy routes.
      */
     public function finalize(): void
     {
         $this->reloadStatuses();
         $this->refresh();
-        $this->clearCaches();
+        $this->rebuildCachesIfNeeded();
         $this->generateZiggyRoutes();
     }
 }
