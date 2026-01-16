@@ -1,0 +1,70 @@
+# =============================================================================
+# Docker Ignore File
+# =============================================================================
+# Excludes unnecessary files from the Docker build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Dependencies (installed during build)
+node_modules
+vendor
+
+# Testing
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Development files
+.env
+.env.local
+.env.*.local
+.env.example
+
+# Build artifacts
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/public/*
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+docs
+
+# Docker files (avoid recursion)
+docker-compose*.yml
+Dockerfile*
+
+# Kubernetes
+k8s
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+Jenkinsfile
+
+# Misc
+*.log
+*.sql
+*.bak
+.DS_Store
+Thumbs.db
+
+# Keep storage structure
+!storage/logs/.gitkeep
+!storage/framework/cache/.gitkeep
+!storage/framework/sessions/.gitkeep
+!storage/framework/views/.gitkeep
+!storage/app/public/.gitkeep
