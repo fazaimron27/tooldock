@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Core\Http\Controllers\GuestController;
 use Modules\Core\Http\Controllers\ProfileController;
@@ -7,7 +8,6 @@ use Modules\Core\Http\Controllers\WelcomeController;
 
 Route::get('/', [WelcomeController::class, 'index']);
 
-// All authenticated routes with /tooldock prefix
 Route::prefix('tooldock')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
