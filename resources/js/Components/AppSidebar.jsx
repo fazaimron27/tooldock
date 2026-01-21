@@ -7,13 +7,14 @@
 import { useAppStore } from '@/Stores/useAppStore';
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Github } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -25,6 +26,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarSeparator,
+  SidebarTrigger,
 } from '@/Components/ui/sidebar';
 
 export default function AppSidebar() {
@@ -287,6 +289,33 @@ export default function AppSidebar() {
           );
         })}
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex flex-col gap-2 p-2">
+          <SidebarMenuButton
+            tooltip="Report an Issue"
+            className="w-full justify-start text-sm text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+            onClick={() => {
+              // Open GitHub issues page to report an issue
+              window.open('https://github.com/fazaimron27/tooldock/issues/new', '_blank');
+            }}
+          >
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden">Report an Issue</span>
+          </SidebarMenuButton>
+          <SidebarMenuButton
+            tooltip="Want to Contribute?"
+            className="w-full justify-start text-sm text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+            onClick={() => {
+              // Open GitHub pull requests page
+              window.open('https://github.com/fazaimron27/tooldock/pulls', '_blank');
+            }}
+          >
+            <Github className="h-4 w-4 shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden">Want to Contribute?</span>
+          </SidebarMenuButton>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
