@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\Modules\ModuleInstalled;
+use App\Events\Modules\ModuleUninstalled;
 use App\Listeners\AutoInstallProtectedModules;
+use App\Listeners\NotifyAdminsOnModuleChange;
 use App\Services\Cache\CacheMetricsService;
 use App\Services\Cache\CacheService;
 use App\Services\Core\AppConfigService;
@@ -21,6 +24,7 @@ use App\Services\Registry\MiddlewareRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
@@ -55,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(GroupRegistry::class);
         $this->app->singleton(InertiaSharedDataRegistry::class);
         $this->app->singleton(MiddlewareRegistry::class);
+        $this->app->singleton(SignalCategoryRegistry::class);
         $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
@@ -109,6 +114,14 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             MigrationsEnded::class,
             AutoInstallProtectedModules::class
+        );
+        Event::listen(
+            ModuleInstalled::class,
+            [NotifyAdminsOnModuleChange::class, 'handleInstalled']
+        );
+        Event::listen(
+            ModuleUninstalled::class,
+            [NotifyAdminsOnModuleChange::class, 'handleUninstalled']
         );
 
         $storageLinkService->ensureExists();
