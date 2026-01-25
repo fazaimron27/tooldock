@@ -71,6 +71,7 @@ export default defineConfig({
       '@Groups': path.resolve(__dirname, 'Modules/Groups/resources/assets/js'),
       '@Media': path.resolve(__dirname, 'Modules/Media/resources/assets/js'),
       '@Settings': path.resolve(__dirname, 'Modules/Settings/resources/assets/js'),
+      '@Signal': path.resolve(__dirname, 'Modules/Signal/resources/assets/js'),
       '@Vault': path.resolve(__dirname, 'Modules/Vault/resources/assets/js'),
     },
   },

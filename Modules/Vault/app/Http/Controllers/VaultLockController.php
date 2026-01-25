@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Signal\Traits\SendsSignalNotifications;
 use Modules\Vault\Models\VaultLock;
 
 class VaultLockController extends Controller
 {
+    use SendsSignalNotifications;
+
     /**
      * Show the vault lock screen.
      */
@@ -60,12 +63,25 @@ class VaultLockController extends Controller
 
         $request->session()->put('vault_unlocked', true);
         $request->session()->put('vault_unlocked_at', now()->timestamp);
+        $request->session()->forget('vault_autolock_notified');
 
         $intendedUrl = $request->session()->pull('vault_intended_url', route('vault.index'));
 
         if (! is_string($intendedUrl) || empty($intendedUrl) || ! $this->isInternalUrl($intendedUrl)) {
             $intendedUrl = route('vault.index');
         }
+
+        $user = Auth::user();
+        $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
+
+        $this->signalInfo(
+            $user,
+            'Vault Unlocked',
+            'Your vault has been unlocked. Remember to lock it when you are done.',
+            $actionUrl,
+            'Vault',
+            'vault'
+        );
 
         return redirect($intendedUrl);
     }
@@ -82,6 +98,21 @@ class VaultLockController extends Controller
 
         $request->session()->forget('vault_unlocked');
         $request->session()->forget('vault_unlocked_at');
+
+        $vaultLock = $this->getVaultLock();
+        if ($vaultLock) {
+            $user = Auth::user();
+            $actionUrl = $user->can('vaults.vault.view') ? route('vault.lock') : null;
+
+            $this->signalInfo(
+                $user,
+                'Vault Locked',
+                'Your vault has been locked. Your secrets are now protected.',
+                $actionUrl,
+                'Vault',
+                'vault'
+            );
+        }
 
         return redirect()->route('vault.lock');
     }
@@ -101,6 +132,8 @@ class VaultLockController extends Controller
         ]);
 
         $user = Auth::user();
+        $existingLock = VaultLock::where('user_id', $user->id)->first();
+        $isUpdate = $existingLock !== null;
 
         VaultLock::updateOrCreate(
             ['user_id' => $user->id],
@@ -109,6 +142,31 @@ class VaultLockController extends Controller
 
         $request->session()->put('vault_unlocked', true);
         $request->session()->put('vault_unlocked_at', now()->timestamp);
+        $request->session()->forget('vault_autolock_notified');
+
+        if ($isUpdate) {
+            $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
+
+            $this->signalAlert(
+                $user,
+                'Vault PIN Changed',
+                'Your Vault PIN was changed. If you did not make this change, please update your PIN immediately.',
+                $actionUrl,
+                'Vault',
+                'vault'
+            );
+        } else {
+            $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
+
+            $this->signalSuccess(
+                $user,
+                'Vault PIN Set',
+                'Your Vault PIN was set successfully. Your vault is now protected with a PIN.',
+                $actionUrl,
+                'Vault',
+                'vault'
+            );
+        }
 
         return redirect()->route('vault.index')
             ->with('success', 'Vault PIN set successfully.');

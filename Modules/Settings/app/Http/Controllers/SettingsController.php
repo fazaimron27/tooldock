@@ -8,12 +8,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
 use Modules\Settings\Http\Requests\UpdateSettingsRequest;
 use Modules\Settings\Models\Setting;
+use Modules\Signal\Traits\SendsSignalNotifications;
 use Nwidart\Modules\Facades\Module;
 
 class SettingsController extends Controller
 {
+    use SendsSignalNotifications;
+
     public function __construct(
         private SettingsService $settingsService
     ) {}
@@ -80,17 +85,23 @@ class SettingsController extends Controller
 
         $errors = [];
         $successCount = 0;
+        $changedKeys = [];
 
         foreach ($request->validated() as $key => $value) {
             try {
                 $this->settingsService->set($key, $value);
                 $successCount++;
+                $changedKeys[] = $key;
             } catch (\RuntimeException $e) {
                 $errors[] = $key;
                 Log::warning("SettingsController: Failed to update setting '{$key}'", [
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        if ($successCount > 0) {
+            $this->notifyAdminsAboutSettingsChange($changedKeys, $request->user());
         }
 
         $appTab = null;
@@ -128,5 +139,35 @@ class SettingsController extends Controller
 
         return redirect($redirectUrl)
             ->with('success', 'Settings updated successfully.');
+    }
+
+    /**
+     * Notify all Super Admins about settings changes.
+     */
+    private function notifyAdminsAboutSettingsChange(array $changedKeys, $changedBy): void
+    {
+        $admins = User::whereHas('roles', function ($query) {
+            $query->where('name', Roles::SUPER_ADMIN);
+        })->get();
+
+        $changedByName = $changedBy?->name ?? 'Unknown';
+        $keyCount = count($changedKeys);
+        $keyList = $keyCount <= 3 ? implode(', ', $changedKeys) : implode(', ', array_slice($changedKeys, 0, 3)).'...';
+
+        foreach ($admins as $admin) {
+            if ($admin->id === $changedBy?->id) {
+                continue;
+            }
+
+            $actionUrl = $admin->can('settings.config.view') ? route('settings.index') : null;
+
+            $this->signalInfo(
+                $admin,
+                'Settings Updated',
+                "{$changedByName} updated {$keyCount} setting(s): {$keyList}",
+                $actionUrl,
+                'Settings'
+            );
+        }
     }
 }

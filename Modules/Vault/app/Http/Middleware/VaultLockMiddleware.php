@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\Signal\Facades\Signal;
 use Modules\Vault\Models\VaultLock;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Symfony\Component\HttpFoundation\Response;
@@ -93,6 +94,8 @@ class VaultLockMiddleware
                     $request->session()->forget('vault_unlocked');
                     $request->session()->forget('vault_unlocked_at');
                     $isLocked = true;
+
+                    $this->sendAutoLockNotification($user, $request);
                 }
             }
         } elseif ($unlocked && (! $unlockedAt || ! is_numeric($unlockedAt) || $unlockedAt <= 0)) {
@@ -138,5 +141,38 @@ class VaultLockMiddleware
         }
 
         return in_array($routeName, self::AUTH_ROUTES, true);
+    }
+
+    /**
+     * Send notification when vault auto-locks due to timeout.
+     */
+    private function sendAutoLockNotification($user, Request $request): void
+    {
+        try {
+            $notificationKey = 'vault_autolock_notified';
+            if ($request->session()->has($notificationKey)) {
+                return;
+            }
+
+            $request->session()->put($notificationKey, true);
+
+            if (! class_exists(Signal::class)) {
+                return;
+            }
+
+            Signal::info(
+                $user,
+                'Vault Auto-Locked',
+                'Your vault was automatically locked due to inactivity timeout.',
+                route('vault.lock'),
+                'Vault',
+                'vault'
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('VaultLockMiddleware: Failed to send auto-lock notification', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

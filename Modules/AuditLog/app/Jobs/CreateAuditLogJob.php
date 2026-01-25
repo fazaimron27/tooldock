@@ -11,6 +11,9 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Models\AuditLog;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
+use Modules\Signal\Facades\Signal;
 use Throwable;
 
 class CreateAuditLogJob implements ShouldQueue
@@ -153,6 +156,7 @@ class CreateAuditLogJob implements ShouldQueue
      *
      * When the database insert fails after all retry attempts,
      * write the audit payload to a physical file to ensure no audit trail is lost.
+     * Also notifies admins about the failure for system monitoring.
      */
     public function failed(?Throwable $exception): void
     {
@@ -162,6 +166,8 @@ class CreateAuditLogJob implements ShouldQueue
             'auditable_id' => $this->auditableId ?? null,
             'exception' => $exception?->getMessage(),
         ]);
+
+        $this->notifyAdminsAboutFailure($exception);
 
         /**
          * Prepare complete audit payload for emergency file logging.
@@ -198,6 +204,43 @@ class CreateAuditLogJob implements ShouldQueue
                 'emergency_log_path' => $logPath,
                 'error' => $e->getMessage(),
                 'original_payload' => $payload,
+            ]);
+        }
+    }
+
+    /**
+     * Notify admin users about audit log job failure.
+     *
+     * Uses Signal facade directly instead of trait to avoid serialization issues in queued jobs.
+     */
+    private function notifyAdminsAboutFailure(?Throwable $exception): void
+    {
+        try {
+            if (! class_exists(Signal::class)) {
+                return;
+            }
+
+            $admins = User::whereHas('roles', function ($query) {
+                $query->where('name', Roles::SUPER_ADMIN);
+            })->get();
+
+            $errorMessage = $exception?->getMessage() ?? 'Unknown error';
+            $shortError = strlen($errorMessage) > 100 ? substr($errorMessage, 0, 100).'...' : $errorMessage;
+
+            foreach ($admins as $admin) {
+                $actionUrl = $admin->can('auditlog.dashboard.view') ? route('auditlog.dashboard') : null;
+
+                Signal::alert(
+                    $admin,
+                    'Audit Log Job Failed',
+                    "An audit log entry failed to save after 3 attempts. Event: {$this->event}, Type: {$this->auditableType}. Error: {$shortError}",
+                    $actionUrl,
+                    'AuditLog'
+                );
+            }
+        } catch (Throwable $e) {
+            Log::warning('AuditLog: Failed to send admin notification about job failure', [
+                'error' => $e->getMessage(),
             ]);
         }
     }

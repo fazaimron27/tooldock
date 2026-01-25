@@ -10,8 +10,9 @@
  * @param {React.RefObject} scrollContainerRef - Ref to the scrollable container
  */
 import { useScrollBlur } from '@/Hooks/useScrollBlur';
+import SignalBell from '@Signal/Components/SignalBell';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, Info, LogOut, Mail, Search, Settings, User } from 'lucide-react';
+import { Info, LogOut, Mail, Search, Settings, User } from 'lucide-react';
 import { useState } from 'react';
 
 import InfoDialog from '@/Components/InfoDialog';
@@ -58,32 +59,15 @@ export default function Navbar({ scrollContainerRef }) {
           <SidebarTrigger className="-ml-1" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <div className="hidden md:block relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input type="search" placeholder="Search..." className="pl-9 w-64 h-9" />
           </div>
-          <ModeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-1 top-1 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
-                </span>
-                <span className="sr-only">Notifications</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No new notifications
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+          <div className="flex items-center gap-1">
+            <ModeToggle />
+            <SignalBell />
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

@@ -66,5 +66,15 @@ class VaultSettingsRegistrar
             label: 'Vault Lock Timeout (minutes)',
             isSystem: false
         );
+
+        $registry->register(
+            module: $moduleName,
+            group: 'vault',
+            key: 'vault_notify_enabled',
+            value: 'true',
+            type: SettingType::Boolean,
+            label: 'Vault Notifications (lock/unlock, PIN changes)',
+            isSystem: false
+        );
     }
 }

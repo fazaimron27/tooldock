@@ -11,9 +11,12 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Media\Http\Requests\UploadMediaRequest;
 use Modules\Media\Models\MediaFile;
+use Modules\Signal\Traits\SendsSignalNotifications;
 
 class MediaController extends Controller
 {
+    use SendsSignalNotifications;
+
     public function __construct(
         private MediaUploader $uploader
     ) {}
@@ -62,14 +65,27 @@ class MediaController extends Controller
                 'size' => $mediaFile->size,
             ]);
         } catch (\Exception $e) {
+            $user = $request->user();
+            $filename = $request->file('file')?->getClientOriginalName() ?? 'Unknown';
+
             Log::error('Media upload failed (temporary)', [
-                'user_id' => $request->user()?->id,
+                'user_id' => $user?->id,
                 'directory' => $request->input('directory', 'temp'),
-                'filename' => $request->file('file')?->getClientOriginalName(),
+                'filename' => $filename,
                 'file_size' => $request->file('file')?->getSize(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            if ($user) {
+                $this->signalWarning(
+                    $user,
+                    'File Upload Failed',
+                    "Failed to upload \"{$filename}\". Error: {$e->getMessage()}. Please check file size limits and try again.",
+                    route('media.index'),
+                    'Media'
+                );
+            }
 
             return response()->json([
                 'error' => 'Server Error',
@@ -142,16 +158,29 @@ class MediaController extends Controller
                 'size' => $mediaFile->size,
             ]);
         } catch (\Exception $e) {
+            $user = $request->user();
+            $filename = $request->file('file')?->getClientOriginalName() ?? 'Unknown';
+
             Log::error('Media upload failed (permanent)', [
-                'user_id' => $request->user()?->id,
+                'user_id' => $user?->id,
                 'directory' => $request->input('directory', 'uploads'),
-                'filename' => $request->file('file')?->getClientOriginalName(),
+                'filename' => $filename,
                 'file_size' => $request->file('file')?->getSize(),
                 'model_type' => $request->input('model_type'),
                 'model_id' => $request->input('model_id'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            if ($user) {
+                $this->signalWarning(
+                    $user,
+                    'File Upload Failed',
+                    "Failed to upload \"{$filename}\". Error: {$e->getMessage()}. Please check file size limits and try again.",
+                    route('media.index'),
+                    'Media'
+                );
+            }
 
             return response()->json([
                 'error' => 'Server Error',

@@ -110,5 +110,15 @@ class GroupsSettingsRegistrar
             label: 'Member Data Chunk Size',
             isSystem: true
         );
+
+        $registry->register(
+            module: $moduleName,
+            group: 'groups',
+            key: 'groups_notify_enabled',
+            value: 'true',
+            type: SettingType::Boolean,
+            label: 'Group Notifications (membership changes)',
+            isSystem: false
+        );
     }
 }

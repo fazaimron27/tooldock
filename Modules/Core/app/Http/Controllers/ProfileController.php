@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Profile Controller
+ *
+ * Handles user profile management including viewing, editing,
+ * and deleting user accounts. Integrates with AuditLog and Signal.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -15,13 +25,29 @@ use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
 use Modules\Core\Models\User;
 use Modules\Media\Models\MediaFile;
+use Modules\Signal\Traits\SendsSignalNotifications;
 
+/**
+ * Class ProfileController
+ *
+ * Manages user profile operations including updates, avatar changes,
+ * and account deletion. Logs all changes and sends security alerts.
+ *
+ * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
+ * @see \Modules\Signal\Traits\SendsSignalNotifications For notifications
+ */
 class ProfileController extends Controller
 {
     use DispatchAuditLog;
+    use SendsSignalNotifications;
 
     /**
      * Display the user's profile form.
+     *
+     * Loads the profile edit page with current user data and avatar.
+     *
+     * @param  Request  $request  The HTTP request
+     * @return Response Inertia profile edit page
      */
     public function edit(Request $request): Response
     {
@@ -42,6 +68,12 @@ class ProfileController extends Controller
 
     /**
      * Update the user's profile information.
+     *
+     * Updates name, email, and avatar. Logs changes appropriately
+     * and sends security alerts for email changes.
+     *
+     * @param  ProfileUpdateRequest  $request  The validated profile request
+     * @return RedirectResponse Redirect to profile with success message
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -80,6 +112,15 @@ class ProfileController extends Controller
 
     /**
      * Log email change event.
+     *
+     * Creates an audit log entry and sends a security alert
+     * when the user's email address is changed.
+     *
+     * @param  Request  $request  The HTTP request
+     * @param  User  $user  The user model
+     * @param  bool  $emailChanged  Whether email was changed
+     * @param  string|null  $oldEmail  The previous email address
+     * @return void
      */
     private function logEmailChange(Request $request, User $user, bool $emailChanged, ?string $oldEmail): void
     {
@@ -101,10 +142,28 @@ class ProfileController extends Controller
             request: $request,
             userId: $user->id
         );
+
+        $this->signalAlert(
+            $user,
+            'Email Address Changed',
+            "Your email was changed from {$oldEmail} to {$user->email}. Email verification is required. If you did not make this change, please contact support immediately.",
+            route('profile.edit'),
+            'System',
+            'security'
+        );
     }
 
     /**
      * Log other field changes (like name) as updated event.
+     *
+     * Creates an audit log entry for non-email field changes.
+     *
+     * @param  Request  $request  The HTTP request
+     * @param  User  $user  The user model
+     * @param  bool  $otherFieldsChanged  Whether other fields changed
+     * @param  array  $dirtyFields  Changed fields array
+     * @param  array  $original  Original field values
+     * @return void
      */
     private function logOtherFieldChanges(Request $request, User $user, bool $otherFieldsChanged, array $dirtyFields, array $original): void
     {
@@ -140,6 +199,12 @@ class ProfileController extends Controller
 
     /**
      * Handle avatar changes (attach, update, or delete).
+     *
+     * Processes avatar file attachment or removal based on request.
+     *
+     * @param  Request  $request  The HTTP request
+     * @param  User  $user  The user model
+     * @return void
      */
     private function handleAvatarChange(Request $request, User $user): void
     {
@@ -183,6 +248,12 @@ class ProfileController extends Controller
 
     /**
      * Delete the user's account.
+     *
+     * Permanently deletes the user account after password verification.
+     * Logs the deletion to audit log before removing the user.
+     *
+     * @param  Request  $request  The HTTP request with password confirmation
+     * @return RedirectResponse|\Illuminate\Http\Response Redirect to home
      */
     public function destroy(Request $request): RedirectResponse|\Illuminate\Http\Response
     {
