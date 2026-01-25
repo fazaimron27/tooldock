@@ -57,6 +57,9 @@ class VaultServiceProvider extends ServiceProvider
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
+            app(\App\Services\Registry\SignalCategoryRegistry::class)->register($this->name, 'vault', 'vault_notify_enabled');
+        }
 
         $middlewareRegistry->register($this->name, \Modules\Vault\Http\Middleware\VaultLockMiddleware::class);
 

@@ -199,7 +199,7 @@ export default function VaultCard({ vault }) {
     router.delete(route('vault.destroy', { vault: vault.id }), {
       onSuccess: () => {
         deleteDialog.onClose();
-        toast.success('Vault item deleted');
+        // Toast handled by Signal notification via WebSocket broadcast
       },
     });
   }, [vault.id, deleteDialog]);
