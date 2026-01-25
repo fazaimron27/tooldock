@@ -4,9 +4,14 @@ namespace Modules\AuditLog\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\AuditLog\Models\AuditLog;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
+use Modules\Signal\Traits\SendsSignalNotifications;
 
 class CleanupAuditLogsCommand extends Command
 {
+    use SendsSignalNotifications;
+
     /**
      * The name and signature of the console command.
      *
@@ -68,6 +73,30 @@ class CleanupAuditLogsCommand extends Command
 
         $this->info("Successfully deleted {$deleted} audit log(s).");
 
+        $this->notifyAdmins($deleted, $days);
+
         return Command::SUCCESS;
+    }
+
+    /**
+     * Notify admin users about the cleanup completion.
+     */
+    private function notifyAdmins(int $deletedCount, int $days): void
+    {
+        $admins = User::whereHas('roles', function ($query) {
+            $query->where('name', Roles::SUPER_ADMIN);
+        })->get();
+
+        foreach ($admins as $admin) {
+            $actionUrl = $admin->can('auditlog.dashboard.view') ? route('auditlog.dashboard') : null;
+
+            $this->signalInfo(
+                $admin,
+                'Audit Log Cleanup Complete',
+                "Scheduled cleanup completed: {$deletedCount} audit log entries older than {$days} days were deleted.",
+                $actionUrl,
+                'AuditLog'
+            );
+        }
     }
 }
