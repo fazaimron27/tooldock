@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/signal",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Signal\\": "app/",
+            "Modules\\Signal\\Database\\Factories\\": "database/factories/",
+            "Modules\\Signal\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Signal\\Tests\\": "tests/"
+        }
+    }
+}
