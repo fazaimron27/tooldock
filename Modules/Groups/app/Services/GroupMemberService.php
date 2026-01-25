@@ -8,6 +8,7 @@ use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\Core\Models\User;
 use Modules\Groups\Models\Group;
+use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Service for managing group member operations.
@@ -17,6 +18,8 @@ use Modules\Groups\Models\Group;
  */
 class GroupMemberService
 {
+    use SendsSignalNotifications;
+
     public function __construct(
         private GroupCacheService $cacheService
     ) {}
@@ -97,6 +100,8 @@ class GroupMemberService
             );
 
             $this->cacheService->clearForMembershipChange($newUserIds);
+
+            $this->notifyUsersAddedToGroup($newUserIds, $group);
 
             $count = count($newUserIds);
             $skipped = count($userIds) - $count;
@@ -180,6 +185,8 @@ class GroupMemberService
             );
 
             $this->cacheService->clearForMembershipChange($usersToRemove);
+
+            $this->notifyUsersRemovedFromGroup($usersToRemove, $group);
 
             $count = count($usersToRemove);
 
@@ -305,6 +312,8 @@ class GroupMemberService
             }
 
             $this->cacheService->clearForMembershipChange($userIds);
+
+            $this->notifyUsersTransferredBetweenGroups($userIds, $sourceGroup, $targetGroup);
 
             $count = count($userIds);
             $alreadyInTarget = count($userIds) - count($usersToAdd);
@@ -463,5 +472,76 @@ class GroupMemberService
             userAgent: request()?->userAgent(),
             tags: 'group,members'
         );
+    }
+
+    /**
+     * Notify users that they have been added to a group.
+     *
+     * @param  array<int|string>  $userIds  User IDs that were added
+     * @param  Group  $group  The group they were added to
+     */
+    private function notifyUsersAddedToGroup(array $userIds, Group $group): void
+    {
+        $users = User::whereIn('id', $userIds)->get();
+
+        foreach ($users as $user) {
+            $actionUrl = $user->can('groups.group.view') ? route('groups.groups.show', $group) : null;
+
+            $this->signalInfo(
+                $user,
+                'Added to Group',
+                "You have been added to the group \"{$group->name}\". Your permissions may have changed.",
+                $actionUrl,
+                'Groups',
+                'groups'
+            );
+        }
+    }
+
+    /**
+     * Notify users that they have been removed from a group.
+     *
+     * @param  array<int|string>  $userIds  User IDs that were removed
+     * @param  Group  $group  The group they were removed from
+     */
+    private function notifyUsersRemovedFromGroup(array $userIds, Group $group): void
+    {
+        $users = User::whereIn('id', $userIds)->get();
+
+        foreach ($users as $user) {
+            $this->signalWarning(
+                $user,
+                'Removed from Group',
+                "You have been removed from the group \"{$group->name}\". Your permissions may have changed.",
+                route('dashboard'),
+                'Groups',
+                'groups'
+            );
+        }
+    }
+
+    /**
+     * Notify users that they have been transferred between groups.
+     *
+     * @param  array<int|string>  $userIds  User IDs that were transferred
+     * @param  Group  $sourceGroup  The group they were transferred from
+     * @param  Group  $targetGroup  The group they were transferred to
+     */
+    private function notifyUsersTransferredBetweenGroups(array $userIds, Group $sourceGroup, Group $targetGroup): void
+    {
+        $users = User::whereIn('id', $userIds)->get();
+
+        foreach ($users as $user) {
+            $actionUrl = $user->can('groups.group.view') ? route('groups.groups.show', $targetGroup) : null;
+
+            $this->signalInfo(
+                $user,
+                'Transferred Between Groups',
+                "You have been transferred from \"{$sourceGroup->name}\" to \"{$targetGroup->name}\". Your permissions may have changed.",
+                $actionUrl,
+                'Groups',
+                'groups'
+            );
+        }
     }
 }

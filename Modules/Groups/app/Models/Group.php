@@ -100,6 +100,9 @@ class Group extends Model
     /**
      * Assign a role to this group.
      *
+     * Catches UniqueConstraintViolationException to handle race conditions
+     * when multiple concurrent processes boot and try to attach the same role.
+     *
      * @param  Role|string  $role  Role model, ID, or name
      * @return void
      */
@@ -109,8 +112,12 @@ class Group extends Model
             $role = Role::findByName($role) ?? Role::find($role);
         }
 
-        if ($role && ! $this->roles()->where('roles.id', $role->id)->exists()) {
-            $this->roles()->attach($role->id);
+        if ($role) {
+            try {
+                $this->roles()->syncWithoutDetaching([$role->id]);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                // Ignore - role is already attached (race condition with concurrent processes)
+            }
         }
     }
 
