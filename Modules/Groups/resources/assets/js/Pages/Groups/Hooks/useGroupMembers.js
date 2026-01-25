@@ -38,6 +38,7 @@ export function useGroupMembers({ group, members, defaultPerPage = 10, columns =
 
   const selectedRows = useMemo(() => {
     return table?.getSelectedRowModel().rows || [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, rowSelection]);
 
   const selectedMemberIds = useMemo(() => {
