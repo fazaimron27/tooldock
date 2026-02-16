@@ -1,11 +1,37 @@
 <?php
 
+/**
+ * Module Dependency Checker.
+ *
+ * Performs reverse dependency checks to prevent disabling or uninstalling modules
+ * that are required by other active or installed modules. Protects the module
+ * dependency graph from being broken by user-initiated operations.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
+/**
+ * Reverse dependency checker for module disable and uninstall operations.
+ *
+ * Validates that removing or disabling a module will not break other modules
+ * by checking if any active (for disable) or installed (for uninstall) modules
+ * declare the target module as a dependency.
+ *
+ * @see ModuleLifecycleService Orchestrates module lifecycle operations
+ * @see ModuleStatusService Provides module installation status queries
+ */
 class ModuleDependencyChecker
 {
+    /**
+     * Create a new module dependency checker instance.
+     *
+     * @param  ModuleStatusService  $statusService  Service for querying module installation status
+     */
     public function __construct(
         private ModuleStatusService $statusService
     ) {}

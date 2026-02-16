@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Module Installing Event.
+ *
+ * Dispatched before a module is installed. Listeners can prevent installation
+ * by setting $preventInstall to true and providing an optional $preventionReason.
+ * Supports skipping dependency validation and optional seeder execution.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

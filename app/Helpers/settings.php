@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Settings Helpers.
+ *
+ * Global helper function for accessing the SettingsService. Provides a
+ * convenient shorthand for retrieving individual settings or the full
+ * service instance for advanced usage.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 use App\Services\Core\SettingsService;
 
 if (! function_exists('settings')) {

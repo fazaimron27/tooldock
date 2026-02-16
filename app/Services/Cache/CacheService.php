@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Cache Service.
+ *
+ * Centralized cache management service optimized for Redis. Provides consistent
+ * cache operations with tag support, automatic error handling with graceful
+ * fallbacks, retry logic with exponential backoff, circuit breaker integration,
+ * and optional performance metrics collection.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Cache;
 
 use App\Services\Cache\Exceptions\CacheConnectionException;
@@ -54,12 +66,10 @@ class CacheService
     public function __construct(
         private ?CacheMetricsService $metrics = null
     ) {
-        // Initialize metrics service if enabled in config
         if ($this->isMetricsEnabled() && $this->metrics === null) {
             $this->metrics = app(CacheMetricsService::class);
         }
 
-        // Initialize circuit breaker if enabled
         if ($this->isCircuitBreakerEnabled()) {
             $this->circuitBreaker = new CircuitBreaker(
                 'cache',
@@ -119,7 +129,6 @@ class CacheService
      */
     private function classifyException(\Throwable $e): CacheException
     {
-        // Check if already a cache exception
         if ($e instanceof CacheException) {
             return $e;
         }
@@ -127,7 +136,6 @@ class CacheService
         $message = $e->getMessage();
         $lowerMessage = strtolower($message);
 
-        // Connection errors
         if (
             str_contains($lowerMessage, 'connection') ||
             str_contains($lowerMessage, 'refused') ||
@@ -137,7 +145,6 @@ class CacheService
             return new CacheConnectionException($message, $e->getCode(), $e);
         }
 
-        // Timeout errors
         if (
             str_contains($lowerMessage, 'timeout') ||
             str_contains($lowerMessage, 'timed out')
@@ -145,7 +152,6 @@ class CacheService
             return new CacheTimeoutException($message, $e->getCode(), $e);
         }
 
-        // Tag errors
         if (
             str_contains($lowerMessage, 'tag') ||
             str_contains($lowerMessage, 'tags not supported')
@@ -153,7 +159,6 @@ class CacheService
             return new CacheTagException($message, $e->getCode(), $e);
         }
 
-        // Default to connection exception for unknown errors (assume transient)
         return new CacheConnectionException($message, $e->getCode(), $e);
     }
 
@@ -174,14 +179,12 @@ class CacheService
 
         for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
             try {
-                // Check circuit breaker before attempting
                 if ($this->circuitBreaker !== null && ! $this->circuitBreaker->allowsRequest()) {
                     throw new CacheConnectionException('Circuit breaker is open - cache operations are temporarily disabled');
                 }
 
                 $result = $operation();
 
-                // Record success in circuit breaker
                 if ($this->circuitBreaker !== null) {
                     $this->circuitBreaker->recordSuccess();
                 }
@@ -191,24 +194,18 @@ class CacheService
                 $lastException = $e;
                 $classifiedException = $this->classifyException($e);
 
-                // Record failure in circuit breaker
                 if ($this->circuitBreaker !== null) {
                     $this->circuitBreaker->recordFailure();
                 }
-
-                // Only retry transient errors
                 if (! $this->isTransientError($classifiedException) || ! $this->isRetryEnabled()) {
                     throw $classifiedException;
                 }
 
-                // Don't retry on last attempt
                 if ($attempt >= $maxRetries) {
                     break;
                 }
-
-                // Exponential backoff: delay = base * (2 ^ attempt)
                 $delay = $baseDelay * (2 ** $attempt);
-                usleep($delay * 1000); // Convert to microseconds
+                usleep($delay * 1000);
 
                 Log::debug('CacheService: Retrying operation after transient error', [
                     'operation' => $operationName,
@@ -221,7 +218,6 @@ class CacheService
             }
         }
 
-        // All retries exhausted
         throw $this->classifyException($lastException);
     }
 
@@ -324,7 +320,6 @@ class CacheService
             return Cache::tags($tags);
         }
 
-        // Fallback to non-tagged cache if tags not supported
         return Cache::store();
     }
 
@@ -339,6 +334,7 @@ class CacheService
      * @param  int|\DateTimeInterface|\DateInterval|null  $ttl  Time to live
      * @param  \Closure  $callback  Value generator
      * @param  string|array|null  $tags  Optional cache tags for selective invalidation
+     * @param  string|null  $context  Context for logging and metrics (e.g., 'SettingsService', 'MenuRegistry')
      * @return mixed Cached value
      *
      * @example
@@ -357,9 +353,8 @@ class CacheService
         $callbackExecuted = false;
 
         try {
-            // Wrap callback to track if it was executed (cache miss)
             $wrappedCallback = function () use ($callback, &$callbackExecuted) {
-                $callbackExecuted = true; // Cache miss - callback executing
+                $callbackExecuted = true;
 
                 return $callback();
             };
@@ -371,7 +366,7 @@ class CacheService
             }, 'remember', $context);
 
             $duration = (microtime(true) - $startTime) * 1000;
-            $hit = ! $callbackExecuted; // If callback didn't execute, it was a cache hit
+            $hit = ! $callbackExecuted;
             $this->recordMetrics('remember', $duration, $hit, $context);
 
             if (! $hit) {
@@ -415,6 +410,7 @@ class CacheService
      * @param  string  $key  Cache key
      * @param  \Closure  $callback  Value generator
      * @param  string|array|null  $tags  Optional cache tags for selective invalidation
+     * @param  string|null  $context  Context for logging and metrics (e.g., 'SettingsService', 'MenuRegistry')
      * @return mixed Cached value
      *
      * @example
@@ -432,9 +428,8 @@ class CacheService
         $callbackExecuted = false;
 
         try {
-            // Wrap callback to track if it was executed (cache miss)
             $wrappedCallback = function () use ($callback, &$callbackExecuted) {
-                $callbackExecuted = true; // Cache miss - callback executing
+                $callbackExecuted = true;
 
                 return $callback();
             };
@@ -446,7 +441,7 @@ class CacheService
             }, 'rememberForever', $context);
 
             $duration = (microtime(true) - $startTime) * 1000;
-            $hit = ! $callbackExecuted; // If callback didn't execute, it was a cache hit
+            $hit = ! $callbackExecuted;
             $this->recordMetrics('rememberForever', $duration, $hit, $context);
 
             if (! $hit) {
@@ -476,6 +471,7 @@ class CacheService
      *
      * @param  string  $key  Cache key
      * @param  string|array|null  $tags  Optional cache tags (must match tags used when storing)
+     * @param  string|null  $context  Context for logging and metrics
      * @return bool True if key was forgotten
      *
      * @example
@@ -571,7 +567,6 @@ class CacheService
                     return true;
                 }
 
-                // Fallback: flush all cache (use with caution)
                 Cache::flush();
 
                 return true;
@@ -644,6 +639,7 @@ class CacheService
      * @param  mixed  $value  Value to cache
      * @param  int|\DateTimeInterface|\DateInterval|null  $ttl  Time to live (null = forever)
      * @param  string|array|null  $tags  Optional cache tags for selective invalidation
+     * @param  string|null  $context  Context for logging and metrics
      * @return bool True if value was cached
      *
      * @example
@@ -693,6 +689,7 @@ class CacheService
      * @param  string  $key  Cache key
      * @param  mixed  $default  Default value if key not found
      * @param  string|array|null  $tags  Optional cache tags (must match tags used when storing)
+     * @param  string|null  $context  Context for logging and metrics
      * @return mixed Cached value or default
      *
      * @example
@@ -717,8 +714,6 @@ class CacheService
                     : Cache::get($key, $default);
             }, 'get', $context);
 
-            // Determine if it was a hit (value found) or miss (default returned)
-            // Note: This check might not be perfect if default value equals cached value
             $hit = $result !== $default || ($tags !== null ? $this->tags($tags)->has($key) : Cache::has($key));
 
             $duration = (microtime(true) - $startTime) * 1000;

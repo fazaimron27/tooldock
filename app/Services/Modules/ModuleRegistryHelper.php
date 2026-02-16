@@ -1,15 +1,45 @@
 <?php
 
+/**
+ * Module Registry Helper
+ *
+ * Assists in post-module-operation tasks such as clearing caches,
+ * rebuilding Artisan caches (routes, config), generating Ziggy
+ * routes, and warming permission caches.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Modules\Core\Services\PermissionCacheService;
 use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
+/**
+ * Class ModuleRegistryHelper
+ *
+ * Consolidates post-module-operation tasks into reusable methods.
+ * Called by ModuleLifecycleService after install, uninstall, enable,
+ * or disable operations to ensure all caches and registries are
+ * synchronized with the current module state.
+ *
+ * @see \App\Services\Modules\ModuleLifecycleService For the primary consumer
+ * @see \App\Services\Modules\DatabaseActivator For status synchronization
+ * @see \Modules\Core\Services\PermissionCacheService For permission cache warming
+ */
 class ModuleRegistryHelper
 {
+    /**
+     * Create a new ModuleRegistryHelper instance.
+     *
+     * @param  \Nwidart\Modules\Contracts\ActivatorInterface  $activator  Module activator for status management
+     * @param  \App\Services\Modules\ModuleStatusService  $statusService  Service for module status cache
+     */
     public function __construct(
         private ActivatorInterface $activator,
         private ModuleStatusService $statusService
@@ -23,7 +53,7 @@ class ModuleRegistryHelper
      */
     public function reloadStatuses(): void
     {
-        if ($this->activator instanceof DatabaseActivator) {
+        if ($this->activator instanceof \App\Services\Modules\DatabaseActivator) {
             $this->activator->reloadStatuses();
         }
 
@@ -69,13 +99,17 @@ class ModuleRegistryHelper
         }
 
         if ($configCached) {
-            Log::info('ModuleRegistryHelper: Deferring config cache rebuild to after response');
-
-            app()->terminating(function () use ($basePath) {
-                Log::info('ModuleRegistryHelper: Rebuilding config cache (deferred)');
+            if (app()->environment('local', 'development', 'testing')) {
+                Log::info('ModuleRegistryHelper: Clearing config cache (dev mode, not re-caching)');
                 $this->runArtisanInSubprocess('config:clear', $basePath);
-                $this->runArtisanInSubprocess('config:cache', $basePath);
-            });
+            } else {
+                Log::info('ModuleRegistryHelper: Deferring config cache rebuild to after response');
+                app()->terminating(function () use ($basePath) {
+                    Log::info('ModuleRegistryHelper: Rebuilding config cache (deferred)');
+                    $this->runArtisanInSubprocess('config:clear', $basePath);
+                    $this->runArtisanInSubprocess('config:cache', $basePath);
+                });
+            }
         }
     }
 
@@ -137,16 +171,36 @@ class ModuleRegistryHelper
     }
 
     /**
+     * Warm the Spatie permission cache.
+     *
+     * Pre-loads permissions into Redis cache to ensure the first web request
+     * after module operations doesn't suffer a cache miss penalty.
+     * This is especially important after cache:clear or module installations.
+     */
+    public function warmPermissionCache(): void
+    {
+        try {
+            app(PermissionCacheService::class)->warm();
+            Log::debug('ModuleRegistryHelper: Permission cache warmed successfully');
+        } catch (\Exception $e) {
+            Log::warning('ModuleRegistryHelper: Failed to warm permission cache', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Complete a module operation by synchronizing all caches and registries.
      *
      * Reloads statuses, refreshes module registry, rebuilds Laravel caches,
-     * and regenerates Ziggy routes.
+     * regenerates Ziggy routes, and warms the permission cache.
      */
     public function finalize(): void
     {
         $this->reloadStatuses();
         $this->refresh();
         $this->rebuildCachesIfNeeded();
+        $this->warmPermissionCache();
         $this->generateZiggyRoutes();
     }
 }

@@ -1,13 +1,38 @@
 <?php
 
+/**
+ * Module Migration Service.
+ *
+ * Handles running and rolling back database migrations for individual modules.
+ * Executes both the nwidart/laravel-modules migrate command and the standard
+ * Laravel migrate command to ensure all module migrations are properly applied.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Contracts\RepositoryInterface;
 
+/**
+ * Database migration manager for individual modules.
+ *
+ * Provides methods to run and rollback migrations for a specific module,
+ * ensuring both module-specific and standard Laravel migration paths
+ * are handled correctly.
+ *
+ * @see ModuleLifecycleService Uses this during install/uninstall operations
+ */
 class ModuleMigrationService
 {
+    /**
+     * Create a new module migration service instance.
+     *
+     * @param  RepositoryInterface  $moduleRepository  Repository for finding module instances
+     */
     public function __construct(
         private RepositoryInterface $moduleRepository
     ) {}

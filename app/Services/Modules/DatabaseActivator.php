@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Database Activator.
+ *
+ * Database-backed implementation of the nwidart/laravel-modules ActivatorInterface.
+ * Stores module activation status in the modules_statuses table instead of JSON files,
+ * providing better multi-server support, queryability, and integration with the
+ * custom module lifecycle system including installation tracking and version management.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Container\Container;
@@ -31,6 +43,11 @@ class DatabaseActivator implements ActivatorInterface
      */
     private array $modulesStatuses = [];
 
+    /**
+     * Create a new database activator instance.
+     *
+     * @param  Container  $app  The application container (required by ActivatorInterface)
+     */
     public function __construct(Container $app)
     {
         $this->loadStatuses();
@@ -112,12 +129,12 @@ class DatabaseActivator implements ActivatorInterface
     }
 
     /**
-     * Reload statuses from database (useful after external changes)
+     * Reload statuses from database (useful after external changes).
      *
-     * Called by ModuleLifecycleService after database changes to ensure
-     * the in-memory cache stays synchronized with the database.
+     * Called after database changes to ensure the in-memory cache stays
+     * synchronized with the database.
      *
-     * Public method used by ModuleLifecycleService::reloadStatusesIfNeeded()
+     * @see ModuleRegistryHelper::reloadStatuses() Primary caller
      */
     public function reloadStatuses(): void
     {

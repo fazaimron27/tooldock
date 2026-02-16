@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Settings Service
+ *
+ * Manages application settings with aggressive Redis caching
+ * and tag-based invalidation, providing methods for getting,
+ * setting, and retrieving all settings.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Core;
 
 use App\Services\Cache\CacheService;
@@ -24,10 +35,19 @@ class SettingsService
 
     private const CACHE_TAG = 'settings';
 
+    /**
+     * Create a new settings service instance.
+     *
+     * @param  \Modules\Settings\Models\Setting  $setting  Setting model for database queries
+     * @param  \App\Services\Registry\SettingsRegistry  $settingsRegistry  Registry for setting definitions and seeding
+     * @param  \App\Services\Cache\CacheService  $cacheService  Cache service for tag-based caching
+     * @param  \App\Services\Core\AppConfigService  $appConfigService  Service for syncing settings to Laravel config
+     */
     public function __construct(
         private Setting $setting,
         private SettingsRegistry $settingsRegistry,
-        private CacheService $cacheService
+        private CacheService $cacheService,
+        private AppConfigService $appConfigService
     ) {}
 
     /**
@@ -91,17 +111,7 @@ class SettingsService
             $this->clearCache();
         }
 
-        match ($key) {
-            'app_name' => config(['app.name' => (string) $value]),
-            'app_timezone' => config(['app.timezone' => (string) $value]),
-            'app_locale' => config(['app.locale' => (string) $value]),
-            'app_fallback_locale' => config(['app.fallback_locale' => (string) $value]),
-            'mail_from_address' => config(['mail.from.address' => (string) $value]),
-            'mail_from_name' => config(['mail.from.name' => (string) $value]),
-            'session_lifetime' => config(['session.lifetime' => (int) $value]),
-            'session_expire_on_close' => config(['session.expire_on_close' => filter_var($value, FILTER_VALIDATE_BOOLEAN)]),
-            default => null,
-        };
+        $this->appConfigService->syncKey($key, $value);
     }
 
     /**
@@ -119,7 +129,11 @@ class SettingsService
         return match ($type) {
             \Modules\Settings\Enums\SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             \Modules\Settings\Enums\SettingType::Integer => (int) $value,
-            \Modules\Settings\Enums\SettingType::Text, \Modules\Settings\Enums\SettingType::Textarea => (string) $value,
+            \Modules\Settings\Enums\SettingType::Percentage => (float) $value,
+            \Modules\Settings\Enums\SettingType::Text,
+            \Modules\Settings\Enums\SettingType::Textarea,
+            \Modules\Settings\Enums\SettingType::Select,
+            \Modules\Settings\Enums\SettingType::Currency => (string) $value,
         };
     }
 
@@ -211,6 +225,8 @@ class SettingsService
      * Returns true during migrations or when running in console without database setup.
      * Checks full command line to catch optimize:clear and sub-commands.
      * Skips cache during migrations or optimize commands to prevent automatic seeding.
+     *
+     * @return bool True if cache should be bypassed
      */
     private function shouldSkipCache(): bool
     {
@@ -237,6 +253,8 @@ class SettingsService
      * Optimized for Redis - uses tag-based flush for efficient invalidation.
      * This method is called automatically when settings are updated, synced, or cleaned up,
      * ensuring cache consistency without manual intervention.
+     *
+     * @return void
      */
     private function clearCache(): void
     {

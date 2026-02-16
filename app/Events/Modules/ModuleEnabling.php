@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Module Enabling Event.
+ *
+ * Dispatched before a module is enabled. Listeners can prevent the operation
+ * by setting $preventEnable to true and providing an optional $preventionReason.
+ * Supports skipping dependency validation via the $skipValidation flag.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

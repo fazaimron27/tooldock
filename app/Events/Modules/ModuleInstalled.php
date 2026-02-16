@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Module Installed Event.
+ *
+ * Dispatched after a module has been successfully installed. Deferred in HTTP
+ * context for performance; dispatched synchronously in CLI for easier debugging.
+ * Includes whether seeders were run during installation.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

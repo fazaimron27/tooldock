@@ -1,15 +1,45 @@
 <?php
 
+/**
+ * Module Discovery Service.
+ *
+ * Discovers available modules from the filesystem, registers them in the
+ * database, and handles automatic installation of protected modules after
+ * fresh database migrations. Coordinates with the lifecycle service for
+ * dependency-ordered installation of essential system modules.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Nwidart\Modules\Module;
 
+/**
+ * Handles module discovery, registration, and protected module auto-installation.
+ *
+ * Scans the Modules directory for available modules, registers them in the
+ * modules_statuses table, and provides automatic installation of protected
+ * modules in dependency order for fresh database setups.
+ *
+ * @see ModuleLifecycleService Used for installing discovered protected modules
+ * @see ModuleRegistryHelper Used for reloading statuses after discovery
+ * @see ModuleStatusService Used for checking and updating module records
+ */
 class ModuleDiscoveryService
 {
+    /** @var ModuleLifecycleService|null Injected post-construction to avoid circular dependency */
     private ?ModuleLifecycleService $lifecycleService = null;
 
+    /**
+     * Create a new module discovery service instance.
+     *
+     * @param  ModuleRegistryHelper  $registryHelper  Helper for reloading module statuses
+     * @param  ModuleStatusService  $statusService  Service for checking and updating module records
+     */
     public function __construct(
         private ModuleRegistryHelper $registryHelper,
         private ModuleStatusService $statusService

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Module Disabled Event.
+ *
+ * Dispatched after a module has been successfully disabled. Deferred in HTTP
+ * context for performance; dispatched synchronously in CLI for easier debugging.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

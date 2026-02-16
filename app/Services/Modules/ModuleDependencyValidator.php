@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Module Dependency Validator.
+ *
+ * Validates module dependencies by scanning PHP source files for cross-module
+ * class references and ensuring they are properly declared in module.json.
+ * Also verifies that all declared dependencies exist and are installed before
+ * allowing module installation or enabling.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use App\Exceptions\MissingDependencyException;
@@ -8,18 +20,37 @@ use Illuminate\Support\Facades\Log;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Nwidart\Modules\Module;
 
+/**
+ * Forward dependency validator for module install and enable operations.
+ *
+ * Uses PHP tokenizer to scan source files for Modules\* namespace references,
+ * compares them against declared dependencies in module.json, and validates
+ * that all declared dependencies exist and are installed. Employs a caching
+ * strategy with file hash-based invalidation for performance.
+ *
+ * @see ModuleLifecycleService Orchestrates module lifecycle operations
+ * @see ModuleDependencyChecker Handles reverse dependency checks
+ * @see CacheService Used for caching scan results with tag-based invalidation
+ */
 class ModuleDependencyValidator
 {
     private const CACHE_TAG = 'module_dependencies';
 
     /**
-     * Cached module map for case-insensitive lookups
-     * Maps lowercase module name => actual module name
+     * Cached module map for case-insensitive lookups.
+     *
+     * Maps lowercase module name => actual module name.
      *
      * @var array<string, string>|null
      */
     private ?array $moduleMapCache = null;
 
+    /**
+     * Create a new module dependency validator instance.
+     *
+     * @param  ModuleStatusService  $statusService  Service for querying module installation status
+     * @param  CacheService  $cacheService  Service for caching dependency scan results
+     */
     public function __construct(
         private ModuleStatusService $statusService,
         private CacheService $cacheService

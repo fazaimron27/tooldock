@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Migration Helpers.
+ *
+ * Global helper functions for detecting if the application is currently
+ * running database migrations. Used to guard logic that should only
+ * execute outside of migration contexts.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
 if (! function_exists('is_running_migrations')) {
     /**
      * Check if we're currently running migrations.

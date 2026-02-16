@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Module Lifecycle Service
+ *
+ * Orchestrates the installation, uninstallation, enabling,
+ * and disabling of modules, handling dependencies, migrations,
+ * seeding, and registry updates.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Modules;
 
 use App\Events\Modules\ModuleDisabled;
@@ -24,6 +35,19 @@ use Nwidart\Modules\Contracts\ActivatorInterface;
 use Nwidart\Modules\Contracts\RepositoryInterface;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 
+/**
+ * Central orchestrator for module lifecycle operations.
+ *
+ * Manages the complete lifecycle of modules including discovery, installation,
+ * uninstallation, enabling, and disabling. Coordinates dependency validation,
+ * database migrations, seeders, and registry updates. Dispatches events before
+ * and after each operation to allow listeners to react or prevent actions.
+ *
+ * @see ModuleDependencyValidator Validates module dependencies before operations
+ * @see ModuleDiscoveryService Discovers modules from the filesystem
+ * @see ModuleMigrationService Handles module database migrations
+ * @see ModuleStatusService Manages module status in the database
+ */
 class ModuleLifecycleService
 {
     /**
@@ -62,12 +86,12 @@ class ModuleLifecycleService
     }
 
     /**
-     * Install a module
+     * Install a module.
      *
      * Performs the complete installation process:
      * 1. Validates dependencies are installed
      * 2. Records installation in database (is_installed, version, installed_at)
-     * 3. Temporarily enables module (so migrations can be discovered)
+     * 3. Pre-enables module via activator (so migrations can be discovered)
      * 4. Runs database migrations
      * 5. Optionally runs seeders
      * 6. Calls enable() to activate module and perform cleanup
@@ -142,19 +166,21 @@ class ModuleLifecycleService
     }
 
     /**
-     * Uninstall a module
+     * Uninstall a module.
      *
      * Performs the complete uninstallation process:
-     * 1. Validates no installed modules depend on this module
-     * 2. Disables module (deactivates routes and services)
-     * 3. Rolls back database migrations
-     * 4. Marks module as uninstalled in database
+     * 1. Checks if module is protected (protected modules cannot be uninstalled)
+     * 2. Validates no installed modules depend on this module
+     * 3. Disables module (deactivates routes and services)
+     * 4. Cleans up all registries (permissions, roles, settings, categories, menus, groups)
+     * 5. Rolls back database migrations
+     * 6. Marks module as uninstalled in database
      *
      * Note: This does NOT delete the module files, only removes it from the system.
      *
      * @param  string  $moduleName  The name of the module to uninstall
      *
-     * @throws \RuntimeException When other installed modules depend on this module
+     * @throws \RuntimeException When module is protected or other installed modules depend on it
      */
     public function uninstall(string $moduleName): void
     {
@@ -187,7 +213,7 @@ class ModuleLifecycleService
     }
 
     /**
-     * Enable a module
+     * Enable a module.
      *
      * Activates a previously installed module:
      * 1. Verifies module is installed
@@ -195,7 +221,7 @@ class ModuleLifecycleService
      * 3. Sets is_active flag in database
      * 4. Enables via activator (updates nwidart/laravel-modules cache)
      * 5. Refreshes module registry to boot service providers (allows registries to register data)
-     * 6. Seeds all registries (settings, roles, categories, permissions)
+     * 6. Seeds all registries (settings, roles, categories, menus, permissions, groups)
      * 7. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
      *
      * Called by install() after migrations/seeders, or independently to re-enable a disabled module.
@@ -239,19 +265,21 @@ class ModuleLifecycleService
     }
 
     /**
-     * Disable a module
+     * Disable a module.
      *
      * Deactivates an enabled module:
-     * 1. Validates no active modules depend on this module
-     * 2. Sets is_active flag to false in database
-     * 3. Disables via activator (updates nwidart/laravel-modules cache)
-     * 4. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
+     * 1. Checks if module is protected (protected modules cannot be disabled)
+     * 2. Validates no active modules depend on this module
+     * 3. Sets is_active flag to false in database
+     * 4. Disables via activator (updates nwidart/laravel-modules cache)
+     * 5. Deactivates menu items registered by this module
+     * 6. Performs cleanup (reload statuses, refresh registry, clear caches, generate routes)
      *
      * Called by uninstall() before rollback, or independently to temporarily disable a module.
      *
      * @param  string  $moduleName  The name of the module to disable
      *
-     * @throws \RuntimeException When active modules depend on this module
+     * @throws \RuntimeException When module is protected or active modules depend on it
      */
     public function disable(string $moduleName): void
     {
@@ -319,7 +347,7 @@ class ModuleLifecycleService
     /**
      * Seed all registries for a module.
      *
-     * Centralized method to seed all registries (settings, roles, categories, permissions, groups)
+     * Centralized method to seed all registries (settings, roles, categories, menus, permissions, groups)
      * with error handling. Uses fail-open strategy - continues on errors to prevent
      * one registry failure from blocking the entire operation.
      *
@@ -386,21 +414,12 @@ class ModuleLifecycleService
                 'trace' => $e->getTraceAsString(),
             ]);
         }
-
-        try {
-            $this->dependencyValidator->clearCache();
-            Log::debug("ModuleLifecycleService: Cleared module dependency cache after seeding '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Failed to clear module dependency cache for '{$moduleName}'", [
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**
      * Cleanup all registries for a module.
      *
-     * Centralized method to cleanup all registries (permissions, roles, settings, categories, groups)
+     * Centralized method to cleanup all registries (permissions, roles, settings, categories, menus, groups)
      * with error handling. Uses fail-open strategy - continues on errors to prevent
      * one registry failure from blocking the entire operation.
      *
@@ -483,15 +502,6 @@ class ModuleLifecycleService
             Log::warning("ModuleLifecycleService: Group cleanup failed for '{$moduleName}'", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-            ]);
-        }
-
-        try {
-            $this->dependencyValidator->clearCache();
-            Log::debug("ModuleLifecycleService: Cleared module dependency cache after cleanup of '{$moduleName}'");
-        } catch (\Exception $e) {
-            Log::warning("ModuleLifecycleService: Failed to clear module dependency cache for '{$moduleName}'", [
-                'error' => $e->getMessage(),
             ]);
         }
     }
