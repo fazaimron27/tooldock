@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Storage Link Service.
+ *
+ * Manages the public storage symbolic link, ensuring it exists automatically
+ * during application boot. Handles both console and web contexts, creating
+ * the target directory and symlink as needed without manual intervention.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Core;
 
 use Illuminate\Support\Facades\Artisan;

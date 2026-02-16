@@ -3,26 +3,33 @@
 namespace Modules\Vault\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\Core\UserPreferenceService;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Signal\Traits\SendsSignalNotifications;
 use Modules\Vault\Models\VaultLock;
 
 class VaultLockController extends Controller
 {
-    use SendsSignalNotifications;
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry,
+        private readonly UserPreferenceService $preferenceService
+    ) {}
 
     /**
      * Show the vault lock screen.
      */
     public function show(): Response|RedirectResponse
     {
+        Gate::authorize('vaults.vault.view');
+
         if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
@@ -40,6 +47,8 @@ class VaultLockController extends Controller
      */
     public function unlock(Request $request): RedirectResponse
     {
+        Gate::authorize('vaults.vault.view');
+
         if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
@@ -74,14 +83,9 @@ class VaultLockController extends Controller
         $user = Auth::user();
         $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
 
-        $this->signalInfo(
-            $user,
-            'Vault Unlocked',
-            'Your vault has been unlocked. Remember to lock it when you are done.',
-            $actionUrl,
-            'Vault',
-            'vault'
-        );
+        $this->signalRegistry->dispatch('vault.unlocked', [
+            'user' => $user,
+        ]);
 
         return redirect($intendedUrl);
     }
@@ -91,6 +95,8 @@ class VaultLockController extends Controller
      */
     public function lock(Request $request): RedirectResponse
     {
+        Gate::authorize('vaults.vault.view');
+
         if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled.');
@@ -104,14 +110,9 @@ class VaultLockController extends Controller
             $user = Auth::user();
             $actionUrl = $user->can('vaults.vault.view') ? route('vault.lock') : null;
 
-            $this->signalInfo(
-                $user,
-                'Vault Locked',
-                'Your vault has been locked. Your secrets are now protected.',
-                $actionUrl,
-                'Vault',
-                'vault'
-            );
+            $this->signalRegistry->dispatch('vault.locked', [
+                'user' => $user,
+            ]);
         }
 
         return redirect()->route('vault.lock');
@@ -122,6 +123,8 @@ class VaultLockController extends Controller
      */
     public function setPin(Request $request): RedirectResponse
     {
+        Gate::authorize('vaults.vault.view');
+
         if (! $this->isVaultLockEnabled()) {
             return redirect()->route('vault.index')
                 ->with('warning', 'Vault lock is currently disabled. Please enable it in settings first.');
@@ -144,29 +147,10 @@ class VaultLockController extends Controller
         $request->session()->put('vault_unlocked_at', now()->timestamp);
         $request->session()->forget('vault_autolock_notified');
 
-        if ($isUpdate) {
-            $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
-
-            $this->signalAlert(
-                $user,
-                'Vault PIN Changed',
-                'Your Vault PIN was changed. If you did not make this change, please update your PIN immediately.',
-                $actionUrl,
-                'Vault',
-                'vault'
-            );
-        } else {
-            $actionUrl = $user->can('vaults.vault.view') ? route('vault.index') : null;
-
-            $this->signalSuccess(
-                $user,
-                'Vault PIN Set',
-                'Your Vault PIN was set successfully. Your vault is now protected with a PIN.',
-                $actionUrl,
-                'Vault',
-                'vault'
-            );
-        }
+        $this->signalRegistry->dispatch('vault.pin.changed', [
+            'user' => $user,
+            'is_update' => $isUpdate,
+        ]);
 
         return redirect()->route('vault.index')
             ->with('success', 'Vault PIN set successfully.');
@@ -177,6 +161,8 @@ class VaultLockController extends Controller
      */
     public function status(Request $request): JsonResponse
     {
+        Gate::authorize('vaults.vault.view');
+
         if (! $this->isVaultLockEnabled()) {
             return response()->json([
                 'unlocked' => true,
@@ -198,7 +184,13 @@ class VaultLockController extends Controller
      */
     private function isVaultLockEnabled(): bool
     {
-        return settings('vault_lock_enabled', false);
+        $user = Auth::user();
+
+        if (! $user) {
+            return settings('vault_lock_enabled', false);
+        }
+
+        return $this->preferenceService->get($user, 'vault_lock_enabled', false);
     }
 
     /**

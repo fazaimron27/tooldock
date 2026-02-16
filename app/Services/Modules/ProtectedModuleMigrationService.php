@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Protected Module Migration Service.
+ *
+ * Discovers and provides migration paths from modules marked as protected
+ * in their module.json configuration. Ensures protected module migrations
+ * are loaded during application bootstrap so they are available during
+ * standard Laravel migration commands.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Nwidart\Modules\Facades\Module;

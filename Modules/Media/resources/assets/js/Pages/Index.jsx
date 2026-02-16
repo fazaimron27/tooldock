@@ -22,8 +22,6 @@ import {
   DialogTitle,
 } from '@/Components/ui/dialog';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 export default function Index({ mediaFiles, defaultPerPage = 20 }) {
   const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
@@ -190,7 +188,7 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
   usePaginationSync(tableProps, mediaFiles, defaultPerPage);
 
   return (
-    <DashboardLayout header="Media">
+    <>
       <PageShell title="Media Files">
         <DataTable
           {...tableProps}
@@ -249,6 +247,6 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }

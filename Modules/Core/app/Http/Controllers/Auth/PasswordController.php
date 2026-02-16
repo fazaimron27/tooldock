@@ -14,13 +14,13 @@
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class PasswordController
@@ -29,12 +29,15 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * Logs password changes and sends security alerts via Signal.
  *
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For security alerts
+ * @see \App\Services\Registry\SignalHandlerRegistry For security alerts
  */
 class PasswordController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
+
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry
+    ) {}
 
     /**
      * Update the user's password.
@@ -77,14 +80,9 @@ class PasswordController extends Controller
             userId: $user->id
         );
 
-        $this->signalAlert(
-            $user,
-            'Password Changed',
-            'Your password was changed successfully. If you did not make this change, please contact support immediately.',
-            route('profile.edit'),
-            'System',
-            'security'
-        );
+        $this->signalRegistry->dispatch('auth.password.changed', [
+            'user' => $user,
+        ]);
 
         return back()->with('success', 'Password updated successfully.');
     }

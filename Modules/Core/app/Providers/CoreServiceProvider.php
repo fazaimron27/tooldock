@@ -2,11 +2,15 @@
 
 namespace Modules\Core\Providers;
 
+use App\Services\Core\UserPreferenceService;
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\RoleRegistry;
+use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -20,13 +24,17 @@ use Modules\Core\Observers\MenuObserver;
 use Modules\Core\Observers\PermissionObserver;
 use Modules\Core\Observers\RoleObserver;
 use Modules\Core\Observers\UserObserver;
+use Modules\Core\Services\CoreCommandRegistrar;
 use Modules\Core\Services\CoreDashboardService;
 use Modules\Core\Services\CoreMenuRegistrar;
 use Modules\Core\Services\CorePermissionRegistrar;
+use Modules\Core\Services\CoreSettingsRegistrar;
+use Modules\Core\Services\CoreSignalRegistrar;
 use Modules\Core\Services\SuperAdminService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Spatie\Permission\PermissionRegistrar;
 
 class CoreServiceProvider extends ServiceProvider
 {
@@ -42,14 +50,25 @@ class CoreServiceProvider extends ServiceProvider
     public function boot(
         InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
+        CommandRegistry $commandRegistry,
         PermissionRegistry $permissionRegistry,
         RoleRegistry $roleRegistry,
         SuperAdminService $superAdminService,
         DashboardWidgetRegistry $widgetRegistry,
+        SettingsRegistry $settingsRegistry,
         CoreMenuRegistrar $menuRegistrar,
+        CoreCommandRegistrar $commandRegistrar,
         CoreDashboardService $dashboardService,
-        CorePermissionRegistrar $permissionRegistrar
+        CorePermissionRegistrar $permissionRegistrar,
+        CoreSettingsRegistrar $settingsRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        CoreSignalRegistrar $signalRegistrar,
+        UserPreferenceService $preferenceService
     ): void {
+        // Ensure Spatie Permission cache is properly initialized with the correct store
+        // This is important when using Redis with custom prefixes (see Spatie docs)
+        app(PermissionRegistrar::class)->initializeCache();
+
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -58,16 +77,24 @@ class CoreServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         $menuRegistrar->register($menuRegistry, $this->name);
+        $commandRegistrar->register($commandRegistry, $this->name);
         $permissionRegistrar->registerRoles($roleRegistry);
         $permissionRegistrar->registerPermissions($permissionRegistry);
-        $superAdminService->ensureExists($roleRegistry);
+        // Only ensure super admin exists during CLI (migrations, artisan commands, etc.)
+        // This avoids 2 unnecessary DB queries on every HTTP request
+        if ($this->app->runningInConsole()) {
+            $superAdminService->ensureExists($roleRegistry);
+        }
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $signalRegistrar->register($signalRegistry);
 
-        $sharedDataRegistry->register($this->name, function ($request) use ($menuRegistry) {
+        $sharedDataRegistry->register($this->name, function ($request) use ($menuRegistry, $commandRegistry, $preferenceService) {
             $user = $request->user();
 
             if ($user) {
-                $user->load(['avatar', 'roles']);
+                // Use loadMissing to avoid reloading relations already preloaded by middleware
+                $user->loadMissing(['avatar', 'roles']);
             }
 
             return [
@@ -78,6 +105,13 @@ class CoreServiceProvider extends ServiceProvider
                     ] : null,
                 ],
                 'menus' => $menuRegistry->getMenus($user),
+                'commands' => $commandRegistry->getCommands($user),
+                'userPreferences' => $user ? [
+                    'theme' => $preferenceService->get($user, 'core_theme', 'system'),
+                    'notificationSound' => $preferenceService->get($user, 'core_notification_sound', true),
+                    'notificationVolume' => (float) $preferenceService->get($user, 'core_notification_volume', 50) / 100,
+                    'notificationDesktop' => $preferenceService->get($user, 'core_notification_desktop', false),
+                ] : null,
             ];
         });
 

@@ -18,6 +18,12 @@ class CoreDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'System Administration',
+            'Central hub for user management and system health.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',

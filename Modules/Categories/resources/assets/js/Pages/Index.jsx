@@ -18,8 +18,6 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Label } from '@/Components/ui/label';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 const getTypeColor = (type) => {
   if (!type)
     return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800';
@@ -239,7 +237,7 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
   usePaginationSync(tableProps, categories, defaultPerPage);
 
   return (
-    <DashboardLayout header="Categories">
+    <>
       <PageShell
         title="Categories"
         actions={
@@ -299,6 +297,6 @@ export default function Index({ categories, defaultPerPage = 20, types = [] }) {
         cancelLabel="Cancel"
         variant="destructive"
       />
-    </DashboardLayout>
+    </>
   );
 }

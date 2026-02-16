@@ -2,17 +2,21 @@
 
 namespace Modules\Settings\Providers;
 
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Settings\Services\SettingsCommandRegistrar;
 use Modules\Settings\Services\SettingsDashboardService;
 use Modules\Settings\Services\SettingsMenuRegistrar;
 use Modules\Settings\Services\SettingsPermissionRegistrar;
 use Modules\Settings\Services\SettingsSettingsRegistrar;
+use Modules\Settings\Services\SettingsSignalRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -29,15 +33,19 @@ class SettingsServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
+        CommandRegistry $commandRegistry,
         DashboardWidgetRegistry $widgetRegistry,
         InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
+        SettingsCommandRegistrar $commandRegistrar,
         SettingsDashboardService $dashboardService,
         SettingsMenuRegistrar $menuRegistrar,
         SettingsPermissionRegistrar $permissionRegistrar,
-        SettingsSettingsRegistrar $settingsRegistrar
+        SettingsSettingsRegistrar $settingsRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        SettingsSignalRegistrar $signalRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -46,17 +54,18 @@ class SettingsServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $signalRegistrar->register($signalRegistry);
 
         $sharedDataRegistry->register($this->name, function ($request) {
             return [
                 'app_name' => settings('app_name', config('app.name')),
                 'app_logo' => settings('app_logo', 'Ship'),
                 'date_format' => settings('date_format', 'd/m/Y'),
-                'currency_symbol' => settings('currency_symbol', 'Rp'),
                 'repository_url' => env('REPOSITORY_URL', null),
             ];
         });

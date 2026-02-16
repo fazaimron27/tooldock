@@ -2,13 +2,13 @@
 
 namespace Modules\Groups\Services;
 
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\Core\Models\User;
 use Modules\Groups\Models\Group;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Service for managing group member operations.
@@ -18,10 +18,9 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  */
 class GroupMemberService
 {
-    use SendsSignalNotifications;
-
     public function __construct(
-        private GroupCacheService $cacheService
+        private GroupCacheService $cacheService,
+        private readonly SignalHandlerRegistry $signalRegistry
     ) {}
 
     /**
@@ -485,16 +484,10 @@ class GroupMemberService
         $users = User::whereIn('id', $userIds)->get();
 
         foreach ($users as $user) {
-            $actionUrl = $user->can('groups.group.view') ? route('groups.groups.show', $group) : null;
-
-            $this->signalInfo(
-                $user,
-                'Added to Group',
-                "You have been added to the group \"{$group->name}\". Your permissions may have changed.",
-                $actionUrl,
-                'Groups',
-                'groups'
-            );
+            $this->signalRegistry->dispatch('groups.member.added', [
+                'user' => $user,
+                'group' => $group,
+            ]);
         }
     }
 
@@ -509,14 +502,10 @@ class GroupMemberService
         $users = User::whereIn('id', $userIds)->get();
 
         foreach ($users as $user) {
-            $this->signalWarning(
-                $user,
-                'Removed from Group',
-                "You have been removed from the group \"{$group->name}\". Your permissions may have changed.",
-                route('dashboard'),
-                'Groups',
-                'groups'
-            );
+            $this->signalRegistry->dispatch('groups.member.removed', [
+                'user' => $user,
+                'group' => $group,
+            ]);
         }
     }
 
@@ -532,16 +521,11 @@ class GroupMemberService
         $users = User::whereIn('id', $userIds)->get();
 
         foreach ($users as $user) {
-            $actionUrl = $user->can('groups.group.view') ? route('groups.groups.show', $targetGroup) : null;
-
-            $this->signalInfo(
-                $user,
-                'Transferred Between Groups',
-                "You have been transferred from \"{$sourceGroup->name}\" to \"{$targetGroup->name}\". Your permissions may have changed.",
-                $actionUrl,
-                'Groups',
-                'groups'
-            );
+            $this->signalRegistry->dispatch('groups.member.transferred', [
+                'user' => $user,
+                'source_group' => $sourceGroup,
+                'target_group' => $targetGroup,
+            ]);
         }
     }
 }

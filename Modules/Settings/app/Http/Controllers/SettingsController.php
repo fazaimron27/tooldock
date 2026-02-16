@@ -4,6 +4,7 @@ namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Core\SettingsService;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -12,15 +13,13 @@ use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
 use Modules\Settings\Http\Requests\UpdateSettingsRequest;
 use Modules\Settings\Models\Setting;
-use Modules\Signal\Traits\SendsSignalNotifications;
 use Nwidart\Modules\Facades\Module;
 
 class SettingsController extends Controller
 {
-    use SendsSignalNotifications;
-
     public function __construct(
-        private SettingsService $settingsService
+        private SettingsService $settingsService,
+        private readonly SignalHandlerRegistry $signalRegistry
     ) {}
 
     /**
@@ -77,15 +76,18 @@ class SettingsController extends Controller
      */
     public function update(UpdateSettingsRequest $request): RedirectResponse
     {
-        $setting = Setting::first();
-
-        if ($setting) {
-            $this->authorize('update', $setting);
-        }
+        // Authorize at class level - works even if settings table is empty
+        $this->authorize('updateAny', Setting::class);
 
         $errors = [];
         $successCount = 0;
         $changedKeys = [];
+        $oldValues = [];
+
+        // Capture old values before updating (for handlers that need them)
+        foreach ($request->validated() as $key => $value) {
+            $oldValues[$key] = settings($key, null, $request->user()?->id);
+        }
 
         foreach ($request->validated() as $key => $value) {
             try {
@@ -101,6 +103,15 @@ class SettingsController extends Controller
         }
 
         if ($successCount > 0) {
+            // Dispatch to the user who made the change (for currency conversion, etc.)
+            $this->signalRegistry->dispatch('settings.changed', [
+                'user' => $request->user(),
+                'changed_by' => $request->user()?->name ?? 'Unknown',
+                'changed_keys' => $changedKeys,
+                'old_values' => $oldValues,
+            ]);
+
+            // Also notify other admins
             $this->notifyAdminsAboutSettingsChange($changedKeys, $request->user());
         }
 
@@ -159,15 +170,11 @@ class SettingsController extends Controller
                 continue;
             }
 
-            $actionUrl = $admin->can('settings.config.view') ? route('settings.index') : null;
-
-            $this->signalInfo(
-                $admin,
-                'Settings Updated',
-                "{$changedByName} updated {$keyCount} setting(s): {$keyList}",
-                $actionUrl,
-                'Settings'
-            );
+            $this->signalRegistry->dispatch('settings.changed', [
+                'user' => $admin,
+                'changed_by' => $changedByName,
+                'changed_keys' => $changedKeys,
+            ]);
         }
     }
 }

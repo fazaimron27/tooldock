@@ -1,0 +1,19 @@
+{
+  "name": "Treasury",
+  "alias": "treasury",
+  "version": "1.0.0",
+  "description": "Wealth management, budgeting, and goal tracking.",
+  "keywords": ["treasury", "finance", "budget", "goals", "wallet"],
+  "priority": -990,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Treasury\\Providers\\TreasuryServiceProvider",
+    "Modules\\Treasury\\Providers\\RouteServiceProvider",
+    "Modules\\Treasury\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Categories", "Settings", "AuditLog", "Signal", "Media"],
+  "icon": "Landmark",
+  "author": "Tool Dock Team"
+}

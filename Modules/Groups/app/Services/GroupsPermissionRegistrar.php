@@ -22,9 +22,10 @@ class GroupsPermissionRegistrar
             'group.add-members',
             'group.remove-members',
             'group.transfer-members',
-            'groups.dashboard.view',
+            'dashboard.view',
+            'preferences.view',
         ], [
-            'Administrator' => ['group.*', 'groups.dashboard.view'],
+            'Administrator' => ['group.*', 'dashboard.view', 'preferences.view'],
         ]);
     }
 }

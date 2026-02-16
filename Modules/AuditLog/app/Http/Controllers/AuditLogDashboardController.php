@@ -18,9 +18,11 @@ class AuditLogDashboardController extends Controller
         Gate::authorize('auditlog.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('AuditLog', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::AuditLog/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }

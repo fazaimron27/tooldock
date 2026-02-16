@@ -30,7 +30,7 @@ class SettingsMenuRegistrar
             label: 'Settings Dashboard',
             route: 'settings.dashboard',
             icon: 'LayoutDashboard',
-            order: 70,
+            order: 60,
             permission: 'settings.dashboard.view',
             parentKey: 'dashboard',
             module: $moduleName

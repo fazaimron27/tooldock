@@ -2,22 +2,21 @@
 
 namespace Modules\Vault\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Categories\Models\Category;
 use Modules\Core\Models\User;
+use Modules\Core\Traits\HasUserOwnership;
 use OTPHP\TOTP;
 use Symfony\Component\Clock\Clock;
 
 class Vault extends Model
 {
-    use HasFactory, HasUuids, LogsActivity;
+    use HasFactory, HasUserOwnership, HasUuids, LogsActivity;
 
     /**
      * Available vault types.
@@ -55,6 +54,9 @@ class Vault extends Model
         'issuer',
         'value',
         'totp_secret',
+        'totp_algorithm',
+        'totp_digits',
+        'totp_period',
         'fields',
         'url',
         'is_favorite',
@@ -104,14 +106,6 @@ class Vault extends Model
     }
 
     /**
-     * Scope a query to only include vaults for the authenticated user.
-     */
-    public function scopeForUser(Builder $query): Builder
-    {
-        return $query->where('user_id', Auth::id());
-    }
-
-    /**
      * Get the favicon URL attribute.
      *
      * Returns the DuckDuckGo favicon service URL for the vault's domain.
@@ -135,8 +129,9 @@ class Vault extends Model
      * Generate the current TOTP code for this vault.
      *
      * Uses the spomky-labs/otphp library to generate a TOTP code
-     * from the decrypted totp_secret value. Code length and period
-     * are configurable via settings.
+     * from the decrypted totp_secret value. Parameters (algorithm,
+     * digits, period) are read from the vault record to ensure
+     * compatibility with the original authenticator service.
      *
      * @return string|null The TOTP code, or null if no secret is set
      */
@@ -149,14 +144,18 @@ class Vault extends Model
         try {
             $secret = $this->totp_secret;
             $clock = Clock::get();
-            $codeLength = (int) settings('vault_totp_code_length', 6);
-            $period = (int) settings('vault_totp_period', 30);
+
+            // Use stored parameters, fallback to defaults if not set
+            // These should be stored when the TOTP secret is first added
+            $algorithm = $this->totp_algorithm ?? 'sha1';
+            $digits = $this->totp_digits ?? (int) settings('vault_totp_code_length', 6);
+            $period = $this->totp_period ?? (int) settings('vault_totp_period', 30);
 
             $totp = TOTP::create(
                 secret: $secret,
                 period: $period,
-                digest: 'sha1',
-                digits: $codeLength,
+                digest: $algorithm,
+                digits: $digits,
                 clock: $clock
             );
 

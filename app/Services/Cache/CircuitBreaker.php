@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Circuit Breaker.
+ *
+ * Implements the circuit breaker pattern to prevent cascading failures in
+ * cache operations. Tracks failure and success counts, transitions between
+ * closed (normal), open (blocked), and half-open (testing recovery) states,
+ * and automatically recovers after a configurable cooldown period.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Cache;
 
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +67,6 @@ class CircuitBreaker
         }
 
         if ($state === self::STATE_OPEN) {
-            // Check if timeout has passed, transition to half-open
             if ($this->shouldAttemptRecovery()) {
                 $this->setState(self::STATE_HALF_OPEN);
                 Log::info('CircuitBreaker: Transitioning to half-open state', [
@@ -68,7 +79,6 @@ class CircuitBreaker
             return false;
         }
 
-        // Half-open state: allow limited requests
         return true;
     }
 
@@ -93,7 +103,6 @@ class CircuitBreaker
                 ]);
             }
         } elseif ($state === self::STATE_CLOSED) {
-            // Reset failure count on success
             $this->resetFailureCount();
         }
     }
@@ -108,7 +117,6 @@ class CircuitBreaker
         $state = $this->getState();
 
         if ($state === self::STATE_HALF_OPEN) {
-            // Failure in half-open state, immediately open circuit
             $this->setState(self::STATE_OPEN);
             $this->setLastFailureTime(time());
             $this->resetCounters();
@@ -116,7 +124,6 @@ class CircuitBreaker
                 'name' => $this->name,
             ]);
         } else {
-            // Increment failure count
             $failures = $this->getFailureCount() + 1;
             $this->setFailureCount($failures);
             $this->setLastFailureTime(time());

@@ -5,6 +5,12 @@
  */
 import ModuleDashboardPage from '@/Components/Dashboard/ModuleDashboardPage';
 
-export default function Dashboard({ widgets }) {
-  return <ModuleDashboardPage moduleName="Categories" widgets={widgets} />;
+export default function Dashboard({ widgets = [], moduleMetadata = {} }) {
+  return (
+    <ModuleDashboardPage
+      moduleName="Categories"
+      widgets={widgets}
+      moduleMetadata={moduleMetadata}
+    />
+  );
 }

@@ -9,12 +9,14 @@
  * @param {string} header - Optional header text to display in breadcrumbs
  * @param {React.RefObject} scrollContainerRef - Ref to the scrollable container
  */
+import { useCommandPalette } from '@/Hooks/useCommandPalette';
 import { useScrollBlur } from '@/Hooks/useScrollBlur';
 import SignalBell from '@Signal/Components/SignalBell';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Info, LogOut, Mail, Search, Settings, User } from 'lucide-react';
 import { useState } from 'react';
 
+import CommandPalette from '@/Components/CommandPalette';
 import InfoDialog from '@/Components/InfoDialog';
 import { ModeToggle } from '@/Components/ModeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
@@ -28,7 +30,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
-import { Input } from '@/Components/ui/input';
 import { SidebarTrigger } from '@/Components/ui/sidebar';
 
 export default function Navbar({ scrollContainerRef }) {
@@ -36,6 +37,7 @@ export default function Navbar({ scrollContainerRef }) {
   const user = auth?.user;
   const isScrolled = useScrollBlur(scrollContainerRef);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
+  const { open: isCommandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
 
   const getInitials = (name) => {
     return name
@@ -60,10 +62,18 @@ export default function Navbar({ scrollContainerRef }) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:block relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input type="search" placeholder="Search..." className="pl-9 w-64 h-9" />
-          </div>
+          <Button
+            variant="outline"
+            onClick={() => setCommandPaletteOpen(true)}
+            className="hidden md:flex items-center gap-2 text-muted-foreground h-9 w-64 justify-start hover:bg-accent hover:text-accent-foreground"
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">Search...</span>
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+          <CommandPalette open={isCommandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
           <div className="flex items-center gap-1">
             <ModeToggle />
             <SignalBell />
@@ -115,9 +125,11 @@ export default function Navbar({ scrollContainerRef }) {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled className="cursor-not-allowed opacity-50">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href={route('preferences.index')} className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Preferences</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"

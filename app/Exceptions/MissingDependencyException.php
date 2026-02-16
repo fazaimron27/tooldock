@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Missing Dependency Exception.
+ *
+ * Thrown when a module's required dependencies are missing, not installed,
+ * or not enabled during lifecycle operations such as install or enable.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Exceptions;
 
 use RuntimeException;

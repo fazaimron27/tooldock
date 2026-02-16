@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Module Uninstalling Event.
+ *
+ * Dispatched before a module is uninstalled. Listeners can prevent the operation
+ * by setting $preventUninstall to true and providing an optional $preventionReason.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

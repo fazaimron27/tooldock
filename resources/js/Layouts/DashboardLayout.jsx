@@ -10,20 +10,27 @@
  * @param {React.ReactNode} children - Page content to render
  */
 import { useFlashNotifications } from '@/Hooks/useFlashNotifications';
-import { useNavigationTracking } from '@/Hooks/useNavigationTracking';
 import { useAppStore } from '@/Stores/useAppStore';
-import { useRef } from 'react';
+import { useSignalListener } from '@Signal/Hooks/useSignalListener';
+import { Suspense, memo, useRef } from 'react';
 
 import AppSidebar from '@/Components/AppSidebar';
 import { NavigationSpinner } from '@/Components/AppSpinner';
 import Footer from '@/Components/Footer';
 import Navbar from '@/Components/Navbar';
+import { ThemeSync } from '@/Components/ThemeSync';
 import { SidebarInset, SidebarProvider } from '@/Components/ui/sidebar';
 import { Toaster } from '@/Components/ui/sonner';
 
+/**
+ * Memoized sidebar to prevent re-renders during navigation
+ */
+const MemoizedSidebar = memo(AppSidebar);
+MemoizedSidebar.displayName = 'MemoizedSidebar';
+
 export default function DashboardLayout({ header: _header, children }) {
   useFlashNotifications();
-  useNavigationTracking();
+  useSignalListener();
   const scrollContainerRef = useRef(null);
   const { sidebarOpen, setSidebarOpen } = useAppStore();
 
@@ -33,7 +40,8 @@ export default function DashboardLayout({ header: _header, children }) {
       open={sidebarOpen}
       onOpenChange={setSidebarOpen}
     >
-      <AppSidebar />
+      <ThemeSync />
+      <MemoizedSidebar />
       <SidebarInset className="flex h-full flex-col overflow-hidden">
         <div className="relative flex-1 overflow-hidden flex flex-col">
           <Navbar scrollContainerRef={scrollContainerRef} />
@@ -42,7 +50,9 @@ export default function DashboardLayout({ header: _header, children }) {
             className="relative flex-1 overflow-x-hidden overflow-y-auto pt-16"
           >
             <NavigationSpinner containerRef={scrollContainerRef} />
-            <div className="flex flex-col gap-4 p-5 py-7 min-h-full">{children}</div>
+            <Suspense fallback={null}>
+              <div className="flex flex-col gap-4 p-5 py-7 min-h-full">{children}</div>
+            </Suspense>
           </div>
           <Footer />
         </div>

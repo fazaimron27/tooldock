@@ -30,7 +30,7 @@ class AuditLogMenuRegistrar
             label: 'Audit Log Dashboard',
             route: 'auditlog.dashboard',
             icon: 'LayoutDashboard',
-            order: 60,
+            order: 50,
             permission: 'auditlog.dashboard.view',
             parentKey: 'dashboard',
             module: $moduleName

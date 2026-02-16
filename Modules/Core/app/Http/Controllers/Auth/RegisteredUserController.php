@@ -13,6 +13,7 @@
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,6 @@ use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class RegisteredUserController
@@ -35,12 +35,15 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * notifications, and admin notifications for new users.
  *
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For notifications
  */
 class RegisteredUserController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
+
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry
+    ) {}
 
     /**
      * Display the registration view.
@@ -119,14 +122,9 @@ class RegisteredUserController extends Controller
     private function sendWelcomeNotification(User $user): void
     {
         try {
-            $this->signalInfo(
-                $user,
-                "Welcome aboard, {$user->name}! 🎉",
-                'Your account has been created with guest access. To request additional permissions or roles, please contact your administrator.',
-                route('dashboard'),
-                'System',
-                'system'
-            );
+            $this->signalRegistry->dispatch('user.registered', [
+                'user' => $user,
+            ]);
         } catch (\Exception $e) {
             Log::warning('Failed to send welcome notification', ['error' => $e->getMessage()]);
         }
@@ -144,20 +142,15 @@ class RegisteredUserController extends Controller
     private function notifyAdminsOfNewUser(User $newUser): void
     {
         try {
-
             $admins = User::whereHas('roles', function ($query) {
                 $query->where('name', Roles::SUPER_ADMIN);
             })->get();
 
             foreach ($admins as $admin) {
-                $this->signalInfo(
-                    $admin,
-                    'New User Registered',
-                    "A new user \"{$newUser->name}\" ({$newUser->email}) has registered.",
-                    route('core.users.index'),
-                    'System',
-                    'system'
-                );
+                $this->signalRegistry->dispatch('user.registered.admin', [
+                    'user' => $admin,
+                    'new_user' => $newUser,
+                ]);
             }
         } catch (\Exception $e) {
             Log::warning('Failed to notify admins of new user', ['error' => $e->getMessage()]);

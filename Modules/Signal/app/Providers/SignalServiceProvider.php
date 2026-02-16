@@ -15,12 +15,14 @@
 namespace Modules\Signal\Providers;
 
 use App\Services\Cache\CacheService;
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Signal\Services\SignalCacheService;
+use Modules\Signal\Services\SignalCommandRegistrar;
 use Modules\Signal\Services\SignalPermissionRegistrar;
 use Modules\Signal\Services\SignalPreferenceService;
 use Modules\Signal\Services\SignalService;
@@ -76,10 +78,12 @@ class SignalServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot(
+        CommandRegistry $commandRegistry,
         InertiaSharedDataRegistry $sharedDataRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
         \App\Services\Registry\SignalCategoryRegistry $categoryRegistry,
+        SignalCommandRegistrar $commandRegistrar,
         SignalPermissionRegistrar $permissionRegistrar,
         SignalSettingsRegistrar $settingsRegistrar,
         SignalCacheService $cacheService
@@ -90,6 +94,7 @@ class SignalServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $commandRegistrar->register($commandRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $categoryRegistry->register($this->name, 'login', 'signal_notify_login');
@@ -129,7 +134,7 @@ class SignalServiceProvider extends ServiceProvider
         $this->app->singleton(SignalPreferenceService::class, function ($app) {
             return new SignalPreferenceService(
                 $app->make(\App\Services\Registry\SignalCategoryRegistry::class),
-                $app->make(\App\Services\Core\SettingsService::class)
+                $app->make(\App\Services\Core\UserPreferenceService::class)
             );
         });
         $this->app->singleton(SignalService::class, function ($app) {

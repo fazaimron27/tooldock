@@ -8,11 +8,15 @@ use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\Role;
+use Modules\Core\Services\PermissionCacheService;
+use Modules\Groups\Services\GroupPermissionCacheService;
 
 class RoleObserver
 {
     public function __construct(
-        private MenuRegistry $menuRegistry
+        private MenuRegistry $menuRegistry,
+        private PermissionCacheService $permissionCacheService,
+        private GroupPermissionCacheService $groupPermissionCacheService
     ) {}
 
     /**
@@ -37,6 +41,9 @@ class RoleObserver
             userAgent: request()?->userAgent(),
             tags: 'role,permission'
         );
+
+        // Invalidate the cached roles list
+        cache()->forget('core:roles:all');
     }
 
     /**
@@ -80,8 +87,12 @@ class RoleObserver
             $role->load('users');
             foreach ($role->users as $user) {
                 $this->menuRegistry->clearCacheForUser($user->id);
+                $this->groupPermissionCacheService->clearForUser($user->id);
             }
         }
+
+        // Invalidate the cached roles list
+        cache()->forget('core:roles:all');
     }
 
     /**
@@ -109,5 +120,22 @@ class RoleObserver
         );
 
         $this->menuRegistry->clearCache();
+        $this->groupPermissionCacheService->clear();
+
+        // Invalidate the cached roles list
+        cache()->forget('core:roles:all');
+    }
+
+    /**
+     * Handle the Role "saved" event (fires after created/updated).
+     *
+     * Warms the permission cache after Spatie's RefreshesPermissionCache trait
+     * clears it, ensuring the cache is immediately available for subsequent requests.
+     */
+    public function saved(Role $role): void
+    {
+        // Spatie's RefreshesPermissionCache has already cleared the cache at this point.
+        // We warm it immediately to avoid slow first requests.
+        $this->permissionCacheService->warm();
     }
 }

@@ -5,6 +5,7 @@ namespace Modules\Core\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -15,7 +16,9 @@ use Modules\Core\Http\Requests\StoreRoleRequest;
 use Modules\Core\Http\Requests\UpdateRoleRequest;
 use Modules\Core\Models\Permission;
 use Modules\Core\Models\Role;
+use Modules\Core\Services\PermissionCacheService;
 use Modules\Core\Services\PermissionService;
+use Modules\Groups\Services\GroupPermissionCacheService;
 
 class RoleController extends Controller
 {
@@ -23,7 +26,9 @@ class RoleController extends Controller
 
     public function __construct(
         private PermissionService $permissionService,
-        private MenuRegistry $menuRegistry
+        private MenuRegistry $menuRegistry,
+        private PermissionCacheService $permissionCacheService,
+        private GroupPermissionCacheService $groupPermissionCacheService
     ) {}
 
     /**
@@ -82,7 +87,7 @@ class RoleController extends Controller
     {
         $this->authorize('create', Role::class);
 
-        $permissions = Permission::all();
+        $permissions = cache()->remember('core:permissions:all', 3600, fn () => Permission::all());
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Core/Roles/Create', [
@@ -122,7 +127,7 @@ class RoleController extends Controller
         $this->authorize('update', $role);
 
         $role->load('permissions');
-        $permissions = Permission::all();
+        $permissions = cache()->remember('core:permissions:all', 3600, fn () => Permission::all());
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Core/Roles/Edit', [
@@ -219,11 +224,42 @@ class RoleController extends Controller
             relationshipDisplayName: 'permissions'
         );
 
-        $userIds = $role->users()->pluck('users.id')->toArray();
-        if (! empty($userIds)) {
-            foreach ($userIds as $userId) {
-                $this->menuRegistry->clearCacheForUser($userId);
+        // Get users directly assigned to this role
+        $directUserIds = $role->users()->pluck('users.id')->toArray();
+
+        // Get users in groups that have this role assigned
+        $groupUserIds = DB::table('groups_users')
+            ->join('groups_roles', 'groups_users.group_id', '=', 'groups_roles.group_id')
+            ->where('groups_roles.role_id', $role->id)
+            ->pluck('groups_users.user_id')
+            ->toArray();
+
+        // Combine and deduplicate user IDs
+        $allAffectedUserIds = array_unique(array_merge($directUserIds, $groupUserIds));
+
+        // Clear both menu and group permission cache for all affected users
+        // and dispatch signal event for real-time frontend refresh
+        $signalRegistry = app(SignalHandlerRegistry::class);
+
+        // Pre-fetch all affected users to avoid N+1 queries
+        $affectedUsers = \Modules\Core\Models\User::whereIn('id', $allAffectedUserIds)->get()->keyBy('id');
+
+        foreach ($allAffectedUserIds as $userId) {
+            $this->menuRegistry->clearCacheForUser($userId);
+            $this->groupPermissionCacheService->clearForUser($userId);
+
+            // Dispatch signal event for broadcast notification (inbox + toast + page reload)
+            $user = $affectedUsers->get($userId);
+            if ($user) {
+                $signalRegistry->dispatch('role.permissions.synced', [
+                    'user' => $user,
+                    'role' => $role,
+                ]);
             }
         }
+
+        // Warm the permission cache after sync since model observer doesn't fire
+        // for pivot table changes (Spatie clears cache but we need to warm it)
+        $this->permissionCacheService->warm();
     }
 }

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Dashboard Widget Data Transfer Object
+ *
+ * Defines the structure for dashboard widget definitions,
+ * supporting static values, closures for dynamic computation,
+ * and multiple widget types (stat, chart, activity, system, table).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Data;
 
 use Closure;
@@ -116,11 +127,11 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
      *
      * @return string|int Returns the computed value or 0 as fallback on error
      */
-    public function getValue(): string|int
+    public function getValue(array $params = []): string|int
     {
         if ($this->value instanceof Closure) {
             try {
-                return ($this->value)();
+                return ($this->value)($params);
             } catch (\Throwable $e) {
                 Log::error('DashboardWidget: Error computing value', [
                     'module' => $this->module,
@@ -128,6 +139,7 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
                     'type' => $this->type,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
+                    'params' => $params,
                 ]);
 
                 return 0;
@@ -142,11 +154,11 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
      *
      * @return string|null Returns the computed change or null as fallback on error
      */
-    public function getChange(): ?string
+    public function getChange(array $params = []): ?string
     {
         if ($this->change instanceof Closure) {
             try {
-                return ($this->change)();
+                return ($this->change)($params);
             } catch (\Throwable $e) {
                 Log::error('DashboardWidget: Error computing change', [
                     'module' => $this->module,
@@ -154,6 +166,7 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
                     'type' => $this->type,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
+                    'params' => $params,
                 ]);
 
                 return null;
@@ -178,11 +191,11 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
      *
      * @return array|null Returns the computed data or null as fallback on error
      */
-    public function getData(): ?array
+    public function getData(array $params = []): ?array
     {
         if ($this->data instanceof Closure) {
             try {
-                return ($this->data)();
+                return ($this->data)($params);
             } catch (\Throwable $e) {
                 Log::error('DashboardWidget: Error computing data', [
                     'module' => $this->module,
@@ -190,6 +203,7 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
                     'type' => $this->type,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
+                    'params' => $params,
                 ]);
 
                 return null;
@@ -208,15 +222,15 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
      *
      * @return array{type: string, title: string, value: string|int, icon: string, module: string|null, group: string|null, change: string|null, trend: string|null, order: int|null, data: array|null, description: string|null, chartType: string|null, config: array|null, xAxisKey: string|null, dataKeys: array|null, scope: string|null}
      */
-    public function toArray(): array
+    public function toArray(array $params = []): array
     {
         $array = [
             'type' => $this->type,
             'title' => $this->title,
-            'value' => $this->getValue(),
+            'value' => $this->getValue($params),
             'icon' => $this->icon,
             'module' => $this->module,
-            'change' => $this->getChange(),
+            'change' => $this->getChange($params),
             'trend' => $this->trend,
             'order' => $this->order,
         ];
@@ -226,7 +240,7 @@ readonly class DashboardWidget implements Arrayable, JsonSerializable
         }
 
         if ($this->data !== null) {
-            $array['data'] = $this->getData();
+            $array['data'] = $this->getData($params);
         }
 
         if ($this->description !== null) {

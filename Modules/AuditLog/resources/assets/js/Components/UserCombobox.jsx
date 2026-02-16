@@ -1,13 +1,11 @@
 /**
  * Searchable combobox component for selecting users in audit log filters.
- * Fetches users from API on search to avoid loading all users.
- * Uses simple divs with onClick instead of Command for better reliability.
+ * Uses React Query for data fetching with caching and automatic cleanup.
  */
-import { API_BASEURL, API_VERSION } from '@/Utils/constants';
+import { useUserById, useUserSearch } from '@/Hooks/queries/useUserSearch';
 import { cn } from '@/Utils/utils';
-import axios from 'axios';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/Components/ui/button';
@@ -18,132 +16,39 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover
 export default function UserCombobox({ value, onChange, label = 'User', id = 'user_id' }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [debouncedSearch] = useDebounce(search, 300);
 
-  /**
-   * Fetch users from API when search term changes or popover opens.
-   * Uses debounced search to reduce API calls and AbortController for request cancellation.
-   */
-  useEffect(() => {
-    if (!open) {
-      return;
+  // React Query handles fetching, caching, and cleanup
+  const {
+    data: searchData,
+    isLoading: searchLoading,
+    error: searchError,
+  } = useUserSearch(debouncedSearch, {
+    enabled: open,
+    limit: 20,
+  });
+
+  // Fetch selected user if not in search results
+  const usersIncludeSelected = useMemo(() => {
+    if (!value || !searchData?.data) return true;
+    return searchData.data.some((u) => String(u.value) === String(value));
+  }, [value, searchData?.data]);
+
+  const { data: selectedUserData } = useUserById(value, {
+    enabled: !!value && open && !usersIncludeSelected,
+  });
+
+  // Combine search results with selected user
+  const users = useMemo(() => {
+    const searchUsers = searchData?.data || [];
+    if (selectedUserData?.data?.[0] && !usersIncludeSelected) {
+      return [selectedUserData.data[0], ...searchUsers];
     }
+    return searchUsers;
+  }, [searchData?.data, selectedUserData?.data, usersIncludeSelected]);
 
-    let cancelled = false;
-    /**
-     * AbortController is a browser API available in modern browsers.
-     * ESLint doesn't recognize it, so we disable the no-undef warning.
-     */
-    // eslint-disable-next-line no-undef
-    const controller = new AbortController();
-
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        if (debouncedSearch) {
-          params.append('search', debouncedSearch);
-        }
-        params.append('limit', '20');
-
-        const response = await axios.get(
-          `${API_BASEURL}/${API_VERSION}/users/search?${params.toString()}`,
-          {
-            headers: {
-              Accept: 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-            },
-            withCredentials: true,
-            signal: controller.signal,
-          }
-        );
-
-        if (!cancelled && response.data?.data) {
-          setUsers(response.data.data);
-        }
-      } catch (error) {
-        if (axios.isCancel(error) || cancelled) {
-          return;
-        }
-        console.error('Failed to fetch users:', error);
-        if (!cancelled) {
-          setUsers([]);
-          setError('Failed to load users. Please try again.');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchUsers();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [debouncedSearch, open]);
-
-  /**
-   * Load selected user by ID when value is provided but not present in current user list.
-   * Ensures the selected user is displayed even if not returned by search results.
-   */
-  useEffect(() => {
-    if (!value || !open || users.find((u) => String(u.value) === String(value))) {
-      return;
-    }
-
-    let cancelled = false;
-    /**
-     * AbortController is a browser API available in modern browsers.
-     * ESLint doesn't recognize it, so we disable the no-undef warning.
-     */
-    // eslint-disable-next-line no-undef
-    const controller = new AbortController();
-
-    const fetchSelectedUser = async () => {
-      try {
-        const response = await axios.get(`${API_BASEURL}/${API_VERSION}/users/search?id=${value}`, {
-          headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          withCredentials: true,
-          signal: controller.signal,
-        });
-
-        if (!cancelled && response.data?.data?.[0]) {
-          const selected = response.data.data[0];
-          setUsers((prev) => {
-            if (!prev.find((u) => String(u.value) === String(selected.value))) {
-              return [selected, ...prev];
-            }
-            return prev;
-          });
-        }
-      } catch (error) {
-        if (axios.isCancel(error) || cancelled) {
-          return;
-        }
-        console.error('Failed to fetch selected user:', error);
-        if (!cancelled) {
-          setError('Failed to load selected user.');
-        }
-      }
-    };
-
-    fetchSelectedUser();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [value, users, open]);
+  const loading = searchLoading;
+  const error = searchError ? 'Failed to load users. Please try again.' : null;
 
   const selectedUser = useMemo(() => {
     if (!value) return null;
@@ -197,10 +102,7 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
                 <p className="text-sm text-destructive">{error}</p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setError(null);
-                    setSearch('');
-                  }}
+                  onClick={() => setSearch('')}
                   className="mt-2 text-xs text-primary hover:underline"
                 >
                   Try again

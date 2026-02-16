@@ -8,7 +8,7 @@
  * - Previous/Next navigation
  * - Action button (if action_url exists)
  * - Delete button with confirmation
- * - Back to notifications link
+ * - Related notifications from the same module
  */
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -20,6 +20,8 @@ import {
   Clock,
   ExternalLink,
   Info,
+  Mail,
+  MailOpen,
   ShieldAlert,
   Trash2,
 } from 'lucide-react';
@@ -38,8 +40,6 @@ import {
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-
-import DashboardLayout from '@/Layouts/DashboardLayout';
 
 const typeConfig = {
   info: {
@@ -68,7 +68,7 @@ const typeConfig = {
   },
 };
 
-export default function Show({ notification, navigation }) {
+export default function Show({ notification, navigation, relatedNotifications = [] }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -102,10 +102,10 @@ export default function Show({ notification, navigation }) {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <Head title={notification.title} />
 
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="w-full max-w-4xl mx-auto space-y-6">
         {/* Navigation Header */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" asChild className="gap-2">
@@ -161,9 +161,9 @@ export default function Show({ notification, navigation }) {
           </div>
         </div>
 
-        {/* Notification Card */}
-        <Card>
-          <CardHeader className="pb-4">
+        {/* Main Notification Card */}
+        <Card className="min-h-[300px]">
+          <CardHeader>
             <div className="flex items-start gap-4">
               {/* Icon */}
               <div className={`flex-shrink-0 p-3 rounded-full ${config.className}`}>
@@ -172,19 +172,27 @@ export default function Show({ notification, navigation }) {
 
               {/* Header Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-xl">{notification.title}</CardTitle>
-                    <CardDescription className="flex flex-wrap items-center gap-2 mt-2">
-                      <Badge variant={config.badgeVariant}>{config.label}</Badge>
-                      {notification.module_source && (
-                        <span className="text-muted-foreground">
-                          via {notification.module_source}
-                        </span>
-                      )}
-                    </CardDescription>
-                  </div>
-                </div>
+                <CardTitle className="text-xl mb-2">{notification.title}</CardTitle>
+                <CardDescription className="flex flex-wrap items-center gap-2">
+                  <Badge variant={config.badgeVariant}>{config.label}</Badge>
+                  {notification.module_source && (
+                    <span className="text-muted-foreground">via {notification.module_source}</span>
+                  )}
+                  <span className="text-muted-foreground">•</span>
+                  <span className="flex items-center gap-1.5">
+                    {notification.read_at ? (
+                      <>
+                        <MailOpen className="h-3.5 w-3.5 text-green-500" />
+                        <span className="text-green-600">Read</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-blue-600">Unread</span>
+                      </>
+                    )}
+                  </span>
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -192,19 +200,27 @@ export default function Show({ notification, navigation }) {
           <CardContent className="space-y-6">
             {/* Message */}
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <p className="text-foreground leading-relaxed">{notification.message}</p>
+              <p className="text-foreground leading-relaxed text-base">{notification.message}</p>
             </div>
 
             {/* Metadata */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground border-t pt-4">
-              <Clock className="h-4 w-4" />
-              <span>{formatDate(notification.created_at)}</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground border-t pt-4">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                <span>{formatDate(notification.created_at)}</span>
+              </div>
               <span className="text-muted-foreground/50">•</span>
               <span>{notification.created_at_human}</span>
+              {notification.read_at && (
+                <>
+                  <span className="text-muted-foreground/50">•</span>
+                  <span>Read {new Date(notification.read_at).toLocaleString()}</span>
+                </>
+              )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-3">
               {notification.action_url && (
                 <Button asChild>
                   <a href={notification.action_url}>
@@ -220,6 +236,45 @@ export default function Show({ notification, navigation }) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Related Notifications */}
+        {relatedNotifications.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Related Notifications</CardTitle>
+              <CardDescription>Similar notifications you might find useful</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="divide-y">
+                {relatedNotifications.map((related) => {
+                  const relatedConfig = typeConfig[related.type] || typeConfig.info;
+                  const RelatedIcon = relatedConfig.icon;
+                  return (
+                    <Link
+                      key={related.id}
+                      href={route('notifications.show', { notification: related.id })}
+                      className="flex items-center gap-4 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                    >
+                      <div className={`flex-shrink-0 p-2 rounded-full ${relatedConfig.className}`}>
+                        <RelatedIcon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{related.title}</p>
+                        <p className="text-sm text-muted-foreground truncate">{related.message}</p>
+                      </div>
+                      <div className="flex-shrink-0 text-right">
+                        <p className="text-xs text-muted-foreground">{related.created_at_human}</p>
+                        {!related.read_at && (
+                          <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mt-1" />
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -242,6 +297,6 @@ export default function Show({ notification, navigation }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 }

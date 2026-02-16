@@ -7,6 +7,12 @@
  * Provides a clean API for other modules to send notifications
  * without directly instantiating notification classes.
  *
+ * Supports four delivery modes:
+ * - silent: Store to database + broadcast (default, updates bell/dropdown, no toast)
+ * - flash: Broadcast only, no database storage (shows toast, ephemeral)
+ * - trigger: Broadcast with action trigger (toast + action, no storage)
+ * - broadcast: Full broadcast - store to DB + toast + action
+ *
  * @author     Tool Dock Team
  * @license    MIT
  */
@@ -28,6 +34,26 @@ use Modules\Signal\Notifications\SystemNotification;
 class SignalService
 {
     /**
+     * Delivery mode: Store to database + broadcast, no toast (default).
+     */
+    public const DELIVERY_SILENT = 'silent';
+
+    /**
+     * Delivery mode: Broadcast only, shows toast, no database storage.
+     */
+    public const DELIVERY_FLASH = 'flash';
+
+    /**
+     * Delivery mode: Broadcast with action trigger, no database storage.
+     */
+    public const DELIVERY_TRIGGER = 'trigger';
+
+    /**
+     * Delivery mode: Full broadcast - store to DB + toast + action.
+     */
+    public const DELIVERY_BROADCAST = 'broadcast';
+
+    /**
      * @param  SignalCacheService|null  $cacheService  Cache service for invalidation
      * @param  SignalPreferenceService|null  $preferenceService  Preference checker service
      */
@@ -37,7 +63,7 @@ class SignalService
     ) {}
 
     /**
-     * Send an informational notification.
+     * Send an informational notification (stored to inbox).
      *
      * @param  Authenticatable  $user  Target user
      * @param  string  $title  Notification title
@@ -53,7 +79,7 @@ class SignalService
     }
 
     /**
-     * Send a success notification.
+     * Send a success notification (stored to inbox).
      *
      * @param  Authenticatable  $user  Target user
      * @param  string  $title  Notification title
@@ -69,7 +95,7 @@ class SignalService
     }
 
     /**
-     * Send a warning notification.
+     * Send a warning notification (stored to inbox).
      *
      * @param  Authenticatable  $user  Target user
      * @param  string  $title  Notification title
@@ -85,7 +111,7 @@ class SignalService
     }
 
     /**
-     * Send an alert/error notification.
+     * Send an alert/error notification (stored to inbox).
      *
      * @param  Authenticatable  $user  Target user
      * @param  string  $title  Notification title
@@ -101,7 +127,7 @@ class SignalService
     }
 
     /**
-     * Send a notification with custom type.
+     * Send a notification with custom type (stored to inbox).
      *
      * @param  Authenticatable  $user  Target user
      * @param  string  $title  Notification title
@@ -115,6 +141,158 @@ class SignalService
     public function send(Authenticatable $user, string $title, string $message, string $type = 'info', ?string $url = null, ?string $moduleSource = null, ?string $category = null): void
     {
         $this->sendWithPreferenceCheck($user, $title, $message, $type, $url, $moduleSource, $category);
+    }
+
+    /**
+     * Send a flash notification (toast only, no inbox storage).
+     *
+     * Use this for transient notifications that don't need to persist.
+     * The notification will appear as a toast in the user's browser
+     * but will NOT be stored in the database.
+     *
+     * @param  Authenticatable  $user  Target user
+     * @param  string  $title  Notification title
+     * @param  string  $message  Notification message
+     * @param  string  $type  Notification type (info, success, warning, error)
+     * @param  string|null  $url  Optional action URL
+     * @param  string|null  $moduleSource  Source module identifier
+     * @return void
+     */
+    public function flash(Authenticatable $user, string $title, string $message, string $type = 'info', ?string $url = null, ?string $moduleSource = null): void
+    {
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $notificationId = uniqid('flash_');
+
+        $this->broadcastNotification(
+            user: $user,
+            notificationId: $notificationId,
+            title: $title,
+            message: $message,
+            type: $type,
+            url: $url,
+            moduleSource: $moduleSource,
+            delivery: self::DELIVERY_FLASH
+        );
+    }
+
+    /**
+     * Send a trigger notification (triggers frontend action, no storage).
+     *
+     * Use this to trigger frontend actions like page reload or navigation.
+     * The notification will appear as a toast and then execute the action.
+     * NOT stored in the database.
+     *
+     * Common actions:
+     * - 'reload_permissions': Forces a full page reload (for permission changes)
+     * - 'navigate': Navigate to a URL (requires $url parameter)
+     * - 'refresh': Soft refresh via Inertia
+     *
+     * @param  Authenticatable  $user  Target user
+     * @param  string  $action  Action identifier to trigger on frontend
+     * @param  string|null  $title  Optional toast title
+     * @param  string|null  $message  Optional toast message
+     * @param  string  $type  Notification type (info, success, warning, error)
+     * @param  string|null  $url  Optional URL (used with 'navigate' action)
+     * @param  string|null  $moduleSource  Source module identifier
+     * @return void
+     */
+    public function trigger(
+        Authenticatable $user,
+        string $action,
+        ?string $title = null,
+        ?string $message = null,
+        string $type = 'info',
+        ?string $url = null,
+        ?string $moduleSource = null
+    ): void {
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $notificationId = uniqid('trigger_');
+
+        $this->broadcastNotification(
+            user: $user,
+            notificationId: $notificationId,
+            title: $title ?? '',
+            message: $message ?? '',
+            type: $type,
+            url: $url,
+            moduleSource: $moduleSource,
+            delivery: self::DELIVERY_TRIGGER,
+            action: $action
+        );
+    }
+
+    /**
+     * Send a broadcast notification (full: inbox + toast + action).
+     *
+     * Use this when you need everything: persistent storage in inbox,
+     * toast notification, AND a frontend action trigger.
+     *
+     * Ideal for important system changes that need:
+     * - A record in the inbox for user reference
+     * - Immediate visual feedback via toast
+     * - A frontend reaction (like page reload for permission changes)
+     *
+     * @param  Authenticatable  $user  Target user
+     * @param  string  $action  Action identifier to trigger on frontend
+     * @param  string  $title  Notification title
+     * @param  string  $message  Notification message
+     * @param  string  $type  Notification type (info, success, warning, error)
+     * @param  string|null  $url  Optional action URL
+     * @param  string|null  $moduleSource  Source module identifier
+     * @param  string|null  $category  Category for preference check
+     * @return void
+     */
+    public function broadcast(
+        Authenticatable $user,
+        string $action,
+        string $title,
+        string $message,
+        string $type = 'info',
+        ?string $url = null,
+        ?string $moduleSource = null,
+        ?string $category = null
+    ): void {
+        // Check preferences if category provided
+        if ($category !== null && $this->preferenceService !== null && $user instanceof User) {
+            if (! $this->preferenceService->isEnabled($user, $category)) {
+                return;
+            }
+        }
+
+        if (! $user instanceof User) {
+            return;
+        }
+
+        // Store to database
+        $notification = new SystemNotification($title, $message, $type, $url, $moduleSource);
+        $user->notify($notification);
+
+        $notificationId = $notification->id ?? uniqid('broadcast_');
+
+        $this->invalidateUserCache($user);
+
+        // Get actual unread count after cache invalidation
+        $unreadCount = $this->cacheService?->getUnreadCount($user);
+
+        // Broadcast with action
+        $this->broadcastNotification(
+            user: $user,
+            notificationId: $notificationId,
+            title: $title,
+            message: $message,
+            type: $type,
+            url: $url,
+            moduleSource: $moduleSource,
+            delivery: self::DELIVERY_BROADCAST,
+            action: $action,
+            unreadCount: $unreadCount
+        );
     }
 
     /**
@@ -157,7 +335,20 @@ class SignalService
         $this->invalidateUserCache($user);
 
         if ($user instanceof User) {
-            $this->broadcastNotification($user, $notificationId, $title, $message, $type, $url, $moduleSource);
+            // Get actual unread count after cache invalidation
+            $unreadCount = $this->cacheService?->getUnreadCount($user);
+
+            $this->broadcastNotification(
+                user: $user,
+                notificationId: $notificationId,
+                title: $title,
+                message: $message,
+                type: $type,
+                url: $url,
+                moduleSource: $moduleSource,
+                delivery: self::DELIVERY_SILENT,
+                unreadCount: $unreadCount
+            );
         }
     }
 
@@ -171,6 +362,9 @@ class SignalService
      * @param  string  $type  Notification type
      * @param  string|null  $url  Optional action URL
      * @param  string|null  $moduleSource  Source module identifier
+     * @param  string  $delivery  Delivery mode (silent, flash, trigger, broadcast)
+     * @param  string|null  $action  Optional action to trigger on frontend
+     * @param  int|null  $unreadCount  Current unread notification count for the user
      * @return void
      */
     private function broadcastNotification(
@@ -180,17 +374,23 @@ class SignalService
         string $message,
         string $type,
         ?string $url,
-        ?string $moduleSource
+        ?string $moduleSource,
+        string $delivery = self::DELIVERY_SILENT,
+        ?string $action = null,
+        ?int $unreadCount = null
     ): void {
         try {
             event(new \Modules\Signal\Events\NotificationReceived(
-                $user,
-                $notificationId,
-                $title,
-                $message,
-                $type,
-                $url,
-                $moduleSource
+                user: $user,
+                notificationId: $notificationId,
+                title: $title,
+                message: $message,
+                type: $type,
+                url: $url,
+                moduleSource: $moduleSource,
+                delivery: $delivery,
+                action: $action,
+                unreadCount: $unreadCount
             ));
         } catch (\Exception $e) {
             if (config('app.debug')) {

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Group Registry
+ *
+ * Manages default group registration and seeding for modules,
+ * handling cleanup during module uninstallation with safeguards
+ * for protected groups and user assignments.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\DB;
@@ -128,6 +139,7 @@ class GroupRegistry
      * This is automatically called by ModuleLifecycleService during module installation
      * and enabling. Only creates groups that don't already exist (based on name uniqueness).
      *
+     * Uses bulk insert for optimal performance - reduces N queries to ~2.
      * Wrapped in a database transaction to ensure atomicity.
      *
      * @param  bool  $strict  If true, any exception during seeding will cause the transaction to rollback.
@@ -140,52 +152,55 @@ class GroupRegistry
         }
 
         DB::transaction(function () use ($strict) {
-            $created = 0;
-            $found = 0;
-            $errors = 0;
+            try {
+                $now = now();
 
-            foreach ($this->groups as $groupData) {
-                $name = $groupData['name'];
-                $slug = $groupData['slug'];
-                $description = $groupData['description'];
-                $module = $groupData['module'];
+                $names = array_unique(array_column($this->groups, 'name'));
+                $existingGroups = Group::whereIn('name', $names)
+                    ->pluck('name')
+                    ->flip()
+                    ->all();
 
-                try {
-                    $group = Group::firstOrCreate(
-                        ['name' => $name],
-                        [
-                            'slug' => $slug,
-                            'description' => $description,
-                        ]
-                    );
+                $toInsert = [];
+                $found = 0;
 
-                    if ($group->wasRecentlyCreated) {
-                        $created++;
-                    } else {
+                foreach ($this->groups as $groupData) {
+                    if (isset($existingGroups[$groupData['name']])) {
                         $found++;
-                    }
-                } catch (\Exception $e) {
-                    $errors++;
-                    Log::error("GroupRegistry: Failed to create group: {$name}", [
-                        'module' => $module,
-                        'name' => $name,
-                        'slug' => $slug,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    if ($strict) {
-                        throw $e;
+                    } else {
+                        $toInsert[] = [
+                            'id' => (string) Str::orderedUuid(),
+                            'name' => $groupData['name'],
+                            'slug' => $groupData['slug'],
+                            'description' => $groupData['description'],
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
                 }
-            }
 
-            if ($created > 0 || $found > 0 || $errors > 0) {
-                Log::debug('GroupRegistry: Seeding completed', [
-                    'created' => $created,
-                    'found' => $found,
-                    'errors' => $errors,
-                    'total' => count($this->groups),
+                $created = 0;
+                if (! empty($toInsert)) {
+                    Group::insert($toInsert);
+                    $created = count($toInsert);
+                }
+
+                if ($created > 0 || $found > 0) {
+                    Log::debug('GroupRegistry: Seeding completed', [
+                        'created' => $created,
+                        'found' => $found,
+                        'total' => count($this->groups),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('GroupRegistry: Seeding failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
+
+                if ($strict) {
+                    throw $e;
+                }
             }
         });
     }

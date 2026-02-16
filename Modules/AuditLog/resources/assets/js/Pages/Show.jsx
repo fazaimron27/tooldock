@@ -14,24 +14,20 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 export default function Show({ auditLog, oldValues, newValues, formattedDiff, causerParams }) {
   if (!auditLog || !auditLog.id) {
     return (
-      <DashboardLayout header="AuditLog">
-        <PageShell title="Audit Log Not Found">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Audit log not found or invalid.</p>
-            <Link href={route('auditlog.index')}>
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Audit Logs
-              </Button>
-            </Link>
-          </div>
-        </PageShell>
-      </DashboardLayout>
+      <PageShell title="Audit Log Not Found">
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Audit log not found or invalid.</p>
+          <Link href={route('auditlog.index')}>
+            <Button variant="outline" className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Audit Logs
+            </Button>
+          </Link>
+        </div>
+      </PageShell>
     );
   }
 
@@ -361,148 +357,143 @@ export default function Show({ auditLog, oldValues, newValues, formattedDiff, ca
   };
 
   return (
-    <DashboardLayout header="AuditLog">
-      <PageShell
-        title="Audit Log Details"
-        breadcrumbs={[
-          { label: 'Audit Logs', href: route('auditlog.index') },
-          { label: `#${auditLog.id}` },
-        ]}
-        actions={
-          <Link href={route('auditlog.index')}>
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Audit Logs
-            </Button>
-          </Link>
-        }
-      >
-        <div className="space-y-6">
+    <PageShell
+      title="Audit Log Details"
+      breadcrumbs={[
+        { label: 'Audit Logs', href: route('auditlog.index') },
+        { label: `#${auditLog.id}` },
+      ]}
+      actions={
+        <Link href={route('auditlog.index')}>
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Audit Logs
+          </Button>
+        </Link>
+      }
+    >
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Event</div>
+                <div className="mt-1">{getEventBadge(auditLog.event)}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Date</div>
+                <div className="mt-1">{formatDate(auditLog.created_at, 'full')}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Causer</div>
+                <div className="mt-1">
+                  <Deferred
+                    data={['causerParams']}
+                    fallback={<span className="text-muted-foreground">Loading...</span>}
+                  >
+                    {auditLog.user ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          {auditLog.user.avatar?.url ? (
+                            <AvatarImage src={auditLog.user.avatar.url} alt={auditLog.user.name} />
+                          ) : null}
+                          <AvatarFallback className="text-xs">
+                            {getInitials(auditLog.user.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{causerParams || auditLog.user.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">{causerParams || 'System'}</span>
+                    )}
+                  </Deferred>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Model</div>
+                <div className="mt-1 font-mono text-sm">
+                  {getModelDisplayName(auditLog.auditable_type, auditLog.auditable_id)}
+                </div>
+              </div>
+              {auditLog.url && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">URL</div>
+                  <div className="mt-1 break-all text-sm">{auditLog.url}</div>
+                </div>
+              )}
+              {auditLog.ip_address && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">IP Address</div>
+                  <div className="mt-1 font-mono text-sm">{auditLog.ip_address}</div>
+                </div>
+              )}
+              {auditLog.user_agent && (
+                <div className="md:col-span-2">
+                  <div className="text-sm font-medium text-muted-foreground">User Agent</div>
+                  <div className="mt-1 break-all text-sm">{auditLog.user_agent}</div>
+                </div>
+              )}
+              {auditLog.tags && (
+                <div className="md:col-span-2">
+                  <div className="text-sm font-medium text-muted-foreground">Tags</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {parseTags(auditLog.tags).map((tag, index) => (
+                      <Badge key={index} variant="outline" className="bg-muted/50 hover:bg-muted">
+                        <Tag className="mr-1 h-3 w-3" />
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {formattedDiff && formattedDiff.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Overview</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Summary of Changes
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Event</div>
-                  <div className="mt-1">{getEventBadge(auditLog.event)}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Date</div>
-                  <div className="mt-1">{formatDate(auditLog.created_at, 'full')}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Causer</div>
-                  <div className="mt-1">
-                    <Deferred
-                      data={['causerParams']}
-                      fallback={<span className="text-muted-foreground">Loading...</span>}
-                    >
-                      {auditLog.user ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            {auditLog.user.avatar?.url ? (
-                              <AvatarImage
-                                src={auditLog.user.avatar.url}
-                                alt={auditLog.user.name}
-                              />
-                            ) : null}
-                            <AvatarFallback className="text-xs">
-                              {getInitials(auditLog.user.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{causerParams || auditLog.user.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">{causerParams || 'System'}</span>
-                      )}
-                    </Deferred>
+            <CardContent>
+              <div className="space-y-2">
+                {formattedDiff.map((change, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border-l-4 border-primary bg-muted/30 p-3 text-sm"
+                  >
+                    {change}
                   </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Model</div>
-                  <div className="mt-1 font-mono text-sm">
-                    {getModelDisplayName(auditLog.auditable_type, auditLog.auditable_id)}
-                  </div>
-                </div>
-                {auditLog.url && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">URL</div>
-                    <div className="mt-1 break-all text-sm">{auditLog.url}</div>
-                  </div>
-                )}
-                {auditLog.ip_address && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">IP Address</div>
-                    <div className="mt-1 font-mono text-sm">{auditLog.ip_address}</div>
-                  </div>
-                )}
-                {auditLog.user_agent && (
-                  <div className="md:col-span-2">
-                    <div className="text-sm font-medium text-muted-foreground">User Agent</div>
-                    <div className="mt-1 break-all text-sm">{auditLog.user_agent}</div>
-                  </div>
-                )}
-                {auditLog.tags && (
-                  <div className="md:col-span-2">
-                    <div className="text-sm font-medium text-muted-foreground">Tags</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {parseTags(auditLog.tags).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="bg-muted/50 hover:bg-muted">
-                          <Tag className="mr-1 h-3 w-3" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {formattedDiff && formattedDiff.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Summary of Changes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {formattedDiff.map((change, index) => (
-                    <div
-                      key={index}
-                      className="rounded-lg border-l-4 border-primary bg-muted/30 p-3 text-sm"
-                    >
-                      {change}
-                    </div>
-                  ))}
+        <Card>
+          <CardHeader>
+            <CardTitle>Detailed Changes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Deferred
+              data={['oldValues', 'newValues']}
+              fallback={
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-muted-foreground">Loading changes...</div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Changes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Deferred
-                data={['oldValues', 'newValues']}
-                fallback={
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-muted-foreground">Loading changes...</div>
-                  </div>
-                }
-              >
-                {renderDiff()}
-              </Deferred>
-            </CardContent>
-          </Card>
-        </div>
-      </PageShell>
-    </DashboardLayout>
+              }
+            >
+              {renderDiff()}
+            </Deferred>
+          </CardContent>
+        </Card>
+      </div>
+    </PageShell>
   );
 }

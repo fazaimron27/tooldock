@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Module Disabling Event.
+ *
+ * Dispatched before a module is disabled. Listeners can prevent the operation
+ * by setting $preventDisable to true and providing an optional $preventionReason.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Events\Modules;
 
 use Illuminate\Foundation\Events\Dispatchable;

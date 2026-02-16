@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Menu Registry
+ *
+ * Manages menu item registration with hierarchical structures,
+ * permission-based visibility, database seeding, and cache
+ * invalidation for module menus.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use App\Services\Cache\CacheService;
@@ -21,14 +32,28 @@ class MenuRegistry
      */
     private const CACHE_TAG = 'menus';
 
-    public function __construct(
-        private CacheService $cacheService
-    ) {}
-
     /**
      * Cache TTL for menu entries. Acts as safety net alongside tag-based invalidation.
      */
     private const CACHE_TTL_HOURS = 24;
+
+    /**
+     * Default ordering for menu groups.
+     * Lower numbers appear first in the navigation.
+     */
+    private const GROUP_ORDER = [
+        'Main' => 0,
+        'Dashboard' => 1,
+        'Life OS' => 2,
+        'Utilities' => 3,
+        'Master Data' => 4,
+        'Platform' => 5,
+        'System' => 6,
+    ];
+
+    public function __construct(
+        private CacheService $cacheService
+    ) {}
 
     /**
      * @var array<int, array{
@@ -140,6 +165,7 @@ class MenuRegistry
      * and enabling. Only creates menus that don't already exist (based on route uniqueness).
      * Handles parent/child relationships automatically.
      *
+     * Uses level-by-level bulk insert for optimal performance - reduces N queries to ~5-7.
      * Wrapped in a database transaction to ensure atomicity.
      *
      * @param  bool  $strict  If true, any exception during seeding will cause the transaction to rollback.
@@ -152,30 +178,95 @@ class MenuRegistry
         }
 
         DB::transaction(function () use ($strict) {
-            $existingMenus = Menu::all()->keyBy('route');
-            $parentMap = [];
-            $created = 0;
-            $found = 0;
-            $reactivated = 0;
-            $errors = 0;
+            try {
+                $existingMenus = Menu::all()->keyBy('route');
+                $now = now();
 
-            foreach ($this->menus as $menu) {
-                if (empty($menu['parent_key'])) {
+                $parents = [];
+                $children = [];
+
+                foreach ($this->menus as $menu) {
+                    if (empty($menu['parent_key'])) {
+                        $parents[] = $menu;
+                    } else {
+                        $children[] = $menu;
+                    }
+                }
+
+                $parentsToInsert = [];
+                $found = 0;
+                $reactivated = 0;
+
+                foreach ($parents as $menu) {
                     if ($existingMenus->has($menu['route'])) {
                         $existingMenu = $existingMenus->get($menu['route']);
-                        $parentMap[$menu['route']] = $existingMenu;
                         $found++;
 
                         if (! $existingMenu->is_active) {
                             $existingMenu->update(['is_active' => true]);
                             $reactivated++;
                         }
-
-                        continue;
+                    } else {
+                        $parentsToInsert[] = [
+                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                            'group' => $menu['group'],
+                            'label' => $menu['label'],
+                            'route' => $menu['route'],
+                            'icon' => $menu['icon'],
+                            'order' => $menu['order'],
+                            'permission' => $menu['permission'],
+                            'module' => $menu['module'],
+                            'parent_id' => null,
+                            'is_active' => true,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
+                }
 
-                    try {
-                        $menuModel = Menu::create([
+                $created = 0;
+                if (! empty($parentsToInsert)) {
+                    Menu::insert($parentsToInsert);
+                    $created += count($parentsToInsert);
+                    $existingMenus = Menu::all()->keyBy('route');
+                }
+
+                $maxDepth = 10;
+                $depth = 0;
+                $processedRoutes = [];
+
+                while ($depth < $maxDepth && ! empty($children)) {
+                    $childrenToInsert = [];
+                    $remainingChildren = [];
+
+                    foreach ($children as $menu) {
+                        if (isset($processedRoutes[$menu['route']])) {
+                            continue;
+                        }
+                        if ($existingMenus->has($menu['route'])) {
+                            $existingMenu = $existingMenus->get($menu['route']);
+                            $found++;
+                            $processedRoutes[$menu['route']] = true;
+
+                            if (! $existingMenu->is_active) {
+                                $existingMenu->update(['is_active' => true]);
+                                $reactivated++;
+                            }
+
+                            continue;
+                        }
+
+                        $parent = $existingMenus->get($menu['parent_key']);
+
+                        if (! $parent) {
+                            $remainingChildren[] = $menu;
+
+                            continue;
+                        }
+
+                        $childrenToInsert[] = [
+                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                            'parent_id' => $parent->id,
                             'group' => $menu['group'],
                             'label' => $menu['label'],
                             'route' => $menu['route'],
@@ -184,113 +275,54 @@ class MenuRegistry
                             'permission' => $menu['permission'],
                             'module' => $menu['module'],
                             'is_active' => true,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                        $processedRoutes[$menu['route']] = true;
+                    }
+
+                    if (! empty($childrenToInsert)) {
+                        Menu::insert($childrenToInsert);
+                        $created += count($childrenToInsert);
+                        $existingMenus = Menu::all()->keyBy('route');
+                    }
+
+                    $children = $remainingChildren;
+
+                    if (empty($childrenToInsert) && ! empty($remainingChildren)) {
+                        Log::warning('MenuRegistry: Some child menus could not be processed (missing parents)', [
+                            'unprocessed' => array_map(fn ($m) => $m['route'], $remainingChildren),
                         ]);
 
-                        $parentMap[$menu['route']] = $menuModel;
-                        $existingMenus->put($menu['route'], $menuModel);
-                        $created++;
-                    } catch (\Exception $e) {
-                        $errors++;
-                        Log::error('MenuRegistry: Failed to create menu', [
-                            'module' => $menu['module'],
-                            'route' => $menu['route'],
-                            'label' => $menu['label'],
-                            'error' => $e->getMessage(),
-                        ]);
-
-                        if ($strict) {
-                            throw $e;
-                        }
+                        break;
                     }
-                }
-            }
 
-            $maxDepth = 10;
-            $depth = 0;
-
-            while ($depth < $maxDepth) {
-                $createdInThisPass = false;
-
-                foreach ($this->menus as $menu) {
-                    if (! empty($menu['parent_key'])) {
-                        if ($existingMenus->has($menu['route'])) {
-                            $existingMenu = $existingMenus->get($menu['route']);
-
-                            if (! $existingMenu->is_active) {
-                                $existingMenu->update(['is_active' => true]);
-                                $reactivated++;
-                            }
-
-                            $found++;
-
-                            continue;
-                        }
-
-                        if (isset($parentMap[$menu['route']])) {
-                            continue;
-                        }
-
-                        $parent = $parentMap[$menu['parent_key']] ?? null;
-
-                        if (! $parent) {
-                            continue;
-                        }
-
-                        try {
-                            $childMenu = Menu::create([
-                                'parent_id' => $parent->id,
-                                'group' => $menu['group'],
-                                'label' => $menu['label'],
-                                'route' => $menu['route'],
-                                'icon' => $menu['icon'],
-                                'order' => $menu['order'],
-                                'permission' => $menu['permission'],
-                                'module' => $menu['module'],
-                                'is_active' => true,
-                            ]);
-
-                            $parentMap[$menu['route']] = $childMenu;
-                            $existingMenus->put($menu['route'], $childMenu);
-                            $created++;
-                            $createdInThisPass = true;
-                        } catch (\Exception $e) {
-                            $errors++;
-                            Log::error('MenuRegistry: Failed to create child menu', [
-                                'module' => $menu['module'],
-                                'route' => $menu['route'],
-                                'label' => $menu['label'],
-                                'parent_key' => $menu['parent_key'],
-                                'error' => $e->getMessage(),
-                            ]);
-
-                            if ($strict) {
-                                throw $e;
-                            }
-                        }
-                    }
+                    $depth++;
                 }
 
-                if (! $createdInThisPass) {
-                    break;
+                if ($depth >= $maxDepth) {
+                    Log::warning('MenuRegistry: Maximum depth reached while seeding menus');
                 }
 
-                $depth++;
-            }
+                if ($created > 0 || $found > 0 || $reactivated > 0) {
+                    Log::debug('MenuRegistry: Seeding completed', [
+                        'created' => $created,
+                        'found' => $found,
+                        'reactivated' => $reactivated,
+                        'total' => count($this->menus),
+                    ]);
 
-            if ($depth >= $maxDepth) {
-                Log::warning('MenuRegistry: Maximum depth reached while seeding menus');
-            }
-
-            if ($created > 0 || $found > 0 || $reactivated > 0 || $errors > 0) {
-                Log::debug('MenuRegistry: Seeding completed', [
-                    'created' => $created,
-                    'found' => $found,
-                    'reactivated' => $reactivated,
-                    'errors' => $errors,
-                    'total' => count($this->menus),
+                    $this->clearCache();
+                }
+            } catch (\Exception $e) {
+                Log::error('MenuRegistry: Seeding failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
 
-                $this->clearCache();
+                if ($strict) {
+                    throw $e;
+                }
             }
         });
     }
@@ -394,12 +426,12 @@ class MenuRegistry
 
         foreach ($allMenus as $menu) {
             $menu->setRelation('children', $childrenMap->get($menu->id, collect())
-                ->sortBy('order')
+                ->sortBy(['order', 'route'])
                 ->values());
         }
 
         $sorted = [];
-        $groupOrder = ['Main' => 0, 'Dashboard' => 1, 'Master Data' => 2, 'Platform' => 3, 'Utilities' => 4, 'System' => 5];
+        $groupOrder = self::GROUP_ORDER;
 
         foreach ($rootMenus as $menu) {
             $group = $menu->group;
@@ -416,7 +448,14 @@ class MenuRegistry
         }
 
         foreach ($sorted as $group => $items) {
-            usort($sorted[$group], fn ($a, $b) => $a['order'] <=> $b['order']);
+            usort($sorted[$group], function ($a, $b) {
+                $orderCmp = $a['order'] <=> $b['order'];
+                if ($orderCmp !== 0) {
+                    return $orderCmp;
+                }
+
+                return strcmp($a['route'], $b['route']);
+            });
         }
 
         $sorted = array_filter($sorted, fn ($items) => ! empty($items));
@@ -438,22 +477,38 @@ class MenuRegistry
     /**
      * Build a menu item with children, filtering by permissions.
      *
+     * For parent menus with children, shows the parent if the user has permission
+     * to at least one child item, even if they don't have permission to the parent itself.
+     * This allows partial access to menu hierarchies.
+     *
      * @param  Menu  $menu  The menu model
      * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
      * @return array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}|null
      */
     private function buildMenuItem(Menu $menu, ?\Illuminate\Contracts\Auth\Authenticatable $user): ?array
     {
-        if (! empty($menu->permission)) {
-            if (! $user) {
-                return null;
-            }
-
-            if (! Gate::forUser($user)->allows($menu->permission)) {
-                return null;
+        $children = [];
+        if ($menu->children->isNotEmpty()) {
+            foreach ($menu->children->sortBy(['order', 'route']) as $child) {
+                $childItem = $this->buildMenuItem($child, $user);
+                if ($childItem !== null) {
+                    $children[] = $childItem;
+                }
             }
         }
 
+        $hasPermission = true;
+        if (! empty($menu->permission)) {
+            if (! $user) {
+                $hasPermission = false;
+            } elseif (! Gate::forUser($user)->allows($menu->permission)) {
+                $hasPermission = false;
+            }
+        }
+
+        if (! $hasPermission && empty($children)) {
+            return null;
+        }
         $item = [
             'label' => $menu->label,
             'route' => $menu->route,
@@ -461,22 +516,12 @@ class MenuRegistry
             'order' => $menu->order,
         ];
 
-        if (! empty($menu->permission)) {
+        if (! empty($menu->permission) && $hasPermission) {
             $item['permission'] = $menu->permission;
         }
 
-        if ($menu->children->isNotEmpty()) {
-            $children = [];
-            foreach ($menu->children->sortBy('order') as $child) {
-                $childItem = $this->buildMenuItem($child, $user);
-                if ($childItem !== null) {
-                    $children[] = $childItem;
-                }
-            }
-
-            if (! empty($children)) {
-                $item['children'] = $children;
-            }
+        if (! empty($children)) {
+            $item['children'] = $children;
         }
 
         return $item;

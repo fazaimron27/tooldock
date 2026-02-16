@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/treasury",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Treasury\\": "app/",
+            "Modules\\Treasury\\Database\\Factories\\": "database/factories/",
+            "Modules\\Treasury\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Treasury\\Tests\\": "tests/"
+        }
+    }
+}

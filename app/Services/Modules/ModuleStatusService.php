@@ -1,10 +1,33 @@
 <?php
 
+/**
+ * Module Status Service.
+ *
+ * Manages module installation and activation status in the database. Provides
+ * an in-memory cache of module statuses (lazily loaded) to avoid repeated
+ * database queries within a single request lifecycle. Handles registration,
+ * installation marking, activation toggling, and version tracking.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Database-backed module status manager with request-scoped caching.
+ *
+ * All read operations are served from an in-memory cache that is lazily loaded
+ * on first access. Write operations clear the cache to ensure consistency.
+ * This service is the single source of truth for module installation and
+ * activation status within the application.
+ *
+ * @see DatabaseActivator Uses this pattern for the nwidart/laravel-modules integration
+ * @see ModuleLifecycleService Primary consumer of this service
+ */
 class ModuleStatusService
 {
     /**

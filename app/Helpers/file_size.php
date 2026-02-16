@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * File Size Helpers.
+ *
+ * Global helper functions for converting PHP ini size values to KB,
+ * retrieving PHP upload limits, and computing effective maximum file
+ * sizes by comparing application settings with PHP runtime limits.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
 if (! function_exists('convert_size_to_kb')) {
     /**
      * Convert PHP ini size value (e.g., "2M", "8M", "128K") to KB.
@@ -28,7 +38,7 @@ if (! function_exists('convert_size_to_kb')) {
             'g' => $value * 1024 * 1024,
             'm' => $value * 1024,
             'k' => $value,
-            default => (int) $size, // Assume bytes, convert to KB
+            default => (int) $size,
         };
     }
 }

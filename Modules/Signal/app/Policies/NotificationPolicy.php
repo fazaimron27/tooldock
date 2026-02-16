@@ -6,6 +6,10 @@
  * Authorization policy for notification-related actions in the Signal module.
  * Enforces strict ownership rules - users can only access their own notifications.
  *
+ * IMPORTANT: Unlike other policies, this does NOT use HasSuperAdminBypass.
+ * Notifications are personal and should always be scoped to the user,
+ * even for Super Admins.
+ *
  * @author     Tool Dock Team
  * @license    MIT
  */
@@ -15,7 +19,6 @@ namespace Modules\Signal\Policies;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Core\Models\User;
-use Modules\Core\Traits\HasSuperAdminBypass;
 
 /**
  * Class NotificationPolicy
@@ -25,14 +28,14 @@ use Modules\Core\Traits\HasSuperAdminBypass;
  * to ensure users cannot access other users' notifications.
  *
  * Permissions used:
- * - notifications.signal.view: Required for viewing notifications
- * - notifications.signal.manage: Required for updating/deleting notifications
+ * - signals.notification.view: Required for viewing notifications
+ * - signals.notification.manage: Required for updating/deleting notifications
  *
  * @see \Modules\Signal\Services\SignalPermissionRegistrar For permission registration
  */
 class NotificationPolicy
 {
-    use HandlesAuthorization, HasSuperAdminBypass;
+    use HandlesAuthorization;
 
     /**
      * Determine whether the user can view any notifications.
@@ -45,7 +48,7 @@ class NotificationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('notifications.signal.view');
+        return $user->hasPermissionTo('signals.notification.view');
     }
 
     /**
@@ -64,7 +67,7 @@ class NotificationPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('notifications.signal.view');
+        return $user->hasPermissionTo('signals.notification.view');
     }
 
     /**
@@ -83,7 +86,7 @@ class NotificationPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('notifications.signal.manage');
+        return $user->hasPermissionTo('signals.notification.manage');
     }
 
     /**
@@ -102,6 +105,6 @@ class NotificationPolicy
             return false;
         }
 
-        return $user->hasPermissionTo('notifications.signal.manage');
+        return $user->hasPermissionTo('signals.notification.manage');
     }
 }

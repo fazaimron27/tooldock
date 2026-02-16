@@ -2,11 +2,12 @@
 
 namespace Modules\Vault\Http\Middleware;
 
+use App\Services\Core\UserPreferenceService;
+use App\Services\Registry\SignalHandlerRegistry;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Modules\Signal\Facades\Signal;
 use Modules\Vault\Models\VaultLock;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,8 +60,8 @@ class VaultLockMiddleware
             return $next($request);
         }
 
-        $vaultLockEnabled = settings('vault_lock_enabled', false);
-        $timeoutMinutes = max(1, min(settings('vault_lock_timeout', 15), 1440));
+        $vaultLockEnabled = app(UserPreferenceService::class)->get($user, 'vault_lock_enabled', false);
+        $timeoutMinutes = max(1, min(app(UserPreferenceService::class)->get($user, 'vault_lock_timeout', 15), 1440));
 
         if (! $vaultLockEnabled) {
             return $next($request);
@@ -156,18 +157,9 @@ class VaultLockMiddleware
 
             $request->session()->put($notificationKey, true);
 
-            if (! class_exists(Signal::class)) {
-                return;
-            }
-
-            Signal::info(
-                $user,
-                'Vault Auto-Locked',
-                'Your vault was automatically locked due to inactivity timeout.',
-                route('vault.lock'),
-                'Vault',
-                'vault'
-            );
+            app(SignalHandlerRegistry::class)->dispatch('vault.autolocked', [
+                'user' => $user,
+            ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('VaultLockMiddleware: Failed to send auto-lock notification', [
                 'error' => $e->getMessage(),

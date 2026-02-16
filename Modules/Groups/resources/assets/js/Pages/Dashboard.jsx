@@ -5,6 +5,8 @@
  */
 import ModuleDashboardPage from '@/Components/Dashboard/ModuleDashboardPage';
 
-export default function Dashboard({ widgets }) {
-  return <ModuleDashboardPage moduleName="Groups" widgets={widgets} />;
+export default function Dashboard({ widgets = [], moduleMetadata = {} }) {
+  return (
+    <ModuleDashboardPage moduleName="Groups" widgets={widgets} moduleMetadata={moduleMetadata} />
+  );
 }

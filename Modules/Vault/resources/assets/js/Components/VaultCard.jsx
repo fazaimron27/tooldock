@@ -4,10 +4,10 @@
  */
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import { cn } from '@/Utils/utils';
+import { useTOTPCode } from '@Vault/Hooks/useVaultQueries';
 import { maskCVV, maskCardNumber } from '@Vault/Utils/maskUtils';
 import { capitalizeType } from '@Vault/Utils/vaultUtils';
 import { router } from '@inertiajs/react';
-import axios from 'axios';
 import {
   Clipboard,
   CreditCard,
@@ -65,7 +65,7 @@ const getTypeColor = (type) => {
  * UI constants for consistent card layout and TOTP behavior
  */
 const CARD_MIN_HEIGHT = 140;
-const TOTP_PERIOD = 30;
+const DEFAULT_TOTP_PERIOD = 30;
 const TOTP_FETCH_INTERVAL = 5000;
 const COUNTDOWN_UPDATE_INTERVAL = 1000;
 
@@ -77,63 +77,44 @@ export default function VaultCard({ vault }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isCardDetailsVisible, setIsCardDetailsVisible] = useState(false);
   const [isTotpCodeVisible, setIsTotpCodeVisible] = useState(false);
-  const [totpCode, setTotpCode] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(TOTP_PERIOD);
+  // Use the vault's stored period or fall back to default
+  const totpPeriod = vault.totp_period || DEFAULT_TOTP_PERIOD;
+  const [timeRemaining, setTimeRemaining] = useState(totpPeriod);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const deleteDialog = useDisclosure();
 
   const TypeIcon = getTypeIcon(vault.type);
 
-  /**
-   * Fetch TOTP codes from server and maintain countdown timer.
-   * TOTP generation happens server-side to prevent secret exposure.
-   */
+  // React Query handles TOTP code fetching with automatic polling
+  const { data: totpData } = useTOTPCode(vault.id, {
+    enabled: !!vault.totp_secret,
+  });
+  const totpCode = totpData?.code || null;
+
+  // Countdown timer (local state, updates every second)
+  // Uses the vault's stored TOTP period for correct timing
   useEffect(() => {
-    if (!vault.totp_secret || !vault.id) {
+    if (!vault.totp_secret) {
       return;
     }
 
-    let codeIntervalId = null;
-    let countdownIntervalId = null;
-
-    const fetchTotpCode = async () => {
-      try {
-        const response = await axios.get(route('vault.generate-totp', { vault: vault.id }));
-        if (response.data.code) {
-          setTotpCode(response.data.code);
-        }
-      } catch {
-        setTotpCode(null);
-      }
-    };
-
     const updateCountdown = () => {
       const now = Math.floor(Date.now() / 1000);
-      const timeStep = Math.floor(now / TOTP_PERIOD);
-      const nextStep = (timeStep + 1) * TOTP_PERIOD;
+      const timeStep = Math.floor(now / totpPeriod);
+      const nextStep = (timeStep + 1) * totpPeriod;
       const remaining = nextStep - now;
       setTimeRemaining(remaining);
     };
 
-    fetchTotpCode();
     updateCountdown();
-
     // eslint-disable-next-line no-undef
-    codeIntervalId = setInterval(fetchTotpCode, TOTP_FETCH_INTERVAL);
-    // eslint-disable-next-line no-undef
-    countdownIntervalId = setInterval(updateCountdown, COUNTDOWN_UPDATE_INTERVAL);
+    const countdownIntervalId = setInterval(updateCountdown, COUNTDOWN_UPDATE_INTERVAL);
 
     return () => {
-      if (codeIntervalId) {
-        // eslint-disable-next-line no-undef
-        clearInterval(codeIntervalId);
-      }
-      if (countdownIntervalId) {
-        // eslint-disable-next-line no-undef
-        clearInterval(countdownIntervalId);
-      }
+      // eslint-disable-next-line no-undef
+      clearInterval(countdownIntervalId);
     };
-  }, [vault.totp_secret, vault.id]);
+  }, [vault.totp_secret, totpPeriod]);
 
   const handleCopyPassword = useCallback(() => {
     if (vault.value) {
@@ -204,7 +185,7 @@ export default function VaultCard({ vault }) {
     });
   }, [vault.id, deleteDialog]);
 
-  const progressPercentage = ((TOTP_PERIOD - timeRemaining) / TOTP_PERIOD) * 100;
+  const progressPercentage = ((totpPeriod - timeRemaining) / totpPeriod) * 100;
 
   return (
     <>

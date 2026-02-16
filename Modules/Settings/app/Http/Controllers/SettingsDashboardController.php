@@ -18,9 +18,11 @@ class SettingsDashboardController extends Controller
         Gate::authorize('settings.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Settings', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Settings/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }

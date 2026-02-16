@@ -15,6 +15,7 @@ namespace Modules\Core\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use App\Services\Registry\MenuRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -24,7 +25,6 @@ use Modules\Core\Http\Requests\StoreUserRequest;
 use Modules\Core\Http\Requests\UpdateUserRequest;
 use Modules\Core\Models\Role;
 use Modules\Core\Models\User;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class UserController
@@ -34,21 +34,22 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * when user roles are changed.
  *
  * @see \Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog For role sync logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For role change notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For role change notifications
  */
 class UserController extends Controller
 {
-    use SendsSignalNotifications;
     use SyncsRelationshipsWithAuditLog;
 
     /**
      * Create a new controller instance.
      *
      * @param  MenuRegistry  $menuRegistry  Menu registry for cache clearing
+     * @param  SignalHandlerRegistry  $signalRegistry  Signal handler registry
      * @return void
      */
     public function __construct(
-        private MenuRegistry $menuRegistry
+        private MenuRegistry $menuRegistry,
+        private readonly SignalHandlerRegistry $signalRegistry
     ) {}
 
     /**
@@ -101,7 +102,7 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $roles = Role::all();
+        $roles = cache()->remember('core:roles:all', 3600, fn () => Role::all());
 
         return Inertia::render('Modules::Core/Users/Create', [
             'roles' => $roles,
@@ -145,7 +146,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $user->load('roles');
-        $roles = Role::all();
+        $roles = cache()->remember('core:roles:all', 3600, fn () => Role::all());
 
         return Inertia::render('Modules::Core/Users/Edit', [
             'user' => $user,
@@ -240,14 +241,11 @@ class UserController extends Controller
             $oldRolesText = empty($oldRoleNames) ? 'none' : implode(', ', $oldRoleNames);
             $newRolesText = empty($newRoleNames) ? 'none' : implode(', ', $newRoleNames);
 
-            $this->signalInfo(
-                $user,
-                'Your Roles Changed',
-                "An administrator changed your roles from [{$oldRolesText}] to [{$newRolesText}]. Your permissions may have changed.",
-                route('dashboard'),
-                'System',
-                'system'
-            );
+            $this->signalRegistry->dispatch('user.roles.changed', [
+                'user' => $user,
+                'old_roles' => $oldRoleNames,
+                'new_roles' => $newRoleNames,
+            ]);
         }
     }
 }

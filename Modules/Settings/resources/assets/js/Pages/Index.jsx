@@ -5,6 +5,7 @@
  * Uses React Hook Form for improved performance and validation
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
+import { cn } from '@/Utils/utils';
 import { updateSettingsResolver } from '@Settings/Schemas/settingsSchemas';
 import { router, usePage } from '@inertiajs/react';
 import { useCallback, useMemo } from 'react';
@@ -12,7 +13,8 @@ import { Controller } from 'react-hook-form';
 
 import FormCard from '@/Components/Common/FormCard';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
-import FormTextarea from '@/Components/Common/FormTextarea';
+import FormTextareaRHF from '@/Components/Common/FormTextareaRHF';
+import SearchableSelectRHF from '@/Components/Common/SearchableSelectRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import {
   Accordion,
@@ -20,13 +22,127 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/Components/ui/accordion';
-import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Label } from '@/Components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/Components/ui/select';
+import { Slider } from '@/Components/ui/slider';
 import { Switch } from '@/Components/ui/switch';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
+/**
+ * Maps currency codes to their display symbols
+ */
+const CURRENCY_SYMBOLS = {
+  IDR: 'Rp',
+  MYR: 'RM',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  CNY: '¥',
+  SGD: 'S$',
+  AUD: 'A$',
+  THB: '฿',
+  PHP: '₱',
+  VND: '₫',
+  INR: '₹',
+  KRW: '₩',
+};
+
+/**
+ * Maps currency codes to their locales for number formatting
+ */
+const CURRENCY_LOCALES = {
+  IDR: 'id-ID', // 1.000.000 (periods)
+  MYR: 'ms-MY', // 1,000,000 (commas)
+  USD: 'en-US', // 1,000,000 (commas)
+  EUR: 'de-DE', // 1.000.000 (periods)
+  GBP: 'en-GB', // 1,000,000 (commas)
+  JPY: 'ja-JP', // 1,000,000 (commas)
+  CNY: 'zh-CN', // 1,000,000 (commas)
+  SGD: 'en-SG', // 1,000,000 (commas)
+  AUD: 'en-AU', // 1,000,000 (commas)
+  THB: 'th-TH', // 1,000,000 (commas)
+  PHP: 'en-PH', // 1,000,000 (commas)
+  VND: 'vi-VN', // 1.000.000 (periods)
+  INR: 'en-IN', // 10,00,000 (Indian style)
+  KRW: 'ko-KR', // 1,000,000 (commas)
+};
+
+/**
+ * Get currency symbol for a currency code
+ */
+function getCurrencySymbol(currencyCode) {
+  return CURRENCY_SYMBOLS[currencyCode] || currencyCode || '';
+}
+
+/**
+ * Get locale for number formatting based on currency
+ */
+function getCurrencyLocale(currencyCode) {
+  return CURRENCY_LOCALES[currencyCode] || 'en-US';
+}
+
+/**
+ * Type configuration for fallback grouping when no category is specified
+ */
+const TYPE_CONFIG = {
+  select: { label: 'Preferences', description: 'Configure your preferences' },
+  boolean: { label: 'Options', description: 'Enable or disable features' },
+  integer: { label: 'Thresholds & Limits', description: 'Set thresholds and limits' },
+  percentage: { label: 'Percentage Thresholds', description: 'Set percentage-based thresholds' },
+  currency: { label: 'Amount Thresholds', description: 'Set currency amount thresholds' },
+  text: { label: 'Configuration', description: 'Configure text-based settings' },
+  textarea: { label: 'Extended Configuration', description: 'Configure extended content' },
+};
+
+/**
+ * Groups settings by category (if set) or type into separate arrays for card rendering.
+ * Uses category_label/description when available, otherwise falls back to TYPE_CONFIG.
+ * Returns array of { type, label, description, settings[] }
+ */
+function groupSettingsByTypeCards(settings) {
+  const typeOrder = ['select', 'boolean', 'integer', 'percentage', 'currency', 'text', 'textarea'];
+  const groups = {};
+
+  // Group settings by category (if set) or fallback to type
+  settings.forEach((setting) => {
+    const groupKey = setting.category || setting.type || 'text';
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        settings: [],
+        // Use category_label/description if available, else TYPE_CONFIG fallback
+        label: setting.category_label || TYPE_CONFIG[setting.type]?.label || groupKey,
+        description: setting.category_description || TYPE_CONFIG[setting.type]?.description || '',
+      };
+    }
+    groups[groupKey].settings.push(setting);
+  });
+
+  // Sort settings within each group alphabetically
+  Object.keys(groups).forEach((key) => {
+    groups[key].settings.sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  // Order: category-based groups first (alphabetically), then type-based fallbacks in typeOrder
+  const categoryKeys = Object.keys(groups)
+    .filter((k) => !typeOrder.includes(k))
+    .sort();
+  const typeKeys = typeOrder.filter((t) => groups[t]);
+
+  return [...categoryKeys, ...typeKeys].map((key) => ({
+    type: key,
+    label: groups[key].label,
+    description: groups[key].description,
+    settings: groups[key].settings,
+  }));
+}
 
 export default function Index({ applicationSettings = {}, modulesSettings = {} }) {
   const { url } = usePage();
@@ -59,6 +175,16 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
       });
     });
     return data;
+  }, [applicationSettings, modulesSettings]);
+
+  // Get reference currency for treasury settings (if available)
+  const referenceCurrency = useMemo(() => {
+    const allSettings = [
+      ...Object.values(applicationSettings).flat(),
+      ...Object.values(modulesSettings).flat(),
+    ];
+    const currencySetting = allSettings.find((s) => s.key === 'treasury_reference_currency');
+    return currencySetting?.value || null;
   }, [applicationSettings, modulesSettings]);
 
   const form = useInertiaForm(initialData, {
@@ -162,25 +288,171 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
           />
         );
 
-      case 'textarea':
+      case 'percentage':
         return (
           <Controller
             key={setting.key}
             name={setting.key}
             control={form.control}
-            render={({ field, fieldState: { error: fieldError } }) => (
-              <div className="space-y-2">
-                <Label htmlFor={setting.key}>{setting.label}</Label>
-                <FormTextarea
-                  name={setting.key}
-                  label={setting.label}
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  error={fieldError?.message}
-                />
-              </div>
-            )}
+            render={({ field }) => {
+              const error = form.formState.errors[setting.key];
+              const value = Number(field.value) || 0;
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={setting.key}>{setting.label}</Label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        id={setting.key}
+                        type="number"
+                        min="0"
+                        max="100"
+                        className={cn(
+                          'h-8 w-16 rounded-md border border-input bg-background px-2 py-1 text-right text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          error && 'border-destructive'
+                        )}
+                        value={value}
+                        onChange={(e) => {
+                          const newValue = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                          field.onChange(newValue);
+                        }}
+                      />
+                      <span className="text-base font-medium text-foreground">%</span>
+                    </div>
+                  </div>
+                  <Slider
+                    value={[value]}
+                    onValueChange={(values) => field.onChange(values[0])}
+                    max={100}
+                    min={0}
+                    step={1}
+                    className="w-full"
+                  />
+                  {error && <p className="text-sm text-destructive">{error.message}</p>}
+                </div>
+              );
+            }}
+          />
+        );
+
+      case 'textarea':
+        return (
+          <FormTextareaRHF
+            key={setting.key}
+            name={setting.key}
+            control={form.control}
+            label={setting.label}
+          />
+        );
+
+      case 'select':
+        // Searchable combobox for settings with many options
+        if (setting.searchable) {
+          return (
+            <SearchableSelectRHF
+              key={setting.key}
+              name={setting.key}
+              control={form.control}
+              label={setting.label}
+              options={setting.options || []}
+              placeholder="Search..."
+            />
+          );
+        }
+
+        // Regular select for settings with few options
+        return (
+          <Controller
+            key={setting.key}
+            name={setting.key}
+            control={form.control}
+            render={({ field }) => {
+              const error = form.formState.errors[setting.key];
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor={setting.key}>{setting.label}</Label>
+                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id={setting.key}
+                      className={cn('w-full', error && 'border-destructive')}
+                    >
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {setting.options?.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {error && <p className="text-sm text-destructive">{error.message}</p>}
+                </div>
+              );
+            }}
+          />
+        );
+
+      case 'currency':
+        return (
+          <Controller
+            key={setting.key}
+            name={setting.key}
+            control={form.control}
+            render={({ field }) => {
+              const error = form.formState.errors[setting.key];
+              // Get currency symbol from reference currency setting
+              const currencySymbol = getCurrencySymbol(referenceCurrency);
+
+              // Get locale for number formatting
+              const locale = getCurrencyLocale(referenceCurrency);
+
+              // Format number with thousand separators for display
+              const formatNumber = (num) => {
+                if (num === null || num === undefined || num === '') return '';
+                return Number(num).toLocaleString(locale);
+              };
+
+              // Parse formatted string back to number
+              const parseNumber = (str) => {
+                if (!str) return 0;
+                // Remove thousand separators (both . and ,) and parse
+                // Keep only the last separator if it's a decimal point
+                return Number(str.replace(/[.,]/g, '')) || 0;
+              };
+
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor={setting.key}>{setting.label}</Label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                      {currencySymbol}
+                    </span>
+                    <input
+                      id={setting.key}
+                      type="text"
+                      inputMode="numeric"
+                      className={cn(
+                        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                        'pl-12',
+                        error && 'border-destructive'
+                      )}
+                      value={formatNumber(field.value)}
+                      onChange={(e) => {
+                        // Allow only numbers and separators
+                        const value = e.target.value.replace(/[^0-9.,]/g, '');
+                        field.onChange(parseNumber(value));
+                      }}
+                      onBlur={() => {
+                        // Re-format on blur
+                        field.onBlur();
+                      }}
+                    />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error.message}</p>}
+                </div>
+              );
+            }}
           />
         );
 
@@ -202,142 +474,112 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
   const hasSettings = appGroups.length > 0 || moduleGroups.length > 0;
 
   return (
-    <DashboardLayout header="Settings">
-      <PageShell title="Application Settings">
-        {!hasSettings ? (
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <p className="text-muted-foreground">No settings available at this time.</p>
+    <PageShell title="Application Settings">
+      {!hasSettings ? (
+        <div className="rounded-lg border border-dashed p-12 text-center">
+          <p className="text-muted-foreground">No settings available at this time.</p>
+        </div>
+      ) : (
+        <form id="settings-form" onSubmit={handleSubmit} className="space-y-8" noValidate>
+          <div className="grid gap-6 md:grid-cols-2 md:items-start">
+            {appGroups.length > 0 && (
+              <Card className="flex flex-col">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-2xl">Application Settings</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Core application and system settings
+                  </p>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <Accordion
+                    type="multiple"
+                    defaultValue={defaultAppValues}
+                    onValueChange={handleAppAccordionChange}
+                    className="w-full"
+                  >
+                    {appGroups.map((group) => {
+                      const groupSettings = applicationSettings[group] || [];
+
+                      return (
+                        <AccordionItem key={group} value={group}>
+                          <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                          <AccordionContent className="space-y-6">
+                            {groupSettingsByTypeCards(groupSettings).map((typeGroup) => (
+                              <FormCard
+                                key={typeGroup.type}
+                                title={typeGroup.label}
+                                description={typeGroup.description}
+                                className="max-w-4xl"
+                              >
+                                <div className="space-y-6">
+                                  {typeGroup.settings.map((setting) => (
+                                    <div key={setting.key}>{renderField(setting)}</div>
+                                  ))}
+                                </div>
+                              </FormCard>
+                            ))}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            )}
+
+            {moduleGroups.length > 0 && (
+              <Card className="flex flex-col">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-2xl">Modules Settings</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Settings from installed modules
+                  </p>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <Accordion
+                    type="multiple"
+                    defaultValue={defaultModuleValues}
+                    onValueChange={handleModuleAccordionChange}
+                    className="w-full"
+                  >
+                    {moduleGroups.map((group) => {
+                      const groupSettings = modulesSettings[group] || [];
+
+                      return (
+                        <AccordionItem key={group} value={group}>
+                          <AccordionTrigger className="capitalize">{group}</AccordionTrigger>
+                          <AccordionContent className="space-y-6">
+                            {groupSettingsByTypeCards(groupSettings).map((typeGroup) => (
+                              <FormCard
+                                key={typeGroup.type}
+                                title={typeGroup.label}
+                                description={typeGroup.description}
+                                className="max-w-4xl"
+                              >
+                                <div className="space-y-6">
+                                  {typeGroup.settings.map((setting) => (
+                                    <div key={setting.key}>{renderField(setting)}</div>
+                                  ))}
+                                </div>
+                              </FormCard>
+                            ))}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        ) : (
-          <form id="settings-form" onSubmit={handleSubmit} className="space-y-8" noValidate>
-            <div className="grid gap-6 md:grid-cols-2 md:items-start">
-              {appGroups.length > 0 && (
-                <Card className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Application Settings</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Core application and system settings
-                    </p>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <Accordion
-                      type="multiple"
-                      defaultValue={defaultAppValues}
-                      onValueChange={handleAppAccordionChange}
-                      className="w-full"
-                    >
-                      {appGroups.map((group) => {
-                        const groupSettings = applicationSettings[group] || [];
-                        const modules = [
-                          ...new Set(groupSettings.map((s) => s.module).filter(Boolean)),
-                        ];
-                        const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
 
-                        return (
-                          <AccordionItem key={group} value={group}>
-                            <AccordionTrigger className="capitalize">
-                              <div className="flex items-center gap-2">
-                                <span>{group}</span>
-                                {moduleLabel && (
-                                  <Badge variant="outline" className="text-xs font-normal">
-                                    {moduleLabel}
-                                  </Badge>
-                                )}
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="space-y-6">
-                              <FormCard
-                                title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
-                                description={
-                                  moduleLabel
-                                    ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
-                                    : `Manage ${group} related settings`
-                                }
-                                className="max-w-4xl"
-                              >
-                                <div className="space-y-6">
-                                  {groupSettings.map((setting) => (
-                                    <div key={setting.key}>{renderField(setting)}</div>
-                                  ))}
-                                </div>
-                              </FormCard>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
-                  </CardContent>
-                </Card>
-              )}
-
-              {moduleGroups.length > 0 && (
-                <Card className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Modules Settings</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Settings from installed modules
-                    </p>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <Accordion
-                      type="multiple"
-                      defaultValue={defaultModuleValues}
-                      onValueChange={handleModuleAccordionChange}
-                      className="w-full"
-                    >
-                      {moduleGroups.map((group) => {
-                        const groupSettings = modulesSettings[group] || [];
-                        const modules = [
-                          ...new Set(groupSettings.map((s) => s.module).filter(Boolean)),
-                        ];
-                        const moduleLabel = modules.length === 1 ? modules[0] : modules.join(', ');
-
-                        return (
-                          <AccordionItem key={group} value={group}>
-                            <AccordionTrigger className="capitalize">
-                              <div className="flex items-center gap-2">
-                                <span>{group}</span>
-                                {moduleLabel && (
-                                  <Badge variant="outline" className="text-xs font-normal">
-                                    {moduleLabel}
-                                  </Badge>
-                                )}
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="space-y-6">
-                              <FormCard
-                                title={`${group.charAt(0).toUpperCase() + group.slice(1)} Settings`}
-                                description={
-                                  moduleLabel
-                                    ? `Manage ${group} related settings from ${moduleLabel} module${modules.length > 1 ? 's' : ''}`
-                                    : `Manage ${group} related settings`
-                                }
-                                className="max-w-4xl"
-                              >
-                                <div className="space-y-6">
-                                  {groupSettings.map((setting) => (
-                                    <div key={setting.key}>{renderField(setting)}</div>
-                                  ))}
-                                </div>
-                              </FormCard>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </form>
-        )}
-      </PageShell>
-    </DashboardLayout>
+          <div className="flex items-center gap-4">
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      )}
+    </PageShell>
   );
 }

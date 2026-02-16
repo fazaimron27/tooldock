@@ -16,8 +16,6 @@ import PageShell from '@/Components/Layouts/PageShell';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 export default function Index({ groups, defaultPerPage = 20 }) {
   const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
@@ -191,7 +189,7 @@ export default function Index({ groups, defaultPerPage = 20 }) {
   usePaginationSync(tableProps, groups, defaultPerPage);
 
   return (
-    <DashboardLayout header="Groups">
+    <>
       <PageShell
         title="Groups"
         actions={
@@ -228,6 +226,6 @@ export default function Index({ groups, defaultPerPage = 20 }) {
         cancelLabel="Cancel"
         variant="destructive"
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,15 +1,28 @@
 <?php
 
+/**
+ * Module Discover Command.
+ *
+ * Artisan command that scans the Modules directory, registers all discovered
+ * modules in the database, and optionally installs them with the --install flag.
+ * Supports running seeders during bulk installation via the --seed flag.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Console\Commands;
 
 use App\Services\Modules\ModuleLifecycleService;
 use Illuminate\Console\Command;
 
 /**
- * Artisan command to discover and register modules
+ * Artisan command to discover and register modules.
  *
  * Scans the Modules directory and registers all found modules in the database.
  * Optionally installs all discovered modules with the --install flag.
+ *
+ * @see ModuleLifecycleService Handles module discovery and installation logic
  */
 class ModuleDiscoverCommand extends Command
 {
@@ -27,6 +40,11 @@ class ModuleDiscoverCommand extends Command
      */
     protected $description = 'Discover and register all available modules in the database';
 
+    /**
+     * Create a new command instance.
+     *
+     * @param  ModuleLifecycleService  $lifecycleService  Service for module lifecycle operations
+     */
     public function __construct(
         private ModuleLifecycleService $lifecycleService
     ) {

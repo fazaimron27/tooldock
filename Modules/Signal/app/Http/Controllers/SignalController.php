@@ -95,6 +95,7 @@ class SignalController extends Controller
      * Renders the notification detail page with navigation context.
      * Automatically marks the notification as read when viewed.
      * Provides prev/next navigation links for sequential browsing.
+     * Includes related notifications from the same module source.
      *
      * @param  Request  $request  The incoming HTTP request
      * @param  DatabaseNotification  $notification  The notification to display
@@ -122,6 +123,20 @@ class SignalController extends Controller
         $prevId = $currentIndex > 0 ? $allNotificationIds[$currentIndex - 1] : null;
         $nextId = $currentIndex < count($allNotificationIds) - 1 ? $allNotificationIds[$currentIndex + 1] : null;
 
+        // Get related notifications from the same module source
+        $moduleSource = $notification->data['module_source'] ?? null;
+        $relatedNotifications = [];
+        if ($moduleSource) {
+            $relatedNotifications = $user->notifications()
+                ->where('id', '!=', $notification->id)
+                ->whereRaw("data::jsonb->>'module_source' = ?", [$moduleSource])
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get()
+                ->map(fn ($n) => $this->formatNotification($n))
+                ->toArray();
+        }
+
         return Inertia::render('Modules::Signal/Show', [
             'notification' => $this->formatNotification($notification),
             'navigation' => [
@@ -130,6 +145,7 @@ class SignalController extends Controller
                 'current' => $currentIndex + 1,
                 'total' => count($allNotificationIds),
             ],
+            'relatedNotifications' => $relatedNotifications,
         ]);
     }
 

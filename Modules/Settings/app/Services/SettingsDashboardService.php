@@ -16,6 +16,12 @@ class SettingsDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'System Configuration',
+            'Manage system-wide settings and preferences.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',

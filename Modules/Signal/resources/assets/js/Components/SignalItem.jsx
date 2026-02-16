@@ -59,8 +59,8 @@ export default function SignalItem({
     <div
       className={cn(
         'flex items-start gap-3 p-3 rounded-lg transition-colors',
-        'cursor-pointer hover:bg-muted/50',
-        isUnread && 'bg-muted/30',
+        'cursor-pointer hover:bg-muted/50 hover:opacity-100',
+        isUnread ? 'bg-muted/30' : 'opacity-60',
         compact && 'py-2'
       )}
     >

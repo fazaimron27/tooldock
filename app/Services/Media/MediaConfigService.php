@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Media Config Service.
+ *
+ * Centralizes media configuration logic, particularly file size limits.
+ * Computes effective maximum file sizes by comparing application settings
+ * with PHP runtime limits, and generates user-friendly error messages
+ * for file-too-large scenarios.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Media;
 
 /**

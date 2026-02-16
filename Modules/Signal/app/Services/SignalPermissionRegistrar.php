@@ -22,15 +22,16 @@ use Modules\Core\Constants\Roles as RoleConstants;
  * All roles receive full notification access by default.
  *
  * Permissions:
- * - notifications.signal.view: View notifications
- * - notifications.signal.manage: Mark as read and delete
+ * - signals.notification.view: View notifications
+ * - signals.notification.manage: Mark as read and delete
+ * - signals.preferences.view: Access Signal notification preferences
  */
 class SignalPermissionRegistrar
 {
     /**
      * Register default permissions for the Signal module.
      *
-     * Registers view and manage permissions under the 'notifications'
+     * Registers view and manage permissions under the 'signals'
      * namespace. All default roles receive full access since users
      * should always be able to access their own notifications.
      *
@@ -39,15 +40,16 @@ class SignalPermissionRegistrar
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {
-        $registry->register('notifications', [
-            'signal.view',
-            'signal.manage',
+        $registry->register('signals', [
+            'notification.view',
+            'notification.manage',
+            'preferences.view',
         ], [
-            RoleConstants::ADMINISTRATOR => ['signal.*'],
-            RoleConstants::MANAGER => ['signal.*'],
-            RoleConstants::STAFF => ['signal.*'],
-            RoleConstants::AUDITOR => ['signal.*'],
-            RoleConstants::GUEST => ['signal.*'],
+            RoleConstants::ADMINISTRATOR => ['notification.*', 'preferences.view'],
+            RoleConstants::MANAGER => ['notification.*', 'preferences.view'],
+            RoleConstants::STAFF => ['notification.*', 'preferences.view'],
+            RoleConstants::AUDITOR => ['notification.*', 'preferences.view'],
+            RoleConstants::GUEST => ['notification.*', 'preferences.view'],
         ]);
     }
 }

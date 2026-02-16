@@ -18,9 +18,11 @@ class VaultDashboardController extends Controller
         Gate::authorize('vaults.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Vault', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Vault/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }

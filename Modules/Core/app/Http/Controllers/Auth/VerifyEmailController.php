@@ -13,12 +13,12 @@
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class VerifyEmailController
@@ -27,12 +27,15 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * Logs verification events and sends success notifications via Signal.
  *
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For notifications
  */
 class VerifyEmailController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
+
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry
+    ) {}
 
     /**
      * Mark the authenticated user's email address as verified.
@@ -66,14 +69,9 @@ class VerifyEmailController extends Controller
                 userId: $user->id
             );
 
-            $this->signalSuccess(
-                $user,
-                'Email Verified',
-                'Your email address has been successfully verified. You now have full access to all features.',
-                route('dashboard'),
-                'System',
-                'system'
-            );
+            $this->signalRegistry->dispatch('auth.email.verified', [
+                'user' => $user,
+            ]);
         }
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');

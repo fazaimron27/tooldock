@@ -30,7 +30,7 @@ class VaultMenuRegistrar
             label: 'Vault Dashboard',
             route: 'vault.dashboard',
             icon: 'LayoutDashboard',
-            order: 40,
+            order: 80,
             permission: 'vaults.dashboard.view',
             parentKey: 'dashboard',
             module: $moduleName

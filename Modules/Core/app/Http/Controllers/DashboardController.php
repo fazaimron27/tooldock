@@ -31,11 +31,13 @@ class DashboardController extends Controller
         $systemHealth = $this->calculateSystemHealth();
         $widgets = $widgetRegistry->getOverviewWidgets();
         $modules = $this->getActiveModules();
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Dashboard', [
             'systemHealth' => $systemHealth,
             'widgets' => $widgets,
             'modules' => $modules,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 
@@ -78,9 +80,11 @@ class DashboardController extends Controller
         Gate::authorize('core.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Core', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Core/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 

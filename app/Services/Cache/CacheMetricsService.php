@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Cache Metrics Service.
+ *
+ * Tracks cache performance metrics including hit/miss rates, operation
+ * durations, write and delete counts, and error rates. Metrics are stored
+ * in cache with a configurable TTL and can be retrieved for analysis,
+ * reporting, or dashboard display.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Cache;
 
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +57,6 @@ class CacheMetricsService
             $this->incrementMetric("context.{$context}.hits");
         }
 
-        // Log slow operations (> 100ms)
         if ($duration > 100) {
             Log::warning('CacheService: Slow cache operation detected', [
                 'operation' => $operation,
@@ -237,9 +248,6 @@ class CacheMetricsService
      */
     public function clear(): void
     {
-        // Clear all metrics keys
-        // Note: This is a simple implementation. In production, you might want
-        // to track metric keys and clear them individually.
         Cache::forget(self::METRICS_PREFIX.':total');
         Cache::forget(self::METRICS_PREFIX.':operations');
         Cache::forget(self::METRICS_PREFIX.':contexts');
@@ -271,14 +279,12 @@ class CacheMetricsService
         $durations = Cache::get($cacheKey, []);
         $durations[] = $duration;
 
-        // Keep only last 100 durations to prevent memory issues
         if (count($durations) > 100) {
             $durations = array_slice($durations, -100);
         }
 
         Cache::put($cacheKey, $durations, self::METRICS_TTL);
 
-        // Also update total durations
         $totalDurations = Cache::get(self::METRICS_PREFIX.':total.durations', []);
         $totalDurations[] = $duration;
         if (count($totalDurations) > 1000) {

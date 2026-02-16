@@ -43,9 +43,15 @@ class Setting extends Model
         'group',
         'key',
         'value',
+        'options',
         'type',
         'label',
         'is_system',
+        'searchable',
+        'category',
+        'category_label',
+        'category_description',
+        'scope',
     ];
 
     /**
@@ -58,6 +64,8 @@ class Setting extends Model
         return [
             'type' => SettingType::class,
             'is_system' => 'boolean',
+            'options' => 'array',
+            'searchable' => 'boolean',
         ];
     }
 
@@ -67,7 +75,7 @@ class Setting extends Model
      * Casts the value based on the type column:
      * - boolean: returns bool
      * - integer: returns int
-     * - text/textarea: returns string
+     * - text/textarea/select: returns string
      */
     public function getValueAttribute($value): mixed
     {
@@ -77,8 +85,9 @@ class Setting extends Model
 
         return match ($this->type) {
             SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            SettingType::Integer => (int) $value,
-            SettingType::Text, SettingType::Textarea => (string) $value,
+            SettingType::Integer, SettingType::Percentage => (int) $value,
+            SettingType::Currency => (float) $value,
+            SettingType::Text, SettingType::Textarea, SettingType::Select => (string) $value,
         };
     }
 

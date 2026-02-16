@@ -20,6 +20,16 @@ class SettingPolicy
     }
 
     /**
+     * Determine whether the user can update settings (class-level check).
+     *
+     * Used when no specific setting instance is available.
+     */
+    public function updateAny(User $user): bool
+    {
+        return $user->hasPermissionTo('settings.config.update');
+    }
+
+    /**
      * Determine whether the user can update the model.
      */
     public function update(User $user, Setting $setting): bool

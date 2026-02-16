@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Auto Install Protected Modules Listener.
+ *
+ * Listens to the MigrationsEnded event and automatically installs essential
+ * protected modules (e.g., Core) on fresh database installations. Ensures
+ * that critical system modules are available immediately after migration
+ * without requiring manual installation.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Listeners;
 
 use App\Services\Modules\ModuleLifecycleService;
@@ -43,7 +55,6 @@ class AutoInstallProtectedModules
 
         Log::info('AutoInstallProtectedModules: modules_statuses table exists');
 
-        // Only auto-install on fresh databases (no installed modules yet)
         $hasInstalledModules = DB::table('modules_statuses')
             ->where('is_installed', true)
             ->exists();

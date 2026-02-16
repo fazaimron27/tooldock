@@ -26,7 +26,19 @@ export default function ActivityWidget({ widget }) {
   const data = Array.isArray(widget.data) ? widget.data : [];
 
   if (!data || data.length === 0) {
-    return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+            <p className="text-sm">No activity recorded for this period.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

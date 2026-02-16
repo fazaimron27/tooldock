@@ -3,74 +3,149 @@
  *
  * Shows recent notifications with:
  * - List of last 5 notifications
- * - Mark all read button
+ * - Mark all read button (uses React Query mutation)
+ * - Sound toggle with volume control
  * - View all link to inbox
  * - Error state handling
  */
-import { Link, router } from '@inertiajs/react';
-import { AlertCircle, Check, Inbox, RefreshCw } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { AlertCircle, Inbox, RefreshCw, Volume, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/Components/ui/button';
 import { DropdownMenuLabel, DropdownMenuSeparator } from '@/Components/ui/dropdown-menu';
+import { Slider } from '@/Components/ui/slider';
 
+import { useMarkAllAsRead, useMarkAsRead } from '../Hooks/useNotificationQueries';
+import { playNotificationSound } from '../Utils/notificationSound';
 import SignalItem from './SignalItem';
 
 export default function SignalDropdown({ notifications, onRefresh, error }) {
-  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const { userPreferences } = usePage().props;
 
-  const handleMarkAllRead = async () => {
-    setIsMarkingAll(true);
-    try {
-      await router.post(
-        route('notifications.read-all'),
-        {},
-        {
-          preserveState: true,
-          preserveScroll: true,
-          onSuccess: () => {
-            if (onRefresh) onRefresh();
-          },
-        }
-      );
-    } finally {
-      setIsMarkingAll(false);
+  // Local state for immediate UI feedback, synced with server preferences
+  const [soundEnabled, setSoundEnabled] = useState(userPreferences?.notificationSound ?? true);
+  const [soundVolume, setSoundVolume] = useState(userPreferences?.notificationVolume ?? 0.5);
+
+  // React Query mutations
+  const markAllReadMutation = useMarkAllAsRead({
+    onSuccess: () => {
+      if (onRefresh) onRefresh();
+    },
+  });
+
+  const markAsReadMutation = useMarkAsRead({
+    onSuccess: () => {
+      if (onRefresh) onRefresh();
+    },
+  });
+
+  const handleMarkAllRead = () => {
+    markAllReadMutation.mutate({});
+  };
+
+  const handleMarkAsRead = (id) => {
+    markAsReadMutation.mutate(id);
+  };
+
+  const toggleSound = () => {
+    const newValue = !soundEnabled;
+    setSoundEnabled(newValue);
+
+    // Sync to backend
+    router.post(
+      route('preferences.update'),
+      {
+        key: 'core_notification_sound',
+        value: newValue,
+      },
+      {
+        preserveScroll: true,
+        preserveState: true,
+        only: [],
+      }
+    );
+
+    // Play a preview sound when enabling
+    if (newValue) {
+      playNotificationSound('info', soundVolume);
     }
   };
 
-  const handleMarkAsRead = async (id) => {
-    await router.post(
-      route('notifications.read', { notification: id }),
-      {},
+  const handleVolumeChange = (value) => {
+    const newVolume = value[0];
+    setSoundVolume(newVolume);
+  };
+
+  // Play sound and save to backend when slider is released (onValueCommit)
+  const handleVolumeCommit = (value) => {
+    const newVolume = value[0];
+    playNotificationSound('info', newVolume);
+
+    // Sync to backend (convert to percentage 0-100)
+    router.post(
+      route('preferences.update'),
       {
-        preserveState: true,
+        key: 'core_notification_volume',
+        value: Math.round(newVolume * 100),
+      },
+      {
         preserveScroll: true,
-        onSuccess: () => {
-          if (onRefresh) onRefresh();
-        },
+        preserveState: true,
+        only: [],
       }
     );
   };
 
   const hasUnread = notifications.some((n) => !n.read_at);
+  const isMarkingAll = markAllReadMutation.isPending;
 
   return (
     <div className="w-96">
       <div className="flex items-center justify-between px-2 py-1.5">
         <DropdownMenuLabel className="px-0">Notifications</DropdownMenuLabel>
-        {hasUnread && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={handleMarkAllRead}
-            disabled={isMarkingAll}
-          >
-            <Check className="mr-1 h-3 w-3" />
-            {isMarkingAll ? 'Marking...' : 'Mark all read'}
-          </Button>
-        )}
+        {/* Sound toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={toggleSound}
+          title={soundEnabled ? 'Mute notifications' : 'Unmute notifications'}
+        >
+          {soundEnabled ? (
+            <Volume2 className="h-4 w-4 text-primary" />
+          ) : (
+            <VolumeX className="h-4 w-4 text-muted-foreground" />
+          )}
+        </Button>
       </div>
+
+      {/* Volume slider - shows when sound is enabled */}
+      {soundEnabled && (
+        <div className="px-3 pb-2">
+          <div className="flex items-center gap-2">
+            {/* Dynamic volume icon based on level */}
+            {soundVolume === 0 ? (
+              <VolumeX className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            ) : soundVolume < 0.4 ? (
+              <Volume className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            ) : soundVolume < 0.7 ? (
+              <Volume1 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            ) : (
+              <Volume2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            )}
+            <Slider
+              value={[soundVolume]}
+              min={0}
+              max={1}
+              step={0.1}
+              onValueChange={handleVolumeChange}
+              onValueCommit={handleVolumeCommit}
+              className="flex-1"
+            />
+          </div>
+        </div>
+      )}
       <DropdownMenuSeparator />
 
       <div className="max-h-80 overflow-y-auto">
@@ -106,9 +181,19 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
       {notifications.length > 0 && !error && (
         <>
           <DropdownMenuSeparator />
-          <div className="p-2">
-            <Button variant="outline" size="sm" className="w-full" asChild>
-              <Link href={route('notifications.index')}>View all notifications</Link>
+          {/* Footer with split actions */}
+          <div className="flex items-center gap-2 px-2 py-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={handleMarkAllRead}
+              disabled={isMarkingAll || !hasUnread}
+            >
+              {isMarkingAll ? 'Marking...' : 'Mark all read'}
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1" asChild>
+              <Link href={route('notifications.index')}>View all</Link>
             </Button>
           </div>
         </>

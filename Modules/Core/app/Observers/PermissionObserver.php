@@ -8,11 +8,13 @@ use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\Permission;
+use Modules\Core\Services\PermissionCacheService;
 
 class PermissionObserver
 {
     public function __construct(
-        private MenuRegistry $menuRegistry
+        private MenuRegistry $menuRegistry,
+        private PermissionCacheService $permissionCacheService
     ) {}
 
     /**
@@ -37,6 +39,9 @@ class PermissionObserver
             userAgent: request()?->userAgent(),
             tags: 'permission'
         );
+
+        // Invalidate the cached permissions list
+        cache()->forget('core:permissions:all');
     }
 
     /**
@@ -79,6 +84,9 @@ class PermissionObserver
         if (isset($dirty['name'])) {
             $this->menuRegistry->clearCache();
         }
+
+        // Invalidate the cached permissions list
+        cache()->forget('core:permissions:all');
     }
 
     /**
@@ -106,5 +114,21 @@ class PermissionObserver
         );
 
         $this->menuRegistry->clearCache();
+
+        // Invalidate the cached permissions list
+        cache()->forget('core:permissions:all');
+    }
+
+    /**
+     * Handle the Permission "saved" event (fires after created/updated).
+     *
+     * Warms the permission cache after Spatie's RefreshesPermissionCache trait
+     * clears it, ensuring the cache is immediately available for subsequent requests.
+     */
+    public function saved(Permission $permission): void
+    {
+        // Spatie's RefreshesPermissionCache has already cleared the cache at this point.
+        // We warm it immediately to avoid slow first requests.
+        $this->permissionCacheService->warm();
     }
 }

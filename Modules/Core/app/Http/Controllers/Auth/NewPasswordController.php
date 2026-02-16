@@ -13,6 +13,7 @@
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class NewPasswordController
@@ -34,12 +34,11 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * Logs password resets and sends security alerts via Signal.
  *
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For security alerts
+ * @see \App\Services\Registry\SignalHandlerRegistry For security alerts
  */
 class NewPasswordController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
 
     /**
      * Display the password reset view.
@@ -100,14 +99,9 @@ class NewPasswordController extends Controller
                     userId: $user->id
                 );
 
-                $this->signalAlert(
-                    $user,
-                    'Password Reset Complete',
-                    'Your password was reset via email link. If you did not request this, please contact support immediately.',
-                    route('login'),
-                    'System',
-                    'security'
-                );
+                app(SignalHandlerRegistry::class)->dispatch('auth.password.reset', [
+                    'user' => $user,
+                ]);
             }
         );
 

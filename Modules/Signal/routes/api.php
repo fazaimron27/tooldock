@@ -24,4 +24,9 @@ use Illuminate\Support\Facades\Route;
 | API routes for Signal module (if needed in the future).
 | Currently, all functionality is handled via web routes with Inertia.
 |
+| Use this file for:
+| - External API integrations (mobile apps, third-party services)
+| - Endpoints that need stateless token authentication (Sanctum)
+| - Versioned API endpoints for backward compatibility
+|
 */

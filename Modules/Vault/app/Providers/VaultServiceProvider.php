@@ -3,19 +3,23 @@
 namespace Modules\Vault\Providers;
 
 use App\Services\Registry\CategoryRegistry;
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\MiddlewareRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Vault\Services\VaultCategoryRegistrar;
+use Modules\Vault\Services\VaultCommandRegistrar;
 use Modules\Vault\Services\VaultDashboardService;
 use Modules\Vault\Services\VaultMenuRegistrar;
 use Modules\Vault\Services\VaultPermissionRegistrar;
 use Modules\Vault\Services\VaultSettingsRegistrar;
+use Modules\Vault\Services\VaultSignalRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -33,6 +37,7 @@ class VaultServiceProvider extends ServiceProvider
      */
     public function boot(
         CategoryRegistry $categoryRegistry,
+        CommandRegistry $commandRegistry,
         DashboardWidgetRegistry $widgetRegistry,
         InertiaSharedDataRegistry $sharedDataRegistry,
         MenuRegistry $menuRegistry,
@@ -40,10 +45,13 @@ class VaultServiceProvider extends ServiceProvider
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
         VaultCategoryRegistrar $categoryRegistrar,
+        VaultCommandRegistrar $commandRegistrar,
         VaultDashboardService $dashboardService,
         VaultMenuRegistrar $menuRegistrar,
         VaultPermissionRegistrar $permissionRegistrar,
-        VaultSettingsRegistrar $settingsRegistrar
+        VaultSettingsRegistrar $settingsRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        VaultSignalRegistrar $signalRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -53,6 +61,7 @@ class VaultServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         $categoryRegistrar->register($categoryRegistry, $this->name);
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
@@ -60,14 +69,23 @@ class VaultServiceProvider extends ServiceProvider
         if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
             app(\App\Services\Registry\SignalCategoryRegistry::class)->register($this->name, 'vault', 'vault_notify_enabled');
         }
+        $signalRegistrar->register($signalRegistry);
 
         $middlewareRegistry->register($this->name, \Modules\Vault\Http\Middleware\VaultLockMiddleware::class);
 
         $sharedDataRegistry->register($this->name, function ($request) {
+            $user = $request->user();
+            $enabled = $user
+                ? app(\App\Services\Core\UserPreferenceService::class)->get($user, 'vault_lock_enabled', false)
+                : settings('vault_lock_enabled', false);
+            $timeout = $user
+                ? app(\App\Services\Core\UserPreferenceService::class)->get($user, 'vault_lock_timeout', 15)
+                : settings('vault_lock_timeout', 15);
+
             return [
                 'vault_lock_settings' => [
-                    'enabled' => settings('vault_lock_enabled', false),
-                    'timeout' => settings('vault_lock_timeout', 15),
+                    'enabled' => $enabled,
+                    'timeout' => $timeout,
                     'unlocked' => $request->session()->get('vault_unlocked', false),
                     'unlocked_at' => $request->session()->get('vault_unlocked_at'),
                 ],

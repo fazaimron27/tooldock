@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Module Page Manifest Service.
+ *
+ * Provides a server-side manifest of available module pages for the frontend
+ * SPA. Since Vite's import.meta.glob only captures pages at build time, this
+ * service enables detection of pages from modules installed after the initial
+ * build by scanning enabled module directories at runtime.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Modules;
 
 use Illuminate\Support\Facades\File;

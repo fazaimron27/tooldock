@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Datatable Query Service.
+ *
+ * Reusable service for building datatable queries with search, sorting, and
+ * pagination operations. Ensures consistent behavior across modules with
+ * security through whitelist validation of sort columns and page sizes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Data;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -23,6 +34,7 @@ class DatatableQueryService
      * @param  Builder  $query  The Eloquent query builder instance
      * @param  array<string>  $searchFields  Column names to search in
      * @param  string|null  $searchTerm  The search term to look for
+     * @return Builder The query with search filters applied
      */
     public function applySearch(Builder $query, array $searchFields, ?string $searchTerm): Builder
     {
@@ -51,8 +63,9 @@ class DatatableQueryService
      *
      * @param  Builder  $query  The Eloquent query builder instance
      * @param  array<string>  $allowedSorts  Whitelist of sortable column names
-     * @param  string  $defaultSort  Default column to sort by
-     * @param  string  $defaultDirection  Default sort direction ('asc' or 'desc')
+     * @param  string|null  $defaultSort  Default column to sort by
+     * @param  string|null  $defaultDirection  Default sort direction ('asc' or 'desc')
+     * @return Builder The query with sorting applied
      */
     public function applySorting(
         Builder $query,
@@ -84,7 +97,8 @@ class DatatableQueryService
      *
      * @param  Builder  $query  The Eloquent query builder instance
      * @param  array<int>  $allowedPerPage  Whitelist of allowed page sizes
-     * @param  int  $defaultPerPage  Default number of items per page
+     * @param  int|null  $defaultPerPage  Default number of items per page
+     * @return LengthAwarePaginator The paginated results
      */
     public function applyPagination(
         Builder $query,
@@ -111,6 +125,7 @@ class DatatableQueryService
      *
      * @param  Builder  $query  The Eloquent query builder instance
      * @param  array{searchFields?: array<string>, allowedSorts?: array<string>, defaultSort?: string, defaultDirection?: string, allowedPerPage?: array<int>, defaultPerPage?: int}  $options  Configuration options for datatable operations
+     * @return LengthAwarePaginator The paginated, searched, and sorted results
      */
     public function build(Builder $query, array $options = []): LengthAwarePaginator
     {

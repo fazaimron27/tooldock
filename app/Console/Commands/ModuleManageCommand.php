@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Module Manage Command.
+ *
+ * Artisan command providing a CLI interface for module lifecycle operations
+ * including install, uninstall, enable, and disable. Handles dependency
+ * validation errors with user-friendly messages and actionable CLI hints.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Console\Commands;
 
 use App\Exceptions\MissingDependencyException;
@@ -7,10 +18,13 @@ use App\Services\Modules\ModuleLifecycleService;
 use Illuminate\Console\Command;
 
 /**
- * Artisan command to manage module lifecycle operations
+ * Artisan command to manage module lifecycle operations.
  *
  * Provides CLI interface for installing, uninstalling, enabling, and disabling modules.
  * Handles dependency validation and provides user-friendly error messages.
+ *
+ * @see ModuleLifecycleService Handles module lifecycle business logic
+ * @see MissingDependencyException Thrown for dependency validation failures
  */
 class ModuleManageCommand extends Command
 {
@@ -28,6 +42,11 @@ class ModuleManageCommand extends Command
      */
     protected $description = 'Manage module lifecycle (install, uninstall, enable, disable)';
 
+    /**
+     * Create a new command instance.
+     *
+     * @param  ModuleLifecycleService  $lifecycleService  Service for module lifecycle operations
+     */
     public function __construct(
         private ModuleLifecycleService $lifecycleService
     ) {

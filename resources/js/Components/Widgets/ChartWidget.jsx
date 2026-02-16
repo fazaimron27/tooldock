@@ -2,6 +2,7 @@
  * Chart Widget component for displaying various chart types
  * Supports bar, area, and line charts based on widget data
  */
+import { formatCurrency, formatNumber } from '@/Utils/format';
 import {
   Area,
   AreaChart,
@@ -46,16 +47,25 @@ export default function ChartWidget({ widget }) {
 
   const config = widget.config || defaultConfig;
 
+  const tooltipFormatter = (value) => {
+    if (widget.config?.valueType === 'currency') {
+      return formatCurrency(value, widget.config?.currency || 'IDR');
+    }
+    return typeof value === 'number' ? formatNumber(value) : value;
+  };
+
   const renderChart = () => {
     switch (chartType) {
       case 'bar':
         return (
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
+            <XAxis dataKey={widget.xAxisKey || 'name'} />
             <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="value" fill="var(--color-value)" radius={[8, 8, 0, 0]} />
+            <ChartTooltip content={<ChartTooltipContent valueFormatter={tooltipFormatter} />} />
+            {widget.dataKeys?.map((key) => (
+              <Bar key={key} dataKey={key} fill={`var(--color-${key})`} radius={[4, 4, 0, 0]} />
+            )) || <Bar dataKey="value" fill="var(--color-value)" radius={[8, 8, 0, 0]} />}
           </BarChart>
         );
 
@@ -65,7 +75,7 @@ export default function ChartWidget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey={widget.xAxisKey || 'month'} />
             <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip content={<ChartTooltipContent valueFormatter={tooltipFormatter} />} />
             {widget.dataKeys?.map((key) => (
               <Area
                 key={key}
@@ -102,7 +112,7 @@ export default function ChartWidget({ widget }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey={widget.xAxisKey || 'name'} />
             <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip content={<ChartTooltipContent valueFormatter={tooltipFormatter} />} />
             <Line
               type="monotone"
               dataKey="value"

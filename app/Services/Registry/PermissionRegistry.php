@@ -1,9 +1,21 @@
 <?php
 
+/**
+ * Permission Registry
+ *
+ * Centralizes permission registration with module prefixing,
+ * default role assignments, wildcard support, and cache
+ * management for the RBAC system.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Core\Models\Permission;
 use Modules\Core\Models\Role;
 use Modules\Core\Services\PermissionCacheService;
@@ -174,6 +186,7 @@ class PermissionRegistry
      * and enabling. Only creates permissions that don't already exist.
      * Handles role assignments automatically.
      *
+     * Uses bulk upsert for optimal performance - reduces N queries to ~3.
      * Wrapped in a database transaction to ensure atomicity.
      *
      * @param  bool  $strict  If true, any exception during seeding will cause the transaction to rollback.
@@ -186,60 +199,81 @@ class PermissionRegistry
         }
 
         DB::transaction(function () use ($strict) {
-            $totalCreated = 0;
-            $totalFound = 0;
-            $totalErrors = 0;
+            try {
+                $allUpsertData = [];
+                $groupMap = [];
+                $now = now();
 
-            foreach ($this->permissionGroups as $group) {
-                $module = $group['module'];
-                $permissions = $group['permissions'];
-                $defaultRoleAssignments = $group['defaultRoleAssignments'];
+                foreach ($this->permissionGroups as $index => $group) {
+                    $module = $group['module'];
+                    $groupPermissionsNames = [];
+                    foreach ($group['permissions'] as $permission) {
+                        $fullName = $this->buildPermissionName($module, $permission);
+                        $allUpsertData[] = [
+                            'id' => (string) Str::uuid(),
+                            'name' => $fullName,
+                            'guard_name' => 'web',
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                        $groupPermissionsNames[] = $fullName;
+                    }
+                    $groupMap[$index] = $groupPermissionsNames;
+                }
 
-                $createdPermissions = [];
+                if (empty($allUpsertData)) {
+                    return;
+                }
 
-                foreach ($permissions as $permission) {
-                    $fullPermissionName = $this->buildPermissionName($module, $permission);
+                $names = array_column($allUpsertData, 'name');
 
-                    try {
-                        $permissionModel = Permission::firstOrCreate(['name' => $fullPermissionName]);
+                $existingCount = Permission::whereIn('name', $names)->count();
 
-                        if ($permissionModel->wasRecentlyCreated) {
-                            $totalCreated++;
-                        } else {
-                            $totalFound++;
+                Permission::upsert($allUpsertData, ['name', 'guard_name'], ['updated_at']);
+
+                $totalCreated = count($allUpsertData) - $existingCount;
+                $totalFound = $existingCount;
+
+                $permissionModels = Permission::whereIn('name', $names)
+                    ->get()
+                    ->keyBy('name');
+
+                foreach ($this->permissionGroups as $index => $group) {
+                    $module = $group['module'];
+                    $defaultRoleAssignments = $group['defaultRoleAssignments'];
+
+                    if (! empty($defaultRoleAssignments)) {
+                        $modelsForThisGroup = [];
+                        foreach ($groupMap[$index] as $name) {
+                            if ($model = $permissionModels->get($name)) {
+                                $modelsForThisGroup[] = $model;
+                            }
                         }
 
-                        $createdPermissions[] = $permissionModel;
-                    } catch (\Exception $e) {
-                        $totalErrors++;
-                        Log::error("PermissionRegistry: Failed to create permission: {$fullPermissionName}", [
-                            'module' => $module,
-                            'permission' => $permission,
-                            'error' => $e->getMessage(),
-                        ]);
-
-                        if ($strict) {
-                            throw $e;
+                        if (! empty($modelsForThisGroup)) {
+                            $this->assignToDefaultRoles($modelsForThisGroup, $defaultRoleAssignments, $module);
                         }
                     }
                 }
 
-                if (! empty($defaultRoleAssignments) && ! empty($createdPermissions)) {
-                    $this->assignToDefaultRoles($createdPermissions, $defaultRoleAssignments, $module);
-                }
-            }
+                app(PermissionCacheService::class)->clear();
 
-            app(PermissionCacheService::class)->clear();
-
-            $totalGroups = count($this->permissionGroups);
-            if ($totalCreated > 0 || $totalFound > 0 || $totalErrors > 0 || $totalGroups > 0) {
+                $totalGroups = count($this->permissionGroups);
                 Log::debug('PermissionRegistry: Seeding completed', [
                     'created' => $totalCreated,
                     'found' => $totalFound,
-                    'errors' => $totalErrors,
                     'total_groups' => $totalGroups,
                     'cache_cleared' => true,
                 ]);
+            } catch (\Exception $e) {
+                Log::error('PermissionRegistry: Seeding failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                if ($strict) {
+                    throw $e;
+                }
             }
         });
     }
@@ -250,6 +284,9 @@ class PermissionRegistry
      * Removes all permissions that start with the module prefix (e.g., "blog.*", "newsletter.*")
      * and cleans up related pivot table entries.
      *
+     * Searches for both singular and plural forms of the module name to handle
+     * cases where registrars use different naming conventions.
+     *
      * Wrapped in a database transaction to ensure atomicity.
      *
      * @param  string  $moduleName  The module name (e.g., 'Blog', 'Newsletter')
@@ -257,15 +294,24 @@ class PermissionRegistry
      */
     public function cleanup(string $moduleName): array
     {
-        $modulePrefix = strtolower($moduleName).'.';
+        $baseName = strtolower($moduleName);
 
-        return DB::transaction(function () use ($modulePrefix, $moduleName) {
+        $prefixes = array_unique([
+            $baseName.'.',
+            Str::plural($baseName).'.',
+        ]);
+
+        return DB::transaction(function () use ($prefixes, $moduleName) {
             try {
                 Log::info("PermissionRegistry: Cleaning up permissions for '{$moduleName}'", [
-                    'prefix' => $modulePrefix,
+                    'prefixes' => $prefixes,
                 ]);
 
-                $permissions = Permission::where('name', 'like', $modulePrefix.'%')->get();
+                $permissions = Permission::where(function ($query) use ($prefixes) {
+                    foreach ($prefixes as $prefix) {
+                        $query->orWhere('name', 'like', $prefix.'%');
+                    }
+                })->get();
 
                 if ($permissions->isEmpty()) {
                     Log::info("PermissionRegistry: No permissions found for '{$moduleName}'");

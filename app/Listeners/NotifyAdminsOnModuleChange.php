@@ -4,7 +4,8 @@
  * Notify Admins On Module Change Listener
  *
  * Sends notifications to Super Admin users when modules are
- * installed or uninstalled to provide visibility into system changes.
+ * installed, uninstalled, enabled, or disabled to provide
+ * visibility into system changes.
  *
  * @author     Tool Dock Team
  * @license    MIT
@@ -12,13 +13,17 @@
 
 namespace App\Listeners;
 
+use App\Events\Modules\ModuleDisabled;
+use App\Events\Modules\ModuleEnabled;
 use App\Events\Modules\ModuleInstalled;
+use App\Events\Modules\ModuleInstalling;
 use App\Events\Modules\ModuleUninstalled;
+use App\Events\Modules\ModuleUninstalling;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
-use Modules\Signal\Facades\Signal;
+use Modules\Signal\Jobs\SendNotificationJob;
 
 /**
  * Class NotifyAdminsOnModuleChange
@@ -29,10 +34,40 @@ use Modules\Signal\Facades\Signal;
  *
  * @see \App\Events\Modules\ModuleInstalled
  * @see \App\Events\Modules\ModuleUninstalled
- * @see \Modules\Signal\Facades\Signal For sending notifications
+ * @see \App\Events\Modules\ModuleEnabled
+ * @see \App\Events\Modules\ModuleDisabled
+ * @see \Modules\Signal\Jobs\SendNotificationJob For sending queued notifications
  */
 class NotifyAdminsOnModuleChange
 {
+    /**
+     * Handle the module installing event.
+     *
+     * Sets a cache key to prevent duplicate enabled notification
+     * since install internally calls enable.
+     *
+     * @param  ModuleInstalling  $event  The module installing event
+     * @return void
+     */
+    public function handleInstalling(ModuleInstalling $event): void
+    {
+        Cache::put("module_installing:{$event->moduleName}", true, 60);
+    }
+
+    /**
+     * Handle the module uninstalling event.
+     *
+     * Sets a cache key to prevent duplicate disabled notification
+     * since uninstall internally calls disable.
+     *
+     * @param  ModuleUninstalling  $event  The module uninstalling event
+     * @return void
+     */
+    public function handleUninstalling(ModuleUninstalling $event): void
+    {
+        Cache::put("module_uninstalling:{$event->moduleName}", true, 60);
+    }
+
     /**
      * Handle the module installed event.
      *
@@ -44,6 +79,8 @@ class NotifyAdminsOnModuleChange
      */
     public function handleInstalled(ModuleInstalled $event): void
     {
+        Cache::forget("module_installing:{$event->moduleName}");
+
         if ($this->isProtectedModule($event->module)) {
             return;
         }
@@ -74,6 +111,8 @@ class NotifyAdminsOnModuleChange
      */
     public function handleUninstalled(ModuleUninstalled $event): void
     {
+        Cache::forget("module_uninstalling:{$event->moduleName}");
+
         if ($this->isProtectedModule($event->module)) {
             return;
         }
@@ -89,6 +128,76 @@ class NotifyAdminsOnModuleChange
         $this->notifyAdmins(
             'Module Uninstalled',
             "The module \"{$event->moduleName}\" has been uninstalled and is no longer available.",
+            route('core.modules.index')
+        );
+    }
+
+    /**
+     * Handle the module enabled event.
+     *
+     * Sends notifications to all Super Admin users when a module
+     * is enabled. Uses caching to prevent duplicate notifications.
+     * Skips notification if module was just installed (to avoid double notification).
+     *
+     * @param  ModuleEnabled  $event  The module enabled event
+     * @return void
+     */
+    public function handleEnabled(ModuleEnabled $event): void
+    {
+        if ($this->isProtectedModule($event->module)) {
+            return;
+        }
+
+        if (Cache::has("module_installing:{$event->moduleName}")) {
+            return;
+        }
+
+        $cacheKey = "module_enabled_notified:{$event->moduleName}";
+
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        Cache::put($cacheKey, true, 5);
+
+        $this->notifyAdmins(
+            'Module Enabled',
+            "The module \"{$event->moduleName}\" has been enabled and is now active.",
+            route('core.modules.index')
+        );
+    }
+
+    /**
+     * Handle the module disabled event.
+     *
+     * Sends notifications to all Super Admin users when a module
+     * is disabled. Uses caching to prevent duplicate notifications.
+     * Skips notification if module was just uninstalled (to avoid double notification).
+     *
+     * @param  ModuleDisabled  $event  The module disabled event
+     * @return void
+     */
+    public function handleDisabled(ModuleDisabled $event): void
+    {
+        if ($this->isProtectedModule($event->module)) {
+            return;
+        }
+
+        if (Cache::has("module_uninstalling:{$event->moduleName}")) {
+            return;
+        }
+
+        $cacheKey = "module_disabled_notified:{$event->moduleName}";
+
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        Cache::put($cacheKey, true, 5);
+
+        $this->notifyAdmins(
+            'Module Disabled',
+            "The module \"{$event->moduleName}\" has been disabled and is no longer active.",
             route('core.modules.index')
         );
     }
@@ -114,7 +223,7 @@ class NotifyAdminsOnModuleChange
     /**
      * Notify all Super Admin users.
      *
-     * Sends an informational notification to each Super Admin user.
+     * Dispatches queued notifications to each Super Admin user.
      * Action URL is only included if the user has permission.
      *
      * @param  string  $title  Notification title
@@ -125,7 +234,7 @@ class NotifyAdminsOnModuleChange
     private function notifyAdmins(string $title, string $message, string $actionUrl): void
     {
         try {
-            if (! class_exists(Signal::class)) {
+            if (! class_exists(SendNotificationJob::class)) {
                 return;
             }
 
@@ -135,10 +244,19 @@ class NotifyAdminsOnModuleChange
 
             foreach ($admins as $admin) {
                 $url = $admin->can('core.modules.manage') ? $actionUrl : null;
-                Signal::info($admin, $title, $message, $url, 'System');
+
+                SendNotificationJob::dispatch(
+                    userId: $admin->id,
+                    type: 'info',
+                    title: $title,
+                    message: $message,
+                    url: $url,
+                    module: 'Platform',
+                    category: null
+                );
             }
         } catch (\Exception $e) {
-            Log::warning('NotifyAdminsOnModuleChange: Failed to send notifications', [
+            Log::warning('NotifyAdminsOnModuleChange: Failed to dispatch notification jobs', [
                 'error' => $e->getMessage(),
             ]);
         }
