@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Preference Model.
+ *
+ * Stores per-user preferences with typed attribute casting
+ * and attribute retrieval via key-based lookup.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -50,6 +60,8 @@ class UserPreference extends Model
 
     /**
      * Get the user that owns this preference.
+     *
+     * @return BelongsTo<User, UserPreference>
      */
     public function user(): BelongsTo
     {
@@ -69,7 +81,6 @@ class UserPreference extends Model
             return null;
         }
 
-        // Boolean handling
         if (in_array(strtolower($value), ['true', '1'], true)) {
             return true;
         }
@@ -77,7 +88,6 @@ class UserPreference extends Model
             return false;
         }
 
-        // Numeric handling
         if (is_numeric($value)) {
             return strpos($value, '.') !== false ? (float) $value : (int) $value;
         }

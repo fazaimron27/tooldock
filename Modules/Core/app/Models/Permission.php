@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Permission Model.
+ *
+ * Extends Spatie's Permission model with UUID primary keys
+ * and custom table naming for the application.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

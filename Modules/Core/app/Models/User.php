@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Model.
+ *
+ * Core user model with authentication, roles, permissions,
+ * avatar support, preferences, and group membership.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -132,6 +142,8 @@ class User extends Authenticatable
 
     /**
      * Get the user's avatar.
+     *
+     * @return MorphOne<MediaFile>
      */
     public function avatar(): MorphOne
     {

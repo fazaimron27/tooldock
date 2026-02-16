@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Observer.
+ *
+ * Observes user model events to handle avatar deletion,
+ * role assignment, and signal dispatching on changes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Observers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
@@ -30,6 +40,9 @@ class UserObserver
      *
      * Assigns the default Guest group (configured in core config) to new users
      * if they don't already have any groups assigned.
+     *
+     * @param  User  $user  The newly created user instance
+     * @return void
      */
     public function created(User $user): void
     {
@@ -65,6 +78,9 @@ class UserObserver
      * Handle the User "updated" event.
      *
      * Clears user search cache when user name or email changes.
+     *
+     * @param  User  $user  The updated user instance
+     * @return void
      */
     public function updated(User $user): void
     {
@@ -77,6 +93,9 @@ class UserObserver
      * Handle the User "deleted" event.
      *
      * Clears user search cache when a user is deleted.
+     *
+     * @param  User  $user  The deleted user instance
+     * @return void
      */
     public function deleted(User $user): void
     {
@@ -93,6 +112,8 @@ class UserObserver
      * Note: Cache tags are only supported by Redis and Memcached drivers.
      * For other drivers (file, database, dynamodb), the exception is caught and
      * we rely on TTL expiration for cache invalidation.
+     *
+     * @return void
      */
     private function clearUserSearchCache(): void
     {

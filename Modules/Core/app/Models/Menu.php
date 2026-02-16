@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Menu Model.
+ *
+ * Represents a navigation menu item with support for
+ * hierarchical structures, ordering, and permission-based visibility.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -67,6 +77,8 @@ class Menu extends Model
 
     /**
      * Get the parent menu.
+     *
+     * @return BelongsTo<Menu, Menu>
      */
     public function parent(): BelongsTo
     {
@@ -75,6 +87,8 @@ class Menu extends Model
 
     /**
      * Get the child menus.
+     *
+     * @return HasMany<Menu>
      */
     public function children(): HasMany
     {
@@ -83,6 +97,10 @@ class Menu extends Model
 
     /**
      * Scope a query to filter by group.
+     *
+     * @param  Builder  $query  The query builder
+     * @param  string  $group  The menu group to filter by
+     * @return Builder
      */
     public function scopeByGroup(Builder $query, string $group): Builder
     {
@@ -91,6 +109,9 @@ class Menu extends Model
 
     /**
      * Scope a query to only include active menus.
+     *
+     * @param  Builder  $query  The query builder
+     * @return Builder
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -99,6 +120,9 @@ class Menu extends Model
 
     /**
      * Scope a query to only include root menus (no parent).
+     *
+     * @param  Builder  $query  The query builder
+     * @return Builder
      */
     public function scopeRoot(Builder $query): Builder
     {
@@ -107,6 +131,9 @@ class Menu extends Model
 
     /**
      * Ensure module is always lowercase.
+     *
+     * @param  string|null  $value  The module name to set
+     * @return void
      */
     public function setModuleAttribute(?string $value): void
     {
