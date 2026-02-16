@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Relationship Event Formatter.
+ *
+ * Handles formatting for relationship sync events, producing human-readable
+ * summaries of attached, detached, and updated relationship changes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 /**
@@ -33,7 +43,6 @@ class RelationshipEventFormatter extends AuditLogFormatter
     {
         $changes = [];
 
-        // Find relationship name from keys (e.g., 'roles', 'permissions', 'members')
         $relationshipKeys = array_filter(
             array_keys($newValues),
             fn ($key) => ! str_ends_with($key, '_ids')
@@ -45,7 +54,6 @@ class RelationshipEventFormatter extends AuditLogFormatter
             $oldIds = $oldValues[$relationshipName.'_ids'] ?? [];
             $newIds = $newValues[$relationshipName.'_ids'] ?? [];
 
-            // Ensure arrays for consistent comparison
             $oldIds = is_array($oldIds) ? array_map('strval', $oldIds) : [];
             $newIds = is_array($newIds) ? array_map('strval', $newIds) : [];
 

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Formatter Abstract Class.
+ *
+ * Base class for all audit log event formatters, defining the common
+ * interface and including shared formatting utilities via trait.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 use Modules\AuditLog\Services\AuditLogFormattingHelper;

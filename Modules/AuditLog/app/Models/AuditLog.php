@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Model.
+ *
+ * Represents a single audit log entry with support for formatted diffs,
+ * user/auditable relationships, bulk insertion, and user agent normalization.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Models;
 
 use Carbon\Carbon;
@@ -16,6 +26,13 @@ use Illuminate\Support\Facades\Schema;
 use Modules\AuditLog\Services\AuditLogFormatterFactory;
 use Modules\Core\Models\User;
 
+/**
+ * Audit log entry model.
+ *
+ * Stores event-driven audit records with support for polymorphic relationships,
+ * formatted diffs via the formatter factory, and batch operations for
+ * efficient relationship loading and cache management.
+ */
 class AuditLog extends Model
 {
     use HasFactory, HasUuids;
@@ -82,6 +99,8 @@ class AuditLog extends Model
 
     /**
      * Get the user that performed the action.
+     *
+     * @return BelongsTo The user relationship
      */
     public function user(): BelongsTo
     {
@@ -91,7 +110,7 @@ class AuditLog extends Model
     /**
      * Get tags as an array.
      *
-     * @return Attribute
+     * @return Attribute Accessor that splits comma-separated tags into an array
      */
     protected function tagsArray(): Attribute
     {
@@ -106,14 +125,12 @@ class AuditLog extends Model
      * Uses the formatter factory to select the appropriate formatter
      * based on the event type.
      *
-     * @return Attribute
+     * @return Attribute Accessor that produces an array of formatted change entries
      */
     protected function formattedDiff(): Attribute
     {
         return Attribute::make(
             get: function (mixed $value, array $attributes) {
-                // Ensure values are arrays (handle JSON strings or null values)
-                // Use casts if available, otherwise fall back to ensureArray
                 $oldValues = is_array($attributes['old_values'] ?? null)
                     ? ($attributes['old_values'] ?? [])
                     : $this->ensureArray($attributes['old_values'] ?? []);
@@ -122,7 +139,6 @@ class AuditLog extends Model
                     : $this->ensureArray($attributes['new_values'] ?? []);
                 $event = $attributes['event'] ?? 'updated';
 
-                // Use factory to get appropriate formatter
                 $formatter = AuditLogFormatterFactory::make($event);
 
                 return $formatter->format($oldValues, $newValues, $event);
@@ -135,8 +151,8 @@ class AuditLog extends Model
      *
      * Handles cases where the value might be a JSON string or null.
      *
-     * @param  mixed  $value
-     * @return array<string, mixed>
+     * @param  mixed  $value  The value to convert to an array
+     * @return array<string, mixed> The resulting array
      */
     protected function ensureArray(mixed $value): array
     {
@@ -157,7 +173,7 @@ class AuditLog extends Model
     /**
      * Get human-readable causer information.
      *
-     * @return Attribute
+     * @return Attribute Accessor that resolves the user to a descriptive string
      */
     protected function causerParams(): Attribute
     {
@@ -176,7 +192,6 @@ class AuditLog extends Model
                         return "User ID: {$userId}";
                     }
 
-                    // Try to get a readable name (name, email)
                     $name = $user->name ?? $user->email ?? null;
 
                     if ($name) {
@@ -196,8 +211,8 @@ class AuditLog extends Model
      *
      * Returns null if user agent is "Symfony" (default when no User-Agent header is present).
      *
-     * @param  string|null  $userAgent
-     * @return string|null
+     * @param  string|null  $userAgent  The raw user agent string
+     * @return string|null The normalized user agent, or null if empty/default
      */
     public static function normalizeUserAgent(?string $userAgent): ?string
     {
@@ -213,6 +228,8 @@ class AuditLog extends Model
      *
      * Handles cases where the model class or table no longer exists
      * (e.g., when modules are uninstalled).
+     *
+     * @return MorphTo The polymorphic relationship to the auditable model
      */
     public function auditable(): MorphTo
     {
@@ -342,6 +359,9 @@ class AuditLog extends Model
      *
      * Converts timestamps to the application timezone when serializing
      * to ensure frontend receives dates in local timezone.
+     *
+     * @param  \DateTimeInterface  $date  The date to serialize
+     * @return string ISO 8601 formatted date string in application timezone
      */
     protected function serializeDate(\DateTimeInterface $date): string
     {
@@ -353,9 +373,11 @@ class AuditLog extends Model
     /**
      * Invalidate the cached model types list.
      *
-     * Optimized for Redis - uses tag-based flush for efficient invalidation.
+     * Optimized for Redis — uses tag-based flush for efficient invalidation.
      * Call this method when you know new model types have been added
      * to ensure the filter dropdown is up-to-date.
+     *
+     * @return void
      */
     public static function invalidateModelTypesCache(): void
     {
@@ -388,7 +410,7 @@ class AuditLog extends Model
      * @param  string|null  $url  The request URL
      * @param  string|null  $ipAddress  The request IP address
      * @param  string|null  $userAgent  The request user agent
-     * @return self
+     * @return self The created audit log entry
      */
     public static function createDirect(
         string $event,

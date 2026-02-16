@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Cleanup Completed Handler.
+ *
+ * Signal handler that generates notification data when the audit log
+ * cleanup command completes, informing administrators of the results.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

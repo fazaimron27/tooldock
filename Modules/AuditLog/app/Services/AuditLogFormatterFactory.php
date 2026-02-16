@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Formatter Factory.
+ *
+ * Maps audit log event types to their corresponding formatter classes,
+ * ensuring the correct formatting logic is applied for each event category.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services;
 
 use Modules\AuditLog\Services\Formatters\AuthenticationEventFormatter;
@@ -19,7 +29,7 @@ class AuditLogFormatterFactory
     /**
      * Get the appropriate formatter for the given event type.
      *
-     * @param  string  $event
+     * @param  string  $event  The audit log event type to resolve a formatter for
      * @return AuthenticationEventFormatter|FileEventFormatter|GenericEventFormatter|RelationshipEventFormatter|UserEventFormatter
      */
     public static function make(string $event): AuthenticationEventFormatter|FileEventFormatter|GenericEventFormatter|RelationshipEventFormatter|UserEventFormatter

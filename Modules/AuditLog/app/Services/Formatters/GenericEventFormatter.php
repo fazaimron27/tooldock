@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Generic Event Formatter.
+ *
+ * Handles formatting for standard CRUD events (created, updated, deleted)
+ * and export events, producing human-readable diff summaries.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 /**
@@ -71,7 +81,6 @@ class GenericEventFormatter extends AuditLogFormatter
             $oldValue = $oldValues[$key] ?? null;
             $newValue = $newValues[$key] ?? null;
 
-            // Skip if values are the same
             if ($oldValue === $newValue) {
                 continue;
             }
@@ -102,22 +111,16 @@ class GenericEventFormatter extends AuditLogFormatter
      */
     public function format(array $oldValues, array $newValues, ?string $event = null): array
     {
-        // Handle export events specially
         if ($event === 'export') {
             return $this->formatExportDiff($newValues);
         }
-
-        // For created events, only newValues are present
         if (empty($oldValues) && ! empty($newValues)) {
             return $this->formatCreatedDiff($newValues);
         }
 
-        // For deleted events, only oldValues are present
         if (! empty($oldValues) && empty($newValues)) {
             return $this->formatDeletedDiff($oldValues);
         }
-
-        // For updated events, both are present
         if (! empty($oldValues) && ! empty($newValues)) {
             return $this->formatUpdatedDiff($oldValues, $newValues);
         }

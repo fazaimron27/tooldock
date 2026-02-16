@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Syncs Relationships With Audit Log Trait.
+ *
+ * Provides a reusable method for syncing many-to-many relationships
+ * while automatically creating audit log entries when relationships change.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Traits;
 
 use Illuminate\Database\Eloquent\Model;

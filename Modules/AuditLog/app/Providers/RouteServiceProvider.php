@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Route Service Provider.
+ *
+ * Defines web and API route groups for the AuditLog module,
+ * applying appropriate middleware and URL prefixes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;

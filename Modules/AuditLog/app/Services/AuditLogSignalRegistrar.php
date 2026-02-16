@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Signal Registrar.
+ *
+ * Registers signal handlers for the AuditLog module, enabling
+ * notifications for job failures and cleanup completion events.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -26,6 +36,12 @@ class AuditLogSignalRegistrar
         AuditLogCleanupCompletedHandler::class,
     ];
 
+    /**
+     * Register all signal handlers with the central registry.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry to register into
+     * @return void
+     */
     public function register(SignalHandlerRegistry $registry): void
     {
         foreach (self::HANDLERS as $handlerClass) {

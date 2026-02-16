@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Event Formatter.
+ *
+ * Handles formatting for user account events such as email verification,
+ * email changes, and account deletion.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;
