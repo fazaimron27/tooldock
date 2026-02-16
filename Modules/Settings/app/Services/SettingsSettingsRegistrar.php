@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Settings Settings Registrar.
+ *
+ * Registers default application settings for the Settings module,
+ * including core application, regional, and mail configuration.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Services;
 
 use App\Services\Registry\SettingsRegistry;
@@ -12,6 +22,10 @@ class SettingsSettingsRegistrar
 {
     /**
      * Register default application settings.
+     *
+     * @param  SettingsRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

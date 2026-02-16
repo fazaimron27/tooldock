@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Settings Database Seeder.
+ *
+ * Seeds permissions and all registered settings from the SettingsRegistry.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Database\Seeders;
 
 use App\Services\Registry\SettingsRegistry;
@@ -12,6 +21,8 @@ class SettingsDatabaseSeeder extends Seeder
      *
      * Seeds permissions first, then seeds all registered settings from the SettingsRegistry.
      * Settings are registered by modules in their service providers' boot methods.
+     *
+     * @return void
      */
     public function run(): void
     {

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Event Service Provider.
+ *
+ * Registers event listeners and subscribers for the Settings module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,6 +31,8 @@ class EventServiceProvider extends ServiceProvider
 
     /**
      * Configure the proper event listeners for email verification.
+     *
+     * @return void
      */
     protected function configureEmailVerification(): void {}
 }

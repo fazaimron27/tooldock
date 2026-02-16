@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Settings Dashboard Service.
+ *
+ * Handles dashboard widget registration and data retrieval
+ * for the Settings module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Services;
 
 use App\Data\DashboardWidget;
@@ -13,6 +23,10 @@ class SettingsDashboardService
 {
     /**
      * Register all dashboard widgets for the Settings module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
@@ -81,6 +95,9 @@ class SettingsDashboardService
 
     /**
      * Formats a setting value for display in the table.
+     *
+     * @param  Setting  $setting
+     * @return string
      */
     private function formatSettingValue(Setting $setting): string
     {

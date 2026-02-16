@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Settings Service Provider.
+ *
+ * Main service provider for the Settings module. Registers commands,
+ * configuration, views, translations, and all module registries.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Providers;
 
 use App\Services\Registry\CommandRegistry;
@@ -31,6 +41,8 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         CommandRegistry $commandRegistry,
@@ -73,6 +85,8 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -82,17 +96,23 @@ class SettingsServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
+     *
+     * @return void
      */
     protected function registerCommands(): void {}
 
     /**
      * Register command Schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -109,6 +129,8 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -141,6 +163,10 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path
+     * @param  string  $key
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -152,6 +178,8 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -167,12 +195,19 @@ class SettingsServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

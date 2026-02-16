@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Settings Changed Handler.
+ *
+ * Notifies administrators when application settings are modified.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Services\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

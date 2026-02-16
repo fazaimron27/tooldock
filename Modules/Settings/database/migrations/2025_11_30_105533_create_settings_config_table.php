@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('key')->unique()->index();
             $table->text('value')->nullable();
             $table->json('options')->nullable();
-            $table->string('type'); // Validated by PHP SettingType enum
+            $table->string('type');
             $table->string('label');
             $table->boolean('is_system')->default(false);
             $table->string('scope', 10)->default('global')->index();
