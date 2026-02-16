@@ -2,6 +2,7 @@
 
 namespace Modules\AuditLog\Jobs;
 
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
@@ -9,11 +10,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Models\AuditLog;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
-use Modules\Signal\Facades\Signal;
 use Throwable;
 
 class CreateAuditLogJob implements ShouldQueue
@@ -41,8 +40,9 @@ class CreateAuditLogJob implements ShouldQueue
      * Create a new job instance.
      *
      * Captures model information before serialization to handle deleted models.
-     * For deleted events, sets model to null to prevent serialization issues
-     * since model information is already captured in auditableType and auditableId.
+     * Always sets model to null after capturing type/id to prevent
+     * ModelNotFoundException when the model is deleted before job runs
+     * (e.g., during module uninstall when related models are cascade deleted).
      * For events without a model (e.g., export, login), uses 'system' type.
      */
     public function __construct(
@@ -59,27 +59,22 @@ class CreateAuditLogJob implements ShouldQueue
         if ($model !== null) {
             $this->auditableType = get_class($model);
             $this->auditableId = $model->getKey();
-
-            if (in_array($this->event, AuditLogEvent::eventsWithNullModel(), true)) {
-                $this->model = null;
-            }
         } else {
             $this->auditableType = 'system';
             $this->auditableId = null;
         }
+
+        // Always nullify model after capturing type/id to prevent
+        // ModelNotFoundException during unserialization if model
+        // is deleted before the job runs (e.g., module uninstall)
+        $this->model = null;
     }
 
     /**
      * Execute the job.
      *
-     * Creates an audit log entry for the model change.
-     * Uses captured values instead of accessing the model directly since
-     * the model may not exist or be accessible after deletion.
-     *
-     * Verifies model existence for events that require it, skipping the check
-     * for deleted/login/logout/password_reset/export events.
-     * Also verifies model class exists to handle cases where model class was removed.
-     *
+     * Creates an audit log entry using captured type/id values.
+     * Skips if model class no longer exists (e.g., module was uninstalled).
      * Invalidates filter cache to ensure dropdowns reflect new model types and events.
      */
     public function handle(): void
@@ -88,22 +83,9 @@ class CreateAuditLogJob implements ShouldQueue
             $auditableType = $this->auditableType;
             $auditableId = $this->auditableId;
 
-            if (! in_array($this->event, AuditLogEvent::eventsWithoutModelCheck(), true) && $this->model !== null) {
-                $modelExists = $this->model->exists ?? false;
-
-                if (! $modelExists) {
-                    Log::warning('AuditLog: Model no longer exists for non-deleted event', [
-                        'event' => $this->event,
-                        'auditable_type' => $auditableType,
-                        'auditable_id' => $auditableId,
-                    ]);
-
-                    return;
-                }
-            }
-
+            // Skip if model class no longer exists (e.g., module was uninstalled)
             if ($auditableType !== 'system' && ! class_exists($auditableType)) {
-                Log::warning('AuditLog: Model class no longer exists', [
+                Log::info('AuditLog: Skipping audit - model class no longer exists', [
                     'event' => $this->event,
                     'auditable_type' => $auditableType,
                     'auditable_id' => $auditableId,
@@ -129,8 +111,8 @@ class CreateAuditLogJob implements ShouldQueue
         } catch (Throwable $e) {
             Log::error('AuditLog: Failed to create audit log entry', [
                 'event' => $this->event,
-                'auditable_type' => $this->auditableType ?? ($this->model ? get_class($this->model) : 'unknown'),
-                'auditable_id' => $this->auditableId ?? ($this->model?->getKey() ?? null),
+                'auditable_type' => $this->auditableType,
+                'auditable_id' => $this->auditableId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -216,10 +198,6 @@ class CreateAuditLogJob implements ShouldQueue
     private function notifyAdminsAboutFailure(?Throwable $exception): void
     {
         try {
-            if (! class_exists(Signal::class)) {
-                return;
-            }
-
             $admins = User::whereHas('roles', function ($query) {
                 $query->where('name', Roles::SUPER_ADMIN);
             })->get();
@@ -228,15 +206,12 @@ class CreateAuditLogJob implements ShouldQueue
             $shortError = strlen($errorMessage) > 100 ? substr($errorMessage, 0, 100).'...' : $errorMessage;
 
             foreach ($admins as $admin) {
-                $actionUrl = $admin->can('auditlog.dashboard.view') ? route('auditlog.dashboard') : null;
-
-                Signal::alert(
-                    $admin,
-                    'Audit Log Job Failed',
-                    "An audit log entry failed to save after 3 attempts. Event: {$this->event}, Type: {$this->auditableType}. Error: {$shortError}",
-                    $actionUrl,
-                    'AuditLog'
-                );
+                app(SignalHandlerRegistry::class)->dispatch('auditlog.job.failed', [
+                    'user' => $admin,
+                    'event' => $this->event,
+                    'auditable_type' => $this->auditableType,
+                    'error' => $shortError,
+                ]);
             }
         } catch (Throwable $e) {
             Log::warning('AuditLog: Failed to send admin notification about job failure', [

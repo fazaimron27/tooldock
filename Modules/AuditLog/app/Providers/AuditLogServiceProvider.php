@@ -2,17 +2,21 @@
 
 namespace Modules\AuditLog\Providers;
 
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
+use Modules\AuditLog\Services\AuditLogCommandRegistrar;
 use Modules\AuditLog\Services\AuditLogDashboardService;
 use Modules\AuditLog\Services\AuditLogMenuRegistrar;
 use Modules\AuditLog\Services\AuditLogPermissionRegistrar;
 use Modules\AuditLog\Services\AuditLogSettingsRegistrar;
+use Modules\AuditLog\Services\AuditLogSignalRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -29,14 +33,18 @@ class AuditLogServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
+        CommandRegistry $commandRegistry,
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         PermissionRegistry $permissionRegistry,
         DashboardWidgetRegistry $widgetRegistry,
+        AuditLogCommandRegistrar $commandRegistrar,
         AuditLogMenuRegistrar $menuRegistrar,
         AuditLogDashboardService $dashboardService,
         AuditLogPermissionRegistrar $permissionRegistrar,
-        AuditLogSettingsRegistrar $settingsRegistrar
+        AuditLogSettingsRegistrar $settingsRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        AuditLogSignalRegistrar $signalRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -45,10 +53,12 @@ class AuditLogServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $signalRegistrar->register($signalRegistry);
     }
 
     /**

@@ -17,6 +17,12 @@ class AuditLogDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'System Audit Log',
+            'Security audit log for monitoring system activities and events.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
