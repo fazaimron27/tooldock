@@ -22,21 +22,17 @@ function parseLocalDate(dateString) {
     return null;
   }
 
-  // If already a Date object, return as is
   if (dateString instanceof Date) {
     return dateString;
   }
-
-  // Parse YYYY-MM-DD format in local timezone
   const parts = dateString.split('-');
   if (parts.length === 3) {
     const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+    const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
     return new Date(year, month, day);
   }
 
-  // Fallback to standard Date parsing
   return new Date(dateString);
 }
 
@@ -67,16 +63,13 @@ export default function DatePicker({
 }) {
   const [open, setOpen] = useState(false);
 
-  // Convert value to Date object if it's a string (parse in local time)
   const dateValue = value ? parseLocalDate(value) : undefined;
 
-  // Validate date
   const isValidDate = dateValue && !isNaN(dateValue.getTime());
   const displayDate = isValidDate ? dateValue : null;
 
   const handleSelect = (date) => {
     if (date) {
-      // Format the date to YYYY-MM-DD string in local timezone
       const dateString = formatLocalDate(date);
       onChange?.(dateString);
     } else {

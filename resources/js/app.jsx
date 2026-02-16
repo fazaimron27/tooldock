@@ -35,14 +35,7 @@ const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/
  * 2. Authentication pages - Use AuthLayout
  */
 
-const pagesWithoutLayout = [
-  // 1. LANDING & PUBLIC PAGES
-  'Welcome',
-
-  // 2. AUTHENTICATION PAGES (use AuthLayout)
-  'Auth/**',
-  'Modules::*/Auth/**',
-];
+const pagesWithoutLayout = ['Welcome', 'Auth/**', 'Modules::*/Auth/**'];
 
 /**
  * Convert a glob-like pattern to a regex.

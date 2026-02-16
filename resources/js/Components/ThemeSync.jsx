@@ -16,13 +16,9 @@ export function ThemeSync() {
   const { theme, _setThemeFromServer } = useTheme();
   const hasInitialized = useRef(false);
 
-  // Sync server theme to local state on mount and when it changes
   useEffect(() => {
     const serverTheme = userPreferences?.theme;
 
-    // Only sync from server if:
-    // 1. Server has a theme preference
-    // 2. Haven't initialized yet, OR server theme differs from current
     if (serverTheme && ['light', 'dark', 'system'].includes(serverTheme)) {
       if (!hasInitialized.current || serverTheme !== theme) {
         _setThemeFromServer(serverTheme);
@@ -34,10 +30,7 @@ export function ThemeSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPreferences?.theme]);
 
-  // Override setTheme to also sync to backend
   useEffect(() => {
-    // Monkey-patch the setTheme function to also POST to backend
-    // This is done via a global event listener approach
     const handleThemeChange = (event) => {
       const newTheme = event.detail;
       if (userPreferences) {

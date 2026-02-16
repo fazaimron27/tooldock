@@ -26,7 +26,6 @@ export default function SearchableSelectRHF({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Memoize filtered options at component level (not inside Controller callback)
   const filteredOptions = useMemo(() => {
     if (!search) return options;
     const searchLower = search.toLowerCase();

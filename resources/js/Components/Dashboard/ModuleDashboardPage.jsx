@@ -38,7 +38,6 @@ export default function ModuleDashboardPage({
     if (a === 'General') return -1;
     if (b === 'General') return 1;
 
-    // Custom order for Treasury or any module prioritizing Today -> Month -> Year
     const order = {
       'Financial Health': 1,
       Today: 2,
@@ -58,7 +57,6 @@ export default function ModuleDashboardPage({
   const hasWidgets = groupNames.length > 0;
   const metadata = moduleMetadata[moduleName.toLowerCase()];
 
-  // Use custom title from metadata or fallback
   const dashboardTitle = metadata?.title || `${moduleName} Dashboard`;
 
   return (

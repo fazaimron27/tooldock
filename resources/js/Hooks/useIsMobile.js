@@ -13,13 +13,12 @@ const MOBILE_BREAKPOINT = 768;
  */
 function getInitialIsMobile() {
   if (typeof window === 'undefined') {
-    return false; // Default to desktop on SSR
+    return false;
   }
   return window.innerWidth < MOBILE_BREAKPOINT;
 }
 
 export function useIsMobile() {
-  // Initialize with actual value to prevent flash
   const [isMobile, setIsMobile] = React.useState(getInitialIsMobile);
 
   React.useEffect(() => {
@@ -28,7 +27,6 @@ export function useIsMobile() {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
     mql.addEventListener('change', onChange);
-    // Set initial value in case it changed between render and effect
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     return () => mql.removeEventListener('change', onChange);
   }, []);

@@ -18,7 +18,7 @@ export default function AddUserDialog({ trigger }) {
         role: 'user',
       },
       {
-        route: 'users.store', // Update with actual route
+        route: 'users.store',
         method: 'post',
         onSuccess: () => {
           toast.success('User added successfully!', {

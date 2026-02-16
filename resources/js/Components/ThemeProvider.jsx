@@ -49,10 +49,8 @@ export function ThemeProvider({
     setTheme: (newTheme) => {
       localStorage.setItem(storageKey, newTheme);
       setThemeState(newTheme);
-      // Dispatch event for ThemeSync to sync to backend
       window.dispatchEvent(new window.CustomEvent('theme-change', { detail: newTheme }));
     },
-    // Internal method for ThemeSync to update without triggering save
     _setThemeFromServer: (newTheme) => {
       if (newTheme && ['light', 'dark', 'system'].includes(newTheme)) {
         localStorage.setItem(storageKey, newTheme);

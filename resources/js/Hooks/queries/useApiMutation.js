@@ -19,11 +19,8 @@ export function useApiMutation(endpoint, method = 'post', options = {}) {
 
   return useMutation({
     mutationFn: async (data) => {
-      // If endpoint is a function, pass data to it for dynamic URL generation
-      // This allows patterns like: (id) => route('resource.action', { id })
       const url = typeof endpoint === 'function' ? endpoint(data) : endpoint;
 
-      // For DELETE requests or when data is just an ID, don't send body
       const isIdOnly = typeof data === 'string' || typeof data === 'number';
       const requestData = isIdOnly ? undefined : data;
 

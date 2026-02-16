@@ -18,7 +18,7 @@ export default function CreateOrderDialog({ trigger }) {
         quantity: '',
       },
       {
-        route: 'orders.store', // Update with actual route
+        route: 'orders.store',
         method: 'post',
         onSuccess: () => {
           toast.success('Order created successfully!', {

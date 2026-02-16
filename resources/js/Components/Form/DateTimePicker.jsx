@@ -156,14 +156,13 @@ export default function DateTimePicker({
   ...props
 }) {
   const [open, setOpen] = useState(false);
-  const [clockMode, setClockMode] = useState('hours'); // 'hours' or 'minutes'
+  const [clockMode, setClockMode] = useState('hours');
   const parsed = parseDateTime(value);
   const [selectedDate, setSelectedDate] = useState(parsed.date);
   const [selectedHours, setSelectedHours] = useState(parsed.hours);
   const [selectedMinutes, setSelectedMinutes] = useState(parsed.minutes);
   const [selectedPeriod, setSelectedPeriod] = useState(parsed.period);
 
-  // Raw input values for direct typing
   const [hourInput, setHourInput] = useState(String(parsed.hours).padStart(2, '0'));
   const [minuteInput, setMinuteInput] = useState(String(parsed.minutes).padStart(2, '0'));
 
@@ -177,7 +176,6 @@ export default function DateTimePicker({
     setMinuteInput(String(parsed.minutes).padStart(2, '0'));
   }, [value]);
 
-  // Reset clock mode when opening
   useEffect(() => {
     if (open) {
       setClockMode('hours');
@@ -196,7 +194,6 @@ export default function DateTimePicker({
   const handleHoursChange = (hours) => {
     setSelectedHours(hours);
     setHourInput(String(hours).padStart(2, '0'));
-    // Auto-switch to minutes after selecting hour
     globalThis.setTimeout(() => setClockMode('minutes'), 300);
   };
 

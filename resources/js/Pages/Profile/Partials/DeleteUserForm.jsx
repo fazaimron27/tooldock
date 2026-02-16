@@ -28,7 +28,6 @@ export default function DeleteUserForm({ className = '' }) {
         window.location.href = '/';
       },
       onError: () => {
-        // Keep dialog open when there are errors
         if (!formHook.dialog.isOpen) {
           formHook.dialog.onOpen();
         }

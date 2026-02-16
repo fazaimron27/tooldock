@@ -100,11 +100,9 @@ function generateBreadcrumbsFromRoute(title, appName) {
     const resourceParts = routeParts.slice(0, -1);
     const action = routeParts[routeParts.length - 1];
 
-    // Skip "core" module name in breadcrumbs
     const isCoreModule = resourceParts[0] === 'core';
     const partsToProcess = isCoreModule ? resourceParts.slice(1) : resourceParts;
 
-    // Remove consecutive duplicate parts to avoid "Groups > Groups" breadcrumbs
     const uniqueResourceParts = [];
     partsToProcess.forEach((part, index) => {
       if (index === 0 || part !== partsToProcess[index - 1]) {
@@ -114,7 +112,6 @@ function generateBreadcrumbsFromRoute(title, appName) {
 
     uniqueResourceParts.forEach((part, index) => {
       const partLabel = capitalizeLabel(part);
-      // Find the actual route that exists for this part
       const fullRoutePrefix = isCoreModule
         ? `core.${uniqueResourceParts.slice(0, index + 1).join('.')}`
         : uniqueResourceParts.slice(0, index + 1).join('.');
@@ -164,18 +161,14 @@ function generateBreadcrumbsFromRoute(title, appName) {
   const action = routeParts[1];
   const actionLabel = actionLabels[action];
 
-  // Skip "core" module name in breadcrumbs - show resource directly
   const isCoreModule = resourceName === 'core';
   const resourceLabel = isCoreModule ? null : capitalizeLabel(resourceName);
   const resourceIndexRoute = `${resourceName}.index`;
   const hasIndexRoute = route().has(resourceIndexRoute);
-
-  // For dashboard routes, always show module name even if index route doesn't exist
   const isDashboardRoute = action === 'dashboard';
   const dashboardRoute = `${resourceName}.dashboard`;
   const hasDashboardRoute = route().has(dashboardRoute);
 
-  // Try alternative nested index routes (e.g., groups.groups.index instead of groups.index)
   let actualIndexRoute = null;
   if (!hasIndexRoute && resourceName) {
     const alternativeRoute = `${resourceName}.${resourceName}.index`;
@@ -184,24 +177,17 @@ function generateBreadcrumbsFromRoute(title, appName) {
     }
   }
 
-  // For core module, skip the module name and show resource directly
   if (isCoreModule) {
     if (isDashboardRoute) {
-      // Use title if provided, otherwise capitalize the action
       const dashboardLabel = title && title.trim() ? title : capitalizeLabel(action);
       breadcrumbs.push({ label: dashboardLabel });
       return breadcrumbs;
     }
 
-    // For 2-part core routes (shouldn't happen for users/roles as they're 3-part),
-    // but handle gracefully
     if (action === 'index') {
-      // This shouldn't happen for core routes, but handle it
       return breadcrumbs;
     }
 
-    // For other actions, this shouldn't typically happen for core module
-    // as most routes are 3+ parts, but handle it
     const coreActionLabel = actionLabels[action];
     if (coreActionLabel) {
       breadcrumbs.push({ label: coreActionLabel });

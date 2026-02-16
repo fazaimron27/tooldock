@@ -37,17 +37,13 @@ const actionHandlers = {
 export default function CommandPalette({ open, onOpenChange }) {
   const { commands } = usePage().props;
 
-  // Process commands from backend - already grouped and sorted by backend
   const groupedCommands = useMemo(() => {
     const grouped = {};
 
-    // Backend already groups by display group (parent if set, otherwise group)
-    // and sorts groups in correct order - just filter by route availability
     Object.entries(commands || {}).forEach(([group, groupCommands]) => {
       const validCommands = [];
 
       groupCommands.forEach((cmd) => {
-        // URL-based commands (external links like Horizon, Pulse)
         if (cmd.url) {
           validCommands.push({
             type: 'command',
@@ -59,9 +55,7 @@ export default function CommandPalette({ open, onOpenChange }) {
             icon: cmd.icon,
             keywords: cmd.keywords || [],
           });
-        }
-        // Route-based commands (internal navigation)
-        else if (cmd.route && route().has(cmd.route)) {
+        } else if (cmd.route && route().has(cmd.route)) {
           validCommands.push({
             type: 'command',
             group,
@@ -71,9 +65,7 @@ export default function CommandPalette({ open, onOpenChange }) {
             icon: cmd.icon,
             keywords: cmd.keywords || [],
           });
-        }
-        // Action-based commands (logout, etc.)
-        else if (cmd.action) {
+        } else if (cmd.action) {
           validCommands.push({
             type: 'command',
             group,
@@ -99,7 +91,6 @@ export default function CommandPalette({ open, onOpenChange }) {
       onOpenChange(false);
 
       if (item.url) {
-        // External URL - open in new tab if specified
         if (item.newTab) {
           window.open(item.url, '_blank');
         } else {
@@ -114,7 +105,6 @@ export default function CommandPalette({ open, onOpenChange }) {
     [onOpenChange]
   );
 
-  // Build search value including keywords
   const getSearchValue = (item) => {
     const parts = [item.label, item.group || ''];
     if (item.keywords) {

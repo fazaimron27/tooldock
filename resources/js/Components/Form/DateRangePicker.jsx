@@ -42,7 +42,6 @@ export function DateRangePicker({
 
   const [isOpen, setIsOpen] = React.useState(false);
 
-  // Sync with props if they change externally
   React.useEffect(() => {
     setDate({
       from: startDate ? parseISO(startDate) : undefined,
@@ -51,7 +50,6 @@ export function DateRangePicker({
   }, [startDate, endDate]);
 
   const handleSelect = (range) => {
-    // If selecting the same start date, clear it
     if (range?.from && date?.from && isSameDay(range.from, date.from) && !range.to) {
       setDate({ from: undefined, to: undefined });
       return;
