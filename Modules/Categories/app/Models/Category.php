@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Category Model.
+ *
+ * Represents a hierarchical category with parent/child relationships,
+ * type-scoped slugs, auto-slug generation, and audit logging.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -57,6 +67,8 @@ class Category extends Model
 
     /**
      * Get the parent category.
+     *
+     * @return BelongsTo
      */
     public function parent(): BelongsTo
     {
@@ -65,6 +77,8 @@ class Category extends Model
 
     /**
      * Get the child categories.
+     *
+     * @return HasMany
      */
     public function children(): HasMany
     {
@@ -73,6 +87,10 @@ class Category extends Model
 
     /**
      * Scope a query to filter by type.
+     *
+     * @param  Builder  $query  The query builder instance
+     * @param  string  $type  The category type to filter by
+     * @return Builder
      */
     public function scopeByType(Builder $query, string $type): Builder
     {
@@ -81,6 +99,9 @@ class Category extends Model
 
     /**
      * Ensure type is always lowercase.
+     *
+     * @param  string  $value  The type value to normalize
+     * @return void
      */
     public function setTypeAttribute(string $value): void
     {
@@ -89,6 +110,9 @@ class Category extends Model
 
     /**
      * Ensure module is always lowercase.
+     *
+     * @param  string|null  $value  The module value to normalize
+     * @return void
      */
     public function setModuleAttribute(?string $value): void
     {
@@ -97,7 +121,11 @@ class Category extends Model
 
     /**
      * Generate a unique slug from the name.
+     *
      * Slug must be unique per type (not globally).
+     *
+     * @param  string  $value  The name value to set and generate slug from
+     * @return void
      */
     public function setNameAttribute(string $value): void
     {
@@ -141,6 +169,8 @@ class Category extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return Factory
      */
     protected static function newFactory(): Factory
     {

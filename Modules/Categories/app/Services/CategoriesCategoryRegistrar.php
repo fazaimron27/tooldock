@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Categories Category Registrar.
+ *
+ * Registers default seed categories (product, finance, project, inventory,
+ * expense, department) for development and testing purposes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Services;
 
 use App\Services\Registry\CategoryRegistry;
@@ -14,6 +24,10 @@ class CategoriesCategoryRegistrar
 {
     /**
      * Register default categories for the Categories module.
+     *
+     * @param  CategoryRegistry  $registry  The category registry
+     * @param  string  $moduleName  The module name
+     * @return void
      */
     public function register(CategoryRegistry $registry, string $moduleName): void
     {

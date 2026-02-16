@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Categories Controller.
+ *
+ * Handles CRUD operations for categories with server-side pagination,
+ * search, sorting, and type filtering via DatatableQueryService.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -18,6 +28,10 @@ class CategoriesController extends Controller
      * Display a paginated listing of categories.
      *
      * Supports server-side search, sorting, pagination, and filtering by type.
+     *
+     * @param  DatatableQueryService  $datatableService  The datatable query builder
+     * @param  Request  $request  The incoming HTTP request
+     * @return Response
      */
     public function index(DatatableQueryService $datatableService, Request $request): Response
     {
@@ -61,6 +75,8 @@ class CategoriesController extends Controller
 
     /**
      * Show the form for creating a new category.
+     *
+     * @return Response
      */
     public function create(): Response
     {
@@ -93,6 +109,9 @@ class CategoriesController extends Controller
 
     /**
      * Store a newly created category in storage.
+     *
+     * @param  StoreCategoryRequest  $request  The validated store request
+     * @return RedirectResponse
      */
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
@@ -104,6 +123,9 @@ class CategoriesController extends Controller
 
     /**
      * Show the form for editing the specified category.
+     *
+     * @param  Category  $category  The category to edit
+     * @return Response
      */
     public function edit(Category $category): Response
     {
@@ -138,6 +160,10 @@ class CategoriesController extends Controller
 
     /**
      * Update the specified category in storage.
+     *
+     * @param  UpdateCategoryRequest  $request  The validated update request
+     * @param  Category  $category  The category to update
+     * @return RedirectResponse
      */
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
@@ -149,6 +175,9 @@ class CategoriesController extends Controller
 
     /**
      * Remove the specified category from storage.
+     *
+     * @param  Category  $category  The category to delete
+     * @return RedirectResponse
      */
     public function destroy(Category $category): RedirectResponse
     {

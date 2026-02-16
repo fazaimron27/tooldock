@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Categories Menu Registrar.
+ *
+ * Registers sidebar menu items and dashboard navigation entries
+ * for the Categories module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Services;
 
 use App\Services\Registry\MenuRegistry;
@@ -11,6 +21,10 @@ class CategoriesMenuRegistrar
 {
     /**
      * Register all menu items for the Categories module.
+     *
+     * @param  MenuRegistry  $menuRegistry  The menu registry
+     * @param  string  $moduleName  The module name
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

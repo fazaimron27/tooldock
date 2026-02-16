@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Store Category Request.
+ *
+ * Validates input for creating a new category, enforcing unique name/slug
+ * per type, valid parent type matching, and hex color format.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,6 +58,8 @@ class StoreCategoryRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
