@@ -58,86 +58,56 @@ import {
  * Organized by parent categories from TreasuryCategoryRegistrar.php
  */
 export const goalCategoryIcons = {
-  // ========================================
-  // EMERGENCY & SECURITY
-  // ========================================
   shield: Shield,
   'shield-check': ShieldCheck,
   'shield-plus': ShieldPlus,
   briefcase: Briefcase,
 
-  // ========================================
-  // HOME & PROPERTY
-  // ========================================
   home: Home,
   key: Key,
   hammer: Hammer,
   armchair: Armchair,
   building: Building,
 
-  // ========================================
-  // TRANSPORTATION
-  // ========================================
   car: Car,
   'car-front': CarFront,
   bike: Bike,
-  bicycle: Bike, // Bicycle not available in lucide-react, using Bike
+  bicycle: Bike,
 
-  // ========================================
-  // TRAVEL & LEISURE
-  // ========================================
   plane: Plane,
   'palm-tree': TreePalm,
   mountain: Mountain,
   hotel: Hotel,
   'map-pin': MapPin,
 
-  // ========================================
-  // EDUCATION & GROWTH
-  // ========================================
   'graduation-cap': GraduationCap,
   school: School,
   award: Award,
   languages: Languages,
   presentation: Presentation,
 
-  // ========================================
-  // LIFE EVENTS
-  // ========================================
   heart: Heart,
-  rings: Gem, // Rings not available in lucide-react, using Gem
+  rings: Gem,
   baby: Baby,
   sunset: Sunset,
   cake: Cake,
 
-  // ========================================
-  // TECHNOLOGY
-  // ========================================
   smartphone: Smartphone,
   phone: Phone,
   laptop: Laptop,
   'gamepad-2': Gamepad2,
   router: Router,
 
-  // ========================================
-  // HEALTH & MEDICAL
-  // ========================================
   'heart-pulse': HeartPulse,
   stethoscope: Stethoscope,
   dumbbell: Dumbbell,
   sparkles: Sparkles,
 
-  // ========================================
-  // BUSINESS & INVESTMENT
-  // ========================================
   'trending-up': TrendingUp,
   rocket: Rocket,
   coins: Coins,
   lightbulb: Lightbulb,
 
-  // ========================================
-  // OTHER
-  // ========================================
   target: Target,
   'piggy-bank': PiggyBank,
   box: Box,

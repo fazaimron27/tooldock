@@ -99,8 +99,6 @@ export default function DataTable({
                       key={cell.id}
                       className="p-4 align-middle whitespace-nowrap"
                       onClick={(e) => {
-                        // Prevents row click when interacting with buttons, links, or form elements
-                        // Ensures action buttons work independently without triggering row navigation
                         const interactiveElements =
                           'button, a, input, select, textarea, [role="button"], [role="link"], [role="menuitem"]';
                         if (e.target.closest(interactiveElements)) {

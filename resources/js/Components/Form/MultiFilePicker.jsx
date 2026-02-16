@@ -46,7 +46,6 @@ export default function MultiFilePicker({
       const maxFileSizeBytes = maxFileSizeKB * 1024;
       const maxFileSizeMB = page.props.media?.max_file_size_mb || maxFileSizeKB / 1024;
 
-      // Validate file sizes
       for (const file of filesToUpload) {
         if (file.size > maxFileSizeBytes) {
           toast.error('File too large', {

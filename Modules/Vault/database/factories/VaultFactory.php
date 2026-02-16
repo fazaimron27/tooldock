@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Vault Factory
+ *
+ * Model factory for generating Vault test data with support for
+ * different types, favorites, and TOTP secrets.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -7,10 +17,19 @@ use Modules\Core\Models\User;
 use Modules\Vault\Models\Vault;
 
 /**
+ * Class VaultFactory
+ *
+ * Generates realistic vault test data for logins, cards, notes, and servers.
+ *
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Modules\Vault\Models\Vault>
  */
 class VaultFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var class-string<Vault>
+     */
     protected $model = Vault::class;
 
     /**
@@ -41,6 +60,8 @@ class VaultFactory extends Factory
 
     /**
      * Indicate that the vault should be a favorite.
+     *
+     * @return static
      */
     public function favorite(): static
     {
@@ -51,6 +72,9 @@ class VaultFactory extends Factory
 
     /**
      * Indicate that the vault should be of a specific type.
+     *
+     * @param  string  $type  The vault type (login, card, note, server)
+     * @return static
      */
     public function ofType(string $type): static
     {
@@ -61,6 +85,8 @@ class VaultFactory extends Factory
 
     /**
      * Indicate that the vault should have a TOTP secret.
+     *
+     * @return static
      */
     public function withTotp(): static
     {

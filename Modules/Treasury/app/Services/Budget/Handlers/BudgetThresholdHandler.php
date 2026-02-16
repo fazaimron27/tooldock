@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Threshold Handler
+ *
+ * Signal handler that returns data when a budget exceeds warning or
+ * overbudget thresholds. Triggers on transaction and budget changes.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -49,18 +59,13 @@ class BudgetThresholdHandler implements SignalHandlerInterface
     /** {@inheritdoc} */
     public function supports(string $event, mixed $data): bool
     {
-        // Transaction events
         if ($data instanceof Transaction && $data->category_id !== null) {
             return $data->type === 'expense'
                 || ($data->type === 'transfer' && $data->goal_id !== null);
         }
-
-        // Array format from BudgetObserver
         if (is_array($data) && isset($data['budget']) && $data['budget'] instanceof Budget) {
             return true;
         }
-
-        // Array format from BudgetPeriodObserver
         if (is_array($data) && isset($data['budgetPeriod']) && $data['budgetPeriod'] instanceof BudgetPeriod) {
             return true;
         }
@@ -71,17 +76,12 @@ class BudgetThresholdHandler implements SignalHandlerInterface
     /** {@inheritdoc} */
     public function handle(mixed $data): ?array
     {
-        // Handle Transaction events
         if ($data instanceof Transaction) {
             return $this->handleTransaction($data);
         }
-
-        // Array format from BudgetObserver
         if (is_array($data) && isset($data['budget']) && $data['budget'] instanceof Budget) {
             return $this->handleBudget($data['budget']);
         }
-
-        // Array format from BudgetPeriodObserver
         if (is_array($data) && isset($data['budgetPeriod']) && $data['budgetPeriod'] instanceof BudgetPeriod) {
             return $this->handleBudgetPeriod($data['budgetPeriod']);
         }
@@ -91,6 +91,9 @@ class BudgetThresholdHandler implements SignalHandlerInterface
 
     /**
      * Handle threshold check triggered by transaction.
+     *
+     * @param  Transaction  $transaction
+     * @return array|null
      */
     private function handleTransaction(Transaction $transaction): ?array
     {
@@ -116,6 +119,9 @@ class BudgetThresholdHandler implements SignalHandlerInterface
 
     /**
      * Handle threshold check triggered by budget template update.
+     *
+     * @param  Budget  $budget
+     * @return array|null
      */
     private function handleBudget(Budget $budget): ?array
     {
@@ -124,7 +130,6 @@ class BudgetThresholdHandler implements SignalHandlerInterface
             return null;
         }
 
-        // When budget template is updated, check for current month
         $month = (int) now()->month;
         $year = (int) now()->year;
 
@@ -133,6 +138,9 @@ class BudgetThresholdHandler implements SignalHandlerInterface
 
     /**
      * Handle threshold check triggered by budget period update.
+     *
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return array|null
      */
     private function handleBudgetPeriod(BudgetPeriod $budgetPeriod): ?array
     {
@@ -155,6 +163,12 @@ class BudgetThresholdHandler implements SignalHandlerInterface
 
     /**
      * Check if budget exceeds threshold and return signal data if so.
+     *
+     * @param  Budget  $budget
+     * @param  mixed  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @return array|null
      */
     private function checkThreshold(Budget $budget, $user, int $month, int $year): ?array
     {
@@ -163,7 +177,6 @@ class BudgetThresholdHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Use the currency from the budget details (budget's native currency)
         $currency = $details['currency'] ?? settings('treasury_reference_currency', 'IDR');
         $percentage = $details['health'] ?? 0;
         $spent = $details['spent'] ?? 0;
@@ -178,7 +191,6 @@ class BudgetThresholdHandler implements SignalHandlerInterface
         $formattedSpent = $this->currencyFormatter->format($spent, $currency);
         $formattedLimit = $this->currencyFormatter->format($totalLimit, $currency);
 
-        // Check overbudget first
         if ($percentage >= $overThreshold) {
             $cacheKey = "budget_signal_{$budget->id}_{$period}_overbudget_sent";
             if (Cache::has($cacheKey)) {
@@ -192,11 +204,9 @@ class BudgetThresholdHandler implements SignalHandlerInterface
                 'percentage' => $percentage,
             ]);
 
-            // Differentiate between exactly at limit vs exceeded
             $isExceeded = $percentage > $overThreshold;
 
             if ($isExceeded) {
-                // Over 100% - alert/danger tone, recommend reducing
                 return [
                     'type' => 'alert',
                     'title' => 'Budget Limit Exceeded',
@@ -206,7 +216,6 @@ class BudgetThresholdHandler implements SignalHandlerInterface
                 ];
             }
 
-            // Exactly at 100% - warning/neutral tone, just informing
             return [
                 'type' => 'warning',
                 'title' => 'Budget Limit Reached',
@@ -216,7 +225,6 @@ class BudgetThresholdHandler implements SignalHandlerInterface
             ];
         }
 
-        // Check warning threshold
         if ($percentage >= $warnThreshold) {
             $cacheKey = "budget_signal_{$budget->id}_{$period}_warning_sent";
             if (Cache::has($cacheKey)) {

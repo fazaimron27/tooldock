@@ -1,15 +1,33 @@
 <?php
 
+/**
+ * Store Wallet Request
+ *
+ * Validates requests to create a new wallet. Ensures the wallet type exists
+ * as a valid category slug, validates ISO 4217 currency codes, and
+ * normalizes nullable description fields.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class StoreWalletRequest
+ *
+ * Handles validation for wallet creation with type and currency enforcement.
+ */
 class StoreWalletRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -18,6 +36,8 @@ class StoreWalletRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {

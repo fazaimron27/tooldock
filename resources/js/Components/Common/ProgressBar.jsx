@@ -12,7 +12,6 @@ export default function ProgressBar({
   barClassName,
   color = 'primary',
 }) {
-  // Calculate percentage if value is provided as number
   const progressPercentage =
     percentage !== undefined
       ? percentage
@@ -20,13 +19,10 @@ export default function ProgressBar({
         ? value
         : parseFloat(value) || 0;
 
-  // Ensure percentage is between 0 and 100
   const clampedPercentage = Math.min(Math.max(progressPercentage, 0), 100);
 
-  // Format value display
   const displayValue = typeof value === 'string' ? value : `${value}%`;
 
-  // Color variants
   const colorClasses = {
     primary: 'bg-primary',
     destructive: 'bg-destructive',
@@ -35,7 +31,6 @@ export default function ProgressBar({
     info: 'bg-blue-500',
   };
 
-  // Determine if color is a variant or dynamic hex
   const isVariant = Object.keys(colorClasses).includes(color);
 
   return (

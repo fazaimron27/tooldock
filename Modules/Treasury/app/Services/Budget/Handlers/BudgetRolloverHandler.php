@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Rollover Handler
+ *
+ * Signal handler that returns data when rollover debt is accumulating
+ * across budget months. Triggered by the scheduled monthly event.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -54,7 +64,6 @@ class BudgetRolloverHandler implements SignalHandlerInterface
         $month = (int) now()->format('m');
         $year = (int) now()->format('Y');
 
-        // Calculate total negative rollover (debt) across all budgets
         $budgets = Budget::where('user_id', $user->id)
             ->where('rollover_enabled', true)
             ->get();
@@ -67,7 +76,6 @@ class BudgetRolloverHandler implements SignalHandlerInterface
             }
         }
 
-        // Minimum threshold to trigger alert (in reference currency)
         $threshold = (float) settings('treasury_rollover_debt_threshold', 100000);
 
         if ($totalDebt < $threshold) {

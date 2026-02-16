@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Budget Recovery Handler
+ *
+ * Signal handler that returns data when a budget recovers from overbudget
+ * to safe status. Triggers on transaction changes, budget period updates,
+ * and budget template updates.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -54,7 +65,6 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
     /** {@inheritdoc} */
     public function supports(string $event, mixed $data): bool
     {
-        // Only expense and goal transfers affect budget spending
         if ($data instanceof Transaction) {
             return $data->type === 'expense'
                 || ($data->type === 'transfer' && $data->goal_id !== null);
@@ -64,12 +74,9 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
             return true;
         }
 
-        // Array format from BudgetPeriodObserver
         if (is_array($data) && isset($data['budgetPeriod']) && $data['budgetPeriod'] instanceof BudgetPeriod) {
             return true;
         }
-
-        // Array format from BudgetObserver
         if (is_array($data) && isset($data['budget']) && $data['budget'] instanceof Budget) {
             return true;
         }
@@ -80,7 +87,6 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
     /** {@inheritdoc} */
     public function handle(mixed $data): ?array
     {
-        // Extract budget, user, and period info based on data type
         if ($data instanceof Transaction) {
             return $this->handleTransaction($data);
         }
@@ -89,12 +95,9 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
             return $this->handleBudgetPeriod($data);
         }
 
-        // Array format from BudgetPeriodObserver
         if (is_array($data) && isset($data['budgetPeriod']) && $data['budgetPeriod'] instanceof BudgetPeriod) {
             return $this->handleBudgetPeriod($data['budgetPeriod']);
         }
-
-        // Array format from BudgetObserver
         if (is_array($data) && isset($data['budget']) && $data['budget'] instanceof Budget) {
             return $this->handleBudget($data['budget']);
         }
@@ -104,6 +107,9 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
 
     /**
      * Handle recovery check triggered by transaction change.
+     *
+     * @param  Transaction  $transaction
+     * @return array|null
      */
     private function handleTransaction(Transaction $transaction): ?array
     {
@@ -129,6 +135,9 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
 
     /**
      * Handle recovery check triggered by budget period update.
+     *
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return array|null
      */
     private function handleBudgetPeriod(BudgetPeriod $budgetPeriod): ?array
     {
@@ -142,7 +151,6 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Extract month and year from period string (YYYY-MM format)
         $periodDate = $budgetPeriod->getPeriodDate();
         $month = (int) $periodDate->month;
         $year = (int) $periodDate->year;
@@ -152,6 +160,9 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
 
     /**
      * Handle recovery check triggered by budget template update.
+     *
+     * @param  Budget  $budget
+     * @return array|null
      */
     private function handleBudget(Budget $budget): ?array
     {
@@ -160,7 +171,6 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
             return null;
         }
 
-        // When budget template is updated, check recovery for current month
         $month = (int) now()->month;
         $year = (int) now()->year;
 
@@ -169,12 +179,17 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
 
     /**
      * Check if budget has recovered and return signal data if so.
+     *
+     * @param  Budget  $budget
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @return array|null
      */
     private function checkRecovery(Budget $budget, User $user, int $month, int $year): ?array
     {
         $period = BudgetPeriod::formatPeriod($month, $year);
 
-        // Check if we previously sent an overbudget or warning signal
         $hadOverbudget = Cache::has("budget_signal_{$budget->id}_{$period}_overbudget_sent");
         $hadWarning = Cache::has("budget_signal_{$budget->id}_{$period}_warning_sent");
 
@@ -190,7 +205,6 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
         $percentage = $details['health'] ?? 0;
         $warnThreshold = (float) settings('treasury_budget_warning_threshold', 80);
 
-        // Check if budget has recovered to safe status (spending below warning threshold)
         if ($percentage >= $warnThreshold) {
             return null;
         }
@@ -202,12 +216,10 @@ class BudgetRecoveryHandler implements SignalHandlerInterface
 
         Cache::put($cacheKey, true, now()->endOfMonth());
 
-        // Clear the warning/overbudget cache since we've recovered
         Cache::forget("budget_signal_{$budget->id}_{$period}_overbudget_sent");
         Cache::forget("budget_signal_{$budget->id}_{$period}_warning_sent");
 
         $budgetName = $budget->category?->name ?? 'Budget';
-        // Use the currency from the budget details (budget's native currency)
         $currency = $details['currency'] ?? settings('treasury_reference_currency', 'IDR');
         $remaining = ($details['total_limit'] ?? 0) - ($details['spent'] ?? 0);
         $formattedRemaining = $this->currencyFormatter->format($remaining, $currency);

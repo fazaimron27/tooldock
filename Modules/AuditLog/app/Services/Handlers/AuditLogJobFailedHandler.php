@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Job Failed Handler.
+ *
+ * Signal handler that generates notification data when an audit log
+ * creation job fails, alerting administrators to investigate.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

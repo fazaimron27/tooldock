@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Settings Registrar.
+ *
+ * Registers settings definitions for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\SettingsRegistry;
@@ -11,7 +20,11 @@ use Modules\Settings\Enums\SettingType;
 class GroupsSettingsRegistrar
 {
     /**
-     * Register groups module settings.
+     * Register settings for the Groups module.
+     *
+     * @param  SettingsRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

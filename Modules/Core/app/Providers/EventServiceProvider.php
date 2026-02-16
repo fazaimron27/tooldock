@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Event Service Provider.
+ *
+ * Registers event listeners and model observers
+ * for the Core module's domain events.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Providers;
 
 use Illuminate\Auth\Events\Lockout;

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Media Dashboard Service.
+ *
+ * Handles dashboard widget registration and data retrieval
+ * for the Media module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Services;
 
 use App\Data\DashboardWidget;
@@ -13,6 +23,10 @@ class MediaDashboardService
 {
     /**
      * Register all dashboard widgets for the Media module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
@@ -67,6 +81,8 @@ class MediaDashboardService
      * Get storage usage metrics for system widget.
      *
      * Uses a single query with conditional aggregation instead of multiple queries.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getStorageUsageMetrics(): array
     {
@@ -110,6 +126,8 @@ class MediaDashboardService
 
     /**
      * Get recent media uploads activity for activity widget.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getRecentMediaActivity(): array
     {

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Treasury Goal Model
+ *
+ * Represents a savings goal linked to a dedicated savings wallet. Tracks
+ * progress through allocated transactions, calculates completion percentage,
+ * remaining amounts, and overdue status based on optional deadlines.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -14,6 +25,11 @@ use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
 use Modules\Treasury\Database\Factories\TreasuryGoalFactory;
 
+/**
+ * Class TreasuryGoal
+ *
+ * Savings goal model with progress tracking and wallet linkage.
+ */
 class TreasuryGoal extends Model
 {
     use HasFactory, HasUserOwnership, HasUuids, LogsActivity;
@@ -64,7 +80,6 @@ class TreasuryGoal extends Model
     protected function casts(): array
     {
         return [
-            // Use string to avoid float precision issues in JavaScript
             'target_amount' => 'string',
             'deadline' => 'date:Y-m-d',
             'is_completed' => 'boolean',
@@ -73,6 +88,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the user that owns the goal.
+     *
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -81,6 +98,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the wallet linked to this goal.
+     *
+     * @return BelongsTo
      */
     public function wallet(): BelongsTo
     {
@@ -89,6 +108,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the category for this goal.
+     *
+     * @return BelongsTo
      */
     public function category(): BelongsTo
     {
@@ -97,6 +118,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the transactions allocated to this goal.
+     *
+     * @return HasMany
      */
     public function transactions(): HasMany
     {
@@ -105,6 +128,9 @@ class TreasuryGoal extends Model
 
     /**
      * Scope a query to only include incomplete goals.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeIncomplete(Builder $query): Builder
     {
@@ -114,10 +140,11 @@ class TreasuryGoal extends Model
     /**
      * Get saved_amount from sum of transactions allocated to this goal.
      * This tracks progress per-goal, allowing multiple sequential goals on the same wallet.
+     *
+     * @return string
      */
     public function getSavedAmountAttribute(): string
     {
-        // Sum all transactions explicitly allocated to this goal
         $allocated = $this->transactions()->sum('amount');
 
         return (string) $allocated;
@@ -125,6 +152,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the progress percentage attribute.
+     *
+     * @return float
      */
     public function getProgressPercentageAttribute(): float
     {
@@ -140,6 +169,8 @@ class TreasuryGoal extends Model
 
     /**
      * Get the remaining amount attribute.
+     *
+     * @return float
      */
     public function getRemainingAmountAttribute(): float
     {
@@ -151,6 +182,8 @@ class TreasuryGoal extends Model
 
     /**
      * Check if the goal is overdue.
+     *
+     * @return bool
      */
     public function getIsOverdueAttribute(): bool
     {
@@ -179,6 +212,8 @@ class TreasuryGoal extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return TreasuryGoalFactory
      */
     protected static function newFactory(): TreasuryGoalFactory
     {

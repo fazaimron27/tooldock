@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Auth Service Provider
+ *
+ * Registers model-policy mappings for Treasury module authorization.
+ * Maps Budget, Transaction, TreasuryGoal, and Wallet models to their
+ * respective policy classes for permission-based access control.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -12,6 +23,11 @@ use Modules\Treasury\Policies\TransactionPolicy;
 use Modules\Treasury\Policies\TreasuryGoalPolicy;
 use Modules\Treasury\Policies\WalletPolicy;
 
+/**
+ * Class AuthServiceProvider
+ *
+ * Treasury module authentication and authorization service provider.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**
@@ -28,6 +44,8 @@ class AuthServiceProvider extends ServiceProvider
 
     /**
      * Register any authentication / authorization services.
+     *
+     * @return void
      */
     public function boot(): void
     {

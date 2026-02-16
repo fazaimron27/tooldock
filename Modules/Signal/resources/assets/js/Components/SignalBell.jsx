@@ -37,31 +37,25 @@ export default function SignalBell() {
     isOpenRef.current = isOpen;
   }, [isOpen]);
 
-  // React Query: Unread count with background polling
   const { data: unreadData, error: unreadError } = useUnreadCount({
-    // Initialize with server-provided count to avoid flash
     initialData: signal?.unread_count !== undefined ? { count: signal.unread_count } : undefined,
   });
 
-  // React Query: Recent notifications (only fetch when dropdown is open)
   const {
     data: recentData,
     error: recentError,
     refetch: refetchRecent,
   } = useRecentNotifications({
-    enabled: isOpen, // Only fetch when dropdown is open
+    enabled: isOpen,
   });
 
   const unreadCount = unreadData?.count ?? 0;
   const notifications = recentData?.notifications ?? [];
   const error = unreadError || recentError ? 'Failed to load notifications' : null;
 
-  // Handle refresh - invalidate both queries
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: notificationKeys.all });
   };
-
-  // WebSocket: Real-time notification updates
   useEffect(() => {
     if (!auth?.user?.id || typeof window.Echo === 'undefined') {
       return;
@@ -70,15 +64,12 @@ export default function SignalBell() {
     const channel = window.Echo.private(`App.Models.User.${auth.user.id}`);
 
     channel.listen('.notification.received', (data) => {
-      // Invalidate queries to refetch fresh data
       queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
 
-      // If dropdown is open, also refetch recent notifications
       if (isOpenRef.current) {
         queryClient.invalidateQueries({ queryKey: notificationKeys.recent() });
       }
 
-      // Optimistic update for immediate feedback on unread count
       if (data.unread_count !== null && data.unread_count !== undefined) {
         queryClient.setQueryData(notificationKeys.unreadCount(), { count: data.unread_count });
       }
@@ -89,14 +80,12 @@ export default function SignalBell() {
     };
   }, [auth?.user?.id, queryClient]);
 
-  // Sync with Inertia props when they change (page navigation)
   useEffect(() => {
     if (signal?.unread_count !== undefined) {
       queryClient.setQueryData(notificationKeys.unreadCount(), { count: signal.unread_count });
     }
   }, [signal?.unread_count, queryClient]);
 
-  // Refetch recent notifications when dropdown opens
   useEffect(() => {
     if (isOpen) {
       refetchRecent();

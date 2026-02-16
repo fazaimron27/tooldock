@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Transaction Milestone Handler
+ *
+ * Signal handler that returns data when a user reaches transaction
+ * count milestones (10, 25, 50, 100, etc.).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -59,16 +69,12 @@ class TransactionMilestoneHandler implements SignalHandlerInterface
         $cacheKey = "transaction_count_user_{$user->id}";
         $cachedCount = Cache::get($cacheKey);
 
-        // If cached count is near a milestone, always verify with actual count
-        // This prevents false positives when transactions are deleted
         $estimatedCount = $cachedCount !== null ? $cachedCount + 1 : null;
         $nearMilestone = $estimatedCount !== null && in_array($estimatedCount, self::MILESTONES, true);
 
         if ($cachedCount === null || $nearMilestone) {
-            // Query actual count for accuracy at milestone boundaries
             $count = Transaction::where('user_id', $user->id)->count();
         } else {
-            // Use incremented cache for non-milestone situations
             $count = $cachedCount + 1;
         }
 

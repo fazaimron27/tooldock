@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Auth Service Provider.
+ *
+ * Registers model-policy mappings for the Media module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -19,6 +28,8 @@ class AuthServiceProvider extends ServiceProvider
 
     /**
      * Register any authentication / authorization services.
+     *
+     * @return void
      */
     public function boot(): void
     {

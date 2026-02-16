@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Send Weekly Transaction Summary Command
+ *
+ * Generates and sends a weekly summary of transaction activity including
+ * income, expenses, and net change totals. Dispatches summary data
+ * through the signal handler registry for notification delivery.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class SendWeeklyTransactionSummaryCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class SendWeeklyTransactionSummaryCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get users who have transactions in the past week
             $weekStart = now()->subWeek()->startOfWeek()->format('Y-m-d');
             $users = User::whereHas('transactions', function ($query) use ($weekStart) {
                 $query->where('date', '>=', $weekStart);

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Has Groups Trait.
+ *
+ * Provides group relationship and permission methods for user models.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

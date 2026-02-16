@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Store User Request.
+ *
+ * Validates data for creating a new user including
+ * name, email uniqueness, password, and role assignment.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +20,8 @@ class StoreUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

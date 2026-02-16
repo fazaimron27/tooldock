@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Media File Model.
+ *
+ * Represents an uploaded file with polymorphic ownership,
+ * temporary/permanent status, and audit logging support.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -51,6 +61,11 @@ class MediaFile extends Model
      */
     private static array $timestampFields = ['created_at', 'updated_at'];
 
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -68,6 +83,8 @@ class MediaFile extends Model
 
     /**
      * Get the parent model (polymorphic).
+     *
+     * @return MorphTo
      */
     public function model(): MorphTo
     {
@@ -76,6 +93,8 @@ class MediaFile extends Model
 
     /**
      * Get the public URL for the file.
+     *
+     * @return string
      */
     public function getUrlAttribute(): string
     {
@@ -87,6 +106,8 @@ class MediaFile extends Model
 
     /**
      * Check if the file is an image.
+     *
+     * @return bool
      */
     public function isImage(): bool
     {
@@ -95,6 +116,9 @@ class MediaFile extends Model
 
     /**
      * Scope a query to only include temporary files.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeTemporary(Builder $query): Builder
     {
@@ -103,6 +127,9 @@ class MediaFile extends Model
 
     /**
      * Scope a query to only include permanent files.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePermanent(Builder $query): Builder
     {
@@ -111,6 +138,8 @@ class MediaFile extends Model
 
     /**
      * Override LogsActivity to use custom event types for file operations.
+     *
+     * @return void
      */
     public static function bootLogsActivity(): void
     {

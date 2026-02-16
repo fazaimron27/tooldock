@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Vault Auto-Locked Handler
+ *
+ * Signal handler that fires when a vault is automatically locked due to timeout.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services\Lock\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

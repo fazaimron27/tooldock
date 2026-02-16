@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Setting Type Enum.
+ *
+ * Defines the available data types for application settings.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Enums;
 
 enum SettingType: string

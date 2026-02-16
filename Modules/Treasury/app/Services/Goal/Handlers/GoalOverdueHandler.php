@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Overdue Handler
+ *
+ * Signal handler that returns data when goals are past their
+ * deadline and still incomplete (scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

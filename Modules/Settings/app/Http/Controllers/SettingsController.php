@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Settings Controller.
+ *
+ * Handles displaying and updating application settings.
+ * Separates application settings from module settings and
+ * dispatches signals on changes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -17,6 +28,12 @@ use Nwidart\Modules\Facades\Module;
 
 class SettingsController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @param  SettingsService  $settingsService
+     * @param  SignalHandlerRegistry  $signalRegistry
+     */
     public function __construct(
         private SettingsService $settingsService,
         private readonly SignalHandlerRegistry $signalRegistry
@@ -27,6 +44,8 @@ class SettingsController extends Controller
      *
      * Returns grouped settings for the UI to display in accordion sections.
      * Separates Application Settings (from Settings module) from Modules Settings.
+     *
+     * @return Response
      */
     public function index(): Response
     {
@@ -73,10 +92,12 @@ class SettingsController extends Controller
      *
      * Loops through the inputs and calls SettingsService->set() for each setting.
      * Handles individual failures gracefully, collecting errors for reporting.
+     *
+     * @param  UpdateSettingsRequest  $request
+     * @return RedirectResponse
      */
     public function update(UpdateSettingsRequest $request): RedirectResponse
     {
-        // Authorize at class level - works even if settings table is empty
         $this->authorize('updateAny', Setting::class);
 
         $errors = [];
@@ -84,7 +105,6 @@ class SettingsController extends Controller
         $changedKeys = [];
         $oldValues = [];
 
-        // Capture old values before updating (for handlers that need them)
         foreach ($request->validated() as $key => $value) {
             $oldValues[$key] = settings($key, null, $request->user()?->id);
         }
@@ -103,7 +123,6 @@ class SettingsController extends Controller
         }
 
         if ($successCount > 0) {
-            // Dispatch to the user who made the change (for currency conversion, etc.)
             $this->signalRegistry->dispatch('settings.changed', [
                 'user' => $request->user(),
                 'changed_by' => $request->user()?->name ?? 'Unknown',
@@ -111,7 +130,6 @@ class SettingsController extends Controller
                 'old_values' => $oldValues,
             ]);
 
-            // Also notify other admins
             $this->notifyAdminsAboutSettingsChange($changedKeys, $request->user());
         }
 
@@ -154,6 +172,10 @@ class SettingsController extends Controller
 
     /**
      * Notify all Super Admins about settings changes.
+     *
+     * @param  array  $changedKeys
+     * @param  User|null  $changedBy
+     * @return void
      */
     private function notifyAdminsAboutSettingsChange(array $changedKeys, $changedBy): void
     {

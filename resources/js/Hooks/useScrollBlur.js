@@ -27,10 +27,8 @@ export function useScrollBlur(scrollContainerRef, threshold = 10) {
         setIsScrolled(scrollTop > threshold);
       };
 
-      // Check initial scroll position in case container is already scrolled
       handleScroll();
 
-      // Use passive listener for better scroll performance
       scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
 
       return () => {
@@ -38,11 +36,8 @@ export function useScrollBlur(scrollContainerRef, threshold = 10) {
       };
     };
 
-    // Attempt to set up listener immediately
     let cleanup = setupScrollListener();
 
-    // If ref not available yet, retry after a short delay
-    // This handles cases where the ref is set asynchronously
     if (!cleanup) {
       const timeoutId = window.setTimeout(() => {
         cleanup = setupScrollListener();

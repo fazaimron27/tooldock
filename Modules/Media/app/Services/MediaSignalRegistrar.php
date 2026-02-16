@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Media Signal Registrar.
+ *
+ * Registers signal handlers for media-related events.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -24,6 +33,12 @@ class MediaSignalRegistrar
         MediaUploadFailedHandler::class,
     ];
 
+    /**
+     * Register all signal handlers with the central registry.
+     *
+     * @param  SignalHandlerRegistry  $registry
+     * @return void
+     */
     public function register(SignalHandlerRegistry $registry): void
     {
         foreach (self::HANDLERS as $handlerClass) {

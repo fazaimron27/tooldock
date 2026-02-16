@@ -57,8 +57,6 @@ export default function VaultFormFields({
       if (data.secret) {
         setValue('totp_secret', data.secret);
       }
-      // Save TOTP parameters from QR code - these are essential for correct code generation
-      // If the service uses different algorithm/digits/period than defaults, codes won't match without these
       if (data.algorithm) {
         setValue('totp_algorithm', data.algorithm.toLowerCase());
       }
@@ -79,32 +77,25 @@ export default function VaultFormFields({
     [setValue, getValues, onQrScannerOpenChange]
   );
 
-  // Type options
   const typeOptions = types.map((type) => ({
     value: type,
     label: capitalizeType(type),
   }));
-
-  // Category options
   const categoryOptions = categories.map((category) => ({
     value: category.id,
     label: category.name,
   }));
 
-  // Month options
   const monthOptions = Array.from({ length: 12 }, (_, i) => {
     const month = String(i + 1).padStart(2, '0');
     return { value: month, label: month };
   });
-
-  // Year options
   const yearOptions = Array.from({ length: 20 }, (_, i) => {
     const year = new Date().getFullYear() + i;
     const yearShort = String(year).slice(-2);
     return { value: yearShort, label: `${yearShort} (${year})` };
   });
 
-  // Protocol options
   const protocolOptions = [
     { value: 'ssh', label: 'SSH' },
     { value: 'ftp', label: 'FTP' },

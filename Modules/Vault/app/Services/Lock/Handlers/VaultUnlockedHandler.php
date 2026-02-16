@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Vault Unlocked Handler
+ *
+ * Signal handler that fires when a user unlocks their vault.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services\Lock\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

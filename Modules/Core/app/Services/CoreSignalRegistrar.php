@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Signal Registrar.
+ *
+ * Registers signal handlers for the Core module including
+ * authentication, user, and role event handlers.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -51,6 +61,9 @@ class CoreSignalRegistrar
 
     /**
      * Register all Core signal handler classes with the registry.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return void
      */
     public function register(SignalHandlerRegistry $registry): void
     {
@@ -83,6 +96,8 @@ class CoreSignalRegistrar
 
     /**
      * Get the count of registered handlers.
+     *
+     * @return int The total number of signal handlers
      */
     public static function getHandlerCount(): int
     {

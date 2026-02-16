@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Group Registrar.
+ *
+ * Handles group registration for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\GroupRegistry;
@@ -11,6 +20,10 @@ class GroupsGroupRegistrar
 {
     /**
      * Register default groups for the Groups module.
+     *
+     * @param  GroupRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(GroupRegistry $registry, string $moduleName): void
     {
@@ -26,6 +39,9 @@ class GroupsGroupRegistrar
      * Attach roles to groups after seeding.
      *
      * This is called after groups and roles are seeded to establish relationships.
+     *
+     * @param  GroupsRoleService  $roleService
+     * @return void
      */
     public function attachRolesToGroups(GroupsRoleService $roleService): void
     {

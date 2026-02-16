@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Wallet Inactivity Handler
+ *
+ * Signal handler that returns data when wallets have no transactions
+ * in the past 30 days (scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Wallet\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

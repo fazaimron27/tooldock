@@ -28,11 +28,9 @@ return new class extends Migration
             $table->dateTimeTz('date')->index();
             $table->timestamps();
 
-            // Composite index for dashboard queries
             $table->index(['user_id', 'wallet_id', 'date']);
             $table->index(['user_id', 'type', 'date']);
 
-            // Composite index for optimized budgeting aggregations
             $table->index(['user_id', 'category_id', 'type', 'date'], 'idx_transactions_budgeting');
         });
 

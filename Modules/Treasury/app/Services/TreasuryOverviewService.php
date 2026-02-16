@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Overview Service
+ *
+ * Provides aggregated financial data for the Treasury module landing page
+ * including net worth, wallets, goals, budgets, and health metrics.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +21,9 @@ use Modules\Treasury\Services\Transaction\TransactionQueryService;
 use Modules\Treasury\Services\Transaction\TransactionStatsService;
 use Modules\Treasury\Services\Wallet\WalletSummaryService;
 
+/**
+ * Service for aggregating Treasury module overview data.
+ */
 class TreasuryOverviewService
 {
     public function __construct(
@@ -24,6 +37,10 @@ class TreasuryOverviewService
 
     /**
      * Get all overview data for the Treasury module landing page.
+     *
+     * @param  User|null  $user
+     * @param  array  $filters
+     * @return array
      */
     public function getOverviewData(?User $user = null, array $filters = []): array
     {
@@ -33,8 +50,7 @@ class TreasuryOverviewService
 
         $budgetReport = $this->budgetService->getMonthlyReport($user, $now->month, $now->year, $filters);
 
-        // Convert budget amounts to reference currency for accurate pie chart visualization
-        $budgets = $budgetReport->map(function ($b) use ($referenceCurrency) {
+        $budgets = $budgetReport->map(function (array $b) use ($referenceCurrency) {
             $budgetCurrency = $b['currency'] ?? $referenceCurrency;
             $convertedAmount = $this->currencyConverter->convert(
                 (float) $b['limit'],
@@ -78,6 +94,11 @@ class TreasuryOverviewService
 
     /**
      * Calculate financial health metrics for the health summary dialog.
+     *
+     * @param  User  $user
+     * @param  mixed  $now
+     * @param  array  $filters
+     * @return array
      */
     private function getFinancialHealthData(User $user, $now, array $filters = []): array
     {

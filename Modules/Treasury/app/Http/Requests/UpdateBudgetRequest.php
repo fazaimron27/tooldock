@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Update Budget Request
+ *
+ * Validates requests to update an existing budget template or period override.
+ * Enforces category uniqueness per user when changing categories and supports
+ * both template-level and period-level update types.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -7,10 +18,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Modules\Treasury\Models\Budget;
 
+/**
+ * Class UpdateBudgetRequest
+ *
+ * Handles validation for budget updates with template/period distinction.
+ */
 class UpdateBudgetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,6 +37,8 @@ class UpdateBudgetRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -44,7 +64,7 @@ class UpdateBudgetRequest extends FormRequest
                 Rule::exists('categories', 'id')->where('type', 'transaction_category'),
             ],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0'],
-            'currency' => ['sometimes', 'string', 'size:3'],  // ISO 4217
+            'currency' => ['sometimes', 'string', 'size:3'],
             'is_recurring' => ['sometimes', 'boolean'],
             'rollover_enabled' => ['sometimes', 'boolean'],
             'update_type' => ['sometimes', 'string', 'in:template,period'],
@@ -55,14 +75,15 @@ class UpdateBudgetRequest extends FormRequest
 
     /**
      * Configure the validator instance.
+     *
+     * @param  \Illuminate\Validation\Validator  $validator  The validator instance
+     * @return void
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             $budget = $this->route('budget');
 
-            // Only check unique constraint if category_id is being changed
-            // One budget per category per user - prevents "shared spending" confusion
             if ($this->has('category_id') && $this->category_id !== $budget->category_id) {
                 $exists = Budget::where('user_id', Auth::id())
                     ->where('category_id', $this->category_id)

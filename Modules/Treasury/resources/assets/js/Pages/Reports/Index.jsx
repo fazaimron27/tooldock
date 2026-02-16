@@ -37,7 +37,6 @@ import {
 } from '@/Components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
-// Report Components
 import BudgetReport from './Components/BudgetReport';
 import CategoryReport from './Components/CategoryReport';
 import GoalReport from './Components/GoalReport';
@@ -123,7 +122,6 @@ export default function Index({
 
   const handleFilterChange = useCallback(
     (key, value) => {
-      // Helper to format date as YYYY-MM-DD in local timezone
       const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -131,19 +129,16 @@ export default function Index({
         return `${year}-${month}-${day}`;
       };
 
-      // When group_by changes, auto-adjust date range for proper financial analysis
       if (key === 'group_by') {
         const now = new Date();
         let updates = { [key]: value };
 
         if (value === 'year') {
-          // Yearly view: Show full current year for year-to-date + projections
           const yearStart = new Date(now.getFullYear(), 0, 1);
           const yearEnd = new Date(now.getFullYear(), 11, 31);
           updates.start_date = formatLocalDate(yearStart);
           updates.end_date = formatLocalDate(yearEnd);
         } else if (value === 'month') {
-          // Monthly view: Show year-to-date for trend analysis across months
           const yearStart = new Date(now.getFullYear(), 0, 1);
           const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
           updates.start_date = formatLocalDate(yearStart);
@@ -160,7 +155,6 @@ export default function Index({
 
   const handlePeriodChange = useCallback(
     (period) => {
-      // Helper to format date as YYYY-MM-DD in local timezone
       const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -199,7 +193,6 @@ export default function Index({
         }
         case 'custom':
         default:
-          // Don't change dates for custom
           applyFilters({ period });
           return;
       }
@@ -221,17 +214,14 @@ export default function Index({
           : value.toISOString().split('T')[0]
         : '';
 
-      // Validate date range - ensure start_date <= end_date
       const updates = { [key]: dateStr, period: 'custom' };
 
       if (key === 'start_date' && dateStr && localFilters.end_date) {
         if (dateStr > localFilters.end_date) {
-          // If new start date is after end date, also update end date
           updates.end_date = dateStr;
         }
       } else if (key === 'end_date' && dateStr && localFilters.start_date) {
         if (dateStr < localFilters.start_date) {
-          // If new end date is before start date, also update start date
           updates.start_date = dateStr;
         }
       }

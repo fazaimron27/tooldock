@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Login Handler.
+ *
+ * Signal handler that sends login notifications
+ * to users with IP address and timestamp details.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\Auth\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

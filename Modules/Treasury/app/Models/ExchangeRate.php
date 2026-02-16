@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Exchange Rate Model
+ *
+ * Stores exchange rates relative to USD for cross-currency conversions.
+ * Uses USD as the base currency (The "Gold Standard" pattern) since
+ * ExchangeRate-API provides all rates relative to USD.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -100,7 +111,6 @@ class ExchangeRate extends Model
             return '1.0000000000';
         }
 
-        // Query raw to avoid any float conversion
         $rate = DB::table('exchange_rates')
             ->where('currency_code', $currencyCode)
             ->value('rate_to_usd');
@@ -120,7 +130,6 @@ class ExchangeRate extends Model
             ->map(fn ($rate) => (string) $rate)
             ->toArray();
 
-        // Ensure USD is always included
         $rates['USD'] = '1.0000000000';
 
         return $rates;

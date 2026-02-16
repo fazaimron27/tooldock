@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Wallet Controller
+ *
+ * Handles CRUD operations for wallets including creation with initial balance,
+ * detailed wallet views with transaction history and statistics, and deletion
+ * safeguards for wallets linked to active savings goals.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -14,6 +25,11 @@ use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class WalletController
+ *
+ * Manages wallet lifecycle with balance tracking and net worth calculations.
+ */
 class WalletController extends Controller
 {
     private const CACHE_TTL_HOURS = 24;
@@ -26,6 +42,8 @@ class WalletController extends Controller
 
     /**
      * Display a listing of wallets.
+     *
+     * @return Response
      */
     public function index(): Response
     {
@@ -36,13 +54,10 @@ class WalletController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Use centralized method for net worth calculation
         $totalBalance = Wallet::getNetWorthForUser();
 
-        // Fetch wallet types from categories for displaying type labels with colors
         $walletTypes = $this->getWalletTypes();
 
-        // Get net worth history for the chart (derived from transactions)
         /** @var \Modules\Treasury\Services\Transaction\TransactionStatsService $transactionStats */
         $transactionStats = app(\Modules\Treasury\Services\Transaction\TransactionStatsService::class);
         $netWorthHistory = $transactionStats->getNetWorthHistory(
@@ -63,12 +78,13 @@ class WalletController extends Controller
 
     /**
      * Show the form for creating a new wallet.
+     *
+     * @return Response
      */
     public function create(): Response
     {
         $this->authorize('create', Wallet::class);
 
-        // Fetch wallet types from categories for displaying type labels with colors
         $walletTypes = $this->getWalletTypes();
 
         return Inertia::render('Modules::Treasury/Wallets/Create', [
@@ -78,6 +94,12 @@ class WalletController extends Controller
 
     /**
      * Store a newly created wallet.
+     *
+     * Creates the wallet and optionally records an initial balance transaction
+     * using the 'initial-balance' category.
+     *
+     * @param  StoreWalletRequest  $request  The validated request
+     * @return RedirectResponse
      */
     public function store(StoreWalletRequest $request): RedirectResponse
     {
@@ -85,15 +107,12 @@ class WalletController extends Controller
         $initialBalance = (float) ($validated['balance'] ?? 0);
         unset($validated['balance']);
 
-        // Create wallet with 0 balance first
         $wallet = Wallet::create([
             'user_id' => $request->user()->id,
             'balance' => 0,
             ...$validated,
         ]);
 
-        // If there's an initial balance, create an "Opening Balance" transaction
-        // Our Transaction observers will automatically update the wallet balance
         if ($initialBalance > 0) {
             $initialBalanceCategory = Category::where('type', 'transaction_category')
                 ->where('slug', 'initial-balance')
@@ -118,12 +137,17 @@ class WalletController extends Controller
 
     /**
      * Display the specified wallet.
+     *
+     * Shows wallet details with recent transactions, aggregate statistics,
+     * and linked savings goals.
+     *
+     * @param  Wallet  $wallet  The wallet to display
+     * @return Response
      */
     public function show(Wallet $wallet): Response
     {
         $this->authorize('view', $wallet);
 
-        // Get transactions where this wallet is the source OR destination (for incoming transfers)
         $recentTransactions = Transaction::where(function ($query) use ($wallet) {
             $query->where('wallet_id', $wallet->id)
                 ->orWhere('destination_wallet_id', $wallet->id);
@@ -134,13 +158,10 @@ class WalletController extends Controller
             ->limit(20)
             ->get()
             ->map(function ($tx) use ($wallet) {
-                // Determine if this is an incoming transfer to this wallet
                 $isIncomingTransfer = $tx->type === 'transfer' && $tx->destination_wallet_id === $wallet->id;
 
-                // Calculate converted amount for incoming cross-currency transfers
                 $convertedAmount = null;
                 if ($isIncomingTransfer && $tx->exchange_rate && $tx->exchange_rate != 1) {
-                    // For incoming transfers, the converted amount is: amount * exchange_rate
                     $convertedAmount = bcmul((string) $tx->amount, (string) $tx->exchange_rate, 2);
                 }
 
@@ -178,12 +199,9 @@ class WalletController extends Controller
                 ];
             });
 
-        // Fetch the wallet type info for display
         $walletType = Category::where('type', 'wallet_type')
             ->where('slug', $wallet->type)
             ->first(['name', 'slug', 'color']);
-
-        // Calculate wallet statistics using a single query with conditional aggregation
         $stats = Transaction::query()
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN wallet_id = ? AND type = 'income' THEN amount ELSE 0 END), 0) as total_income,
@@ -206,7 +224,6 @@ class WalletController extends Controller
             'transaction_count' => (int) $stats->transaction_count,
         ];
 
-        // Fetch goals linked to this wallet
         $goals = TreasuryGoal::where('wallet_id', $wallet->id)
             ->with('category')
             ->orderBy('is_completed')
@@ -238,6 +255,9 @@ class WalletController extends Controller
 
     /**
      * Show the form for editing the specified wallet.
+     *
+     * @param  Wallet  $wallet  The wallet to edit
+     * @return Response
      */
     public function edit(Wallet $wallet): Response
     {
@@ -253,6 +273,10 @@ class WalletController extends Controller
 
     /**
      * Update the specified wallet.
+     *
+     * @param  UpdateWalletRequest  $request  The validated request
+     * @param  Wallet  $wallet  The wallet to update
+     * @return RedirectResponse
      */
     public function update(UpdateWalletRequest $request, Wallet $wallet): RedirectResponse
     {
@@ -265,12 +289,16 @@ class WalletController extends Controller
 
     /**
      * Remove the specified wallet.
+     *
+     * Prevents deletion if the wallet is linked to active savings goals.
+     *
+     * @param  Wallet  $wallet  The wallet to delete
+     * @return RedirectResponse
      */
     public function destroy(Wallet $wallet): RedirectResponse
     {
         $this->authorize('delete', $wallet);
 
-        // Prevent deletion if wallet is linked to an active goal
         $activeGoal = \Modules\Treasury\Models\TreasuryGoal::where('wallet_id', $wallet->id)
             ->where('is_completed', false)
             ->first();
@@ -291,6 +319,8 @@ class WalletController extends Controller
 
     /**
      * Get cached wallet types.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getWalletTypes()
     {

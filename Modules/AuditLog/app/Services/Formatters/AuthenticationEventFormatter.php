@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Authentication Event Formatter.
+ *
+ * Handles formatting for authentication-related events such as registration,
+ * login, logout, and password changes, producing human-readable summaries.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;

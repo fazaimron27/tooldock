@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Categories Permission Registrar.
+ *
+ * Registers permissions and default role mappings for the Categories module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Services;
 
 use App\Services\Registry\PermissionRegistry;
@@ -12,6 +21,9 @@ class CategoriesPermissionRegistrar
 {
     /**
      * Register default permissions for the Categories module.
+     *
+     * @param  PermissionRegistry  $registry  The permission registry
+     * @return void
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {

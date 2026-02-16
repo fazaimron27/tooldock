@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Unbudgeted Handler
+ *
+ * Signal handler that returns data when there is significant unbudgeted
+ * spending detected during the daily scheduled check.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -56,7 +66,6 @@ class BudgetUnbudgetedHandler implements SignalHandlerInterface
         $summary = $this->reportingService->getMonthlySummary($user, $month, $year);
         $unbudgeted = $summary['total_unbudgeted_spent'] ?? 0;
 
-        // Minimum threshold to trigger alert (in reference currency)
         $threshold = (float) settings('treasury_unbudgeted_spending_threshold', 100000);
 
         if ($unbudgeted < $threshold) {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Profile Update Request.
+ *
+ * Validates profile update data including name and email
+ * with uniqueness constraints for the current user.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;

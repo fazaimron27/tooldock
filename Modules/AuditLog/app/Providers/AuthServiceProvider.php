@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Auth Service Provider.
+ *
+ * Registers policy mappings for the AuditLog module,
+ * binding the AuditLog model to its authorization policy.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;

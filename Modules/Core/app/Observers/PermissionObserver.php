@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Permission Observer.
+ *
+ * Observes permission model events to invalidate
+ * and warm the permission cache on changes.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Observers;
 
 use App\Services\Registry\MenuRegistry;
@@ -21,6 +31,9 @@ class PermissionObserver
      * Handle the Permission "created" event.
      *
      * Prevents infinite loop if Permission model uses LogsActivity trait.
+     *
+     * @param  Permission  $permission  The newly created permission instance
+     * @return void
      */
     public function created(Permission $permission): void
     {
@@ -40,7 +53,6 @@ class PermissionObserver
             tags: 'permission'
         );
 
-        // Invalidate the cached permissions list
         cache()->forget('core:permissions:all');
     }
 
@@ -49,6 +61,9 @@ class PermissionObserver
      *
      * Prevents infinite loop if Permission model uses LogsActivity trait.
      * Clears menu cache if permission name changed.
+     *
+     * @param  Permission  $permission  The updated permission instance
+     * @return void
      */
     public function updated(Permission $permission): void
     {
@@ -85,7 +100,6 @@ class PermissionObserver
             $this->menuRegistry->clearCache();
         }
 
-        // Invalidate the cached permissions list
         cache()->forget('core:permissions:all');
     }
 
@@ -94,6 +108,9 @@ class PermissionObserver
      *
      * Prevents infinite loop if Permission model uses LogsActivity trait.
      * Clears all menu caches since any user/role/group could have had this permission.
+     *
+     * @param  Permission  $permission  The deleted permission instance
+     * @return void
      */
     public function deleted(Permission $permission): void
     {
@@ -115,7 +132,6 @@ class PermissionObserver
 
         $this->menuRegistry->clearCache();
 
-        // Invalidate the cached permissions list
         cache()->forget('core:permissions:all');
     }
 
@@ -124,11 +140,12 @@ class PermissionObserver
      *
      * Warms the permission cache after Spatie's RefreshesPermissionCache trait
      * clears it, ensuring the cache is immediately available for subsequent requests.
+     *
+     * @param  Permission  $permission  The saved permission instance
+     * @return void
      */
     public function saved(Permission $permission): void
     {
-        // Spatie's RefreshesPermissionCache has already cleared the cache at this point.
-        // We warm it immediately to avoid slow first requests.
         $this->permissionCacheService->warm();
     }
 }

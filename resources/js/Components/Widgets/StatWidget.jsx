@@ -31,7 +31,6 @@ export default function StatWidget({ widget }) {
   const isValueMissing = widget.value === null || widget.value === undefined;
   let value = isValueMissing ? '--' : widget.value;
 
-  // Format currency if specified in config and value is a number
   if (!isValueMissing && widget.config?.valueType === 'currency') {
     value = formatCurrency(value, widget.config?.currency || 'IDR');
   } else if (!isValueMissing && typeof value === 'number') {

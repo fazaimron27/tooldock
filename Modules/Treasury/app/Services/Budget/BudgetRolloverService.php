@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Rollover Service
+ *
+ * Handles the recursive calculation of budget rollovers (debt/surplus).
+ * Supports strict/envelope budgeting where overspending impacts future months.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget;
 
 use Carbon\Carbon;
@@ -42,7 +52,7 @@ class BudgetRolloverService
      * @param  Budget  $budget  The budget template
      * @param  int  $month  Current month
      * @param  int  $year  Current year
-     * @param  array  $filters  Optional filters (e.g., wallet_id)
+     * @param  array  $filters  Optional filters
      * @param  int  $depth  Recursion depth to prevent infinite loops (max 12 months)
      * @return float
      */
@@ -54,8 +64,6 @@ class BudgetRolloverService
             return $this->rolloverCache[$cacheKey];
         }
 
-        // Limit recursion depth to 1 year back
-        // AND stop if we are looking before the budget template was even created
         $targetDate = Carbon::create($year, $month)->startOfMonth();
         $createdAt = $budget->created_at->startOfMonth();
 
@@ -66,7 +74,6 @@ class BudgetRolloverService
         $previousDate = Carbon::create($year, $month)->subMonth();
         $previousPeriod = BudgetPeriod::formatPeriod($previousDate->month, $previousDate->year);
 
-        // Recursive call to get the rollover amount inherited by the previous month
         $inheritedRollover = $this->calculateRollover(
             $budget,
             $previousDate->month,
@@ -75,7 +82,6 @@ class BudgetRolloverService
             $depth + 1
         );
 
-        // Get the budget limit for the previous month (saved override or template amount)
         $periodCacheKey = "{$budget->id}-{$previousPeriod}";
         $savedPeriod = $this->periodCache[$periodCacheKey] ?? BudgetPeriod::where('budget_id', $budget->id)
             ->where('period', $previousPeriod)
@@ -84,7 +90,6 @@ class BudgetRolloverService
         $previousAmount = $savedPeriod ? (float) $savedPeriod->amount : (float) $budget->amount;
         $previousTotalLimit = $previousAmount + $inheritedRollover;
 
-        // Get actual spending for the previous month (converted to budget's currency)
         $budgetCurrency = $budget->currency ?? settings('treasury_reference_currency', 'IDR');
         $spent = $this->getSpendingForRollover(
             $budget->user_id,
@@ -95,7 +100,6 @@ class BudgetRolloverService
             $filters
         );
 
-        // Strict rollover: balance carries over directly, even if negative (debt).
         return $this->rolloverCache[$cacheKey] = $previousTotalLimit - $spent;
     }
 
@@ -103,18 +107,22 @@ class BudgetRolloverService
      * Get spending for a specific category in a month, optimized for rollover calculations.
      * Converts all amounts to the target currency for accurate multi-currency aggregation.
      *
-     * @param  string  $targetCurrency  Currency to convert spending totals to (usually budget's currency)
+     * @param  string  $userId  The user ID
+     * @param  string  $categoryId  The category ID
+     * @param  int  $month  The month
+     * @param  int  $year  The year
+     * @param  string  $targetCurrency  Currency to convert spending totals to
+     * @param  array  $filters  Optional filters
+     * @return float
      */
     private function getSpendingForRollover(string $userId, string $categoryId, int $month, int $year, string $targetCurrency, array $filters = []): float
     {
-        // Cache key includes target currency to match preloadForBudgets format
         $cacheKey = "{$userId}-{$categoryId}-{$month}-{$year}-{$targetCurrency}-".md5(serialize($filters));
 
         if (isset($this->spendingCache[$cacheKey])) {
             return $this->spendingCache[$cacheKey];
         }
 
-        // Include expenses and goal allocation transfers (transfers with goal_id)
         $query = Transaction::where('user_id', $userId)
             ->where(function ($q) {
                 $q->where('type', 'expense')
@@ -151,10 +159,11 @@ class BudgetRolloverService
      * Call this before processing a batch of budgets with rollover enabled.
      *
      * @param  \Illuminate\Support\Collection  $budgets  Collection of Budget models
-     * @param  int  $month  Current month
-     * @param  int  $year  Current year
+     * @param  int  $month  Target month
+     * @param  int  $year  Target year
      * @param  array  $filters  Optional filters
-     * @param  int  $monthsBack  How many months of history to preload (default: 12)
+     * @param  int  $monthsBack  How many months of history to preload
+     * @return void
      */
     public function preloadForBudgets($budgets, int $month, int $year, array $filters = [], int $monthsBack = 12): void
     {
@@ -166,14 +175,12 @@ class BudgetRolloverService
             return;
         }
 
-        // Generate all period strings for the past N months
         $periods = [];
         for ($i = 0; $i < $monthsBack; $i++) {
             $date = \Carbon\Carbon::create($year, $month)->subMonths($i);
             $periods[] = BudgetPeriod::formatPeriod($date->month, $date->year);
         }
 
-        // Bulk fetch all budget periods
         $allPeriods = BudgetPeriod::whereIn('budget_id', $budgetIds)
             ->whereIn('period', $periods)
             ->get();
@@ -183,11 +190,9 @@ class BudgetRolloverService
             $this->periodCache[$cacheKey] = $period;
         }
 
-        // Bulk fetch all spending data with wallet info for currency conversion
         $startDate = \Carbon\Carbon::create($year, $month)->subMonths($monthsBack - 1)->startOfMonth();
         $endDate = \Carbon\Carbon::create($year, $month)->endOfMonth();
 
-        // Include expenses and goal allocation transfers for accurate spending aggregation
         $spendingQuery = Transaction::whereIn('user_id', $userIds)
             ->where(function ($q) {
                 $q->where('type', 'expense')
@@ -205,14 +210,12 @@ class BudgetRolloverService
 
         $allTransactions = $spendingQuery->get(['user_id', 'category_id', 'wallet_id', 'amount', 'date']);
 
-        // Build a map of category_id -> budget_currency for each user
         $categoryToBudgetCurrency = [];
         foreach ($budgets as $budget) {
             $budgetCurrency = $budget->currency ?? settings('treasury_reference_currency', 'IDR');
             $categoryToBudgetCurrency[$budget->user_id][$budget->category_id] = $budgetCurrency;
         }
 
-        // Group transactions by user/category/month/year/currency and convert to budget currency
         $grouped = [];
         foreach ($allTransactions as $tx) {
             $budgetCurrency = $categoryToBudgetCurrency[$tx->user_id][$tx->category_id]
@@ -234,7 +237,6 @@ class BudgetRolloverService
             $grouped[$groupKey] += $convertedAmount;
         }
 
-        // Store in cache
         foreach ($grouped as $cacheKey => $total) {
             $this->spendingCache[$cacheKey] = $total;
         }
@@ -242,6 +244,8 @@ class BudgetRolloverService
 
     /**
      * Clear the runtime caches.
+     *
+     * @return void
      */
     public function clearCache(): void
     {

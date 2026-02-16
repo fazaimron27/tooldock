@@ -49,7 +49,6 @@ const sheetVariants = cva(
 );
 
 const SheetContent = React.forwardRef(({ side = 'right', className, children, ...props }, ref) => {
-  // Map side to animation direction
   const getAnimationVariants = () => {
     const baseVariants = {
       initial: { opacity: 0 },

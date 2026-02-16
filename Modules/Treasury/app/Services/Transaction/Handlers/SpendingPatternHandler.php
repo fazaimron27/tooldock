@@ -1,10 +1,21 @@
 <?php
 
+/**
+ * Spending Pattern Handler
+ *
+ * Signal handler that detects when category spending significantly exceeds
+ * the previous month using month-over-month comparison.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Models\User;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 use Modules\Treasury\Services\Support\CurrencyFormatter;
@@ -51,7 +62,6 @@ class SpendingPatternHandler implements SignalHandlerInterface
             return false;
         }
 
-        // Support expenses and goal allocation transfers (transfers with goal_id)
         return $data->type === 'expense'
             || ($data->type === 'transfer' && $data->goal_id !== null);
     }
@@ -71,12 +81,9 @@ class SpendingPatternHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Only check after day 5 of the month to have meaningful data
         if (now()->day < 5) {
             return null;
         }
-
-        // Cache to prevent spam - one alert per category per month
         $cacheKey = "spending_pattern_{$transaction->category_id}_".now()->format('Y-m');
         if (Cache::has($cacheKey)) {
             return null;
@@ -84,7 +91,6 @@ class SpendingPatternHandler implements SignalHandlerInterface
 
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Compare same period: Day 1 to current day of this month vs last month
         $dayOfMonth = now()->day;
 
         $thisMonthStart = now()->startOfMonth();
@@ -96,7 +102,6 @@ class SpendingPatternHandler implements SignalHandlerInterface
             $referenceCurrency
         );
 
-        // Same period last month (day 1 to same day)
         $lastMonthStart = now()->subMonth()->startOfMonth();
         $lastMonthEnd = now()->subMonth()->startOfMonth()->addDays($dayOfMonth - 1)->endOfDay();
         $lastMonthSpending = $this->getSpendingForPeriod(
@@ -107,7 +112,6 @@ class SpendingPatternHandler implements SignalHandlerInterface
             $referenceCurrency
         );
 
-        // Need meaningful baseline (at least 50k in reference currency)
         $minThreshold = (float) settings('treasury_spending_pattern_min_threshold', 50000);
         if ($lastMonthSpending < $minThreshold) {
             return null;
@@ -115,7 +119,6 @@ class SpendingPatternHandler implements SignalHandlerInterface
 
         $changePercent = (($thisMonthSpending - $lastMonthSpending) / $lastMonthSpending) * 100;
 
-        // Require significant increase (50%+) to reduce noise
         $changeThreshold = (float) settings('treasury_spending_pattern_change_threshold', 50);
         if ($changePercent >= $changeThreshold) {
             $categoryName = $transaction->category?->name ?? 'Unknown';
@@ -145,6 +148,16 @@ class SpendingPatternHandler implements SignalHandlerInterface
         return null;
     }
 
+    /**
+     * Calculate total spending for a user in a category during a given period.
+     *
+     * @param  User  $user
+     * @param  int  $categoryId
+     * @param  mixed  $start
+     * @param  mixed  $end
+     * @param  string  $referenceCurrency
+     * @return float
+     */
     private function getSpendingForPeriod($user, $categoryId, $start, $end, $referenceCurrency): float
     {
         $transactions = Transaction::where('user_id', $user->id)

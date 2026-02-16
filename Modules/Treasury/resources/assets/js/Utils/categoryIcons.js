@@ -54,10 +54,6 @@ import {
  * Organized by: Income, Expense, and System categories
  */
 export const categoryIcons = {
-  // ========================================
-  // INCOME CATEGORIES
-  // ========================================
-
   // Salary & Wages
   'salary-wages': Banknote,
   'regular-salary': Banknote,
@@ -85,10 +81,6 @@ export const categoryIcons = {
   'tax-refunds': DollarSign,
   'lottery-winnings': Sparkles,
   inheritance: Gift,
-
-  // ========================================
-  // EXPENSE CATEGORIES
-  // ========================================
 
   // Food & Dining
   'food-dining': Utensils,
@@ -177,9 +169,6 @@ export const categoryIcons = {
   'other-expense': Package,
   miscellaneous: Package,
 
-  // ========================================
-  // SYSTEM CATEGORIES
-  // ========================================
   'initial-balance': PiggyBank,
   adjustment: RefreshCw,
   'goal-allocation': Target,

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Store Transaction Request
+ *
+ * Validates requests to create a new financial transaction (income, expense,
+ * or transfer). Enforces wallet ownership, prevents expenses from savings
+ * wallets, and validates cross-wallet transfer destinations.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -8,10 +19,17 @@ use Illuminate\Validation\Rule;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class StoreTransactionRequest
+ *
+ * Handles validation for transaction creation with wallet and category checks.
+ */
 class StoreTransactionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -20,6 +38,8 @@ class StoreTransactionRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -44,7 +64,6 @@ class StoreTransactionRequest extends FormRequest
                 Rule::exists('wallets', 'id')->where(function ($query) {
                     return $query->where('user_id', Auth::id());
                 }),
-                // Block expenses from savings-type wallets
                 function ($attribute, $value, $fail) {
                     if ($this->input('type') === 'expense') {
                         $wallet = Wallet::find($value);
@@ -74,8 +93,8 @@ class StoreTransactionRequest extends FormRequest
             'fee' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string', 'max:255'],
             'date' => ['required', 'date'],
-            'exchange_rate' => ['nullable', 'numeric', 'min:0.0000000001'],  // For cross-currency transfers
-            'original_currency' => ['nullable', 'string', 'max:3'],  // Source wallet currency for audit
+            'exchange_rate' => ['nullable', 'numeric', 'min:0.0000000001'],
+            'original_currency' => ['nullable', 'string', 'max:3'],
             'attachment_ids' => ['nullable', 'array'],
             'attachment_ids.*' => ['uuid', 'exists:media_files,id'],
         ];

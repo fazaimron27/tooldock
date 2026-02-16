@@ -17,7 +17,6 @@ export default function Edit({ group, roles = [], groupedPermissions = {} }) {
     [roles]
   );
 
-  // Edit mode doesn't include members (managed on Show page)
   const form = useInertiaForm(getGroupDefaults(group, false), {
     resolver: updateGroupResolver,
     toast: {

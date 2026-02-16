@@ -1,10 +1,26 @@
 <?php
 
+/**
+ * Refresh Exchange Rates Command
+ *
+ * Fetches the latest currency exchange rates from the ExchangeRate-API
+ * service and stores them locally for use in cross-currency calculations
+ * throughout the Treasury module.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Treasury\Services\Exchange\ExchangeRateService;
 
+/**
+ * Class RefreshExchangeRatesCommand
+ *
+ * Fetches latest exchange rates from ExchangeRate-API.
+ */
 class RefreshExchangeRatesCommand extends Command
 {
     /**
@@ -24,6 +40,9 @@ class RefreshExchangeRatesCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  ExchangeRateService  $service  The exchange rate service
+     * @return int
      */
     public function handle(ExchangeRateService $service): int
     {

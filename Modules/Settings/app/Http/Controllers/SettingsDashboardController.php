@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Settings Dashboard Controller.
+ *
+ * Displays the Settings module dashboard with widgets.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -12,6 +21,9 @@ class SettingsDashboardController extends Controller
 {
     /**
      * Display the Settings module dashboard.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @return Response
      */
     public function index(DashboardWidgetRegistry $widgetRegistry): Response
     {

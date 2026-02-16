@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Command Registrar.
+ *
+ * Registers Command Palette commands for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\CommandRegistry;
@@ -11,6 +20,10 @@ class GroupsCommandRegistrar
 {
     /**
      * Register all Command Palette commands for the Groups module.
+     *
+     * @param  CommandRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(CommandRegistry $registry, string $moduleName): void
     {

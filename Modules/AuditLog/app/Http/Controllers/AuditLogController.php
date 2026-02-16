@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Controller.
+ *
+ * Handles listing, viewing, and exporting audit log entries with
+ * support for filtering, pagination, and batch relationship loading.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -14,8 +24,20 @@ use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\Models\AuditLog;
 
+/**
+ * Audit log resource controller.
+ *
+ * Provides endpoints for listing, viewing, and exporting audit logs.
+ * Supports advanced filtering by user, event type, model type, date range,
+ * and tags. Uses deferred props for performance optimization.
+ */
 class AuditLogController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @param  CacheService  $cacheService  The cache service for model type caching
+     */
     public function __construct(
         private CacheService $cacheService
     ) {}
@@ -23,7 +45,12 @@ class AuditLogController extends Controller
     /**
      * Display a paginated listing of audit logs.
      *
-     * Supports filtering by user, system (user vs system actions), event type, model type, and date range.
+     * Supports filtering by user, system (user vs system actions), event type,
+     * model type, and date range.
+     *
+     * @param  DatatableQueryService  $datatableService  Service for building paginated datatable queries
+     * @param  Request  $request  The incoming HTTP request with filter parameters
+     * @return Response Inertia response rendering the audit log index page
      */
     public function index(DatatableQueryService $datatableService, Request $request): Response
     {
@@ -96,7 +123,12 @@ class AuditLogController extends Controller
 
     /**
      * Display the specified audit log.
-     * Uses deferred props to load large old_values and new_values separately for better performance.
+     *
+     * Uses deferred props to load large old_values and new_values
+     * separately for better performance.
+     *
+     * @param  AuditLog  $auditLog  The audit log entry to display
+     * @return Response Inertia response rendering the audit log detail page
      */
     public function show(AuditLog $auditLog): Response
     {
@@ -161,6 +193,9 @@ class AuditLogController extends Controller
      *
      * Applies the same filters as the index method and processes
      * results in chunks for memory efficiency.
+     *
+     * @param  Request  $request  The incoming HTTP request with filter parameters
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse Streamed CSV download
      */
     public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -169,7 +204,6 @@ class AuditLogController extends Controller
         $query = AuditLog::with(['user.avatar']);
         $this->applyFilters($query, $request);
 
-        // Count records before export
         $recordCount = $query->count();
 
         $filename = 'audit-logs-'.now()->format('Y-m-d-His').'.csv';
@@ -218,10 +252,9 @@ class AuditLogController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
 
-        // Log export event after successful export
         CreateAuditLogJob::dispatch(
             event: \Modules\AuditLog\Enums\AuditLogEvent::EXPORT,
-            model: null, // Export doesn't have a specific model
+            model: null,
             oldValues: null,
             newValues: [
                 'format' => 'CSV',
@@ -333,8 +366,8 @@ class AuditLogController extends Controller
      * Validates date range to ensure start_date is before or equal to end_date.
      * Validates user_id exists in database before applying filter.
      *
-     * @param  Builder  $query
-     * @param  Request  $request
+     * @param  Builder  $query  The Eloquent query builder to apply filters to
+     * @param  Request  $request  The incoming HTTP request containing filter values
      * @return void
      */
     private function applyFilters(Builder $query, Request $request): void
@@ -349,10 +382,10 @@ class AuditLogController extends Controller
      * based on the current filters. It can exclude specific filters to get
      * all available options for that filter type.
      *
-     * @param  Builder  $query
-     * @param  Request  $request
-     * @param  bool  $excludeEvent  If true, excludes the event filter
-     * @param  bool  $excludeAuditableType  If true, excludes the auditable_type filter
+     * @param  Builder  $query  The Eloquent query builder to apply filters to
+     * @param  Request  $request  The incoming HTTP request containing filter values
+     * @param  bool  $excludeEvent  If true, skips the event type filter
+     * @param  bool  $excludeAuditableType  If true, skips the auditable_type filter
      * @return void
      */
     private function applyFiltersForOptions(
@@ -367,7 +400,6 @@ class AuditLogController extends Controller
          */
         $query->when($request->filled('user_id'), function ($q) use ($request) {
             $userId = $request->input('user_id');
-            // Validate UUID format (36 characters with dashes)
             if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $userId)) {
                 $q->where('user_id', $userId);
             }
@@ -390,7 +422,6 @@ class AuditLogController extends Controller
         if (! $excludeEvent) {
             $query->when($request->filled('event'), function ($q) use ($request) {
                 $event = $request->input('event');
-                // Validate event is one of the allowed values
                 if (in_array($event, AuditLogEvent::allEvents(), true)) {
                     $q->where('event', $event);
                 }
@@ -400,7 +431,6 @@ class AuditLogController extends Controller
         if (! $excludeAuditableType) {
             $query->when($request->filled('auditable_type'), function ($q) use ($request) {
                 $auditableType = $request->input('auditable_type');
-                // Validate class name format (namespace with backslashes)
                 if (is_string($auditableType) && preg_match('/^[a-zA-Z0-9\\\\]+$/', $auditableType) && strlen($auditableType) <= 255) {
                     $q->where('auditable_type', $auditableType);
                 }
@@ -410,10 +440,8 @@ class AuditLogController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // Validate date format (YYYY-MM-DD)
         if ($startDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
             if ($endDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate) && $startDate > $endDate) {
-                // Invalid date range - only apply start date
                 $query->whereDate('created_at', '>=', $startDate);
             } else {
                 $query->whereDate('created_at', '>=', $startDate);
@@ -426,11 +454,9 @@ class AuditLogController extends Controller
 
         $query->when($request->filled('tags'), function ($q) use ($request) {
             $tagsInput = $request->input('tags');
-            // Validate tags input length and sanitize
             if (is_string($tagsInput) && strlen($tagsInput) <= 500) {
                 $tags = array_filter(array_map('trim', explode(',', $tagsInput)));
-                // Limit number of tags and validate each tag
-                $tags = array_slice($tags, 0, 20); // Max 20 tags
+                $tags = array_slice($tags, 0, 20);
                 $tags = array_filter($tags, function ($tag) {
                     return strlen($tag) <= 50 && preg_match('/^[a-zA-Z0-9_-]+$/', $tag);
                 });
@@ -448,7 +474,11 @@ class AuditLogController extends Controller
 
     /**
      * Get event types for filter dropdown.
+     *
      * Uses simplified caching strategy for better performance.
+     *
+     * @param  Request  $request  The incoming HTTP request with active filters
+     * @return array<int, array{value: string, label: string}> Distinct event types
      */
     private function getEventTypes(Request $request): array
     {
@@ -499,7 +529,11 @@ class AuditLogController extends Controller
 
     /**
      * Get model types for filter dropdown.
+     *
      * Uses simplified caching strategy for better performance.
+     *
+     * @param  Request  $request  The incoming HTTP request with active filters
+     * @return array<int, array{value: string, label: string}> Distinct model types
      */
     private function getModelTypes(Request $request): array
     {

@@ -1,11 +1,24 @@
 <?php
 
+/**
+ * Transaction Category Service
+ *
+ * Handles aggregation of expense data by category for a given month,
+ * with multi-currency conversion support.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction;
 
 use Modules\Core\Models\User;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 
+/**
+ * Service for aggregating transaction data by category.
+ */
 class TransactionCategoryService
 {
     public function __construct(
@@ -15,6 +28,13 @@ class TransactionCategoryService
 
     /**
      * Get top expense categories for a specific month.
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  int  $limit
+     * @param  array  $filters
+     * @return array
      */
     public function getTopExpenseCategories(User $user, int $month, int $year, int $limit = 50, array $filters = []): array
     {
@@ -30,7 +50,6 @@ class TransactionCategoryService
 
         $transactions = $query->get(['amount', 'wallet_id', 'category_id']);
 
-        // Group by category and convert currencies
         $categoryTotals = [];
         foreach ($transactions as $tx) {
             $categoryId = $tx->category_id ?? 'uncategorized';
@@ -52,7 +71,6 @@ class TransactionCategoryService
             $categoryTotals[$categoryId]['total'] += $convertedAmount;
         }
 
-        // Sort by total descending and limit
         usort($categoryTotals, fn ($a, $b) => $b['total'] <=> $a['total']);
         $categoryTotals = array_slice($categoryTotals, 0, $limit);
 

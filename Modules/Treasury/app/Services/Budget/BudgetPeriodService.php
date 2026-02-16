@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Period Service
+ *
+ * Handles the lifecycle of manual budget overrides (BudgetPeriods)
+ * and manages the determination of available historical periods for navigation.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget;
 
 use Carbon\Carbon;
@@ -19,6 +29,11 @@ class BudgetPeriodService
 {
     /**
      * Get or create a budget period instance (Lazy creation).
+     *
+     * @param  Budget  $budget
+     * @param  int  $month
+     * @param  int  $year
+     * @return BudgetPeriod
      */
     public function getOrCreatePeriod(Budget $budget, int $month, int $year): BudgetPeriod
     {
@@ -33,12 +48,16 @@ class BudgetPeriodService
     /**
      * Update a budget period's amount and description.
      * Implements semantic auto-cleanup: if the override matches the template, the record is deleted.
+     *
+     * @param  BudgetPeriod  $period
+     * @param  float  $amount
+     * @param  string|null  $description
+     * @return BudgetPeriod|null
      */
     public function updatePeriodAmount(BudgetPeriod $period, float $amount, ?string $description = null): ?BudgetPeriod
     {
         $budget = $period->budget;
 
-        // Semantic Auto-Cleanup: If it matches the template default, don't keep a redundant DB row.
         if (bccomp((string) $amount, (string) $budget->amount, 2) === 0 && empty($description)) {
             $period->delete();
 
@@ -55,10 +74,13 @@ class BudgetPeriodService
 
     /**
      * Get available periods for a user, including those with transaction history or budget overrides.
+     *
+     * @param  User  $user
+     * @param  int  $limit
+     * @return Collection
      */
     public function getAvailablePeriods(User $user, int $limit = 12): Collection
     {
-        // Get periods from saved overrides
         $periodMonths = BudgetPeriod::whereHas('budget', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
@@ -66,8 +88,6 @@ class BudgetPeriodService
             ->distinct()
             ->pluck('period');
 
-        // Get periods from transaction history (using database-agnostic scope)
-        // Include expenses and goal allocation transfers (transfers with goal_id)
         $transactionMonths = Transaction::where('user_id', $user->id)
             ->where(function ($q) {
                 $q->where('type', 'expense')

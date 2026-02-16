@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Checks Guest User Trait.
+ *
+ * Provides a method to determine if a user has only
+ * guest-level roles with no other permissions.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Traits;
 
 use Modules\Core\Constants\Roles;

@@ -22,10 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
 
-            // Composite index for common wallet queries
             $table->index(['user_id', 'is_active']);
-
-            // Composite index for user-specific balance queries and sorting
             $table->index(['user_id', 'balance']);
         });
 

@@ -38,7 +38,6 @@ export default function CardNumberInputRHF({
                   const formatted = formatCardNumber(e.target.value);
                   field.onChange(formatted);
 
-                  // Notify parent of card type change if callback provided
                   if (onCardTypeChange) {
                     const detected = detectCardType(formatted);
                     onCardTypeChange(detected);

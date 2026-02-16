@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Settings Signal Registrar.
+ *
+ * Registers signal handlers for settings-related events.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -24,6 +33,12 @@ class SettingsSignalRegistrar
         SettingsChangedHandler::class,
     ];
 
+    /**
+     * Register all signal handlers with the central registry.
+     *
+     * @param  SignalHandlerRegistry  $registry
+     * @return void
+     */
     public function register(SignalHandlerRegistry $registry): void
     {
         foreach (self::HANDLERS as $handlerClass) {

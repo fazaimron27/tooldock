@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Reference Currency Changed Handler
+ *
+ * Handles automatic conversion of budget amounts and threshold settings
+ * when the user changes their reference currency.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Settings;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -58,12 +68,10 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
     /** {@inheritdoc} */
     public function supports(string $event, mixed $data): bool
     {
-        // We need user and changed_keys from the settings change event
         if (! is_array($data) || ! isset($data['user']) || ! ($data['user'] instanceof User)) {
             return false;
         }
 
-        // Check if treasury_reference_currency is among the changed keys
         $changedKeys = $data['changed_keys'] ?? [];
 
         return in_array('treasury_reference_currency', $changedKeys, true);
@@ -74,7 +82,6 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
     {
         $user = $data['user'];
 
-        // Get the old and new currency from the data
         $oldCurrency = $data['old_values']['treasury_reference_currency'] ?? null;
         $newCurrency = settings('treasury_reference_currency', 'IDR');
 
@@ -117,6 +124,9 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
     /**
      * Convert all budget amounts and their period overrides from old currency to new currency.
      *
+     * @param  User  $user
+     * @param  string  $oldCurrency
+     * @param  string  $newCurrency
      * @return array{int, int} [budgetCount, periodCount]
      */
     private function convertBudgets(User $user, string $oldCurrency, string $newCurrency): array
@@ -142,7 +152,6 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
                 ]);
                 $budgetCount++;
 
-                // Also convert period overrides for this budget
                 $periodCount += $this->convertBudgetPeriods($budget, $oldCurrency, $newCurrency);
             }
         }
@@ -158,6 +167,11 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
 
     /**
      * Convert all period overrides for a budget.
+     *
+     * @param  Budget  $budget
+     * @param  string  $oldCurrency
+     * @param  string  $newCurrency
+     * @return int
      */
     private function convertBudgetPeriods(Budget $budget, string $oldCurrency, string $newCurrency): int
     {
@@ -184,6 +198,11 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
 
     /**
      * Convert threshold settings from old currency to new currency.
+     *
+     * @param  User  $user
+     * @param  string  $oldCurrency
+     * @param  string  $newCurrency
+     * @return int
      */
     private function convertThresholds(User $user, string $oldCurrency, string $newCurrency): int
     {
@@ -203,7 +222,6 @@ class ReferenceCurrencyChangedHandler implements SignalHandlerInterface
             );
 
             if ($convertedValue !== null) {
-                // Update the setting directly in the database
                 Setting::where('user_id', $user->id)
                     ->where('key', $key)
                     ->update(['value' => round($convertedValue, 2)]);

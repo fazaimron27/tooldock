@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Transfer Members Request.
+ *
+ * Validates and authorizes requests to transfer members between groups.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;

@@ -69,7 +69,6 @@ export default function PermissionMatrixRHF({
     return Object.keys(groupedPermissions).sort();
   }, [groupedPermissions]);
 
-  // Get inherited permission IDs from the map
   const inheritedPermissionIds = useMemo(() => {
     return Array.from(inheritedPermissionsMap.keys());
   }, [inheritedPermissionsMap]);
@@ -133,7 +132,6 @@ export default function PermissionMatrixRHF({
                     (resource) => moduleResources[resource] || []
                   );
                   const modulePermissionIds = allModulePermissions.map((p) => p.id);
-                  // Count both selected and inherited permissions
                   const allActivePermissions = new Set([
                     ...selectedPermissions,
                     ...inheritedPermissionIds,
@@ -175,7 +173,6 @@ export default function PermissionMatrixRHF({
                             const resourceKey = `${module}.${resource}`;
                             const isResourceOpen = openResources[resourceKey] ?? true;
                             const resourcePermissionIds = resourcePermissions.map((p) => p.id);
-                            // Count both selected and inherited permissions
                             const resourceActivePermissions = new Set([
                               ...selectedPermissions,
                               ...inheritedPermissionIds,

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Groups Service Provider.
+ *
+ * Main service provider for the Groups module. Bootstraps module
+ * configuration, routes, views, registries, and authorization.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Providers;
 
 use App\Services\Registry\CommandRegistry;
@@ -28,6 +38,9 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Service provider for the Groups module.
+ */
 class GroupsServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -38,6 +51,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         CommandRegistry $commandRegistry,
@@ -80,6 +95,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -89,7 +106,9 @@ class GroupsServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -98,6 +117,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register command Schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void
     {
@@ -109,6 +130,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -125,6 +148,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -157,6 +182,10 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path
+     * @param  string  $key
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -168,6 +197,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -183,12 +214,19 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];
@@ -210,6 +248,8 @@ class GroupsServiceProvider extends ServiceProvider
      *
      * Skips checking for unauthenticated users and certain system abilities
      * to prevent redirect loops.
+     *
+     * @return void
      */
     private function registerAuthorization(): void
     {
@@ -233,6 +273,8 @@ class GroupsServiceProvider extends ServiceProvider
 
     /**
      * Register model observers.
+     *
+     * @return void
      */
     private function registerObservers(): void
     {
@@ -244,6 +286,8 @@ class GroupsServiceProvider extends ServiceProvider
      *
      * This allows Role models to access their associated groups through
      * the groups_roles pivot table, enabling efficient eager loading.
+     *
+     * @return void
      */
     private function registerRoleGroupsRelationship(): void
     {
@@ -261,6 +305,8 @@ class GroupsServiceProvider extends ServiceProvider
      *
      * Only runs in console (CLI) context to avoid unnecessary queries on HTTP requests.
      * This ensures roles and groups are seeded before attaching relationships.
+     *
+     * @return void
      */
     private function attachRolesToGroups(): void
     {

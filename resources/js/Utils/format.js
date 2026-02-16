@@ -34,7 +34,6 @@ export function getLocalDateTimeString(date = new Date()) {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
 
-  // Get timezone offset in ±HH:mm format
   const tzOffset = -date.getTimezoneOffset();
   const tzSign = tzOffset >= 0 ? '+' : '-';
   const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, '0');
@@ -60,25 +59,21 @@ export function formatCurrency(value, currency = 'IDR', locale = null, currencyS
     return value;
   }
 
-  // Use locale based on currency for best formatting, or fallback to en-US
   const effectiveLocale = locale || getLocaleForCurrency(currency);
 
   try {
-    // Use native Intl.NumberFormat - it handles all ISO 4217 currencies automatically
     const formatted = new Intl.NumberFormat(effectiveLocale, {
       style: 'currency',
       currency: currency,
-      currencyDisplay: 'narrowSymbol', // Use narrow symbol when available (e.g., $ instead of US$)
+      currencyDisplay: 'narrowSymbol',
     }).format(numValue);
 
-    // If custom symbol is provided (legacy support for IDR), replace the default symbol
     if (currencySymbol && currency === 'IDR') {
       return formatted.replace(/^[^\d\s]+\s?/, `${currencySymbol} `);
     }
 
     return formatted;
   } catch (_error) {
-    // Fallback for invalid currency codes
     return `${currency} ${numValue.toLocaleString('en-US')}`;
   }
 }
@@ -91,7 +86,6 @@ export function formatCurrency(value, currency = 'IDR', locale = null, currencyS
  * @returns {string} Locale string
  */
 function getLocaleForCurrency(currency) {
-  // 1. Try to get from router props (standard Inertia way)
   const props = router.page?.props || {};
   const currencyMap = props.currency_map || {};
 
@@ -99,7 +93,6 @@ function getLocaleForCurrency(currency) {
     return currencyMap[currency].locale.replace('_', '-');
   }
 
-  // 2. Try to get from DOM directly (fallback if router is not yet initialized)
   try {
     const el = document.getElementById('app');
     if (el?.dataset?.page) {
@@ -113,7 +106,6 @@ function getLocaleForCurrency(currency) {
     // Ignore parsing errors
   }
 
-  // 3. Common currency-to-locale fallbacks
   const fallbacks = {
     IDR: 'id-ID',
     USD: 'en-US',
@@ -128,7 +120,6 @@ function getLocaleForCurrency(currency) {
     return fallbacks[currency];
   }
 
-  // 4. Default to document lang or en-US
   return document.documentElement.lang || 'en-US';
 }
 
@@ -143,8 +134,6 @@ export function getCurrencyInfo(currencyCode) {
   const locale = getLocaleForCurrency(currencyCode);
 
   try {
-    // Format a test number to extract formatting info
-    // Use a large enough number to ensure a thousand separator is present
     const formatter = new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currencyCode,
@@ -175,8 +164,6 @@ export function getCurrencyInfo(currencyCode) {
       }
     }
 
-    // Check if this is a zero-decimal currency by formatting 1.5
-    // Some locales/currencies might have decimals in data but not in common usage
     const testFormat = formatter.format(1.5);
     if (!testFormat.includes(decimalSep)) {
       decimals = 0;
@@ -247,16 +234,12 @@ export function formatDate(
 ) {
   if (!date) return '';
 
-  // Detect if this is a date-only string (YYYY-MM-DD format without time component)
-  // Date-only strings should be parsed in local timezone, not UTC
   const isDateOnly = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim());
 
   let dateObj;
   if (date instanceof Date) {
     dateObj = date;
   } else if (isDateOnly) {
-    // Append T00:00:00 to parse in local timezone instead of UTC
-    // Without timezone suffix, JavaScript uses the browser's local timezone
     dateObj = new Date(date + 'T00:00:00');
   } else {
     dateObj = new Date(date);
@@ -284,8 +267,6 @@ export function formatDate(
 
   let options = formatOptions[format] || formatOptions.short;
 
-  // For date-only values, don't show time even if 'full' or 'datetime' format is requested
-  // There's no meaningful time data for date-only fields
   if (isDateOnly && options.timeStyle) {
     options = { dateStyle: options.dateStyle };
   }

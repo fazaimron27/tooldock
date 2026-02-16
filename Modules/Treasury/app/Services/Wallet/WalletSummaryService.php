@@ -1,11 +1,24 @@
 <?php
 
+/**
+ * Wallet Summary Service
+ *
+ * Provides wallet balance summaries and net worth calculations
+ * with multi-currency conversion support.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Wallet;
 
 use Modules\Core\Models\User;
 use Modules\Treasury\Models\Wallet;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 
+/**
+ * Service for wallet balance summaries and net worth calculations.
+ */
 class WalletSummaryService
 {
     public function __construct(
@@ -16,12 +29,15 @@ class WalletSummaryService
      * Get total net worth (sum of all wallet balances).
      * Uses centralized Wallet::getSummaryForUser when no wallet filter is applied.
      * Converts all balances to reference currency for accurate multi-currency aggregation.
+     *
+     * @param  User  $user
+     * @param  array  $filters
+     * @return array{total: float, wallet_count: int}
      */
     public function getNetWorth(User $user, array $filters = []): array
     {
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // If filtering by specific wallet, calculate with currency conversion
         if (! empty($filters['wallet_id'])) {
             $query = Wallet::where('user_id', $user->id)->active();
             $this->applyFilters($query, $filters);
@@ -48,12 +64,15 @@ class WalletSummaryService
             ];
         }
 
-        // Use centralized method for unfiltered net worth
         return Wallet::getSummaryForUser($user->id);
     }
 
     /**
      * Get all wallets with their balances.
+     *
+     * @param  User  $user
+     * @param  array  $filters
+     * @return array
      */
     public function getWallets(User $user, array $filters = []): array
     {
@@ -74,6 +93,10 @@ class WalletSummaryService
 
     /**
      * Apply filters to wallet queries.
+     *
+     * @param  mixed  $query
+     * @param  array  $filters
+     * @return void
      */
     private function applyFilters($query, array $filters): void
     {

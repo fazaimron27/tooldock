@@ -1,11 +1,24 @@
 <?php
 
+/**
+ * Transaction Chart Service
+ *
+ * Provides time-series chart data for transaction visualization
+ * at hourly, daily, and monthly granularity.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction;
 
 use Modules\Core\Models\User;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 
+/**
+ * Service for generating transaction chart data at various time granularities.
+ */
 class TransactionChartService
 {
     public function __construct(
@@ -15,6 +28,11 @@ class TransactionChartService
 
     /**
      * Get hourly trend data for today.
+     *
+     * @param  User  $user
+     * @param  string|null  $date
+     * @param  array  $filters
+     * @return array
      */
     public function getHourlyChartData(User $user, ?string $date = null, array $filters = []): array
     {
@@ -31,7 +49,6 @@ class TransactionChartService
 
         $transactions = $query->get(['amount', 'type', 'wallet_id', 'created_at']);
 
-        // Group by hour and convert currencies
         $hourlyTotals = [];
         foreach ($transactions as $tx) {
             $hour = (int) $tx->created_at->format('G');
@@ -66,6 +83,12 @@ class TransactionChartService
 
     /**
      * Get daily trend data for a specific month.
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array
      */
     public function getDailyChartData(User $user, int $month, int $year, array $filters = []): array
     {
@@ -83,7 +106,6 @@ class TransactionChartService
 
         $transactions = $query->get(['amount', 'type', 'wallet_id', 'date']);
 
-        // Group by date and convert currencies
         $dailyTotals = [];
         foreach ($transactions as $tx) {
             $dateKey = $tx->date->format('Y-m-d');
@@ -121,6 +143,11 @@ class TransactionChartService
 
     /**
      * Get monthly trend data for a specific year.
+     *
+     * @param  User  $user
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array
      */
     public function getMonthlyChartData(User $user, int $year, array $filters = []): array
     {
@@ -136,7 +163,6 @@ class TransactionChartService
 
         $transactions = $query->get(['amount', 'type', 'wallet_id', 'date']);
 
-        // Group by month and convert currencies
         $monthlyTotals = [];
         foreach ($transactions as $tx) {
             $monthNum = (int) $tx->date->format('n');

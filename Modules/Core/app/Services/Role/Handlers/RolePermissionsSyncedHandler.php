@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Role Permissions Synced Handler.
+ *
+ * Signal handler that notifies users when their role
+ * permissions have been modified by an administrator.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\Role\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

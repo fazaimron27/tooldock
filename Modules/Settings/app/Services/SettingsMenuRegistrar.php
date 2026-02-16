@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Settings Menu Registrar.
+ *
+ * Registers navigation menu items for the Settings module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Services;
 
 use App\Services\Registry\MenuRegistry;
@@ -11,6 +20,10 @@ class SettingsMenuRegistrar
 {
     /**
      * Register all menu items for the Settings module.
+     *
+     * @param  MenuRegistry  $menuRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

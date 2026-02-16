@@ -49,12 +49,10 @@ class UserPreferenceController extends Controller
         $user = $request->user();
         $overridableSettings = $this->preferenceService->getOverridableSettings();
 
-        // Build preferences data with current values, filtered by permission access
         $preferences = [];
         $grouped = [];
 
         foreach ($overridableSettings as $setting) {
-            // Check if user has access to this setting based on its permission
             if (! $this->userHasSettingAccess($user, $setting)) {
                 continue;
             }
@@ -79,7 +77,6 @@ class UserPreferenceController extends Controller
 
             $preferences[] = $preference;
 
-            // Group by category for frontend display
             $category = $preference['category'];
             if (! isset($grouped[$category])) {
                 $grouped[$category] = [
@@ -111,7 +108,6 @@ class UserPreferenceController extends Controller
     {
         $permission = $setting['permission'] ?? null;
 
-        // If no permission defined, allow access (e.g., Core module settings)
         if ($permission === null) {
             return true;
         }
@@ -139,7 +135,6 @@ class UserPreferenceController extends Controller
         $key = $request->input('key');
         $value = $request->input('value');
 
-        // Check permission based on the setting
         $setting = $this->findSettingByKey($key);
         if ($setting && ! $this->userHasSettingAccess($user, $setting)) {
             return Redirect::back()->withErrors(['key' => 'You do not have permission to modify this preference.']);
@@ -192,7 +187,6 @@ class UserPreferenceController extends Controller
         $user = $request->user();
         $preferences = $request->input('preferences');
 
-        // Check permission for each preference
         foreach ($preferences as $pref) {
             $setting = $this->findSettingByKey($pref['key']);
             if ($setting && ! $this->userHasSettingAccess($user, $setting)) {
@@ -227,7 +221,6 @@ class UserPreferenceController extends Controller
         $user = $request->user();
         $key = $request->input('key');
 
-        // Check permission based on the setting
         $setting = $this->findSettingByKey($key);
         if ($setting && ! $this->userHasSettingAccess($user, $setting)) {
             return Redirect::back()->withErrors(['key' => 'You do not have permission to modify this preference.']);

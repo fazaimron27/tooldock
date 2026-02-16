@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Store Budget Request
+ *
+ * Validates requests to create a new budget template. Ensures category
+ * uniqueness per user (one budget per category), validates the category
+ * exists as a transaction category, and normalizes boolean fields.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -7,10 +18,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Modules\Treasury\Models\Budget;
 
+/**
+ * Class StoreBudgetRequest
+ *
+ * Handles validation for budget creation with category uniqueness enforcement.
+ */
 class StoreBudgetRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,6 +37,8 @@ class StoreBudgetRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -42,7 +62,7 @@ class StoreBudgetRequest extends FormRequest
                 Rule::exists('categories', 'id')->where('type', 'transaction_category'),
             ],
             'amount' => ['required', 'numeric', 'min:0'],
-            'currency' => ['nullable', 'string', 'size:3'],  // ISO 4217, defaults to user's reference currency
+            'currency' => ['nullable', 'string', 'size:3'],
             'is_recurring' => ['sometimes', 'boolean'],
             'rollover_enabled' => ['sometimes', 'boolean'],
         ];
@@ -50,12 +70,13 @@ class StoreBudgetRequest extends FormRequest
 
     /**
      * Configure the validator instance.
+     *
+     * @param  \Illuminate\Validation\Validator  $validator  The validator instance
+     * @return void
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Enforce one budget per category per user
-            // Multiple budgets per category causes "shared spending" confusion
             $exists = \Modules\Treasury\Models\Budget::where('user_id', Auth::id())
                 ->where('category_id', $this->category_id)
                 ->exists();

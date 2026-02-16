@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Login Request.
+ *
+ * Validates login credentials and handles authentication
+ * attempts including rate limiting and lockout detection.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
@@ -13,6 +23,8 @@ class LoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -35,6 +47,8 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
+     * @return void
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function authenticate(): void
@@ -54,6 +68,8 @@ class LoginRequest extends FormRequest
 
     /**
      * Ensure the login request is not rate limited.
+     *
+     * @return void
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -77,6 +93,8 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the rate limiting throttle key for the request.
+     *
+     * @return string
      */
     public function throttleKey(): string
     {

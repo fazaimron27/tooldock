@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Send Notification Job.
+ *
+ * Queued job that sends a notification via SignalService.
+ * This allows handler logic to run synchronously while the
+ * actual notification (DB write + broadcast) runs asynchronously.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Signal\Jobs;
 
 use Illuminate\Bus\Queueable;
@@ -12,17 +23,12 @@ use Modules\Signal\Services\SignalService;
 use Throwable;
 
 /**
- * Send Notification Job
+ * Class SendNotificationJob
  *
- * Queued job that sends a notification via SignalService.
- * This allows handler logic to run synchronously while the
- * actual notification (DB write + broadcast) runs asynchronously.
+ * Queueable job that delegates notification sending to SignalService.
+ * Supports silent, flash, trigger, and broadcast delivery modes.
  *
- * Supports four delivery modes:
- * - silent (default): Store to database + broadcast
- * - flash: Broadcast only, no database storage
- * - trigger: Broadcast with frontend action trigger
- * - broadcast: Full - store to DB + toast + action
+ * @see \Modules\Signal\Services\SignalService
  */
 class SendNotificationJob implements ShouldQueue
 {
@@ -30,6 +36,8 @@ class SendNotificationJob implements ShouldQueue
 
     /**
      * The number of times the job may be attempted.
+     *
+     * @var int
      */
     public int $tries = 3;
 
@@ -62,6 +70,9 @@ class SendNotificationJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @param  SignalService  $signalService
+     * @return void
      */
     public function handle(SignalService $signalService): void
     {
@@ -75,7 +86,6 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        // Handle trigger delivery mode (toast + action, no storage)
         if ($this->delivery === SignalService::DELIVERY_TRIGGER && $this->action) {
             $signalService->trigger(
                 user: $user,
@@ -90,7 +100,6 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        // Handle flash delivery mode (toast only, no storage)
         if ($this->delivery === SignalService::DELIVERY_FLASH) {
             $signalService->flash(
                 user: $user,
@@ -104,7 +113,6 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        // Handle broadcast delivery mode (inbox + toast + action)
         if ($this->delivery === SignalService::DELIVERY_BROADCAST && $this->action) {
             $signalService->broadcast(
                 user: $user,
@@ -120,7 +128,6 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        // Default: silent delivery mode (inbox, no toast)
         match ($this->type) {
             'alert' => $signalService->alert($user, $this->title, $this->message, $this->url, $this->module, $this->category),
             'warning' => $signalService->warning($user, $this->title, $this->message, $this->url, $this->module, $this->category),
@@ -141,6 +148,9 @@ class SendNotificationJob implements ShouldQueue
 
     /**
      * Handle a job failure.
+     *
+     * @param  Throwable|null  $exception
+     * @return void
      */
     public function failed(?Throwable $exception): void
     {

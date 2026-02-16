@@ -1,17 +1,35 @@
 <?php
 
+/**
+ * Vault Settings Registrar
+ *
+ * Registers configurable settings for the Vault module.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services;
 
 use App\Services\Registry\SettingsRegistry;
 use Modules\Settings\Enums\SettingType;
 
 /**
- * Handles settings registration for the Vault module.
+ * Class VaultSettingsRegistrar
+ *
+ * Registers display, TOTP, security (lock), and notification
+ * settings for administrative and per-user configuration.
+ *
+ * @see \App\Services\Registry\SettingsRegistry
  */
 class VaultSettingsRegistrar
 {
     /**
      * Register vault module settings.
+     *
+     * @param  SettingsRegistry  $registry  The central settings registry
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

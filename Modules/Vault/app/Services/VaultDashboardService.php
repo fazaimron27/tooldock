@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Vault Dashboard Service
+ *
+ * Registers dashboard widgets for the Vault module overview.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services;
 
 use App\Data\DashboardWidget;
@@ -7,12 +16,21 @@ use App\Services\Registry\DashboardWidgetRegistry;
 use Modules\Vault\Models\Vault;
 
 /**
- * Handles dashboard widget registration for the Vault module.
+ * Class VaultDashboardService
+ *
+ * Provides statistical dashboard widgets for vault item counts
+ * broken down by type (login, card, note, server) and favorites.
+ *
+ * @see \App\Services\Registry\DashboardWidgetRegistry
  */
 class VaultDashboardService
 {
     /**
      * Register all dashboard widgets for the Vault module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The central widget registry
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {

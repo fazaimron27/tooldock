@@ -63,12 +63,10 @@ export default function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  // Get selected option label
   const selectedOption = useMemo(() => {
     return options.find((opt) => String(opt.value) === String(value));
   }, [options, value]);
 
-  // Filter options based on search
   const filteredOptions = useMemo(() => {
     if (!search.trim()) return options;
     const searchLower = search.toLowerCase();
@@ -79,22 +77,18 @@ export default function SearchableSelect({
     );
   }, [options, search]);
 
-  // Group options hierarchically if enabled
   const groupedOptions = useMemo(() => {
     if (!hierarchical) return { roots: filteredOptions, children: {} };
 
     const searchLower = search.toLowerCase().trim();
 
-    // When searching, we need to include parents whose children match
     if (searchLower) {
-      // Find all matching options (both parents and children)
       const matchingOptions = options.filter(
         (opt) =>
           opt.label.toLowerCase().includes(searchLower) ||
           opt.description?.toLowerCase().includes(searchLower)
       );
 
-      // Collect parent values of matching children
       const parentValuesOfMatchingChildren = new Set();
       matchingOptions.forEach((opt) => {
         if (opt.parentValue) {
@@ -102,7 +96,6 @@ export default function SearchableSelect({
         }
       });
 
-      // Get all parents that either match OR have matching children
       const allParents = options.filter((opt) => !opt.parentValue);
       const visibleParents = allParents.filter(
         (parent) =>
@@ -111,10 +104,8 @@ export default function SearchableSelect({
           parentValuesOfMatchingChildren.has(String(parent.value))
       );
 
-      // Get matching children
       const matchingChildren = matchingOptions.filter((opt) => opt.parentValue);
 
-      // Group children by parent
       const children = {};
       matchingChildren.forEach((child) => {
         if (!children[child.parentValue]) {
@@ -126,7 +117,6 @@ export default function SearchableSelect({
       return { roots: visibleParents, children };
     }
 
-    // No search - show all hierarchically
     const roots = [];
     const children = {};
 
@@ -155,7 +145,6 @@ export default function SearchableSelect({
     if (!isOpen) setSearch('');
   };
 
-  // Render a single option item
   const renderOption = (option, isChild = false) => {
     const isSelected = String(value) === String(option.value);
     const isDisabled = option.disabled === true;
@@ -214,7 +203,6 @@ export default function SearchableSelect({
     );
   };
 
-  // Render hierarchical options
   const renderHierarchicalOptions = () => {
     const { roots, children } = groupedOptions;
 
@@ -239,7 +227,6 @@ export default function SearchableSelect({
     });
   };
 
-  // Render flat options
   const renderFlatOptions = () => {
     if (filteredOptions.length === 0) {
       return <div className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</div>;

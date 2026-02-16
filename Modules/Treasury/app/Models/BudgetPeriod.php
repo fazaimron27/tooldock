@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Budget Period Model
+ *
+ * Represents a monthly instance of a budget template that tracks spending
+ * for a specific month. Each period belongs to a Budget template and can
+ * have customized amounts per month. Supports period navigation and formatting.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -63,13 +74,16 @@ class BudgetPeriod extends Model
     protected function casts(): array
     {
         return [
-            // Use string to avoid float precision issues in JavaScript
             'amount' => 'string',
         ];
     }
 
     /**
      * Create a formatted period string (YYYY-MM).
+     *
+     * @param  int  $month  Month number (1-12)
+     * @param  int  $year  Four-digit year
+     * @return string
      */
     public static function formatPeriod(int $month, int $year): string
     {
@@ -78,6 +92,8 @@ class BudgetPeriod extends Model
 
     /**
      * Get the budget template this period belongs to.
+     *
+     * @return BelongsTo
      */
     public function budget(): BelongsTo
     {
@@ -86,6 +102,8 @@ class BudgetPeriod extends Model
 
     /**
      * Get the category attribute.
+     *
+     * @return Category|null
      */
     public function getCategoryAttribute(): ?Category
     {
@@ -94,6 +112,8 @@ class BudgetPeriod extends Model
 
     /**
      * Get the user ID attribute.
+     *
+     * @return string|null
      */
     public function getUserIdAttribute(): ?string
     {
@@ -103,6 +123,8 @@ class BudgetPeriod extends Model
     /**
      * Get the user via budget relationship.
      * Used by SignalHandlerRegistry to extract user for notifications.
+     *
+     * @return \Modules\Core\Models\User|null
      */
     public function getUserAttribute(): ?\Modules\Core\Models\User
     {
@@ -113,6 +135,9 @@ class BudgetPeriod extends Model
      * Scope a query to only include periods for the authenticated user.
      *
      * Super Admins can see all budget periods.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForUser(Builder $query): Builder
     {
@@ -129,6 +154,10 @@ class BudgetPeriod extends Model
 
     /**
      * Scope a query to filter by period (YYYY-MM format).
+     *
+     * @param  Builder  $query
+     * @param  string  $period  Period string in YYYY-MM format
+     * @return Builder
      */
     public function scopeForPeriod(Builder $query, string $period): Builder
     {
@@ -137,6 +166,11 @@ class BudgetPeriod extends Model
 
     /**
      * Scope a query to filter by month and year.
+     *
+     * @param  Builder  $query
+     * @param  int  $month  Month number (1-12)
+     * @param  int  $year  Four-digit year
+     * @return Builder
      */
     public function scopeForMonth(Builder $query, int $month, int $year): Builder
     {
@@ -155,6 +189,8 @@ class BudgetPeriod extends Model
 
     /**
      * Convert period string to Carbon date.
+     *
+     * @return \Carbon\Carbon
      */
     public function getPeriodDate(): \Carbon\Carbon
     {
@@ -163,6 +199,8 @@ class BudgetPeriod extends Model
 
     /**
      * Get the previous period string (YYYY-MM format).
+     *
+     * @return string
      */
     public function getPreviousPeriod(): string
     {
@@ -171,6 +209,8 @@ class BudgetPeriod extends Model
 
     /**
      * Get the next period string (YYYY-MM format).
+     *
+     * @return string
      */
     public function getNextPeriod(): string
     {
@@ -179,6 +219,8 @@ class BudgetPeriod extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return BudgetPeriodFactory
      */
     protected static function newFactory(): BudgetPeriodFactory
     {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Permission Registrar
+ *
+ * Registers role-based permissions for the Treasury module
+ * including view, create, edit, and delete access for each resource.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use App\Services\Registry\PermissionRegistry;
@@ -12,6 +22,9 @@ class TreasuryPermissionRegistrar
 {
     /**
      * Register default permissions for the Treasury module.
+     *
+     * @param  PermissionRegistry  $registry
+     * @return void
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {

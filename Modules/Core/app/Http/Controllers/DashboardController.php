@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Dashboard Controller.
+ *
+ * Serves the main application dashboard with system health
+ * metrics, active modules, and registered widgets.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -18,6 +28,9 @@ class DashboardController extends Controller
 
     /**
      * Display the dashboard.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry service
+     * @return Response|RedirectResponse Inertia dashboard page or redirect for guests
      */
     public function index(
         DashboardWidgetRegistry $widgetRegistry
@@ -74,6 +87,9 @@ class DashboardController extends Controller
 
     /**
      * Display the Core module dashboard.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry service
+     * @return Response Inertia Core module dashboard page
      */
     public function module(DashboardWidgetRegistry $widgetRegistry): Response
     {

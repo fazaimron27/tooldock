@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Cleanup Temporary Media Command.
+ *
+ * Removes temporary media files older than a configurable retention period.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Console;
 
 use Illuminate\Console\Command;
@@ -24,10 +33,11 @@ class CleanupTemporaryMedia extends Command
 
     /**
      * Execute the console command.
+     *
+     * @return int
      */
     public function handle(): int
     {
-        // Use setting from database if hours option not provided, otherwise use the provided value
         $hours = $this->option('hours') !== null
             ? (int) $this->option('hours')
             : (int) settings('temporary_file_retention_hours', 24);
@@ -42,12 +52,9 @@ class CleanupTemporaryMedia extends Command
 
         foreach ($temporaryFiles as $file) {
             try {
-                // Delete from storage
                 if (Storage::disk($file->disk)->exists($file->path)) {
                     Storage::disk($file->disk)->delete($file->path);
                 }
-
-                // Delete database record
                 $file->delete();
                 $deletedCount++;
             } catch (\Exception $e) {

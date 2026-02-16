@@ -78,14 +78,10 @@ export function useSignalListener() {
   const { auth, userPreferences } = usePage().props;
   const userId = auth?.user?.id;
 
-  // Get sound settings from server-provided preferences (fallback to defaults)
   const soundEnabled = userPreferences?.notificationSound ?? true;
   const soundVolume = userPreferences?.notificationVolume ?? 0.5;
 
-  // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
-
-  // Use refs to avoid stale closure in WebSocket callback
   const soundEnabledRef = useRef(soundEnabled);
   const soundVolumeRef = useRef(soundVolume);
   useEffect(() => {
@@ -93,7 +89,6 @@ export function useSignalListener() {
     soundVolumeRef.current = soundVolume;
   }, [soundEnabled, soundVolume]);
 
-  // Initialize audio unlock listener on mount
   useEffect(() => {
     isMounted.current = true;
     initNotificationSoundUnlock();
@@ -104,48 +99,38 @@ export function useSignalListener() {
   }, []);
 
   useEffect(() => {
-    // Only subscribe if user is authenticated and Echo is available
     if (!userId || typeof window.Echo === 'undefined') {
       return;
     }
 
     const channel = window.Echo.private(`App.Models.User.${userId}`);
 
-    // Listen for all notification broadcasts
     channel.listen('.notification.received', (data) => {
-      // Skip if component unmounted
       if (!isMounted.current) {
         return;
       }
 
       const { delivery, action, title, message, type, url } = data;
 
-      // Log for debugging
       if (import.meta.env.DEV) {
         console.log('[SignalListener] Received:', { delivery, action, title });
       }
-
-      // Play notification sound for non-silent modes
       if (soundEnabledRef.current && delivery !== 'silent') {
         playNotificationSound(type, soundVolumeRef.current);
       }
 
-      // Handle based on delivery mode
       switch (delivery) {
         case 'flash':
-          // Show toast only, no inbox update
           showToast(type, title, message, url);
           break;
 
         case 'trigger':
-          // Show toast if title provided, then execute action
           if (title) {
             showToast(type, title, message, url, {
-              duration: 4000, // Longer duration for action notifications
+              duration: 4000,
             });
           }
 
-          // Execute the action after a short delay for toast to show
           if (action && ACTIONS[action]) {
             ACTIONS[action](url);
           } else if (action) {
@@ -154,15 +139,12 @@ export function useSignalListener() {
           break;
 
         case 'broadcast':
-          // Full notification: show toast AND execute action
-          // (inbox update is handled by SignalBell via the same broadcast)
           if (title) {
             showToast(type, title, message, url, {
               duration: 4000,
             });
           }
 
-          // Execute action if provided
           if (action && ACTIONS[action]) {
             ACTIONS[action](url);
           } else if (action) {
@@ -172,15 +154,10 @@ export function useSignalListener() {
 
         case 'silent':
         default:
-          // Silent notifications: SignalBell handles these
-          // No toast, no action here
           break;
       }
     });
 
-    // Cleanup on unmount - only stop listening, don't leave channel
-    // This keeps the WebSocket connection alive across Inertia navigations
-    // avoiding re-authentication on every page change (~200-300ms savings)
     return () => {
       channel.stopListening('.notification.received');
     };

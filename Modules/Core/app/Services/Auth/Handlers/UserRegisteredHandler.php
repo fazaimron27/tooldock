@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Registered Handler.
+ *
+ * Signal handler that sends welcome notifications
+ * to newly registered users.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\Auth\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

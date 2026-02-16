@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User API Controller.
+ *
+ * Provides API endpoints for user-related operations
+ * such as searching and retrieving user data.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -15,6 +25,9 @@ class UserController extends Controller
      *
      * Supports searching by ID for direct lookups.
      * Returns optimized JSON response for combobox usage.
+     *
+     * @param  Request  $request  The HTTP request with search, id, and limit params
+     * @return JsonResponse JSON response containing matched users
      */
     public function search(Request $request): JsonResponse
     {

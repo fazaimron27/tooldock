@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Dispatch Audit Log Trait.
+ *
+ * Provides a reusable method for controllers to dispatch audit log jobs
+ * with automatic extraction of request context (user, URL, IP, user agent).
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Traits;
 
 use Illuminate\Database\Eloquent\Model;

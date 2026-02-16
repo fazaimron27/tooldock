@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Category Observer.
+ *
+ * Observes Category model events and clears category-related
+ * cache when categories are created, updated, or deleted.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Observers;
 
 use App\Services\Cache\CacheService;
@@ -21,6 +31,9 @@ class CategoryObserver
 
     /**
      * Handle the Category "created" event.
+     *
+     * @param  Category  $category  The created category
+     * @return void
      */
     public function created(Category $category): void
     {
@@ -29,6 +42,9 @@ class CategoryObserver
 
     /**
      * Handle the Category "updated" event.
+     *
+     * @param  Category  $category  The updated category
+     * @return void
      */
     public function updated(Category $category): void
     {
@@ -37,6 +53,9 @@ class CategoryObserver
 
     /**
      * Handle the Category "deleted" event.
+     *
+     * @param  Category  $category  The deleted category
+     * @return void
      */
     public function deleted(Category $category): void
     {
@@ -45,6 +64,8 @@ class CategoryObserver
 
     /**
      * Clear category-related cache.
+     *
+     * @return void
      */
     private function clearCache(): void
     {

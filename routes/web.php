@@ -19,8 +19,6 @@ Route::prefix('tooldock')->middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // User preferences
     Route::get('/preferences', [UserPreferenceController::class, 'index'])->name('preferences.index');
     Route::post('/preferences', [UserPreferenceController::class, 'update'])->name('preferences.update');
     Route::post('/preferences/bulk', [UserPreferenceController::class, 'bulkUpdate'])->name('preferences.bulkUpdate');

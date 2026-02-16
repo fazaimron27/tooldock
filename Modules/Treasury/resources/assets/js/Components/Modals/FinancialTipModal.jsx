@@ -80,17 +80,14 @@ export default function FinancialTipModal({ open, onOpenChange, data, onApply })
   const DataIcon = config.dataIcon;
   const hasSufficientData = data.has_sufficient_data !== false;
 
-  // Check if currency was converted (wallet currency differs from reference)
   const isConverted = data.reference_currency && data.reference_currency !== data.currency;
 
-  // Display amounts - always show reference currency as primary (calculation basis)
   const referenceAvg =
     data.category_type === 'insurance_fund'
       ? (data.reference_avg_income ?? data.avg_income)
       : (data.reference_avg_expense ?? data.avg_expense);
   const referenceCurrency = data.reference_currency ?? data.currency;
 
-  // Converted amounts for wallet currency
   const walletAvg = data.avg_income;
   const walletCurrency = data.currency;
 
@@ -98,7 +95,6 @@ export default function FinancialTipModal({ open, onOpenChange, data, onApply })
     const targetDate = suggestion.months_to_build
       ? calculateTargetDate(suggestion.months_to_build)
       : null;
-    // Apply the wallet currency amount (converted if applicable)
     onApply?.({
       amount: suggestion.amount,
       targetDate,
@@ -159,7 +155,6 @@ export default function FinancialTipModal({ open, onOpenChange, data, onApply })
               <p className="text-sm font-medium">Recommended Targets:</p>
               <div className="space-y-2">
                 {data.suggestions.map((suggestion, index) => {
-                  // Reference amount is original, wallet amount is converted
                   const refAmount = suggestion.reference_amount ?? suggestion.amount;
                   const walletAmount = suggestion.amount;
 

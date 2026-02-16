@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Settings Registrar.
+ *
+ * Registers configurable settings for the AuditLog module, including
+ * data retention, cleanup scheduling, and export parameters.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services;
 
 use App\Services\Registry\SettingsRegistry;
@@ -12,6 +22,10 @@ class AuditLogSettingsRegistrar
 {
     /**
      * Register default settings for the AuditLog module.
+     *
+     * @param  SettingsRegistry  $registry  The settings registry to register entries into
+     * @param  string  $moduleName  The module name for grouping settings
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Add Members Request.
+ *
+ * Validates and authorizes requests to add members to a group.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;

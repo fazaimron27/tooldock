@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Role Constants.
+ *
+ * Defines string constants for default system roles
+ * used throughout the application.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Constants;
 
 /**

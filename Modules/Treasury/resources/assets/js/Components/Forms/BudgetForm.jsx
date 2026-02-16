@@ -54,16 +54,13 @@ export default function BudgetForm({
   cancelUrl,
   currentPeriod = null,
   currency = null,
-  categoryName = null, // For displaying read-only category in edit mode
+  categoryName = null,
 }) {
   const { currency_code } = usePage().props;
   const budgetCurrency = currency || currency_code || 'IDR';
 
-  // Convert to Set for O(1) lookup
   const usedCategorySet = useMemo(() => new Set(usedCategoryIds.map(String)), [usedCategoryIds]);
 
-  // Convert categories to options for SearchableSelect
-  // Disable categories that already have budgets (one budget per category)
   const categoryOptions = useMemo(() => {
     return categories.map((category) => {
       const isUsed = usedCategorySet.has(String(category.id));

@@ -33,7 +33,6 @@ export default function Index({ goals, wallets = [] }) {
     }
   };
 
-  // Context-aware delete message based on goal state
   const getDeleteMessage = (goal) => {
     if (!goal) return '';
 
@@ -53,7 +52,6 @@ export default function Index({ goals, wallets = [] }) {
   const hasSavingsWallet = wallets.some((w) => w.type === 'savings');
 
   const GoalCard = ({ goal }) => {
-    // Get icon from category slug using goalIcons utility
     const IconComponent = getGoalIcon(goal.category?.slug);
     const categoryColor = goal.category?.color || '#6B7280';
 

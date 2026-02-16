@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Signal Registrar
+ *
+ * Registers all Treasury module signal handlers with the central
+ * SignalHandlerRegistry, organized by category (transaction, budget, wallet, goal).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -94,6 +104,9 @@ class TreasurySignalRegistrar
 
     /**
      * Register all Treasury signal handler classes with the registry.
+     *
+     * @param  SignalHandlerRegistry  $registry
+     * @return void
      */
     public function register(SignalHandlerRegistry $registry): void
     {
@@ -126,6 +139,8 @@ class TreasurySignalRegistrar
 
     /**
      * Get the count of registered handlers.
+     *
+     * @return int
      */
     public static function getHandlerCount(): int
     {

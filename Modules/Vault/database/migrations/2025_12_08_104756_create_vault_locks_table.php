@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Create Vault Locks Table Migration
+ *
+ * Creates the vault_locks table for storing user PIN hashes
+ * used by the vault lock/unlock mechanism.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

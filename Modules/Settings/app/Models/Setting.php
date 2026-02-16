@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Setting Model.
+ *
+ * Represents an application setting with automatic type casting,
+ * UUID primary keys, and audit logging support.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -76,6 +86,9 @@ class Setting extends Model
      * - boolean: returns bool
      * - integer: returns int
      * - text/textarea/select: returns string
+     *
+     * @param  mixed  $value
+     * @return mixed
      */
     public function getValueAttribute($value): mixed
     {

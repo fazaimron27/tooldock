@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Categories Dashboard Service.
+ *
+ * Registers dashboard widgets and module metadata for the Categories module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Services;
 
 use App\Data\DashboardWidget;
@@ -13,6 +22,10 @@ class CategoriesDashboardService
 {
     /**
      * Register all dashboard widgets for the Categories module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry
+     * @param  string  $moduleName  The module name
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {

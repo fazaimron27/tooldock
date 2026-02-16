@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Dashboard Service.
+ *
+ * Registers and provides data for AuditLog module dashboard widgets,
+ * including statistics, event charts, and recent activity feeds.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services;
 
 use App\Data\DashboardWidget;
@@ -14,6 +24,10 @@ class AuditLogDashboardService
 {
     /**
      * Register all dashboard widgets for the AuditLog module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry to register into
+     * @param  string  $moduleName  The module name for widget grouping
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
@@ -108,6 +122,8 @@ class AuditLogDashboardService
      *
      * Uses a single query with GROUP BY instead of multiple separate queries.
      * Includes all events (with 0 for events that didn't occur).
+     *
+     * @return array<int, array<string, mixed>> Daily event counts for the last 7 days
      */
     private function getAuditEventsData(): array
     {
@@ -150,6 +166,8 @@ class AuditLogDashboardService
 
     /**
      * Get recent audit logs activity for activity widget.
+     *
+     * @return array<int, array{id: string, title: string, timestamp: string, icon: string, iconColor: string}> Recent audit log summaries
      */
     private function getRecentAuditLogsActivity(): array
     {

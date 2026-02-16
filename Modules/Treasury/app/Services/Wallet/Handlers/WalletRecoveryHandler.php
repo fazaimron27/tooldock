@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Wallet Recovery Handler
+ *
+ * Signal handler that returns data when a wallet recovers from
+ * a previously reported low or critical balance state.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Wallet\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -50,21 +60,14 @@ class WalletRecoveryHandler implements SignalHandlerInterface
             return false;
         }
 
-        // Income always increases balance
         if ($data->type === 'income') {
             return true;
         }
 
-        // Note: Transfers are NOT supported for recovery because $transaction->wallet
-        // always returns the SOURCE wallet. Recovery on destination wallet would require
-        // the observer to dispatch separate signals for each wallet, which is not implemented.
-
-        // Deleted expense increases balance (money returned)
         if ($event === 'transaction.deleted' && $data->type === 'expense') {
             return true;
         }
 
-        // Updated expense might increase balance (if amount was reduced)
         if ($event === 'transaction.updated' && $data->type === 'expense') {
             return true;
         }
@@ -84,7 +87,6 @@ class WalletRecoveryHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Check if we previously sent a low balance signal
         $hadCritical = Cache::has("wallet_signal_{$wallet->id}_critical_sent");
         $hadLow = Cache::has("wallet_signal_{$wallet->id}_low_balance_sent");
 
@@ -96,15 +98,12 @@ class WalletRecoveryHandler implements SignalHandlerInterface
         $walletCurrency = $wallet->currency ?? settings('treasury_reference_currency', 'IDR');
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Threshold is in reference currency
         $lowThreshold = (float) settings('treasury_wallet_low_balance_threshold', 500000);
 
-        // Convert balance to reference currency for comparison
         $balanceInReference = $walletCurrency !== $referenceCurrency
             ? $this->currencyConverter->convert($balance, $walletCurrency, $referenceCurrency)
             : $balance;
 
-        // Check if balance is now above threshold (in reference currency)
         if ($balanceInReference < $lowThreshold) {
             return null;
         }

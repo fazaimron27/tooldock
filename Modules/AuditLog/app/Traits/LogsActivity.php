@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Logs Activity Trait.
+ *
+ * Automatically logs model lifecycle events (created, updated, deleted) to the
+ * audit log, with support for field exclusion, sensitive data redaction, and
+ * custom audit tags.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Traits;
 
 use App\Services\Cache\CacheService;
@@ -27,6 +38,10 @@ trait LogsActivity
 
     /**
      * Boot the LogsActivity trait.
+     *
+     * Registers model event listeners for created, updated, and deleted events.
+     *
+     * @return void
      */
     public static function bootLogsActivity(): void
     {
@@ -113,8 +128,8 @@ trait LogsActivity
      *
      * Uses persistent caching via CacheService to optimize reflection operations.
      *
-     * @param  Model  $model
-     * @return string|null
+     * @param  Model  $model  The model to extract audit tags from
+     * @return string|null Comma-separated tags, or null if none
      */
     protected static function getAuditTagsString(Model $model): ?string
     {
@@ -132,8 +147,8 @@ trait LogsActivity
      *
      * Uses persistent caching via CacheService to optimize reflection operations.
      *
-     * @param  Model  $model
-     * @return array<string>
+     * @param  Model  $model  The model to collect audit tags from
+     * @return array<string> Unique audit tags
      */
     protected static function collectAuditTags(Model $model): array
     {
@@ -171,8 +186,8 @@ trait LogsActivity
      *
      * Uses persistent caching via CacheService for the trait file path.
      *
-     * @param  Model  $model
-     * @return array{hasMethod: bool, isStatic: bool, filePath: string|null}
+     * @param  Model  $model  The model to analyze
+     * @return array{hasMethod: bool, isStatic: bool, filePath: string|null} Method analysis result
      */
     protected static function analyzeGetAuditTagsMethod(Model $model): array
     {
@@ -218,7 +233,7 @@ trait LogsActivity
      * Resolves from container since traits can't use dependency injection.
      * Caches the instance to avoid repeated container lookups.
      *
-     * @return CacheService
+     * @return CacheService The resolved cache service instance
      */
     protected static function getCacheService(): CacheService
     {
@@ -276,6 +291,9 @@ trait LogsActivity
 
     /**
      * Determine if activity should be logged for the model.
+     *
+     * @param  Model  $model  The model to check
+     * @return bool True if activity should be logged
      */
     protected static function shouldLogActivity(Model $model): bool
     {
@@ -317,8 +335,8 @@ trait LogsActivity
     /**
      * Execute a callback without logging activity.
      *
-     * @param  callable  $callback
-     * @return mixed
+     * @param  callable  $callback  The callback to execute without logging
+     * @return mixed The callback return value
      */
     public static function withoutLoggingActivity(callable $callback): mixed
     {
@@ -334,6 +352,8 @@ trait LogsActivity
 
     /**
      * Get the current user ID, handling console contexts.
+     *
+     * @return string|null The authenticated user's ID, or null in console context
      */
     protected static function getUserId(): ?string
     {
@@ -346,6 +366,8 @@ trait LogsActivity
 
     /**
      * Get the current request URL, handling console contexts.
+     *
+     * @return string|null The current URL, or null in console context
      */
     protected static function getRequestUrl(): ?string
     {
@@ -358,6 +380,8 @@ trait LogsActivity
 
     /**
      * Get the current request IP address, handling console contexts.
+     *
+     * @return string|null The client IP address, or null in console context
      */
     protected static function getRequestIp(): ?string
     {
@@ -371,12 +395,10 @@ trait LogsActivity
     /**
      * Get the current user agent, handling console contexts.
      *
-     * Returns null if:
-     * - Running in console
-     * - No request available
-     * - User agent is "Symfony" (default when no User-Agent header is present)
+     * Returns null if running in console, no request is available,
+     * or user agent is "Symfony" (default when no User-Agent header is present).
      *
-     * Uses AuditLog::normalizeUserAgent() for consistency.
+     * @return string|null The normalized user agent string, or null
      */
     protected static function getUserAgent(): ?string
     {
@@ -425,8 +447,8 @@ trait LogsActivity
      *
      * Models can define protected $auditExclude = [] to exclude fields.
      *
-     * @param  Model  $model
-     * @return array<string>
+     * @param  Model  $model  The model to get excluded fields from
+     * @return array<string> Field names to exclude
      */
     protected static function getExcludedFields(Model $model): array
     {
@@ -449,8 +471,8 @@ trait LogsActivity
      * Models can define protected $auditSensitive = [] to redact fields.
      * Default sensitive fields include: password, token, secret, credit_card, etc.
      *
-     * @param  Model  $model
-     * @return array<string>
+     * @param  Model  $model  The model to get sensitive fields from
+     * @return array<string> Field names to redact
      */
     protected static function getSensitiveFields(Model $model): array
     {
@@ -482,9 +504,9 @@ trait LogsActivity
     /**
      * Check if a field should be completely excluded from audit logs.
      *
-     * @param  string  $field
-     * @param  Model  $model
-     * @return bool
+     * @param  string  $field  The field name to check
+     * @param  Model  $model  The model to check against
+     * @return bool True if the field should be excluded
      */
     protected static function isExcludedField(string $field, Model $model): bool
     {
@@ -496,9 +518,9 @@ trait LogsActivity
     /**
      * Check if a field is sensitive and should be redacted in audit logs.
      *
-     * @param  string  $field
-     * @param  Model  $model
-     * @return bool
+     * @param  string  $field  The field name to check
+     * @param  Model  $model  The model to check against
+     * @return bool True if the field is sensitive
      */
     protected static function isSensitiveField(string $field, Model $model): bool
     {
@@ -512,9 +534,9 @@ trait LogsActivity
      *
      * This method handles both exclusion (complete removal) and redaction (masking).
      *
-     * @param  array<string, mixed>  $attributes
-     * @param  Model  $model
-     * @return array<string, mixed>
+     * @param  array<string, mixed>  $attributes  The attributes to process
+     * @param  Model  $model  The model used for exclusion/sensitivity rules
+     * @return array<string, mixed> Processed attributes with excluded fields removed and sensitive fields masked
      */
     protected static function processSensitiveFields(array $attributes, Model $model): array
     {

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Categories Route Service Provider.
+ *
+ * Registers web and API routes for the Categories module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -13,6 +22,8 @@ class RouteServiceProvider extends ServiceProvider
      * Called before routes are registered.
      *
      * Register any model bindings or pattern based filters.
+     *
+     * @return void
      */
     public function boot(): void
     {
@@ -21,6 +32,8 @@ class RouteServiceProvider extends ServiceProvider
 
     /**
      * Define the routes for the application.
+     *
+     * @return void
      */
     public function map(): void
     {

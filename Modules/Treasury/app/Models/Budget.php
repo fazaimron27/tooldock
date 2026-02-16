@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Budget Model
+ *
+ * Represents a recurring budget template that defines monthly spending limits
+ * per category. Each template can generate BudgetPeriod instances for tracking
+ * actual monthly spending. Supports rollover and recurring configurations.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -61,7 +72,6 @@ class Budget extends Model
     protected function casts(): array
     {
         return [
-            // Use string to avoid float precision issues in JavaScript
             'amount' => 'string',
             'is_active' => 'boolean',
             'is_recurring' => 'boolean',
@@ -71,6 +81,8 @@ class Budget extends Model
 
     /**
      * Get the user that owns the budget template.
+     *
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -79,6 +91,8 @@ class Budget extends Model
 
     /**
      * Get the category for this budget template.
+     *
+     * @return BelongsTo
      */
     public function category(): BelongsTo
     {
@@ -87,6 +101,8 @@ class Budget extends Model
 
     /**
      * Get all budget periods (monthly instances) for this template.
+     *
+     * @return HasMany
      */
     public function periods(): HasMany
     {
@@ -95,6 +111,9 @@ class Budget extends Model
 
     /**
      * Get the budget period for a specific month.
+     *
+     * @param  string  $period  Period string in YYYY-MM format
+     * @return BudgetPeriod|null
      */
     public function getPeriod(string $period): ?BudgetPeriod
     {
@@ -103,6 +122,9 @@ class Budget extends Model
 
     /**
      * Scope a query to only include active budgets.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -111,6 +133,9 @@ class Budget extends Model
 
     /**
      * Scope a query to only include recurring budgets.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeRecurring(Builder $query): Builder
     {
@@ -129,6 +154,8 @@ class Budget extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return BudgetFactory
      */
     protected static function newFactory(): BudgetFactory
     {

@@ -22,6 +22,10 @@ class CoreSettingsRegistrar
 {
     /**
      * Register core module settings.
+     *
+     * @param  SettingsRegistry  $registry  The settings registry service
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

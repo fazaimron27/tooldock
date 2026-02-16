@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Send Goal Summary Command
+ *
+ * Generates and sends monthly savings goal summaries including progress,
+ * projected completion dates, and milestone achievements. Dispatches
+ * through the signal handler registry for notification delivery.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class SendGoalSummaryCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class SendGoalSummaryCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get all users who have at least one goal
             $users = User::whereHas('goals')->get();
         }
 

@@ -24,7 +24,6 @@ return new class extends Migration
             $table->boolean('is_completed')->default(false);
             $table->timestamps();
 
-            // Composite index for filtering by user + completion status
             $table->index(['user_id', 'is_completed'], 'treasury_goals_user_completion_index');
         });
 

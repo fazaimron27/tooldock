@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Vault Signal Registrar
+ *
+ * Registers all Vault module signal handlers with the central SignalHandlerRegistry.
+ * Called from VaultServiceProvider during application boot.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -10,10 +20,11 @@ use Modules\Vault\Services\Lock\Handlers\VaultPinChangedHandler;
 use Modules\Vault\Services\Lock\Handlers\VaultUnlockedHandler;
 
 /**
- * Vault Signal Registrar
+ * Class VaultSignalRegistrar
  *
- * Registers all Vault module signal handlers with the central SignalHandlerRegistry.
- * Called from VaultServiceProvider during application boot.
+ * Manages registration of lock/unlock and PIN change signal handlers.
+ *
+ * @see \App\Services\Registry\SignalHandlerRegistry
  */
 class VaultSignalRegistrar
 {
@@ -35,6 +46,9 @@ class VaultSignalRegistrar
 
     /**
      * Register all Vault signal handler classes with the registry.
+     *
+     * @param  SignalHandlerRegistry  $registry  The central signal handler registry
+     * @return void
      */
     public function register(SignalHandlerRegistry $registry): void
     {
@@ -67,6 +81,8 @@ class VaultSignalRegistrar
 
     /**
      * Get the count of registered handlers.
+     *
+     * @return int The total number of handler classes
      */
     public static function getHandlerCount(): int
     {

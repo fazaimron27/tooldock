@@ -19,7 +19,6 @@ class GroupsDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create or get the "Editors" group (test/demo group)
         $editorsGroup = Group::firstOrCreate(
             ['slug' => 'editors'],
             [
@@ -28,7 +27,6 @@ class GroupsDatabaseSeeder extends Seeder
             ]
         );
 
-        // Create or get user "John" with no roles
         $john = User::withoutEvents(function () {
             return User::firstOrCreate(
                 ['email' => 'john@example.com'],
@@ -41,10 +39,8 @@ class GroupsDatabaseSeeder extends Seeder
             );
         });
 
-        // Ensure John has no roles
         $john->roles()->detach();
 
-        // Assign John to the Editors group
         if (! $editorsGroup->users()->where('users.id', $john->id)->exists()) {
             $editorsGroup->users()->attach($john->id);
         }

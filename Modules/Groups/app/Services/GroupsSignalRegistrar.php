@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Signal Registrar.
+ *
+ * Registers signal handlers for group-related events.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\SignalHandlerInterface;

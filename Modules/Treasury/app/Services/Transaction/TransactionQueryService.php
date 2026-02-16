@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Transaction Query Service
+ *
+ * Provides reusable query building and filtering for transaction data,
+ * including recent transaction retrieval and global filter application.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction;
 
 use Modules\Core\Models\User;
@@ -7,10 +17,18 @@ use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Service for querying and filtering transaction data.
+ */
 class TransactionQueryService
 {
     /**
      * Get recent transactions.
+     *
+     * @param  User  $user
+     * @param  int  $limit
+     * @param  array  $filters
+     * @return array
      */
     public function getRecent(User $user, int $limit = 10, array $filters = []): array
     {
@@ -19,7 +37,6 @@ class TransactionQueryService
 
         $this->applyFilters($query, $filters);
 
-        // Get the filtered wallet ID if any (for is_incoming_transfer calculation)
         $filteredWalletId = $filters['wallet_id'] ?? null;
 
         return $query->orderBy('date', 'desc')
@@ -31,7 +48,6 @@ class TransactionQueryService
                     && $tx->type === 'transfer'
                     && $tx->destination_wallet_id === $filteredWalletId;
 
-                // Calculate converted amount for incoming cross-currency transfers
                 $convertedAmount = null;
                 if ($isIncomingTransfer && $tx->exchange_rate && $tx->exchange_rate != 1) {
                     $convertedAmount = bcmul((string) $tx->amount, (string) $tx->exchange_rate, 2);
@@ -88,13 +104,16 @@ class TransactionQueryService
     /**
      * Apply global filters to a query.
      * Uses qualified column names for Transaction queries to support JOINs.
+     *
+     * @param  mixed  $query
+     * @param  array  $filters
+     * @return void
      */
     public function applyFilters($query, array $filters): void
     {
         $model = $query->getModel();
         $isTransaction = $model instanceof Transaction;
 
-        // Filter by Wallet (includes incoming transfers)
         if (! empty($filters['wallet_id'])) {
             if ($model instanceof Wallet) {
                 $query->where('id', $filters['wallet_id']);
@@ -108,7 +127,6 @@ class TransactionQueryService
             }
         }
 
-        // Filter by Date Range
         $hasDateColumn = ! ($model instanceof Wallet) && ! ($model instanceof TreasuryGoal);
 
         if ($hasDateColumn) {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Income Streak Handler
+ *
+ * Signal handler that returns data when users maintain a consecutive
+ * income recording streak, reaching predefined milestones.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -57,7 +67,6 @@ class IncomeStreakHandler implements SignalHandlerInterface
         $today = now()->format('Y-m-d');
         $lastDate = $streakData['last_date'];
 
-        // Calculate streak
         if ($lastDate === null) {
             $newStreak = 1;
         } elseif ($lastDate === $today) {
@@ -68,13 +77,11 @@ class IncomeStreakHandler implements SignalHandlerInterface
             $newStreak = 1;
         }
 
-        // Update cache
         Cache::put($cacheKey, [
             'count' => $newStreak,
             'last_date' => $today,
         ], now()->addDays(35));
 
-        // Check for milestone
         if (in_array($newStreak, self::STREAK_MILESTONES, true)) {
             Log::info('IncomeStreakHandler: Streak milestone reached', [
                 'user_id' => $user->id,

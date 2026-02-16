@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Event Enum.
+ *
+ * Defines constants for all audit log event types and provides helper
+ * methods for event categorization, icon mapping, and color assignment.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Enums;
 
 /**
@@ -10,14 +20,12 @@ namespace Modules\AuditLog\Enums;
  */
 class AuditLogEvent
 {
-    // Standard CRUD events
     public const CREATED = 'created';
 
     public const UPDATED = 'updated';
 
     public const DELETED = 'deleted';
 
-    // Authentication events
     public const LOGIN = 'login';
 
     public const LOGOUT = 'logout';
@@ -30,29 +38,24 @@ class AuditLogEvent
 
     public const PASSWORD_CHANGED = 'password_changed';
 
-    // Email events
     public const EMAIL_VERIFIED = 'email_verified';
 
     public const EMAIL_CHANGED = 'email_changed';
 
-    // Account events
     public const ACCOUNT_DELETED = 'account_deleted';
 
-    // Media events
     public const FILE_UPLOADED = 'file_uploaded';
 
     public const FILE_DELETED = 'file_deleted';
 
-    // Relationship events
     public const RELATIONSHIP_SYNCED = 'relationship_synced';
 
-    // System events
     public const EXPORT = 'export';
 
     /**
      * Get all events that don't require model existence check.
      *
-     * @return array<string>
+     * @return array<string> Event names that skip model existence validation
      */
     public static function eventsWithoutModelCheck(): array
     {
@@ -71,7 +74,7 @@ class AuditLogEvent
     /**
      * Get all events that should set model to null in job constructor.
      *
-     * @return array<string>
+     * @return array<string> Event names where the model is nullified before dispatch
      */
     public static function eventsWithNullModel(): array
     {
@@ -84,7 +87,7 @@ class AuditLogEvent
     /**
      * Get all valid event types.
      *
-     * @return array<string>
+     * @return array<string> All recognized audit log event names
      */
     public static function allEvents(): array
     {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Role Model.
+ *
+ * Extends Spatie's Role model with UUID primary keys,
+ * user relationships, and custom table naming.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

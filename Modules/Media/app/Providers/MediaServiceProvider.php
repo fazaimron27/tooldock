@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Media Service Provider.
+ *
+ * Main service provider for the Media module. Registers commands,
+ * configuration, views, translations, and all module registries.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Providers;
 
 use App\Services\Media\MediaConfigService;
@@ -38,6 +48,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         CommandRegistry $commandRegistry,
@@ -88,6 +100,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -97,6 +111,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register model observers.
+     *
+     * @return void
      */
     public function bootObservers(): void
     {
@@ -105,6 +121,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register commands in the format of Command::class
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -115,6 +133,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register command Schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void
     {
@@ -126,6 +146,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -142,6 +164,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -174,6 +198,10 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path
+     * @param  string  $key
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -185,6 +213,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -200,12 +230,19 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];
@@ -220,6 +257,8 @@ class MediaServiceProvider extends ServiceProvider
 
     /**
      * Register rate limiter for media uploads.
+     *
+     * @return void
      */
     private function registerRateLimiter(): void
     {

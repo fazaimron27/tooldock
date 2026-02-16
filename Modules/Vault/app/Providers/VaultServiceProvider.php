@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Vault Service Provider
+ *
+ * Main service provider for the Vault module. Bootstraps all module
+ * registrations including routes, views, config, permissions, menus,
+ * commands, settings, dashboard widgets, middleware, and signals.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Providers;
 
 use App\Services\Registry\CategoryRegistry;
@@ -24,6 +35,15 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class VaultServiceProvider
+ *
+ * Orchestrates the Vault module bootstrap process by delegating
+ * to specialised registrar services for each integration point.
+ *
+ * @see \Modules\Vault\Services\VaultPermissionRegistrar
+ * @see \Modules\Vault\Services\VaultMenuRegistrar
+ */
 class VaultServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -34,6 +54,24 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @param  CategoryRegistry  $categoryRegistry  Central category registry
+     * @param  CommandRegistry  $commandRegistry  Central command palette registry
+     * @param  DashboardWidgetRegistry  $widgetRegistry  Central dashboard widget registry
+     * @param  InertiaSharedDataRegistry  $sharedDataRegistry  Inertia shared data registry
+     * @param  MenuRegistry  $menuRegistry  Central menu registry
+     * @param  MiddlewareRegistry  $middlewareRegistry  Central middleware registry
+     * @param  PermissionRegistry  $permissionRegistry  Central permission registry
+     * @param  SettingsRegistry  $settingsRegistry  Central settings registry
+     * @param  VaultCategoryRegistrar  $categoryRegistrar  Vault category registrar
+     * @param  VaultCommandRegistrar  $commandRegistrar  Vault command registrar
+     * @param  VaultDashboardService  $dashboardService  Vault dashboard service
+     * @param  VaultMenuRegistrar  $menuRegistrar  Vault menu registrar
+     * @param  VaultPermissionRegistrar  $permissionRegistrar  Vault permission registrar
+     * @param  VaultSettingsRegistrar  $settingsRegistrar  Vault settings registrar
+     * @param  SignalHandlerRegistry  $signalRegistry  Central signal handler registry
+     * @param  VaultSignalRegistrar  $signalRegistrar  Vault signal registrar
+     * @return void
      */
     public function boot(
         CategoryRegistry $categoryRegistry,
@@ -95,6 +133,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -105,6 +145,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register commands in the format of Command::class
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -113,6 +155,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register command Schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void
     {
@@ -124,6 +168,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -140,6 +186,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -173,6 +221,10 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path  Absolute path to the config file
+     * @param  string  $key  The config key to merge into
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -184,6 +236,8 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -199,12 +253,19 @@ class VaultServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths from the application's view directories.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

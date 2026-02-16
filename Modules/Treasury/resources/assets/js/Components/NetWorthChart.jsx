@@ -19,7 +19,6 @@ const chartConfig = {
 export default function NetWorthChart({ data = [], className = '' }) {
   const { formatCurrency } = useAppearance();
 
-  // Ensure we have valid data
   const chartData = useMemo(() => {
     if (!data || data.length === 0) {
       return [];
@@ -36,7 +35,6 @@ export default function NetWorthChart({ data = [], className = '' }) {
     return null;
   }
 
-  // Calculate min/max for Y axis domain
   const minValue = Math.min(...chartData.map((d) => d.netWorth));
   const maxValue = Math.max(...chartData.map((d) => d.netWorth));
   const padding = (maxValue - minValue) * 0.1 || maxValue * 0.1;

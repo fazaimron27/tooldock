@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Event Service Provider
+ *
+ * Registers event listeners and model observers for the Treasury module.
+ * Handles module installation events and observes changes to Transaction,
+ * BudgetPeriod, Wallet, Budget, and TreasuryGoal models.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Providers;
 
 use App\Events\Modules\ModuleInstalled;
@@ -16,6 +27,11 @@ use Modules\Treasury\Observers\TransactionObserver;
 use Modules\Treasury\Observers\TreasuryGoalObserver;
 use Modules\Treasury\Observers\WalletObserver;
 
+/**
+ * Class EventServiceProvider
+ *
+ * Treasury module event listeners and model observer registration.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -38,6 +54,8 @@ class EventServiceProvider extends ServiceProvider
 
     /**
      * Register any events for your application.
+     *
+     * @return void
      */
     public function boot(): void
     {
@@ -50,6 +68,8 @@ class EventServiceProvider extends ServiceProvider
 
     /**
      * Configure the proper event listeners for email verification.
+     *
+     * @return void
      */
     protected function configureEmailVerification(): void {}
 }

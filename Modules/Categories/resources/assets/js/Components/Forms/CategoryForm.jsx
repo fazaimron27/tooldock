@@ -51,13 +51,10 @@ export default function CategoryForm({
   watch,
   setValue,
   cancelUrl,
-  excludeCategoryId = null, // Used in edit mode to exclude current category from parent options
+  excludeCategoryId = null,
 }) {
-  // Watch type for parent filtering
   const selectedType = watch?.('type') || '';
 
-  // Get available parent categories based on selected type
-  // Filter out the current category in edit mode to prevent circular reference
   const availableParents = useMemo(() => {
     if (!selectedType || !parentCategories[selectedType]) {
       return [];
@@ -91,10 +88,8 @@ export default function CategoryForm({
                 {...field}
                 onChange={(e) => {
                   field.onChange(e);
-                  // Auto-generate slug from name
                   const name = e.target.value;
                   const currentSlug = watch?.('slug') || '';
-                  // Only auto-generate if slug is empty or matches auto-generated pattern
                   if (
                     !currentSlug ||
                     currentSlug ===

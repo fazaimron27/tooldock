@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Update Settings Request.
+ *
+ * Validates bulk settings updates with dynamic key validation
+ * against existing settings in the database.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Http\Requests;
 
 use App\Services\Core\SettingsService;
@@ -35,6 +45,8 @@ class UpdateSettingsRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

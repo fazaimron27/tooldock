@@ -75,7 +75,6 @@ export default function Dashboard({ systemHealth, widgets, modules = [], moduleM
           {moduleNames.map((moduleName) => {
             const moduleGroups = widgetsByModule[moduleName];
             const groupNames = Object.keys(moduleGroups).sort((a, b) => {
-              // Put "General" group first if it exists
               if (a === 'General') return -1;
               if (b === 'General') return 1;
               return a.localeCompare(b);

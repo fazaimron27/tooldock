@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Permission Service.
+ *
+ * Provides utility methods for grouping permissions
+ * by module for organized display in the UI.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use Illuminate\Support\Collection;

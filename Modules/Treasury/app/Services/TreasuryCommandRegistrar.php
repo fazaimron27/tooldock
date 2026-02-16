@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Command Registrar
+ *
+ * Registers Command Palette commands for the Treasury module,
+ * providing quick access to wallets, goals, budgets, and transactions.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use App\Services\Registry\CommandRegistry;
@@ -11,10 +21,13 @@ class TreasuryCommandRegistrar
 {
     /**
      * Register all Command Palette commands for the Treasury module.
+     *
+     * @param  CommandRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(CommandRegistry $registry, string $moduleName): void
     {
-        // Treasury navigation commands
         $registry->registerMany($moduleName, 'Life OS', [
             [
                 'label' => 'Wallets',
@@ -63,7 +76,6 @@ class TreasuryCommandRegistrar
             ],
         ]);
 
-        // Quick actions
         $registry->registerMany($moduleName, 'Quick Actions', [
             [
                 'label' => 'Create Transaction',

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Categories Settings Registrar.
+ *
+ * Registers configurable settings for the Categories module including
+ * display preferences and available category types.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Services;
 
 use App\Services\Registry\SettingsRegistry;
@@ -12,6 +22,10 @@ class CategoriesSettingsRegistrar
 {
     /**
      * Register categories module settings.
+     *
+     * @param  SettingsRegistry  $registry  The settings registry
+     * @param  string  $moduleName  The module name
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

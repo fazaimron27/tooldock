@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Setting Policy.
+ *
+ * Authorizes setting operations including viewing
+ * and updating application settings.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Settings\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -13,6 +23,9 @@ class SettingPolicy
 
     /**
      * Determine whether the user can view any models.
+     *
+     * @param  User  $user
+     * @return bool
      */
     public function viewAny(User $user): bool
     {
@@ -23,6 +36,9 @@ class SettingPolicy
      * Determine whether the user can update settings (class-level check).
      *
      * Used when no specific setting instance is available.
+     *
+     * @param  User  $user
+     * @return bool
      */
     public function updateAny(User $user): bool
     {
@@ -31,6 +47,10 @@ class SettingPolicy
 
     /**
      * Determine whether the user can update the model.
+     *
+     * @param  User  $user
+     * @param  Setting  $setting
+     * @return bool
      */
     public function update(User $user, Setting $setting): bool
     {

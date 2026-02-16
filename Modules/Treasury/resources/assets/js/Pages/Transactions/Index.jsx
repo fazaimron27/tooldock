@@ -49,8 +49,6 @@ import {
   SelectValue,
 } from '@/Components/ui/select';
 
-// Group transactions by date
-// isWalletFiltered: when true, outgoing transfers count as expenses, incoming as income
 function groupTransactionsByDate(
   transactions,
   exchangeRates,
@@ -68,7 +66,6 @@ function groupTransactionsByDate(
     const txDate = new Date(tx.date);
     const dateKey = txDate.toISOString().split('T')[0];
 
-    // Create readable date label
     const txDateOnly = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const yesterdayOnly = new Date(
@@ -83,7 +80,6 @@ function groupTransactionsByDate(
     } else if (txDateOnly.getTime() === yesterdayOnly.getTime()) {
       dateLabel = 'Yesterday';
     } else {
-      // Use date-only format for group labels
       dateLabel = formatDate(txDateOnly, 'long');
     }
 
@@ -99,15 +95,12 @@ function groupTransactionsByDate(
 
     groups[dateKey].transactions.push(tx);
 
-    // Handle incoming transfers specially
     if (tx.is_incoming_transfer) {
-      // For incoming cross-currency transfers, use the converted amount
       const amount = tx.converted_amount ? tx.converted_amount : parseFloat(tx.amount);
       const currency = tx.destination_wallet?.currency || tx.wallet?.currency || referenceCurrency;
       const convertedAmount = convertCurrency(amount, currency, referenceCurrency, exchangeRates);
       groups[dateKey].totalIncome += convertedAmount;
     } else if (tx.type === 'transfer' && isWalletFiltered && !tx.is_incoming_transfer) {
-      // Outgoing transfer when filtering by wallet - count as expense
       const amount = parseFloat(tx.amount);
       const walletCurrency = tx.wallet?.currency || referenceCurrency;
       const convertedAmount = convertCurrency(
@@ -138,35 +131,23 @@ function groupTransactionsByDate(
       );
       groups[dateKey].totalExpense += convertedAmount;
     }
-    // Transfers are excluded from daily totals when viewing all wallets (neutral)
   });
 
-  // Sort by date descending
   return Object.values(groups).sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
-// Convert amount from one currency to another using exchange rates (via USD as intermediary)
-//
-// PRECISION NOTE: This uses JavaScript's native Number type which is IEEE 754 double-precision.
-// For display purposes this is acceptable, but for actual monetary calculations the backend
-// CurrencyConverter service should be used (BCMath precision with anti-arbitrage truncation).
-//
-// The backend is the source of truth for all stored/persisted monetary values.
 function convertCurrency(amount, fromCurrency, toCurrency, exchangeRates) {
   if (!exchangeRates || fromCurrency === toCurrency) return amount;
 
   const fromRate = exchangeRates[fromCurrency];
   const toRate = exchangeRates[toCurrency];
 
-  if (!fromRate || !toRate) return amount; // Fallback if rate not found
+  if (!fromRate || !toRate) return amount;
 
-  // Convert: fromCurrency -> USD -> toCurrency (Gold Standard pattern)
   const amountInUsd = amount / fromRate;
   return amountInUsd * toRate;
 }
 
-// Calculate summary stats with currency conversion
-// isWalletFiltered: when true, transfers are counted (in/out). When false, transfers are excluded (neutral)
 function calculateSummary(
   transactions,
   exchangeRates,
@@ -184,11 +165,8 @@ function calculateSummary(
   transactions.forEach((tx) => {
     const walletCurrency = tx.wallet?.currency || referenceCurrency;
 
-    // Handle incoming transfers (only when filtering by wallet)
     if (tx.is_incoming_transfer && isWalletFiltered) {
-      // For incoming cross-currency transfers, use the converted amount
       const amount = tx.converted_amount ? tx.converted_amount : parseFloat(tx.amount);
-      // Use destination wallet currency for incoming transfers
       const currency = tx.destination_wallet?.currency || walletCurrency;
       const convertedAmount = convertCurrency(amount, currency, referenceCurrency, exchangeRates);
       totalIncome += convertedAmount;
@@ -211,7 +189,6 @@ function calculateSummary(
       );
       totalExpense += convertedAmount;
     } else if (tx.type === 'transfer' && tx.goal) {
-      // Goal allocation transfers are counted as savings
       const amount = parseFloat(tx.amount);
       const convertedAmount = convertCurrency(
         amount,
@@ -221,7 +198,6 @@ function calculateSummary(
       );
       totalSavings += convertedAmount;
     } else if (tx.type === 'transfer' && isWalletFiltered && !tx.is_incoming_transfer && !tx.goal) {
-      // Non-goal outgoing transfers only count as expenses when filtering by wallet
       const amount = parseFloat(tx.amount);
       const convertedAmount = convertCurrency(
         amount,
@@ -231,7 +207,6 @@ function calculateSummary(
       );
       totalExpense += convertedAmount;
     }
-    // When not filtering by wallet, regular transfers are excluded (net zero internal movement)
   });
 
   return {
@@ -243,29 +218,24 @@ function calculateSummary(
   };
 }
 
-// Transaction Row Component with hover actions
 function TransactionRow({ tx, onDelete }) {
   const { formatCurrency } = useAppearance();
 
-  // Handle incoming transfers specially
   const isTransfer = tx.type === 'transfer';
   const isIncomingTransfer = tx.is_incoming_transfer;
   const isGoalAllocation = !!tx.goal;
 
-  // For incoming transfers, use income-like styling
   const config = isIncomingTransfer
     ? { ...typeConfig.income, prefix: '+' }
     : typeConfig[tx.type] || typeConfig.expense;
   const Icon = config.icon;
 
-  // Determine icon and color based on transaction type
   let CategoryIcon;
   let categoryColor;
 
   if (isGoalAllocation) {
-    // For goal allocations, use the goal's category icon
     CategoryIcon = getGoalIcon(tx.goal?.category?.slug);
-    categoryColor = tx.goal?.category?.color || '#8b5cf6'; // Purple fallback for goals
+    categoryColor = tx.goal?.category?.color || '#8b5cf6';
   } else if (isTransfer) {
     CategoryIcon = config.icon;
     categoryColor = '#3b82f6';
@@ -276,13 +246,11 @@ function TransactionRow({ tx, onDelete }) {
 
   const hasAttachments = tx.attachments && tx.attachments.length > 0;
 
-  // Display name: for transfers show "Transfer" if no custom name
   const displayName = isTransfer
     ? tx.name || 'Transfer'
     : tx.name || tx.description || tx.category?.name || 'Transaction';
 
   const handleRowClick = (e) => {
-    // Don't navigate if clicking on dropdown or its children
     if (e.target.closest('[data-dropdown]')) return;
     router.visit(route('treasury.transactions.show', tx.id));
   };
@@ -508,7 +476,6 @@ export default function Index({
     end_date: filters?.end_date || '',
   });
 
-  // Group transactions by date
   const groupedTransactions = useMemo(
     () =>
       groupTransactionsByDate(
@@ -520,7 +487,6 @@ export default function Index({
     [transactions?.data, exchangeRates, referenceCurrency, filters?.wallet_id]
   );
 
-  // Calculate summary
   const summary = useMemo(
     () =>
       calculateSummary(
@@ -532,10 +498,8 @@ export default function Index({
     [transactions?.data, exchangeRates, referenceCurrency, filters?.wallet_id]
   );
 
-  // Check if any filters are active (exclude 'all' values and empty strings)
   const hasActiveFilters = Object.entries(filterData).some(([_key, v]) => v !== '' && v !== 'all');
   const applyFilters = () => {
-    // Convert 'all' to empty/undefined for the server
     const serverFilters = Object.fromEntries(
       Object.entries(filterData)
         .filter(([_, v]) => v !== '' && v !== 'all')
@@ -827,7 +791,6 @@ export default function Index({
                   </p>
                   <div className="flex gap-1">
                     {transactions.links.map((link, index) => {
-                      // Skip prev/next text links, we'll use icons
                       if (index === 0 || index === transactions.links.length - 1) {
                         const isPrev = index === 0;
                         return (

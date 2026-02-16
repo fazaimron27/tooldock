@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Vault Lock Controller
+ *
+ * Manages vault lock/unlock lifecycle, PIN setup, and lock status checks.
+ * Works with VaultLockMiddleware to enforce session-based vault access control.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -16,8 +26,25 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Vault\Models\VaultLock;
 
+/**
+ * Class VaultLockController
+ *
+ * Provides endpoints for vault lock screen display, PIN-based unlock/lock,
+ * PIN creation/update, and lock status polling. Dispatches signal events
+ * on lock state changes for notification delivery.
+ *
+ * @see \Modules\Vault\Http\Middleware\VaultLockMiddleware
+ * @see \Modules\Vault\Models\VaultLock
+ */
 class VaultLockController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @param  SignalHandlerRegistry  $signalRegistry  Registry for dispatching lock/unlock signals
+     * @param  UserPreferenceService  $preferenceService  Service for reading user-scoped preferences
+     * @return void
+     */
     public function __construct(
         private readonly SignalHandlerRegistry $signalRegistry,
         private readonly UserPreferenceService $preferenceService
@@ -25,6 +52,8 @@ class VaultLockController extends Controller
 
     /**
      * Show the vault lock screen.
+     *
+     * @return Response|RedirectResponse Inertia lock page or redirect if lock is disabled
      */
     public function show(): Response|RedirectResponse
     {
@@ -44,6 +73,11 @@ class VaultLockController extends Controller
 
     /**
      * Unlock the vault with PIN/password.
+     *
+     * @param  Request  $request  The incoming HTTP request containing the PIN
+     * @return RedirectResponse Redirect to intended URL or vault index
+     *
+     * @throws ValidationException If the provided PIN is incorrect
      */
     public function unlock(Request $request): RedirectResponse
     {
@@ -92,6 +126,9 @@ class VaultLockController extends Controller
 
     /**
      * Lock the vault manually.
+     *
+     * @param  Request  $request  The incoming HTTP request
+     * @return RedirectResponse Redirect to the vault lock screen
      */
     public function lock(Request $request): RedirectResponse
     {
@@ -120,6 +157,9 @@ class VaultLockController extends Controller
 
     /**
      * Set or update the vault PIN.
+     *
+     * @param  Request  $request  The incoming HTTP request containing the new PIN
+     * @return RedirectResponse Redirect to vault index with success message
      */
     public function setPin(Request $request): RedirectResponse
     {
@@ -158,6 +198,9 @@ class VaultLockController extends Controller
 
     /**
      * Check if vault is currently unlocked (for frontend).
+     *
+     * @param  Request  $request  The incoming HTTP request
+     * @return JsonResponse JSON response with unlock status and timestamp
      */
     public function status(Request $request): JsonResponse
     {
@@ -181,6 +224,10 @@ class VaultLockController extends Controller
 
     /**
      * Check if vault lock feature is enabled.
+     *
+     * Reads the user-scoped preference, falling back to the global setting.
+     *
+     * @return bool True if vault lock is enabled for the current user
      */
     private function isVaultLockEnabled(): bool
     {
@@ -195,6 +242,8 @@ class VaultLockController extends Controller
 
     /**
      * Get the vault lock record for the authenticated user.
+     *
+     * @return VaultLock|null The vault lock record, or null if none exists
      */
     private function getVaultLock(): ?VaultLock
     {
@@ -210,8 +259,8 @@ class VaultLockController extends Controller
     /**
      * Check if a URL is internal to prevent open redirect vulnerabilities.
      *
-     * @param  string  $url
-     * @return bool
+     * @param  string  $url  The URL to validate
+     * @return bool True if the URL is internal to the application
      */
     private function isInternalUrl(string $url): bool
     {

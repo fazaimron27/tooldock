@@ -1,15 +1,33 @@
 <?php
 
+/**
+ * Allocate Goal Request
+ *
+ * Validates fund allocation requests from a source wallet to a savings goal.
+ * Ensures the source wallet is active, owned by the user, and different
+ * from the goal's linked savings wallet.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * Class AllocateGoalRequest
+ *
+ * Handles validation for goal fund allocation with wallet ownership checks.
+ */
 class AllocateGoalRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -18,6 +36,8 @@ class AllocateGoalRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -43,7 +63,6 @@ class AllocateGoalRequest extends FormRequest
                     return $query->where('user_id', Auth::id())
                         ->where('is_active', true);
                 }),
-                // Source wallet must be different from goal's linked savings wallet
                 function ($attribute, $value, $fail) use ($goal) {
                     if ($goal && $value === $goal->wallet_id) {
                         $fail('The source wallet must be different from the goal\'s linked savings wallet.');

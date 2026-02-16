@@ -18,7 +18,7 @@ export default function GenerateReportDialog({ trigger }) {
         end_date: '',
       },
       {
-        route: 'reports.generate', // Update with actual route
+        route: 'reports.generate',
         method: 'post',
         onSuccess: () => {
           toast.info('Report generation started', {

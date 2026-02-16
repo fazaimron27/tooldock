@@ -111,13 +111,11 @@ function groupSettingsByTypeCards(settings) {
   const typeOrder = ['select', 'boolean', 'integer', 'percentage', 'currency', 'text', 'textarea'];
   const groups = {};
 
-  // Group settings by category (if set) or fallback to type
   settings.forEach((setting) => {
     const groupKey = setting.category || setting.type || 'text';
     if (!groups[groupKey]) {
       groups[groupKey] = {
         settings: [],
-        // Use category_label/description if available, else TYPE_CONFIG fallback
         label: setting.category_label || TYPE_CONFIG[setting.type]?.label || groupKey,
         description: setting.category_description || TYPE_CONFIG[setting.type]?.description || '',
       };
@@ -125,12 +123,9 @@ function groupSettingsByTypeCards(settings) {
     groups[groupKey].settings.push(setting);
   });
 
-  // Sort settings within each group alphabetically
   Object.keys(groups).forEach((key) => {
     groups[key].settings.sort((a, b) => a.label.localeCompare(b.label));
   });
-
-  // Order: category-based groups first (alphabetically), then type-based fallbacks in typeOrder
   const categoryKeys = Object.keys(groups)
     .filter((k) => !typeOrder.includes(k))
     .sort();
@@ -177,7 +172,6 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
     return data;
   }, [applicationSettings, modulesSettings]);
 
-  // Get reference currency for treasury settings (if available)
   const referenceCurrency = useMemo(() => {
     const allSettings = [
       ...Object.values(applicationSettings).flat(),
@@ -346,7 +340,6 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
         );
 
       case 'select':
-        // Searchable combobox for settings with many options
         if (setting.searchable) {
           return (
             <SearchableSelectRHF
@@ -360,7 +353,6 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
           );
         }
 
-        // Regular select for settings with few options
         return (
           <Controller
             key={setting.key}
@@ -401,23 +393,16 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
             control={form.control}
             render={({ field }) => {
               const error = form.formState.errors[setting.key];
-              // Get currency symbol from reference currency setting
               const currencySymbol = getCurrencySymbol(referenceCurrency);
-
-              // Get locale for number formatting
               const locale = getCurrencyLocale(referenceCurrency);
 
-              // Format number with thousand separators for display
               const formatNumber = (num) => {
                 if (num === null || num === undefined || num === '') return '';
                 return Number(num).toLocaleString(locale);
               };
 
-              // Parse formatted string back to number
               const parseNumber = (str) => {
                 if (!str) return 0;
-                // Remove thousand separators (both . and ,) and parse
-                // Keep only the last separator if it's a decimal point
                 return Number(str.replace(/[.,]/g, '')) || 0;
               };
 
@@ -439,12 +424,10 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
                       )}
                       value={formatNumber(field.value)}
                       onChange={(e) => {
-                        // Allow only numbers and separators
                         const value = e.target.value.replace(/[^0-9.,]/g, '');
                         field.onChange(parseNumber(value));
                       }}
                       onBlur={() => {
-                        // Re-format on blur
                         field.onBlur();
                       }}
                     />

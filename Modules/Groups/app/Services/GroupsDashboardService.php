@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Dashboard Service.
+ *
+ * Handles dashboard widget registration and data retrieval for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Data\DashboardWidget;
@@ -15,6 +24,10 @@ class GroupsDashboardService
 {
     /**
      * Register all dashboard widgets for the Groups module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
@@ -122,6 +135,8 @@ class GroupsDashboardService
 
     /**
      * Get average members per group.
+     *
+     * @return string
      */
     private function getAverageMembersPerGroup(): string
     {
@@ -140,6 +155,8 @@ class GroupsDashboardService
 
     /**
      * Get largest groups by member count.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getLargestGroups(): array
     {
@@ -160,6 +177,8 @@ class GroupsDashboardService
 
     /**
      * Get recent group activity for activity widget.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getRecentGroupActivity(): array
     {

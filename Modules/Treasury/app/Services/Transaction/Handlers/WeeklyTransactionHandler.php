@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Weekly Transaction Handler
+ *
+ * Signal handler that returns a weekly transaction summary including
+ * income, expense, and net totals for the previous week (scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * File Event Formatter.
+ *
+ * Handles formatting for file upload and deletion events, producing
+ * human-readable summaries with file size and path details.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;

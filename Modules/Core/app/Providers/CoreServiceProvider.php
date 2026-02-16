@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Service Provider.
+ *
+ * Main service provider for the Core module, handling
+ * registration of config, views, migrations, and services.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Providers;
 
 use App\Services\Core\UserPreferenceService;
@@ -46,6 +56,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         InertiaSharedDataRegistry $sharedDataRegistry,
@@ -65,8 +77,6 @@ class CoreServiceProvider extends ServiceProvider
         CoreSignalRegistrar $signalRegistrar,
         UserPreferenceService $preferenceService
     ): void {
-        // Ensure Spatie Permission cache is properly initialized with the correct store
-        // This is important when using Redis with custom prefixes (see Spatie docs)
         app(PermissionRegistrar::class)->initializeCache();
 
         $this->registerCommands();
@@ -80,8 +90,6 @@ class CoreServiceProvider extends ServiceProvider
         $commandRegistrar->register($commandRegistry, $this->name);
         $permissionRegistrar->registerRoles($roleRegistry);
         $permissionRegistrar->registerPermissions($permissionRegistry);
-        // Only ensure super admin exists during CLI (migrations, artisan commands, etc.)
-        // This avoids 2 unnecessary DB queries on every HTTP request
         if ($this->app->runningInConsole()) {
             $superAdminService->ensureExists($roleRegistry);
         }
@@ -93,7 +101,6 @@ class CoreServiceProvider extends ServiceProvider
             $user = $request->user();
 
             if ($user) {
-                // Use loadMissing to avoid reloading relations already preloaded by middleware
                 $user->loadMissing(['avatar', 'roles']);
             }
 
@@ -121,6 +128,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -129,7 +138,9 @@ class CoreServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -140,11 +151,15 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register command Schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -161,6 +176,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -197,6 +214,10 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path  Absolute path to the config file
+     * @param  string  $key  The config key to merge under
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -208,6 +229,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -223,12 +246,19 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths for the module.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];
@@ -243,6 +273,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register authorization gates and policies.
+     *
+     * @return void
      */
     private function registerAuthorization(): void
     {
@@ -257,6 +289,8 @@ class CoreServiceProvider extends ServiceProvider
 
     /**
      * Register model observers.
+     *
+     * @return void
      */
     private function registerObservers(): void
     {

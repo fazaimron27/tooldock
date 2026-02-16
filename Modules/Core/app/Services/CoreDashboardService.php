@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Dashboard Service.
+ *
+ * Registers dashboard widgets for the Core module
+ * including user and role summary statistics.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Data\DashboardWidget;
@@ -15,6 +25,10 @@ class CoreDashboardService
 {
     /**
      * Register all dashboard widgets for the Core module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry service
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
@@ -99,6 +113,8 @@ class CoreDashboardService
      * Get user growth data for chart widget.
      *
      * Uses a single query with GROUP BY instead of multiple separate queries.
+     *
+     * @return array<int, array{name: string, value: int}> Monthly user registration counts
      */
     private function getUserGrowthData(): array
     {
@@ -136,6 +152,8 @@ class CoreDashboardService
 
     /**
      * Get recent users activity for activity widget.
+     *
+     * @return array<int, array{id: string, title: string, timestamp: string, icon: string, iconColor: string}> Recent user activity data
      */
     private function getRecentUsersActivity(): array
     {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Event Service Provider.
+ *
+ * Registers event listeners and enables automatic event discovery
+ * for the AuditLog module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;

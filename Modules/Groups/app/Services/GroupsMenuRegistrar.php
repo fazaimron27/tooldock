@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Menu Registrar.
+ *
+ * Registers navigation menu items for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\MenuRegistry;
@@ -10,7 +19,11 @@ use App\Services\Registry\MenuRegistry;
 class GroupsMenuRegistrar
 {
     /**
-     * Register all menu items for the Groups module.
+     * Register navigation menu items for the Groups module.
+     *
+     * @param  MenuRegistry  $menuRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

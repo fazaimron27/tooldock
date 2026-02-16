@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Role Controller.
+ *
+ * Manages CRUD operations for roles including permission
+ * assignment, cache invalidation, and audit logging.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -33,6 +43,9 @@ class RoleController extends Controller
 
     /**
      * Display a listing of roles.
+     *
+     * @param  DatatableQueryService  $datatableService  Service for building datatable queries
+     * @return Response Inertia roles index page
      */
     public function index(DatatableQueryService $datatableService): Response
     {
@@ -82,6 +95,8 @@ class RoleController extends Controller
 
     /**
      * Show the form for creating a new role.
+     *
+     * @return Response Inertia role creation page
      */
     public function create(): Response
     {
@@ -97,6 +112,9 @@ class RoleController extends Controller
 
     /**
      * Store a newly created role in storage.
+     *
+     * @param  StoreRoleRequest  $request  The validated store role request
+     * @return RedirectResponse Redirect to roles index with success message
      */
     public function store(StoreRoleRequest $request): RedirectResponse
     {
@@ -121,6 +139,9 @@ class RoleController extends Controller
 
     /**
      * Show the form for editing the specified role.
+     *
+     * @param  Role  $role  The role to edit
+     * @return Response Inertia role edit page
      */
     public function edit(Role $role): Response
     {
@@ -138,6 +159,10 @@ class RoleController extends Controller
 
     /**
      * Update the specified role in storage.
+     *
+     * @param  UpdateRoleRequest  $request  The validated update role request
+     * @param  Role  $role  The role to update
+     * @return RedirectResponse Redirect to roles index with success message
      */
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
@@ -168,6 +193,9 @@ class RoleController extends Controller
 
     /**
      * Remove the specified role from storage.
+     *
+     * @param  Role  $role  The role to delete
+     * @return RedirectResponse Redirect to roles index with success or error message
      */
     public function destroy(Role $role): RedirectResponse
     {
@@ -224,31 +252,24 @@ class RoleController extends Controller
             relationshipDisplayName: 'permissions'
         );
 
-        // Get users directly assigned to this role
         $directUserIds = $role->users()->pluck('users.id')->toArray();
 
-        // Get users in groups that have this role assigned
         $groupUserIds = DB::table('groups_users')
             ->join('groups_roles', 'groups_users.group_id', '=', 'groups_roles.group_id')
             ->where('groups_roles.role_id', $role->id)
             ->pluck('groups_users.user_id')
             ->toArray();
 
-        // Combine and deduplicate user IDs
         $allAffectedUserIds = array_unique(array_merge($directUserIds, $groupUserIds));
 
-        // Clear both menu and group permission cache for all affected users
-        // and dispatch signal event for real-time frontend refresh
         $signalRegistry = app(SignalHandlerRegistry::class);
 
-        // Pre-fetch all affected users to avoid N+1 queries
         $affectedUsers = \Modules\Core\Models\User::whereIn('id', $allAffectedUserIds)->get()->keyBy('id');
 
         foreach ($allAffectedUserIds as $userId) {
             $this->menuRegistry->clearCacheForUser($userId);
             $this->groupPermissionCacheService->clearForUser($userId);
 
-            // Dispatch signal event for broadcast notification (inbox + toast + page reload)
             $user = $affectedUsers->get($userId);
             if ($user) {
                 $signalRegistry->dispatch('role.permissions.synced', [
@@ -258,8 +279,6 @@ class RoleController extends Controller
             }
         }
 
-        // Warm the permission cache after sync since model observer doesn't fire
-        // for pivot table changes (Spatie clears cache but we need to warm it)
         $this->permissionCacheService->warm();
     }
 }

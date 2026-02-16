@@ -10,8 +10,6 @@ import { z } from 'zod';
  */
 const baseVaultSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255, 'Name must not exceed 255 characters'),
-  // Note: Types are defined in backend Vault::TYPES constant
-  // This enum should match: ['login', 'card', 'note', 'server']
   type: z.enum(['login', 'card', 'note', 'server'], {
     required_error: 'Type is required',
     invalid_type_error: 'Type must be one of: login, card, note, server',
@@ -39,13 +37,11 @@ const baseVaultSchema = z.object({
     ])
     .optional(),
   totp_secret: z.string().optional().or(z.literal('')),
-  // TOTP parameters - extracted from QR code, needed for correct code generation
   totp_algorithm: z.enum(['sha1', 'sha256', 'sha512']).optional().or(z.literal('')),
   totp_digits: z.number().int().min(6).max(8).optional().or(z.literal('')),
   totp_period: z.number().int().min(30).max(60).optional().or(z.literal('')),
   fields: z
     .object({
-      // Credit Card fields
       card_number: z
         .string()
         .max(23, 'Card number must not exceed 23 characters')
@@ -70,7 +66,6 @@ const baseVaultSchema = z.object({
         .max(1000, 'Billing address must not exceed 1000 characters')
         .optional()
         .or(z.literal('')),
-      // Server fields
       host: z.string().max(255, 'Host must not exceed 255 characters').optional().or(z.literal('')),
       port: z
         .string()
@@ -110,7 +105,6 @@ const baseVaultSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => {
-      // Convert empty objects to null
       if (val && typeof val === 'object' && Object.keys(val).length === 0) {
         return null;
       }

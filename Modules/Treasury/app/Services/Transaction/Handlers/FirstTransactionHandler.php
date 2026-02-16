@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * First Transaction Handler
+ *
+ * Signal handler that returns data when a user makes their first
+ * transaction of a particular type (income in wallet, spending in category).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -54,7 +64,6 @@ class FirstTransactionHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Check for first income in wallet
         if ($transaction->type === 'income' && $transaction->wallet_id) {
             $cacheKey = "transaction_first_income_wallet_{$transaction->wallet_id}";
 
@@ -85,8 +94,6 @@ class FirstTransactionHandler implements SignalHandlerInterface
             }
         }
 
-        // Check for first expense/goal allocation in category
-        // Include both expenses and goal allocation transfers (transfers with goal_id)
         $isExpenseOrGoalAllocation = $transaction->type === 'expense'
             || ($transaction->type === 'transfer' && $transaction->goal_id !== null);
 

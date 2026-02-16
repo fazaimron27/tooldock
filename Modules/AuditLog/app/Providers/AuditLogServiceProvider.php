@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Audit Log Service Provider.
+ *
+ * Bootstraps the AuditLog module by registering commands, routes,
+ * translations, views, configurations, and module-specific registrars
+ * for menus, permissions, settings, widgets, and signal handlers.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Providers;
 
 use App\Services\Registry\CommandRegistry;
@@ -31,6 +42,8 @@ class AuditLogServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         CommandRegistry $commandRegistry,
@@ -63,6 +76,8 @@ class AuditLogServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -72,7 +87,9 @@ class AuditLogServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register Artisan commands provided by this module.
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -82,7 +99,9 @@ class AuditLogServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register command Schedules.
+     * Register scheduled command executions.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void
     {
@@ -107,7 +126,9 @@ class AuditLogServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register translations.
+     * Register translation files for the module.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -123,7 +144,9 @@ class AuditLogServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register config.
+     * Register and merge module configuration files.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -156,6 +179,10 @@ class AuditLogServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path  Absolute path to the configuration file
+     * @param  string  $key  Configuration key to merge under
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -166,7 +193,9 @@ class AuditLogServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register views.
+     * Register view files and Blade component namespace for the module.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -182,6 +211,8 @@ class AuditLogServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<string> List of service class names
      */
     public function provides(): array
     {

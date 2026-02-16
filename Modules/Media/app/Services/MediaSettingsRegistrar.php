@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Media Settings Registrar.
+ *
+ * Registers settings definitions for the Media module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Services;
 
 use App\Services\Registry\SettingsRegistry;
@@ -12,6 +21,10 @@ class MediaSettingsRegistrar
 {
     /**
      * Register media module settings.
+     *
+     * @param  SettingsRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

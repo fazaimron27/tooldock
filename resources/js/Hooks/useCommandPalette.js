@@ -12,7 +12,6 @@ export function useCommandPalette() {
   const [open, setOpen] = useState(false);
 
   const handleKeyDown = useCallback((e) => {
-    // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       setOpen((prev) => !prev);

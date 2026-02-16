@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Group Model.
+ *
+ * Represents a group entity with relationships to users,
+ * roles, and permissions for access control management.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -154,13 +164,10 @@ class Group extends Model
             return false;
         }
 
-        // Check direct permissions
         $this->loadMissing('permissions');
         if ($this->permissions->contains('name', $permissionName)) {
             return true;
         }
-
-        // Check permissions through roles
         $this->loadMissing('roles.permissions');
         foreach ($this->roles as $role) {
             if ($role->hasPermissionTo($permissionName)) {

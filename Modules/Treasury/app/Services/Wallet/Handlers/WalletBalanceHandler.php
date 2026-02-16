@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Wallet Balance Handler
+ *
+ * Signal handler that returns data when a wallet balance drops below
+ * configured low or critical thresholds.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Wallet\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -50,22 +60,18 @@ class WalletBalanceHandler implements SignalHandlerInterface
             return false;
         }
 
-        // Expense always decreases balance
         if ($data->type === 'expense') {
             return true;
         }
 
-        // Transfer from this wallet decreases balance
         if ($data->type === 'transfer') {
             return true;
         }
 
-        // Deleted income decreases balance (money taken back)
         if ($event === 'transaction.deleted' && $data->type === 'income') {
             return true;
         }
 
-        // Updated income might decrease balance (if amount was reduced)
         if ($event === 'transaction.updated' && $data->type === 'income') {
             return true;
         }
@@ -89,11 +95,9 @@ class WalletBalanceHandler implements SignalHandlerInterface
         $walletCurrency = $wallet->currency ?? settings('treasury_reference_currency', 'IDR');
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Thresholds are stored in reference currency
         $criticalThresholdRef = (float) settings('treasury_wallet_critical_threshold', 100000);
         $lowThresholdRef = (float) settings('treasury_wallet_low_balance_threshold', 500000);
 
-        // Convert balance to reference currency for comparison
         $balanceInReference = $walletCurrency !== $referenceCurrency
             ? $this->currencyConverter->convert($balance, $walletCurrency, $referenceCurrency)
             : $balance;
@@ -102,7 +106,6 @@ class WalletBalanceHandler implements SignalHandlerInterface
             return null;
         }
 
-        // For consistent display, convert thresholds TO wallet currency
         $criticalThreshold = $walletCurrency !== $referenceCurrency
             ? $this->currencyConverter->convert($criticalThresholdRef, $referenceCurrency, $walletCurrency)
             : $criticalThresholdRef;
@@ -110,7 +113,6 @@ class WalletBalanceHandler implements SignalHandlerInterface
             ? $this->currencyConverter->convert($lowThresholdRef, $referenceCurrency, $walletCurrency)
             : $lowThresholdRef;
 
-        // Format all in wallet currency for consistency
         $formattedBalance = $this->currencyFormatter->format($balance, $walletCurrency);
         $formattedLowThreshold = $this->currencyFormatter->format($lowThreshold, $walletCurrency);
         $formattedCriticalThreshold = $this->currencyFormatter->format($criticalThreshold, $walletCurrency);

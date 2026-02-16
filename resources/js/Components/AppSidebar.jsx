@@ -296,7 +296,6 @@ export default function AppSidebar() {
             tooltip="Report an Issue"
             className="w-full justify-start text-sm text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
             onClick={() => {
-              // Open GitHub issues page to report an issue
               window.open('https://github.com/fazaimron27/tooldock/issues/new', '_blank');
             }}
           >
@@ -307,7 +306,6 @@ export default function AppSidebar() {
             tooltip="Want to Contribute?"
             className="w-full justify-start text-sm text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
             onClick={() => {
-              // Open GitHub pull requests page
               window.open('https://github.com/fazaimron27/tooldock/pulls', '_blank');
             }}
           >

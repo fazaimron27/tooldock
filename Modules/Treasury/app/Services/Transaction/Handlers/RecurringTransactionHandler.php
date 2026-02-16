@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Recurring Transaction Handler
+ *
+ * Signal handler that returns data about upcoming recurring transactions
+ * scheduled for the next week (scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -49,7 +59,6 @@ class RecurringTransactionHandler implements SignalHandlerInterface
         /** @var User $user */
         $user = $data;
 
-        // Find recurring transactions due this week
         $recurring = Transaction::where('user_id', $user->id)
             ->where('is_recurring', true)
             ->whereNotNull('recurring_frequency')
@@ -63,7 +72,6 @@ class RecurringTransactionHandler implements SignalHandlerInterface
         $weekFromNow = now()->addWeek();
 
         foreach ($recurring as $txn) {
-            // Check if recurring is due within the next 7 days
             if (
                 $txn->next_occurrence_date &&
                 $txn->next_occurrence_date->isBetween(now(), $weekFromNow)

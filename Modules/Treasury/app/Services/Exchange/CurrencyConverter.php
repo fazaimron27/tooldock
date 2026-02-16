@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Currency Converter Service
+ *
+ * Handles currency conversions using the "Gold Standard" cross-rate
+ * calculation pattern via BCMath for arbitrary precision arithmetic.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Exchange;
 
 use Modules\Treasury\Models\ExchangeRate;
@@ -49,7 +59,6 @@ class CurrencyConverter
      */
     public function convert(float|string $amount, string $from, string $to, int $decimals = self::AMOUNT_DECIMALS): ?float
     {
-        // Same currency, no conversion needed
         if ($from === $to) {
             return (float) $this->truncate((string) $amount, $decimals);
         }
@@ -61,15 +70,12 @@ class CurrencyConverter
             return null;
         }
 
-        // BCMath cross-rate calculation: amount × (toRate / fromRate)
-        // This maintains precision throughout the calculation
         $result = bcdiv(
             bcmul((string) $amount, $toRate, self::CALCULATION_SCALE),
             $fromRate,
             self::CALCULATION_SCALE
         );
 
-        // Truncate to prevent arbitrage (never round up)
         return (float) $this->truncate($result, $decimals);
     }
 
@@ -136,7 +142,6 @@ class CurrencyConverter
             return null;
         }
 
-        // BCMath division for precision
         return (float) bcdiv($toRate, $fromRate, self::CALCULATION_SCALE);
     }
 
@@ -216,7 +221,6 @@ class CurrencyConverter
             ];
         }
 
-        // Convert: currency1 → currency2 → currency1
         $inCurrency2 = $this->convert($testAmount, $currency1, $currency2);
         $backToCurrency1 = $this->convert($inCurrency2, $currency2, $currency1);
 
@@ -279,7 +283,6 @@ class CurrencyConverter
             $decimals = 0;
         }
 
-        // Use bcdiv with scale to truncate
         return bcdiv($value, '1', $decimals);
     }
 }

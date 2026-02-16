@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Create Audit Log Job.
+ *
+ * Queued job that creates audit log entries asynchronously. Captures model
+ * information before serialization to prevent errors if the model is deleted
+ * before the job runs. Includes retry logic and admin failure notifications.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Jobs;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -15,6 +26,13 @@ use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
 use Throwable;
 
+/**
+ * Queued job for creating audit log entries.
+ *
+ * Handles the creation of audit log entries with automatic retry logic,
+ * emergency file logging on failure, and administrator notifications.
+ * Captures model type and ID before serialization to handle model deletion.
+ */
 class CreateAuditLogJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -64,9 +82,6 @@ class CreateAuditLogJob implements ShouldQueue
             $this->auditableId = null;
         }
 
-        // Always nullify model after capturing type/id to prevent
-        // ModelNotFoundException during unserialization if model
-        // is deleted before the job runs (e.g., module uninstall)
         $this->model = null;
     }
 
@@ -76,6 +91,10 @@ class CreateAuditLogJob implements ShouldQueue
      * Creates an audit log entry using captured type/id values.
      * Skips if model class no longer exists (e.g., module was uninstalled).
      * Invalidates filter cache to ensure dropdowns reflect new model types and events.
+     *
+     * @return void
+     *
+     * @throws Throwable If the audit log entry cannot be created
      */
     public function handle(): void
     {
@@ -83,7 +102,6 @@ class CreateAuditLogJob implements ShouldQueue
             $auditableType = $this->auditableType;
             $auditableId = $this->auditableId;
 
-            // Skip if model class no longer exists (e.g., module was uninstalled)
             if ($auditableType !== 'system' && ! class_exists($auditableType)) {
                 Log::info('AuditLog: Skipping audit - model class no longer exists', [
                     'event' => $this->event,
@@ -139,6 +157,9 @@ class CreateAuditLogJob implements ShouldQueue
      * When the database insert fails after all retry attempts,
      * write the audit payload to a physical file to ensure no audit trail is lost.
      * Also notifies admins about the failure for system monitoring.
+     *
+     * @param  Throwable|null  $exception  The exception that caused the failure
+     * @return void
      */
     public function failed(?Throwable $exception): void
     {
@@ -193,7 +214,11 @@ class CreateAuditLogJob implements ShouldQueue
     /**
      * Notify admin users about audit log job failure.
      *
-     * Uses Signal facade directly instead of trait to avoid serialization issues in queued jobs.
+     * Uses Signal facade directly instead of trait to avoid serialization
+     * issues in queued jobs.
+     *
+     * @param  Throwable|null  $exception  The exception that triggered the notification
+     * @return void
      */
     private function notifyAdminsAboutFailure(?Throwable $exception): void
     {

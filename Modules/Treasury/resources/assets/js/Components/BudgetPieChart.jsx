@@ -18,7 +18,6 @@ import {
   ChartTooltipContent,
 } from '@/Components/ui/chart';
 
-// Default colors for pie chart segments
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
@@ -44,20 +43,15 @@ function prepareChartData(budgets) {
   }
 
   const chartData = budgets.map((budget, index) => ({
-    // Category name serves as budget identifier (budget.category is the category name from report)
     name: budget.category?.name || budget.category || `Budget ${index + 1}`,
-    // Use converted_amount for accurate multi-currency comparison in pie chart
-    // Falls back to amount for backward compatibility
     value: parseFloat(budget.converted_amount ?? budget.amount) || 0,
     spent: parseFloat(budget.converted_spent ?? budget.spent) || 0,
-    // Keep original values for tooltip display
     originalAmount: parseFloat(budget.amount) || 0,
     currency: budget.currency,
     fill: budget.category?.color || CHART_COLORS[index % CHART_COLORS.length],
   }));
 
   const chartConfig = budgets.reduce((acc, budget, index) => {
-    // Category name serves as budget identifier
     const categoryName = budget.category?.name || budget.category || `budget_${index}`;
     const key = categoryName.toLowerCase().replace(/\s+/g, '_');
     acc[key] = {

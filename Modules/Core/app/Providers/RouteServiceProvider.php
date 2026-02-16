@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Route Service Provider.
+ *
+ * Configures web and API route loading for the Core module
+ * with appropriate middleware groups.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
@@ -13,6 +23,8 @@ class RouteServiceProvider extends ServiceProvider
      * Called before routes are registered.
      *
      * Register any model bindings or pattern based filters.
+     *
+     * @return void
      */
     public function boot(): void
     {
@@ -21,6 +33,8 @@ class RouteServiceProvider extends ServiceProvider
 
     /**
      * Define the routes for the application.
+     *
+     * @return void
      */
     public function map(): void
     {
@@ -32,6 +46,8 @@ class RouteServiceProvider extends ServiceProvider
      * Define the "web" routes for the application.
      *
      * These routes all receive session state, CSRF protection, etc.
+     *
+     * @return void
      */
     protected function mapWebRoutes(): void
     {
@@ -44,6 +60,8 @@ class RouteServiceProvider extends ServiceProvider
      * Define the "api" routes for the application.
      *
      * These routes are typically stateless.
+     *
+     * @return void
      */
     protected function mapApiRoutes(): void
     {

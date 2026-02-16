@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Update Category Request.
+ *
+ * Validates input for updating a category, enforcing unique name/slug per type,
+ * circular reference prevention, valid parent type matching, and hex color format.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Categories\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -80,10 +90,8 @@ class UpdateCategoryRequest extends FormRequest
             return true;
         }
 
-        /**
-         * Check if the current category is an ancestor of the new parent.
-         * This would create: newParent -> ... -> current -> newParent (a cycle).
-         */
+        // Check if the current category is an ancestor of the new parent.
+        // This would create: newParent -> ... -> current -> newParent (a cycle).
         $newParentAncestors = $this->getAllAncestors($newParentId);
         if (in_array($categoryId, $newParentAncestors, true)) {
             return true;
@@ -104,10 +112,8 @@ class UpdateCategoryRequest extends FormRequest
         $visited = [];
         $currentId = $categoryId;
 
-        /**
-         * Traverse up the parent chain until we hit null or a cycle.
-         * Prevents infinite loops in case of data corruption.
-         */
+        // Traverse up the parent chain until we hit null or a cycle.
+        // Prevents infinite loops in case of data corruption.
         while ($currentId) {
             if (isset($visited[$currentId])) {
                 break;
@@ -129,6 +135,8 @@ class UpdateCategoryRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

@@ -18,7 +18,6 @@ export default function Index({ modules = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKeywords, setSelectedKeywords] = useState([]);
 
-  // Extract all unique keywords from all modules
   const allKeywords = useMemo(() => {
     const keywordSet = new Set();
     modules.forEach((module) => {

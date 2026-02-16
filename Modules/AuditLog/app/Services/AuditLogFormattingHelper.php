@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Formatting Helper Trait.
+ *
+ * Provides utility methods for formatting audit log values including
+ * file sizes, field names, dates, booleans, arrays, and JSON data.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Services;
 
 use Carbon\Carbon;
@@ -14,8 +24,8 @@ trait AuditLogFormattingHelper
     /**
      * Format file size in human-readable format.
      *
-     * @param  int  $bytes
-     * @return string
+     * @param  int  $bytes  The file size in bytes
+     * @return string Human-readable file size (e.g., '1.5 MB')
      */
     protected function formatFileSize(int $bytes): string
     {
@@ -31,8 +41,8 @@ trait AuditLogFormattingHelper
     /**
      * Format a field name for human readability.
      *
-     * @param  string  $key
-     * @return string
+     * @param  string  $key  The raw field name (e.g., 'created_at')
+     * @return string Human-readable field name (e.g., 'Created At')
      */
     protected function formatFieldName(string $key): string
     {
@@ -42,8 +52,8 @@ trait AuditLogFormattingHelper
     /**
      * Format a value for human-readable display.
      *
-     * @param  mixed  $value
-     * @return string|null
+     * @param  mixed  $value  The value to format
+     * @return string|null Formatted string representation, or null for null values
      */
     protected function formatValue(mixed $value): ?string
     {
@@ -88,8 +98,8 @@ trait AuditLogFormattingHelper
      * Uses Carbon to attempt parsing, which is more reliable than regex patterns.
      * Carbon can handle many date formats including ISO, MySQL datetime, and more.
      *
-     * @param  string  $value
-     * @return bool
+     * @param  string  $value  The string to check for a date pattern
+     * @return bool True if the string appears to be a valid date
      */
     protected function isDateString(string $value): bool
     {
@@ -117,8 +127,8 @@ trait AuditLogFormattingHelper
      *
      * Handles cases where the value might be a JSON string or null.
      *
-     * @param  mixed  $value
-     * @return array<string, mixed>
+     * @param  mixed  $value  The value to convert
+     * @return array<string, mixed> The resulting array, or empty array if conversion fails
      */
     protected function ensureArray(mixed $value): array
     {

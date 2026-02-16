@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Treasury Goal Controller
+ *
+ * Handles CRUD operations for savings goals including creation, progress
+ * tracking, fund allocation from wallets, and cross-currency conversions.
+ * Supports dedicated savings wallet linking and exchange rate calculations.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -17,6 +28,11 @@ use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class TreasuryGoalController
+ *
+ * Manages savings goals with wallet-backed fund tracking and multi-currency support.
+ */
 class TreasuryGoalController extends Controller
 {
     private const CACHE_TTL_HOURS = 24;
@@ -29,6 +45,8 @@ class TreasuryGoalController extends Controller
 
     /**
      * Display a listing of goals.
+     *
+     * @return Response
      */
     public function index(): Response
     {
@@ -56,6 +74,8 @@ class TreasuryGoalController extends Controller
 
     /**
      * Show the form for creating a new goal.
+     *
+     * @return Response
      */
     public function create(): Response
     {
@@ -73,12 +93,14 @@ class TreasuryGoalController extends Controller
 
     /**
      * Store a newly created goal.
+     *
+     * @param  StoreGoalRequest  $request  The validated request
+     * @return RedirectResponse
      */
     public function store(StoreGoalRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
-        // Currency is always derived from the linked savings wallet
         $wallet = Wallet::find($validated['wallet_id']);
         $validated['currency'] = $wallet->currency;
 
@@ -94,6 +116,9 @@ class TreasuryGoalController extends Controller
 
     /**
      * Display the specified goal.
+     *
+     * @param  TreasuryGoal  $goal  The goal to display
+     * @return Response
      */
     public function show(TreasuryGoal $goal): Response
     {
@@ -101,7 +126,6 @@ class TreasuryGoalController extends Controller
 
         $goal->load(['wallet', 'category']);
 
-        // Paginate transactions to avoid loading all allocations into memory
         $transactions = $goal->transactions()
             ->with('wallet')
             ->orderBy('date', 'desc')
@@ -110,7 +134,6 @@ class TreasuryGoalController extends Controller
 
         $wallets = $this->getWallets();
 
-        // Get cached exchange rates for cross-currency allocation display
         $exchangeRates = $this->getExchangeRates();
 
         return Inertia::render('Modules::Treasury/Goals/Show', [
@@ -128,6 +151,9 @@ class TreasuryGoalController extends Controller
 
     /**
      * Show the form for editing the specified goal.
+     *
+     * @param  TreasuryGoal  $goal  The goal to edit
+     * @return Response
      */
     public function edit(TreasuryGoal $goal): Response
     {
@@ -146,12 +172,15 @@ class TreasuryGoalController extends Controller
 
     /**
      * Update the specified goal.
+     *
+     * @param  UpdateGoalRequest  $request  The validated request
+     * @param  TreasuryGoal  $goal  The goal to update
+     * @return RedirectResponse
      */
     public function update(UpdateGoalRequest $request, TreasuryGoal $goal): RedirectResponse
     {
         $validated = $request->validated();
 
-        // Currency is always derived from the linked savings wallet
         if (isset($validated['wallet_id']) && $validated['wallet_id'] !== $goal->wallet_id) {
             $wallet = Wallet::find($validated['wallet_id']);
             $validated['currency'] = $wallet->currency;
@@ -166,6 +195,9 @@ class TreasuryGoalController extends Controller
 
     /**
      * Remove the specified goal.
+     *
+     * @param  TreasuryGoal  $goal  The goal to delete
+     * @return RedirectResponse
      */
     public function destroy(TreasuryGoal $goal): RedirectResponse
     {
@@ -181,10 +213,16 @@ class TreasuryGoalController extends Controller
 
     /**
      * Allocate funds from a wallet to the goal.
+     *
+     * Creates a transfer transaction from the source wallet to the goal's
+     * linked savings wallet, handling cross-currency conversion when needed.
+     *
+     * @param  AllocateGoalRequest  $request  The validated allocation request
+     * @param  TreasuryGoal  $goal  The goal to allocate funds to
+     * @return RedirectResponse
      */
     public function allocate(AllocateGoalRequest $request, TreasuryGoal $goal): RedirectResponse
     {
-        // Get the 'Goal Allocation' category for proper categorization
         $goalAllocationCategory = \Modules\Categories\Models\Category::where('slug', 'goal-allocation')
             ->where('type', 'transaction_category')
             ->first();
@@ -199,11 +237,9 @@ class TreasuryGoalController extends Controller
         $amount = $request->validated('amount');
         $description = $request->validated('description') ?? "Transfer to goal: {$goal->name}";
 
-        // Get source and destination wallets
         $sourceWallet = Wallet::find($sourceWalletId);
         $destinationWallet = Wallet::find($goal->wallet_id);
 
-        // Calculate exchange rate for cross-currency transfers
         $exchangeRate = null;
         $originalCurrency = null;
         if ($sourceWallet->currency !== $destinationWallet->currency) {
@@ -214,7 +250,6 @@ class TreasuryGoalController extends Controller
             $originalCurrency = $sourceWallet->currency;
         }
 
-        // Create a transfer transaction from source wallet to goal's savings wallet
         Transaction::create([
             'user_id' => $request->user()->id,
             'wallet_id' => $sourceWalletId,
@@ -237,6 +272,8 @@ class TreasuryGoalController extends Controller
 
     /**
      * Get cached wallets for the authenticated user.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getWallets()
     {
@@ -251,6 +288,8 @@ class TreasuryGoalController extends Controller
 
     /**
      * Get cached goal categories.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getCategories()
     {
@@ -265,6 +304,8 @@ class TreasuryGoalController extends Controller
 
     /**
      * Get savings wallets for the authenticated user (for goal linking).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getSavingsWallets()
     {
@@ -278,6 +319,8 @@ class TreasuryGoalController extends Controller
      * Get cached exchange rates for cross-currency calculations.
      *
      * Exchange rates are cached for 1 hour since they're typically updated daily.
+     *
+     * @return array<string, float>
      */
     private function getExchangeRates(): array
     {

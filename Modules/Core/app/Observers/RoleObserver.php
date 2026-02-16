@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Role Observer.
+ *
+ * Observes role model events to invalidate and warm
+ * the permission cache when roles are modified.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Observers;
 
 use App\Services\Registry\MenuRegistry;
@@ -23,6 +33,9 @@ class RoleObserver
      * Handle the Role "created" event.
      *
      * Prevents infinite loop if Role model uses LogsActivity trait.
+     *
+     * @param  Role  $role  The newly created role instance
+     * @return void
      */
     public function created(Role $role): void
     {
@@ -42,7 +55,6 @@ class RoleObserver
             tags: 'role,permission'
         );
 
-        // Invalidate the cached roles list
         cache()->forget('core:roles:all');
     }
 
@@ -51,6 +63,9 @@ class RoleObserver
      *
      * Prevents infinite loop if Role model uses LogsActivity trait.
      * Clears menu cache for all users with this role if the role name changed.
+     *
+     * @param  Role  $role  The updated role instance
+     * @return void
      */
     public function updated(Role $role): void
     {
@@ -91,7 +106,6 @@ class RoleObserver
             }
         }
 
-        // Invalidate the cached roles list
         cache()->forget('core:roles:all');
     }
 
@@ -100,6 +114,9 @@ class RoleObserver
      *
      * Prevents infinite loop if Role model uses LogsActivity trait.
      * Clears menu cache for all users who had this role.
+     *
+     * @param  Role  $role  The deleted role instance
+     * @return void
      */
     public function deleted(Role $role): void
     {
@@ -122,7 +139,6 @@ class RoleObserver
         $this->menuRegistry->clearCache();
         $this->groupPermissionCacheService->clear();
 
-        // Invalidate the cached roles list
         cache()->forget('core:roles:all');
     }
 
@@ -131,11 +147,12 @@ class RoleObserver
      *
      * Warms the permission cache after Spatie's RefreshesPermissionCache trait
      * clears it, ensuring the cache is immediately available for subsequent requests.
+     *
+     * @param  Role  $role  The saved role instance
+     * @return void
      */
     public function saved(Role $role): void
     {
-        // Spatie's RefreshesPermissionCache has already cleared the cache at this point.
-        // We warm it immediately to avoid slow first requests.
         $this->permissionCacheService->warm();
     }
 }

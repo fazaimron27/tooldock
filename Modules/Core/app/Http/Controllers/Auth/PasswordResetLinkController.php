@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Password Reset Link Controller.
+ *
+ * Handles password reset link request form display and
+ * sending reset links with audit logging.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -19,6 +29,8 @@ class PasswordResetLinkController extends Controller
 
     /**
      * Display the password reset link request view.
+     *
+     * @return Response Inertia forgot password page response
      */
     public function create(): Response
     {
@@ -29,6 +41,9 @@ class PasswordResetLinkController extends Controller
 
     /**
      * Handle an incoming password reset link request.
+     *
+     * @param  Request  $request  The HTTP request containing the email
+     * @return RedirectResponse Redirect back with status
      *
      * @throws \Illuminate\Validation\ValidationException
      */

@@ -54,7 +54,6 @@ export default function WalletForm({
   cancelUrl,
   watch,
 }) {
-  // Watch currency for CurrencyInput
   const currency = watch?.('currency');
 
   return (

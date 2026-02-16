@@ -2,7 +2,6 @@ import { cn } from '@/Utils/utils';
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = {
   light: '',
   dark: '.dark',
@@ -24,7 +23,6 @@ const ChartContainer = React.forwardRef(({ id, className, children, config, ...p
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`;
 
-  // Check if explicit height is provided in className
   const hasExplicitHeight =
     className?.includes('h-[') || (className?.match(/h-\d+/) && !className?.includes('aspect-'));
 
@@ -268,7 +266,6 @@ const ChartLegendContent = React.forwardRef(
 );
 ChartLegendContent.displayName = 'ChartLegend';
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(config, payload, key) {
   if (typeof payload !== 'object' || payload === null) {
     return undefined;

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Reconcile Treasury Balances Command
+ *
+ * Validates that wallet balances and goal progress match their computed
+ * values from transaction history. Uses efficient aggregate queries
+ * (2 queries instead of 4N) and optionally fixes discrepancies.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Cache\CacheService;
@@ -8,6 +19,11 @@ use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class ReconcileTreasuryBalances
+ *
+ * Reconciles wallet balances and goal progress from transaction history.
+ */
 class ReconcileTreasuryBalances extends Command
 {
     /**
@@ -26,6 +42,9 @@ class ReconcileTreasuryBalances extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  CacheService  $cacheService  The cache service for flushing treasury cache
+     * @return void
      */
     public function handle(CacheService $cacheService): void
     {
@@ -35,7 +54,6 @@ class ReconcileTreasuryBalances extends Command
         $this->reconcileWallets($fix);
         $this->reconcileGoals($fix);
 
-        // Always flush cache to ensure UI is updated if any fixes were made
         $cacheService->flush('treasury', 'ReconcileTreasuryBalances');
 
         $this->info('Reconciliation complete.');
@@ -46,6 +64,9 @@ class ReconcileTreasuryBalances extends Command
      *
      * Uses aggregate queries to calculate balances efficiently.
      * Reduces 4N queries to just 2 aggregate queries.
+     *
+     * @param  bool  $fix  Whether to fix discrepancies found
+     * @return void
      */
     private function reconcileWallets(bool $fix): void
     {
@@ -53,7 +74,6 @@ class ReconcileTreasuryBalances extends Command
         $wallets = Wallet::all()->keyBy('id');
         $discrepancies = 0;
 
-        // Single aggregate query for outgoing transactions (income, expense, transfer out)
         $outgoingBalances = Transaction::selectRaw('
             wallet_id,
             SUM(CASE WHEN type = ? THEN amount ELSE 0 END) as income,
@@ -64,7 +84,6 @@ class ReconcileTreasuryBalances extends Command
             ->get()
             ->keyBy('wallet_id');
 
-        // Single aggregate query for incoming transfers
         $incomingTransfers = Transaction::selectRaw('
             destination_wallet_id as wallet_id,
             SUM(amount) as transfer_in
@@ -110,8 +129,12 @@ class ReconcileTreasuryBalances extends Command
 
     /**
      * Reconcile all goal progress.
+     *
      * Since saved_amount is now computed from wallet balance, this method
      * checks that goals with wallets have consistent progress values.
+     *
+     * @param  bool  $fix  Whether to fix discrepancies found
+     * @return void
      */
     private function reconcileGoals(bool $fix): void
     {
@@ -120,7 +143,6 @@ class ReconcileTreasuryBalances extends Command
         $issues = 0;
 
         foreach ($goals as $goal) {
-            // Check if goal has a wallet linked
             if (! $goal->wallet_id) {
                 $this->warn(sprintf(
                     'Goal "%s" (%s) has no wallet linked.',
@@ -132,7 +154,6 @@ class ReconcileTreasuryBalances extends Command
                 continue;
             }
 
-            // Check if goal's wallet exists and is a savings wallet
             if (! $goal->wallet) {
                 $this->warn(sprintf(
                     'Goal "%s" (%s) has wallet_id but wallet not found.',
@@ -154,7 +175,6 @@ class ReconcileTreasuryBalances extends Command
                 $issues++;
             }
 
-            // Check completion status consistency
             $walletBalance = (float) $goal->wallet->balance;
             $targetAmount = (float) $goal->target_amount;
             $shouldBeCompleted = $walletBalance >= $targetAmount;

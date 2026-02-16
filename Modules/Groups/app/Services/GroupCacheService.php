@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Cache Service.
+ *
+ * Centralized service for clearing caches related to groups.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\MenuRegistry;

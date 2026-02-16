@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Audit Log Cleanup Command.
+ *
+ * Artisan command that deletes audit log records older than a configurable
+ * retention period, with support for dry-run mode and admin notifications.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\AuditLog\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -8,6 +18,12 @@ use Modules\AuditLog\Models\AuditLog;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
 
+/**
+ * Audit Log Cleanup Command.
+ *
+ * Deletes audit log entries older than a configurable retention period.
+ * Supports dry-run mode and notifies administrators on completion.
+ */
 class CleanupAuditLogsCommand extends Command
 {
     /**
@@ -28,6 +44,8 @@ class CleanupAuditLogsCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @return int Command exit code (SUCCESS or FAILURE)
      */
     public function handle(): int
     {
@@ -78,6 +96,10 @@ class CleanupAuditLogsCommand extends Command
 
     /**
      * Notify admin users about the cleanup completion.
+     *
+     * @param  int  $deletedCount  Number of audit log entries deleted
+     * @param  int  $days  Retention period in days
+     * @return void
      */
     private function notifyAdmins(int $deletedCount, int $days): void
     {

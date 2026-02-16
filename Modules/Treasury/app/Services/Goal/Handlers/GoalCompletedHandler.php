@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Completed Handler
+ *
+ * Signal handler that returns data when a savings goal is fully completed.
+ * Triggered when a goal-linked transaction is created.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -60,10 +70,8 @@ class GoalCompletedHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Refresh to get latest saved_amount
         $goal->refresh();
 
-        // Check if goal just reached 100%
         $percentage = $goal->target_amount > 0
             ? ($goal->saved_amount / $goal->target_amount) * 100
             : 0;
