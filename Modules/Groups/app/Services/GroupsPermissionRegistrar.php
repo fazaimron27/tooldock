@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Permission Registrar.
+ *
+ * Registers permission definitions for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\PermissionRegistry;
@@ -10,7 +19,10 @@ use App\Services\Registry\PermissionRegistry;
 class GroupsPermissionRegistrar
 {
     /**
-     * Register default permissions for the Groups module.
+     * Register all permissions required by the Groups module.
+     *
+     * @param  PermissionRegistry  $registry
+     * @return void
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {

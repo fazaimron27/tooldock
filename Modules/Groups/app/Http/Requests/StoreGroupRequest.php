@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Store Group Request.
+ *
+ * Validates and authorizes requests to create a new group.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,6 +21,8 @@ class StoreGroupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

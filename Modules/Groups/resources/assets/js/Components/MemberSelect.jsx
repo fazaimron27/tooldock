@@ -26,15 +26,10 @@ export default function MemberSelect({
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 300);
 
-  // React Query handles fetching, caching, and cleanup
   const { data: searchData, isLoading: loading } = useUserSearch(debouncedSearch, {
     enabled: open,
     limit: 20,
   });
-
-  // Fetch selected users not in search results
-  // For multi-select, we use separate queries for each missing user
-  // React Query deduplicates and caches these automatically
   const options = useMemo(() => {
     const users = searchData?.data || [];
     return users.map((user) => ({

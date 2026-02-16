@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Member Service.
+ *
+ * Handles business logic for adding, removing, and transferring group members.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Registry\SignalHandlerRegistry;

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Role Service.
+ *
+ * Manages role-to-group associations for the Groups module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use Illuminate\Support\Facades\Log;
@@ -16,6 +25,8 @@ class GroupsRoleService
      * Ensure the Guest role is attached to the Guest group.
      *
      * This should be called after roles and groups are seeded.
+     *
+     * @return void
      */
     public function ensureGuestRoleAttached(): void
     {

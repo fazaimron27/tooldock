@@ -61,11 +61,8 @@ export default function GroupForm({
   groupedPermissions = {},
   cancelUrl,
 }) {
-  // Watch roles to trigger re-render when roles change
   const watchedRoles = watch('roles');
 
-  // Calculate inherited permissions with role names
-  // Returns a Map of permissionId -> array of role names that grant it
   const inheritedPermissionsMap = useMemo(() => {
     const selectedRoleIds = watchedRoles || [];
     const selectedRoles = availableRoles.filter((role) => selectedRoleIds.includes(role.id));

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Member Removed Handler.
+ *
+ * Handles side effects when members are removed from a group.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services\Member\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

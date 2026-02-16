@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Roles Synced Handler.
+ *
+ * Handles cache invalidation when group roles are synced.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services\Group\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

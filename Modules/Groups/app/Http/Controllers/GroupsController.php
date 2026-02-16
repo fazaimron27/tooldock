@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Groups Controller.
+ *
+ * Handles HTTP requests for CRUD operations on groups,
+ * including member, permission, and role synchronization.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -20,6 +30,12 @@ use Modules\Groups\Http\Requests\UpdateGroupRequest;
 use Modules\Groups\Models\Group;
 use Modules\Groups\Services\GroupCacheService;
 
+/**
+ * Controller for managing groups.
+ *
+ * Handles HTTP requests for CRUD operations on groups,
+ * including member, permission, and role synchronization.
+ */
 class GroupsController extends Controller
 {
     use SyncsRelationshipsWithAuditLog;
@@ -33,6 +49,9 @@ class GroupsController extends Controller
 
     /**
      * Display a listing of groups.
+     *
+     * @param  DatatableQueryService  $datatableService
+     * @return Response
      */
     public function index(DatatableQueryService $datatableService): Response
     {
@@ -57,7 +76,6 @@ class GroupsController extends Controller
             ]
         );
 
-        // Transform roles to only include id and name for frontend
         $groups->through(function ($group) {
             $group->setRelation('roles', $group->roles->map(fn ($role) => [
                 'id' => $role->id,
@@ -75,6 +93,10 @@ class GroupsController extends Controller
 
     /**
      * Display the specified group.
+     *
+     * @param  DatatableQueryService  $datatableService
+     * @param  Group  $group
+     * @return Response
      */
     public function show(DatatableQueryService $datatableService, Group $group): Response
     {
@@ -116,6 +138,8 @@ class GroupsController extends Controller
 
     /**
      * Show the form for creating a new group.
+     *
+     * @return Response
      */
     public function create(): Response
     {
@@ -135,6 +159,9 @@ class GroupsController extends Controller
 
     /**
      * Store a newly created group in storage.
+     *
+     * @param  StoreGroupRequest  $request
+     * @return RedirectResponse
      */
     public function store(StoreGroupRequest $request): RedirectResponse
     {
@@ -164,6 +191,9 @@ class GroupsController extends Controller
 
     /**
      * Show the form for editing the specified group.
+     *
+     * @param  Group  $group
+     * @return Response
      */
     public function edit(Group $group): Response
     {
@@ -185,6 +215,10 @@ class GroupsController extends Controller
 
     /**
      * Update the specified group in storage.
+     *
+     * @param  UpdateGroupRequest  $request
+     * @param  Group  $group
+     * @return RedirectResponse
      */
     public function update(UpdateGroupRequest $request, Group $group): RedirectResponse
     {
@@ -196,7 +230,6 @@ class GroupsController extends Controller
             'description' => $request->description,
         ]);
 
-        // Note: Members are managed on the Show page, not in the edit form
         if ($request->has('permissions') && is_array($request->permissions)) {
             $this->syncGroupPermissions($group, $request->permissions);
         }
@@ -211,6 +244,9 @@ class GroupsController extends Controller
 
     /**
      * Remove the specified group from storage.
+     *
+     * @param  Group  $group
+     * @return RedirectResponse
      */
     public function destroy(Group $group): RedirectResponse
     {
@@ -282,10 +318,8 @@ class GroupsController extends Controller
         if (! empty($userIds)) {
             $this->cacheService->clearForPermissionChange($userIds);
 
-            // Pre-fetch all affected users to avoid N+1 queries
             $affectedUsers = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-            // Dispatch signal event for each affected user
             foreach ($userIds as $userId) {
                 $user = $affectedUsers->get($userId);
                 if ($user) {
@@ -338,10 +372,8 @@ class GroupsController extends Controller
         if (! empty($userIds)) {
             $this->cacheService->clearForRoleChange($userIds);
 
-            // Pre-fetch all affected users to avoid N+1 queries
             $affectedUsers = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-            // Dispatch signal event for each affected user
             foreach ($userIds as $userId) {
                 $user = $affectedUsers->get($userId);
                 if ($user) {

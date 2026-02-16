@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Remove Members Request.
+ *
+ * Validates and authorizes requests to remove members from a group.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;

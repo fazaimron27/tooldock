@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Permission Cache Service.
+ *
+ * Provides methods for caching and retrieving group permissions.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services;
 
 use App\Services\Cache\CacheService;

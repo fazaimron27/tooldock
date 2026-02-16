@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Group Member Controller.
+ *
+ * Handles HTTP requests for managing group membership,
+ * including adding, removing, and transferring members.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -31,6 +41,10 @@ class GroupMemberController extends Controller
      *
      * Returns a paginated list of users who are members of the specified group.
      * Used for displaying the members table in the group detail page.
+     *
+     * @param  DatatableQueryService  $datatableService
+     * @param  Group  $group
+     * @return Response
      */
     public function members(DatatableQueryService $datatableService, Group $group): Response
     {
@@ -67,6 +81,10 @@ class GroupMemberController extends Controller
      *
      * Returns users that are not already members of the group, with server-side
      * search and pagination. Used for the "Add Members" dialog.
+     *
+     * @param  DatatableQueryService  $datatableService
+     * @param  Group  $group
+     * @return Response
      */
     public function availableUsers(DatatableQueryService $datatableService, Group $group): Response
     {
@@ -104,6 +122,10 @@ class GroupMemberController extends Controller
      * Bulk adds multiple users to a group. Skips users that are already members.
      * All operations are performed within a database transaction to ensure data integrity.
      * Changes are logged to the audit log and permission caches are cleared.
+     *
+     * @param  AddMembersRequest  $request
+     * @param  Group  $group
+     * @return RedirectResponse
      */
     public function addMembers(AddMembersRequest $request, Group $group): RedirectResponse
     {
@@ -128,6 +150,10 @@ class GroupMemberController extends Controller
      * Bulk removes multiple users from a group. Only removes users that are actually members.
      * All operations are performed within a database transaction to ensure data integrity.
      * Changes are logged to the audit log and permission caches are cleared.
+     *
+     * @param  RemoveMembersRequest  $request
+     * @param  Group  $group
+     * @return RedirectResponse
      */
     public function removeMembers(RemoveMembersRequest $request, Group $group): RedirectResponse
     {
@@ -153,6 +179,10 @@ class GroupMemberController extends Controller
      * Users already in the target group are skipped. All operations are performed
      * within a database transaction to ensure data integrity. Changes are logged
      * to the audit log for both groups and permission caches are cleared.
+     *
+     * @param  TransferMembersRequest  $request
+     * @param  Group  $group
+     * @return RedirectResponse
      */
     public function transferMembers(TransferMembersRequest $request, Group $group): RedirectResponse
     {

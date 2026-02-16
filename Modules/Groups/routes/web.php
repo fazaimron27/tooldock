@@ -6,7 +6,6 @@ use Modules\Groups\Http\Controllers\GroupsController;
 use Modules\Groups\Http\Controllers\GroupsDashboardController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard route must be before resource routes to avoid route conflicts
     Route::get('groups/dashboard', [GroupsDashboardController::class, 'index'])->name('groups.dashboard');
 
     Route::resource('groups', GroupsController::class)->names([
@@ -19,7 +18,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'destroy' => 'groups.groups.destroy',
     ]);
 
-    // Member management routes
     Route::post('groups/{group}/transfer-members', [GroupMemberController::class, 'transferMembers'])
         ->name('groups.transfer-members');
 

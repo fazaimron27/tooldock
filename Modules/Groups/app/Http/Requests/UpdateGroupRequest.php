@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Update Group Request.
+ *
+ * Validates and authorizes requests to update an existing group.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,6 +22,8 @@ class UpdateGroupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -52,7 +63,6 @@ class UpdateGroupRequest extends FormRequest
                 Rule::unique(Group::class)->ignore($groupId),
             ],
             'description' => ['nullable', 'string'],
-            // Note: Members are managed on the Show page, not in the edit form
             'roles' => ['nullable', 'array'],
             'roles.*' => [
                 'exists:roles,id',

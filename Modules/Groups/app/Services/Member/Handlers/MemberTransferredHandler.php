@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Member Transferred Handler.
+ *
+ * Handles side effects when members are transferred between groups.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services\Member\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

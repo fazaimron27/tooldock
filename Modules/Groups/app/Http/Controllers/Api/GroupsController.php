@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Groups API Controller.
+ *
+ * Handles RESTful API requests for CRUD operations on groups,
+ * including bulk user assignment and removal.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -17,6 +27,12 @@ use Modules\Core\Services\PermissionCacheService;
 use Modules\Groups\Models\Group;
 use Modules\Groups\Services\GroupCacheService;
 
+/**
+ * API controller for managing groups.
+ *
+ * Handles RESTful API requests for CRUD operations on groups,
+ * including bulk user assignment and removal.
+ */
 class GroupsController extends Controller
 {
     use SyncsRelationshipsWithAuditLog;
@@ -28,6 +44,9 @@ class GroupsController extends Controller
 
     /**
      * Display a listing of groups.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -55,6 +74,9 @@ class GroupsController extends Controller
      *
      * Validates input, creates the group, and syncs members, roles, and permissions.
      * Prevents assignment of the Super Admin role to groups.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -109,6 +131,9 @@ class GroupsController extends Controller
 
     /**
      * Display the specified group.
+     *
+     * @param  Group  $group
+     * @return JsonResponse
      */
     public function show(Group $group): JsonResponse
     {
@@ -124,6 +149,10 @@ class GroupsController extends Controller
      *
      * Validates input, updates the group attributes, and syncs members, roles, and permissions.
      * Prevents assignment of the Super Admin role to groups.
+     *
+     * @param  Request  $request
+     * @param  Group  $group
+     * @return JsonResponse
      */
     public function update(Request $request, Group $group): JsonResponse
     {
@@ -181,6 +210,9 @@ class GroupsController extends Controller
      *
      * Prevents deletion if the group has members. Users must be transferred
      * or removed before the group can be deleted.
+     *
+     * @param  Group  $group
+     * @return JsonResponse
      */
     public function destroy(Group $group): JsonResponse
     {
@@ -206,6 +238,9 @@ class GroupsController extends Controller
      *
      * Assigns the specified users to the specified groups. Only assigns users
      * that are not already members. Logs all changes to the audit log.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function bulkAssignUsers(Request $request): JsonResponse
     {
@@ -276,6 +311,9 @@ class GroupsController extends Controller
      *
      * Removes the specified users from the specified groups. Logs all changes
      * to the audit log and clears relevant caches.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function bulkRemoveUsers(Request $request): JsonResponse
     {

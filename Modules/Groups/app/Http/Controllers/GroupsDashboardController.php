@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Groups Dashboard Controller.
+ *
+ * Handles rendering the Groups module dashboard page.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -8,10 +17,16 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Controller for the Groups module dashboard.
+ */
 class GroupsDashboardController extends Controller
 {
     /**
      * Display the Groups module dashboard.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @return Response
      */
     public function index(DashboardWidgetRegistry $widgetRegistry): Response
     {

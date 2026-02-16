@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Observer.
+ *
+ * Handles cache clearing when groups are saved or deleted.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Observers;
 
 use App\Services\Registry\DashboardWidgetRegistry;
@@ -7,6 +16,11 @@ use App\Services\Registry\MenuRegistry;
 use Modules\Groups\Models\Group;
 use Modules\Groups\Services\GroupCacheService;
 
+/**
+ * Observer for the Group model.
+ *
+ * Handles cache clearing when groups are saved or deleted.
+ */
 class GroupObserver
 {
     public function __construct(
@@ -22,6 +36,9 @@ class GroupObserver
      *
      * When group attributes change, we only need to clear menu cache if the group name
      * changed (affects menu display), not permission cache (permissions didn't change).
+     *
+     * @param  Group  $group
+     * @return void
      */
     public function saved(Group $group): void
     {
@@ -50,6 +67,9 @@ class GroupObserver
      * Note: We use "deleting" instead of "deleted" because we need to
      * access the relationship before the pivot table entries are removed.
      * The "deleting" event fires before deletion, so relationships are still accessible.
+     *
+     * @param  Group  $group
+     * @return void
      */
     public function deleting(Group $group): void
     {
@@ -64,6 +84,8 @@ class GroupObserver
 
     /**
      * Clear Groups module widget cache.
+     *
+     * @return void
      */
     private function clearWidgetCache(): void
     {

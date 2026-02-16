@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Group Permissions Synced Handler.
+ *
+ * Handles cache invalidation when group permissions are synced.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Groups\Services\Group\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
