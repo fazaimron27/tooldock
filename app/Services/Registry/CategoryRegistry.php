@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Category Registry
+ *
+ * Manages default category registration and seeding for modules,
+ * supporting hierarchical parent-child structures and cleanup
+ * during module uninstallation.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\DB;
@@ -202,6 +213,8 @@ class CategoryRegistry
     /**
      * Seed categories for a specific type, handling parent/child relationships.
      *
+     * Uses level-by-level bulk insert for optimal performance.
+     *
      * @param  string  $type  Category type
      * @param  array<int, array{module: string, type: string, name: string, slug: string, parent_slug: string|null, color: string|null, description: string|null}>  $categories  Categories to seed
      * @param  bool  $strict  If true, exceptions will be re-thrown to rollback transaction
@@ -209,135 +222,172 @@ class CategoryRegistry
      */
     private function seedCategoriesForType(string $type, array $categories, bool $strict = false): array
     {
-        $created = 0;
-        $found = 0;
-        $errors = 0;
+        $now = now();
 
         $existingCategories = Category::where('type', $type)
             ->get()
             ->keyBy(fn ($cat) => "{$cat->type}:{$cat->slug}");
+        $parents = [];
+        $children = [];
 
-        $parentMap = [];
         foreach ($categories as $category) {
             if (empty($category['parent_slug'])) {
+                $parents[] = $category;
+            } else {
+                $children[] = $category;
+            }
+        }
+
+        $parentsToInsert = [];
+        $found = 0;
+
+        foreach ($parents as $category) {
+            $key = "{$category['type']}:{$category['slug']}";
+
+            if ($existingCategories->has($key)) {
+                $found++;
+            } else {
+                $parentsToInsert[] = [
+                    'id' => (string) Str::orderedUuid(),
+                    'name' => $category['name'],
+                    'slug' => $category['slug'],
+                    'type' => $category['type'],
+                    'module' => $category['module'],
+                    'parent_id' => null,
+                    'color' => $category['color'],
+                    'description' => $category['description'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        $created = 0;
+        if (! empty($parentsToInsert)) {
+            try {
+                Category::insert($parentsToInsert);
+                $created += count($parentsToInsert);
+
+                Log::debug('CategoryRegistry: Created parent categories', [
+                    'type' => $type,
+                    'count' => count($parentsToInsert),
+                ]);
+
+                $existingCategories = Category::where('type', $type)
+                    ->get()
+                    ->keyBy(fn ($cat) => "{$cat->type}:{$cat->slug}");
+            } catch (\Exception $e) {
+                Log::error('CategoryRegistry: Failed to bulk insert parent categories', [
+                    'type' => $type,
+                    'error' => $e->getMessage(),
+                ]);
+
+                if ($strict) {
+                    throw $e;
+                }
+
+                return ['created' => 0, 'found' => $found, 'errors' => count($parentsToInsert)];
+            }
+        }
+
+        $maxDepth = 10;
+        $depth = 0;
+        $processedSlugs = [];
+        $errors = 0;
+
+        while ($depth < $maxDepth && ! empty($children)) {
+            $childrenToInsert = [];
+            $remainingChildren = [];
+
+            foreach ($children as $category) {
+                if (isset($processedSlugs[$category['slug']])) {
+                    continue;
+                }
+
                 $key = "{$category['type']}:{$category['slug']}";
 
                 if ($existingCategories->has($key)) {
-                    $parentMap[$category['slug']] = $existingCategories->get($key);
                     $found++;
+                    $processedSlugs[$category['slug']] = true;
 
                     continue;
                 }
 
-                try {
-                    $parentCategory = Category::create([
-                        'name' => $category['name'],
-                        'slug' => $category['slug'],
-                        'type' => $category['type'],
+                $parentKey = "{$category['type']}:{$category['parent_slug']}";
+                $parent = $existingCategories->get($parentKey);
+
+                if (! $parent) {
+                    $remainingChildren[] = $category;
+
+                    continue;
+                }
+
+                if ($parent->type !== $category['type']) {
+                    Log::warning('CategoryRegistry: Parent category type mismatch', [
                         'module' => $category['module'],
-                        'color' => $category['color'],
-                        'description' => $category['description'],
+                        'type' => $category['type'],
+                        'slug' => $category['slug'],
+                        'parent_slug' => $category['parent_slug'],
+                        'parent_type' => $parent->type,
+                    ]);
+                    $processedSlugs[$category['slug']] = true;
+                    $errors++;
+
+                    continue;
+                }
+
+                $childrenToInsert[] = [
+                    'id' => (string) Str::orderedUuid(),
+                    'name' => $category['name'],
+                    'slug' => $category['slug'],
+                    'type' => $category['type'],
+                    'module' => $category['module'],
+                    'parent_id' => $parent->id,
+                    'color' => $category['color'],
+                    'description' => $category['description'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $processedSlugs[$category['slug']] = true;
+            }
+
+            if (! empty($childrenToInsert)) {
+                try {
+                    Category::insert($childrenToInsert);
+                    $created += count($childrenToInsert);
+
+                    Log::debug('CategoryRegistry: Created child categories', [
+                        'type' => $type,
+                        'level' => $depth + 1,
+                        'count' => count($childrenToInsert),
                     ]);
 
-                    $parentMap[$category['slug']] = $parentCategory;
-                    $existingCategories->put("{$parentCategory->type}:{$parentCategory->slug}", $parentCategory);
-                    $created++;
-                    Log::debug('CategoryRegistry: Created category', [
-                        'module' => $category['module'],
-                        'type' => $category['type'],
-                        'slug' => $category['slug'],
-                        'name' => $category['name'],
-                    ]);
+                    $existingCategories = Category::where('type', $type)
+                        ->get()
+                        ->keyBy(fn ($cat) => "{$cat->type}:{$cat->slug}");
                 } catch (\Exception $e) {
-                    $errors++;
-                    Log::error('CategoryRegistry: Failed to create category', [
-                        'module' => $category['module'],
-                        'type' => $category['type'],
-                        'slug' => $category['slug'],
+                    Log::error('CategoryRegistry: Failed to bulk insert child categories', [
+                        'type' => $type,
+                        'level' => $depth + 1,
                         'error' => $e->getMessage(),
                     ]);
+                    $errors += count($childrenToInsert);
 
                     if ($strict) {
                         throw $e;
                     }
                 }
             }
-        }
 
-        $maxDepth = 10;
-        $depth = 0;
+            $children = $remainingChildren;
 
-        while ($depth < $maxDepth) {
-            $createdInThisPass = false;
+            if (empty($childrenToInsert) && ! empty($remainingChildren)) {
+                Log::warning('CategoryRegistry: Some child categories could not be processed (missing parents)', [
+                    'type' => $type,
+                    'unprocessed' => array_map(fn ($c) => $c['slug'], $remainingChildren),
+                ]);
+                $errors += count($remainingChildren);
 
-            foreach ($categories as $category) {
-                if (! empty($category['parent_slug'])) {
-                    $key = "{$category['type']}:{$category['slug']}";
-
-                    if ($existingCategories->has($key) || isset($parentMap[$category['slug']])) {
-                        $found++;
-
-                        continue;
-                    }
-
-                    $parent = $parentMap[$category['parent_slug']] ?? null;
-
-                    if (! $parent) {
-                        continue;
-                    }
-
-                    if ($parent->type !== $category['type']) {
-                        Log::warning('CategoryRegistry: Parent category type mismatch', [
-                            'module' => $category['module'],
-                            'type' => $category['type'],
-                            'slug' => $category['slug'],
-                            'parent_slug' => $category['parent_slug'],
-                            'parent_type' => $parent->type,
-                        ]);
-
-                        continue;
-                    }
-
-                    try {
-                        $childCategory = Category::create([
-                            'name' => $category['name'],
-                            'slug' => $category['slug'],
-                            'type' => $category['type'],
-                            'module' => $category['module'],
-                            'parent_id' => $parent->id,
-                            'color' => $category['color'],
-                            'description' => $category['description'],
-                        ]);
-
-                        $parentMap[$category['slug']] = $childCategory;
-                        $existingCategories->put("{$childCategory->type}:{$childCategory->slug}", $childCategory);
-                        $created++;
-                        $createdInThisPass = true;
-                        Log::debug('CategoryRegistry: Created child category', [
-                            'module' => $category['module'],
-                            'type' => $category['type'],
-                            'slug' => $category['slug'],
-                            'name' => $category['name'],
-                            'parent_slug' => $category['parent_slug'],
-                        ]);
-                    } catch (\Exception $e) {
-                        $errors++;
-                        Log::error('CategoryRegistry: Failed to create child category', [
-                            'module' => $category['module'],
-                            'type' => $category['type'],
-                            'slug' => $category['slug'],
-                            'parent_slug' => $category['parent_slug'],
-                            'error' => $e->getMessage(),
-                        ]);
-
-                        if ($strict) {
-                            throw $e;
-                        }
-                    }
-                }
-            }
-
-            if (! $createdInThisPass) {
                 break;
             }
 

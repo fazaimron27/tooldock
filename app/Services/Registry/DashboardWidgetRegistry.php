@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Dashboard Widget Registry
+ *
+ * Handles registration, caching, and retrieval of dashboard
+ * widgets with module-specific cache tags for selective
+ * invalidation and scope-based filtering.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use App\Data\DashboardWidget;
@@ -40,6 +51,11 @@ class DashboardWidgetRegistry
      * @var array<int, DashboardWidget>
      */
     private array $widgets = [];
+
+    /**
+     * @var array<string, array{title: string, description: string|null}>
+     */
+    private array $moduleMetadata = [];
 
     public function __construct(
         private CacheService $cacheService
@@ -160,6 +176,21 @@ class DashboardWidgetRegistry
     }
 
     /**
+     * Register metadata for a module (title and optional description).
+     *
+     * @param  string  $module  Module name
+     * @param  string  $title  Custom title for the module section
+     * @param  string|null  $description  Custom description for the module section
+     */
+    public function registerModuleMetadata(string $module, string $title, ?string $description = null): void
+    {
+        $this->moduleMetadata[strtolower($module)] = [
+            'title' => $title,
+            'description' => $description,
+        ];
+    }
+
+    /**
      * Validate a widget before registration.
      *
      * @param  DashboardWidget  $widget  The widget to validate
@@ -236,9 +267,10 @@ class DashboardWidgetRegistry
      *
      * Executes any callbacks to get current values, then returns widgets
      * as arrays sorted by order (if provided).
-     * Uses caching for expensive computations if enabled (see CACHE_TTL constant).
+     * Uses caching for expensive computations if enabled via getCacheTtl() config.
      *
      * @param  string|null  $scope  Optional scope filter: 'overview' (main dashboard), 'detail' (module dashboard), or null for all widgets
+     * @param  array  $filters  Optional filters passed through to widget computation callbacks
      * @return array<int, array{type: string, title: string, value: string|int, icon: string, module: string|null, group: string|null, change: string|null, trend: string|null, order: int|null, data: array|null, description: string|null, chartType: string|null, scope: string|null}>
      *
      * @example
@@ -253,10 +285,10 @@ class DashboardWidgetRegistry
      * $detailWidgets = $registry->getWidgets('detail');
      * ```
      */
-    public function getWidgets(?string $scope = null): array
+    public function getWidgets(?string $scope = null, array $filters = []): array
     {
         $widgets = array_map(
-            fn (DashboardWidget $widget) => $this->computeWidgetWithCache($widget),
+            fn (DashboardWidget $widget) => $this->computeWidgetWithCache($widget, $filters),
             $this->widgets
         );
 
@@ -290,6 +322,7 @@ class DashboardWidgetRegistry
      *
      * @param  string  $module  Module name (case-insensitive, e.g., 'Core', 'Blog', 'Media')
      * @param  string|null  $scope  Optional scope filter: 'overview', 'detail', or null for all widgets in the module
+     * @param  array  $filters  Optional filters passed through to widget computation callbacks
      * @return array<int, array{type: string, title: string, value: string|int, icon: string, module: string|null, group: string|null, change: string|null, trend: string|null, order: int|null, data: array|null, description: string|null, chartType: string|null, scope: string|null}>
      *
      * @example
@@ -301,9 +334,9 @@ class DashboardWidgetRegistry
      * $blogDetailWidgets = $registry->getWidgetsForModule('Blog', 'detail');
      * ```
      */
-    public function getWidgetsForModule(string $module, ?string $scope = null): array
+    public function getWidgetsForModule(string $module, ?string $scope = null, array $filters = []): array
     {
-        $widgets = $this->getWidgets($scope);
+        $widgets = $this->getWidgets($scope, $filters);
 
         return array_values(array_filter($widgets, function ($widget) use ($module) {
             return strtolower($widget['module'] ?? '') === strtolower($module);
@@ -318,6 +351,7 @@ class DashboardWidgetRegistry
      * to keep the overview dashboard concise and performant.
      * Other widget types (charts, activities, systems) are included without limit.
      *
+     * @param  array  $filters  Optional filters passed through to widget computation callbacks
      * @return array<int, array{type: string, title: string, value: string|int, icon: string, module: string|null, group: string|null, change: string|null, trend: string|null, order: int|null, data: array|null, description: string|null, chartType: string|null, scope: string|null}>
      *
      * @example
@@ -327,9 +361,9 @@ class DashboardWidgetRegistry
      * return Inertia::render('Dashboard', ['widgets' => $overviewWidgets]);
      * ```
      */
-    public function getOverviewWidgets(): array
+    public function getOverviewWidgets(array $filters = []): array
     {
-        $widgets = $this->getWidgets('overview');
+        $widgets = $this->getWidgets('overview', $filters);
 
         $grouped = [];
         foreach ($widgets as $widget) {
@@ -364,35 +398,46 @@ class DashboardWidgetRegistry
     }
 
     /**
+     * Get all registered module metadata.
+     *
+     * @return array<string, array{title: string, description: string|null}>
+     */
+    public function getAllModuleMetadata(): array
+    {
+        return $this->moduleMetadata;
+    }
+
+    /**
      * Compute widget values with optional caching.
      *
      * Caches widget computations if the widget has closures and caching is enabled.
      * Cache key is based on widget module, title, and type to ensure uniqueness.
      *
      * @param  DashboardWidget  $widget  The widget to compute
+     * @param  array  $filters  Optional filters passed through to widget toArray() call
      * @return array<int|string, mixed> The widget as an array with computed values
      */
-    private function computeWidgetWithCache(DashboardWidget $widget): array
+    private function computeWidgetWithCache(DashboardWidget $widget, array $filters = []): array
     {
         $cacheTtl = $this->getCacheTtl();
 
         if ($cacheTtl <= 0) {
-            return $widget->toArray();
+            return $widget->toArray($filters);
         }
 
         $hasClosures = $widget->hasValueCallback() || $widget->hasChangeCallback() || $widget->hasDataCallback();
 
         if (! $hasClosures) {
-            return $widget->toArray();
+            return $widget->toArray($filters);
         }
 
-        $cacheKey = $this->generateCacheKey($widget);
+        $cacheKey = $this->generateCacheKey($widget, $filters);
         $tags = $this->useCacheTags() ? $this->getWidgetCacheTags($widget) : null;
 
         return $this->cacheService->remember(
             $cacheKey,
             $cacheTtl,
-            fn () => $widget->toArray(),
+            fn () => $widget->toArray($filters),
             $tags
         );
     }
@@ -406,11 +451,13 @@ class DashboardWidgetRegistry
      * - Widget type
      * - Title hash (for uniqueness)
      * - Optional version (for cache invalidation when widget definition changes)
+     * - Optional filters hash (for filter-specific cache entries)
      *
      * @param  DashboardWidget  $widget  The widget
+     * @param  array  $filters  Optional filters to include in cache key hash
      * @return string The cache key
      */
-    private function generateCacheKey(DashboardWidget $widget): string
+    private function generateCacheKey(DashboardWidget $widget, array $filters = []): string
     {
         $parts = [];
 
@@ -426,6 +473,10 @@ class DashboardWidgetRegistry
 
         if ($widget->version !== null) {
             $parts[] = $widget->version;
+        }
+
+        if (! empty($filters)) {
+            $parts[] = md5(serialize($filters));
         }
 
         return implode(':', $parts);

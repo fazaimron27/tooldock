@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Inertia Shared Data Registry.
+ *
+ * Registry pattern implementation that allows modules to register callbacks
+ * providing shared data for Inertia responses. Each module can register its
+ * own data providers without interfering with global shared data or other
+ * modules, enabling a decoupled architecture for frontend data sharing.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Registry;
 
 use Closure;

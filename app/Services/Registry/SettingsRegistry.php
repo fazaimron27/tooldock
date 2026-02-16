@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Settings Registry
+ *
+ * Manages application settings registration for modules,
+ * supporting scoped settings (global and user-overridable),
+ * database seeding, and Redis cache invalidation.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use App\Services\Cache\CacheService;
@@ -23,7 +34,7 @@ class SettingsRegistry
     private const CACHE_TAG = 'settings';
 
     /**
-     * @var array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool}>
+     * @var array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool, options: ?array, searchable: bool}>
      */
     private array $settings = [];
 
@@ -48,9 +59,16 @@ class SettingsRegistry
      * @param  string  $group  Setting group name (should be lowercase module name, e.g., 'blog')
      * @param  string  $key  Unique setting key
      * @param  mixed  $value  Default value
-     * @param  SettingType  $type  Setting type (Text, Boolean, Integer, Textarea)
+     * @param  SettingType  $type  Setting type (Text, Boolean, Integer, Textarea, Select)
      * @param  string  $label  Human-readable label for the UI
      * @param  bool  $isSystem  Whether this is a system setting (not editable via UI)
+     * @param  array|null  $options  Options for select-type settings (array of ['value' => '', 'label' => ''])
+     * @param  bool  $searchable  Whether select-type settings should have search functionality
+     * @param  string|null  $category  Category key for grouping related settings in UI
+     * @param  string|null  $categoryLabel  Human-readable label for the category card
+     * @param  string|null  $categoryDescription  Description shown in the category card
+     * @param  string  $scope  Setting scope: 'global' (admin-only) or 'user' (user-overridable)
+     * @param  string|null  $permission  Permission required to access this setting's preferences
      *
      * @throws \RuntimeException When a duplicate key is registered by a different module
      */
@@ -61,7 +79,14 @@ class SettingsRegistry
         mixed $value,
         SettingType $type,
         string $label,
-        bool $isSystem = false
+        bool $isSystem = false,
+        ?array $options = null,
+        bool $searchable = false,
+        ?string $category = null,
+        ?string $categoryLabel = null,
+        ?string $categoryDescription = null,
+        string $scope = 'global',
+        ?string $permission = null
     ): void {
         if (isset($this->registeredKeys[$key]) && $this->registeredKeys[$key] !== $module) {
             throw new \RuntimeException(
@@ -80,38 +105,59 @@ class SettingsRegistry
             'type' => $type,
             'label' => $label,
             'is_system' => $isSystem,
+            'options' => $options,
+            'searchable' => $searchable,
+            'category' => $category,
+            'category_label' => $categoryLabel,
+            'category_description' => $categoryDescription,
+            'scope' => $scope,
+            'permission' => $permission,
         ];
     }
 
     /**
      * Register multiple settings for a module in a single call.
      *
-     * Convenience method that iterates through an array of setting definitions
-     * and registers each one using the register() method.
+     * Uses grouped category format:
+     * ['category_key' => ['label' => '...', 'description' => '...', 'settings' => [...]]]
      *
      * @param  string  $module  Module name
      * @param  string  $group  Setting group name
-     * @param  array<int, array{key: string, value: mixed, type: SettingType, label: string, is_system?: bool}>  $settings  Array of setting definitions
+     * @param  array  $categories  Array of category definitions with their settings
      */
-    public function registerMany(string $module, string $group, array $settings): void
+    public function registerMany(string $module, string $group, array $categories): void
     {
-        foreach ($settings as $setting) {
-            $this->register(
-                module: $module,
-                group: $group,
-                key: $setting['key'],
-                value: $setting['value'],
-                type: $setting['type'],
-                label: $setting['label'],
-                isSystem: $setting['is_system'] ?? false
-            );
+        foreach ($categories as $categoryKey => $categoryConfig) {
+            $categoryLabel = $categoryConfig['label'] ?? null;
+            $categoryDescription = $categoryConfig['description'] ?? null;
+            $categoryPermission = $categoryConfig['permission'] ?? null;
+            $categorySettings = $categoryConfig['settings'] ?? [];
+
+            foreach ($categorySettings as $setting) {
+                $this->register(
+                    module: $module,
+                    group: $group,
+                    key: $setting['key'],
+                    value: $setting['value'],
+                    type: $setting['type'],
+                    label: $setting['label'],
+                    isSystem: $setting['is_system'] ?? false,
+                    options: $setting['options'] ?? null,
+                    searchable: $setting['searchable'] ?? false,
+                    category: $categoryKey,
+                    categoryLabel: $categoryLabel,
+                    categoryDescription: $categoryDescription,
+                    scope: $setting['scope'] ?? 'global',
+                    permission: $categoryPermission
+                );
+            }
         }
     }
 
     /**
      * Get all registered settings.
      *
-     * @return array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool}>
+     * @return array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool, options: ?array, searchable: bool}>
      */
     public function getSettings(): array
     {
@@ -122,7 +168,7 @@ class SettingsRegistry
      * Get settings for a specific module.
      *
      * @param  string  $module  Module name
-     * @return array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool}>
+     * @return array<int, array{module: string, group: string, key: string, value: mixed, type: SettingType, label: string, is_system: bool, options: ?array, searchable: bool}>
      */
     public function getSettingsByModule(string $module): array
     {
@@ -138,6 +184,7 @@ class SettingsRegistry
      * settings (module, group, type, label, is_system) while preserving user-modified
      * values. If a setting's type changes, the value is reset to the default.
      *
+     * Uses bulk operations for optimal performance.
      * Automatically called by ModuleLifecycleService during module installation
      * and enabling. Clears the settings cache after successful seeding to ensure
      * changes are immediately visible.
@@ -152,75 +199,126 @@ class SettingsRegistry
         }
 
         DB::transaction(function () use ($strict) {
-            $registeredKeys = array_column($this->settings, 'key');
-            $existingSettings = Setting::whereIn('key', $registeredKeys)
-                ->get()
-                ->keyBy('key');
+            try {
+                $registeredKeys = array_column($this->settings, 'key');
+                $existingSettings = Setting::whereIn('key', $registeredKeys)
+                    ->get()
+                    ->keyBy('key');
+                $toInsert = [];
+                $toUpdate = [];
+                $typeChanges = [];
+                $now = now();
 
-            $created = 0;
-            $updated = 0;
-            $errors = 0;
-
-            foreach ($this->settings as $setting) {
-                try {
+                foreach ($this->settings as $setting) {
                     $existing = $existingSettings->get($setting['key']);
 
                     if ($existing) {
                         $typeChanged = $existing->type !== $setting['type'];
-                        $updateData = [
+
+                        if ($typeChanged) {
+                            $typeChanges[] = [
+                                'key' => $setting['key'],
+                                'old_type' => $existing->type->value,
+                                'new_type' => $setting['type']->value,
+                                'module' => $setting['module'],
+                            ];
+                        }
+
+                        $toUpdate[] = [
+                            'id' => $existing->id,
                             'module' => $setting['module'],
                             'group' => $setting['group'],
                             'type' => $setting['type'],
                             'label' => $setting['label'],
                             'is_system' => $setting['is_system'],
+                            'options' => $setting['options'],
+                            'searchable' => $setting['searchable'],
+                            'category' => $setting['category'],
+                            'category_label' => $setting['category_label'],
+                            'category_description' => $setting['category_description'],
+                            'scope' => $setting['scope'] ?? 'global',
+                            'value' => $typeChanged ? $setting['value'] : null,
+                            'reset_value' => $typeChanged,
+                            'updated_at' => $now,
                         ];
-
-                        if ($typeChanged) {
-                            $updateData['value'] = $setting['value'];
-                            Log::info("SettingsRegistry: Type changed for setting '{$setting['key']}', resetting to default value", [
-                                'module' => $setting['module'],
-                                'old_type' => $existing->type->value,
-                                'new_type' => $setting['type']->value,
-                            ]);
-                        }
-
-                        $existing->update($updateData);
-                        $updated++;
                     } else {
-                        Setting::create([
+                        $toInsert[] = [
+                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
                             'module' => $setting['module'],
                             'group' => $setting['group'],
                             'key' => $setting['key'],
-                            'value' => $setting['value'],
+                            'value' => is_array($setting['value']) ? json_encode($setting['value']) : $setting['value'],
                             'type' => $setting['type'],
                             'label' => $setting['label'],
                             'is_system' => $setting['is_system'],
-                        ]);
-                        $created++;
-                    }
-                } catch (\Exception $e) {
-                    $errors++;
-                    Log::error('SettingsRegistry: Failed to seed setting', [
-                        'module' => $setting['module'],
-                        'key' => $setting['key'],
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    if ($strict) {
-                        throw $e;
+                            'options' => $setting['options'] ? json_encode($setting['options']) : null,
+                            'searchable' => $setting['searchable'],
+                            'category' => $setting['category'],
+                            'category_label' => $setting['category_label'],
+                            'category_description' => $setting['category_description'],
+                            'scope' => $setting['scope'] ?? 'global',
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
                 }
-            }
 
-            if ($created > 0 || $updated > 0 || $errors > 0) {
-                Log::debug('SettingsRegistry: Seeding completed', [
-                    'created' => $created,
-                    'updated' => $updated,
-                    'errors' => $errors,
-                    'total' => count($this->settings),
+                $created = 0;
+                if (! empty($toInsert)) {
+                    Setting::insert($toInsert);
+                    $created = count($toInsert);
+                }
+
+                $updated = 0;
+                if (! empty($toUpdate)) {
+                    foreach ($toUpdate as $updateData) {
+                        $id = $updateData['id'];
+                        $resetValue = $updateData['reset_value'];
+                        unset($updateData['id'], $updateData['reset_value']);
+
+                        if (! $resetValue) {
+                            unset($updateData['value']);
+                        } else {
+                            if (is_array($updateData['value'])) {
+                                $updateData['value'] = json_encode($updateData['value']);
+                            }
+                        }
+                        if (is_array($updateData['options'])) {
+                            $updateData['options'] = json_encode($updateData['options']);
+                        }
+
+                        Setting::where('id', $id)->update($updateData);
+                        $updated++;
+                    }
+                }
+
+                foreach ($typeChanges as $change) {
+                    Log::info("SettingsRegistry: Type changed for setting '{$change['key']}', resetting to default value", [
+                        'module' => $change['module'],
+                        'old_type' => $change['old_type'],
+                        'new_type' => $change['new_type'],
+                    ]);
+                }
+
+                if ($created > 0 || $updated > 0) {
+                    Log::debug('SettingsRegistry: Seeding completed', [
+                        'created' => $created,
+                        'updated' => $updated,
+                        'type_changes' => count($typeChanges),
+                        'total' => count($this->settings),
+                    ]);
+
+                    $this->clearCache();
+                }
+            } catch (\Exception $e) {
+                Log::error('SettingsRegistry: Seeding failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
 
-                $this->clearCache();
+                if ($strict) {
+                    throw $e;
+                }
             }
         });
     }
@@ -267,5 +365,51 @@ class SettingsRegistry
     private function clearCache(): void
     {
         $this->cacheService->clearTag(self::CACHE_TAG, 'SettingsRegistry');
+    }
+
+    /**
+     * Check if a setting is user-overridable.
+     *
+     * @param  string  $key  The setting key
+     * @return bool True if the setting can be overridden by users
+     */
+    public function isUserOverridable(string $key): bool
+    {
+        foreach ($this->settings as $setting) {
+            if ($setting['key'] === $key) {
+                return ($setting['scope'] ?? 'global') === 'user';
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all settings that can be overridden by users.
+     *
+     * @return \Illuminate\Support\Collection Collection of user-overridable settings
+     */
+    public function getUserOverridableSettings(): \Illuminate\Support\Collection
+    {
+        return collect($this->settings)->filter(
+            fn ($setting) => ($setting['scope'] ?? 'global') === 'user'
+        );
+    }
+
+    /**
+     * Get the type of a setting.
+     *
+     * @param  string  $key  The setting key
+     * @return SettingType|null The setting type, or null if not found
+     */
+    public function getSettingType(string $key): ?SettingType
+    {
+        foreach ($this->settings as $setting) {
+            if ($setting['key'] === $key) {
+                return $setting['type'];
+            }
+        }
+
+        return null;
     }
 }

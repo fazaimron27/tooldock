@@ -1,9 +1,21 @@
 <?php
 
+/**
+ * Role Registry
+ *
+ * Manages default role registration and seeding for modules,
+ * handling cleanup during module uninstallation with safeguards
+ * for protected roles and user assignments.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\Role;
 
@@ -129,6 +141,7 @@ class RoleRegistry
      * This is automatically called by ModuleLifecycleService during module installation
      * and enabling. Only creates roles that don't already exist (based on name + guard uniqueness).
      *
+     * Uses bulk upsert for optimal performance - reduces N queries to ~2.
      * Wrapped in a database transaction to ensure atomicity.
      *
      * @param  bool  $strict  If true, any exception during seeding will cause the transaction to rollback.
@@ -141,50 +154,46 @@ class RoleRegistry
         }
 
         DB::transaction(function () use ($strict) {
-            $created = 0;
-            $found = 0;
-            $errors = 0;
+            try {
+                $allUpsertData = [];
+                $now = now();
 
-            foreach ($this->roles as $roleData) {
-                $name = $roleData['name'];
-                $guardName = $roleData['guard_name'];
-                $module = $roleData['module'];
-
-                try {
-                    $role = Role::firstOrCreate(
-                        [
-                            'name' => $name,
-                            'guard_name' => $guardName,
-                        ]
-                    );
-
-                    if ($role->wasRecentlyCreated) {
-                        $created++;
-                    } else {
-                        $found++;
-                    }
-                } catch (\Exception $e) {
-                    $errors++;
-                    Log::error("RoleRegistry: Failed to create role: {$name}", [
-                        'module' => $module,
-                        'name' => $name,
-                        'guard' => $guardName,
-                        'error' => $e->getMessage(),
-                    ]);
-
-                    if ($strict) {
-                        throw $e;
-                    }
+                foreach ($this->roles as $roleData) {
+                    $allUpsertData[] = [
+                        'id' => (string) Str::orderedUuid(),
+                        'name' => $roleData['name'],
+                        'guard_name' => $roleData['guard_name'],
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
                 }
-            }
 
-            if ($created > 0 || $found > 0 || $errors > 0) {
+                if (empty($allUpsertData)) {
+                    return;
+                }
+
+                $names = array_column($allUpsertData, 'name');
+
+                $existingCount = Role::whereIn('name', $names)->count();
+
+                Role::upsert($allUpsertData, ['name', 'guard_name'], ['updated_at']);
+
+                $totalCreated = count($allUpsertData) - $existingCount;
+
                 Log::debug('RoleRegistry: Seeding completed', [
-                    'created' => $created,
-                    'found' => $found,
-                    'errors' => $errors,
+                    'created' => $totalCreated,
+                    'found' => $existingCount,
                     'total' => count($this->roles),
                 ]);
+            } catch (\Exception $e) {
+                Log::error('RoleRegistry: Seeding failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                if ($strict) {
+                    throw $e;
+                }
             }
         });
     }

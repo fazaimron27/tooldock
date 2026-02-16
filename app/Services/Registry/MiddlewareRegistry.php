@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Middleware Registry.
+ *
+ * Registry for managing module-specific middleware registration. Modules
+ * register their middleware during service provider boot, which are then
+ * collected and applied to the web middleware group by AppServiceProvider.
+ * Uses a static array for early access before service providers boot.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace App\Services\Registry;
 
 /**
