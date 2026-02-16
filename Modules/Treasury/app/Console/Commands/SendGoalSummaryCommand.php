@@ -1,0 +1,69 @@
+<?php
+
+namespace Modules\Treasury\Console\Commands;
+
+use App\Services\Registry\SignalHandlerRegistry;
+use Illuminate\Console\Command;
+use Modules\Core\Models\User;
+
+/**
+ * Send Goal Summary Command
+ *
+ * Sends monthly goal summary notifications to all users with goals.
+ * Should be scheduled to run at the end of each month.
+ */
+class SendGoalSummaryCommand extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'treasury:send-goal-summary
+                            {--user= : Send for specific user ID only}
+                            {--dry-run : Preview without sending}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Send monthly goal summary notifications to users';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(SignalHandlerRegistry $registry): int
+    {
+        $userId = $this->option('user');
+        $dryRun = $this->option('dry-run');
+
+        $this->info('Sending goal summaries...'.($dryRun ? ' (DRY RUN)' : ''));
+
+        if ($userId) {
+            $users = collect([User::find($userId)])->filter();
+        } else {
+            // Get all users who have at least one goal
+            $users = User::whereHas('goals')->get();
+        }
+
+        $totalSignals = 0;
+
+        foreach ($users as $user) {
+            $results = $registry->dispatch('scheduled.monthly', $user, $dryRun);
+
+            if (! empty($results)) {
+                foreach ($results as $handler => $signal) {
+                    $totalSignals++;
+                    $this->line("  User {$user->name}: {$signal['title']}");
+                }
+            } else {
+                $this->line("  User {$user->name}: No signals");
+            }
+        }
+
+        $this->info("Completed: {$totalSignals} signals ".($dryRun ? 'would be sent.' : 'sent.'));
+
+        return Command::SUCCESS;
+    }
+}
