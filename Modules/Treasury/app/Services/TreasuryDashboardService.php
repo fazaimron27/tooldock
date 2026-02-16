@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Dashboard Service
+ *
+ * Registers dashboard widgets for the Treasury module, providing
+ * financial overview data including stats, charts, and activity feeds.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use App\Data\DashboardWidget;
@@ -14,6 +24,9 @@ use Modules\Treasury\Services\Transaction\TransactionQueryService;
 use Modules\Treasury\Services\Transaction\TransactionStatsService;
 use Modules\Treasury\Services\Wallet\WalletSummaryService;
 
+/**
+ * Service for registering Treasury dashboard widgets.
+ */
 class TreasuryDashboardService
 {
     public function __construct(
@@ -29,17 +42,19 @@ class TreasuryDashboardService
 
     /**
      * Register all dashboard widgets for the Treasury module.
+     *
+     * @param  DashboardWidgetRegistry  $widgetRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
-        // Register module metadata for the dashboard section
         $widgetRegistry->registerModuleMetadata(
             $moduleName,
             'Financial Overview',
             'Monitor your income, expenses, and transaction history across all wallets.'
         );
 
-        // --- Stat Widgets: Financial Health ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
@@ -76,7 +91,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Stat Widgets: Today ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
@@ -107,7 +121,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Stat Widgets: Monthly ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
@@ -138,7 +151,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Stat Widgets: Year ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
@@ -169,7 +181,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Chart Widgets ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'chart',
@@ -239,7 +250,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Activity Widget ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'activity',
@@ -254,7 +264,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- Table Widget ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'table',
@@ -275,7 +284,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- System Widget: Savings Goals ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'system',
@@ -296,7 +304,6 @@ class TreasuryDashboardService
             )
         );
 
-        // --- System Widget: Budget Tracking ---
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'system',
@@ -317,7 +324,7 @@ class TreasuryDashboardService
 
                     $currency = settings('treasury_reference_currency', 'IDR');
 
-                    return $budgetReport->map(function ($budget) use ($currency) {
+                    return $budgetReport->map(function (array $budget) use ($currency) {
                         $spent = $this->currencyFormatter->format($budget['spent'], $currency);
                         $limit = $this->currencyFormatter->format($budget['total_limit'], $currency);
 

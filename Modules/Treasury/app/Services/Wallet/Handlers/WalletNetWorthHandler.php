@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Wallet Net Worth Handler
+ *
+ * Signal handler that returns data when a user reaches net worth
+ * milestones across all active wallets.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Wallet\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -106,6 +116,13 @@ class WalletNetWorthHandler implements SignalHandlerInterface
         return null;
     }
 
+    /**
+     * Calculate the user's total net worth across all active wallets.
+     *
+     * @param  User  $user
+     * @param  string  $referenceCurrency
+     * @return float
+     */
     private function calculateNetWorth(User $user, string $referenceCurrency): float
     {
         $wallets = Wallet::where('user_id', $user->id)->where('is_active', true)->get();

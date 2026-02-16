@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Velocity Handler
+ *
+ * Signal handler that returns data when saving velocity indicates
+ * a goal is falling behind its expected progress toward the deadline.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -63,7 +73,6 @@ class GoalVelocityHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Refresh to get latest saved_amount
         $goal->refresh();
 
         $remaining = $goal->target_amount - $goal->saved_amount;
@@ -76,7 +85,6 @@ class GoalVelocityHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Calculate if on track
         $created = $goal->created_at ?? now()->subMonth();
         $totalDays = $created->diffInDays($goal->deadline);
         $daysElapsed = $created->diffInDays(now());
@@ -88,7 +96,6 @@ class GoalVelocityHandler implements SignalHandlerInterface
         $expectedProgress = ($daysElapsed / $totalDays) * 100;
         $actualProgress = ($goal->saved_amount / $goal->target_amount) * 100;
 
-        // Alert if significantly behind (more than 15% below expected)
         if ($actualProgress < ($expectedProgress - 15)) {
             $difference = (int) ($expectedProgress - $actualProgress);
             $actualInt = (int) $actualProgress;

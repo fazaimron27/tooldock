@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Summary Handler
+ *
+ * Signal handler that returns data for the monthly budget performance
+ * summary, including on-track counts and total spending.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

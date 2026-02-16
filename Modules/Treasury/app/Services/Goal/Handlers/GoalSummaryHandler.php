@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Summary Handler
+ *
+ * Signal handler that returns data for the monthly goal performance
+ * summary, including completion counts and total savings.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

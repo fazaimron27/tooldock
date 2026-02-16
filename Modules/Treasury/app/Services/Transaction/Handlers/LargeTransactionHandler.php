@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Large Transaction Handler
+ *
+ * Signal handler that returns data when a transaction amount exceeds
+ * the user's configured threshold.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -55,7 +65,6 @@ class LargeTransactionHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Get threshold from settings (default: 1,000,000 in reference currency)
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
         $thresholdRef = (float) settings(
             'treasury_large_transaction_threshold',
@@ -66,22 +75,16 @@ class LargeTransactionHandler implements SignalHandlerInterface
         $amount = (float) $transaction->amount;
         $walletCurrency = $transaction->wallet?->currency ?? $referenceCurrency;
 
-        // Convert to reference currency for threshold comparison
         $amountInReference = $walletCurrency !== $referenceCurrency
             ? $this->currencyConverter->convert($amount, $walletCurrency, $referenceCurrency)
             : $amount;
-
-        // Skip if below threshold (in reference currency)
         if ($amountInReference < $thresholdRef) {
             return null;
         }
 
-        // For consistent display, convert threshold TO wallet currency
         $threshold = $walletCurrency !== $referenceCurrency
             ? $this->currencyConverter->convert($thresholdRef, $referenceCurrency, $walletCurrency)
             : $thresholdRef;
-
-        // Format all in wallet currency for consistency
         $formattedAmount = $this->currencyFormatter->format($amount, $walletCurrency);
         $formattedThreshold = $this->currencyFormatter->format($threshold, $walletCurrency);
         $name = $transaction->name ?? 'Transaction';
@@ -94,7 +97,6 @@ class LargeTransactionHandler implements SignalHandlerInterface
             'threshold' => $threshold,
         ]);
 
-        // Different tones based on transaction type
         return match ($transaction->type) {
             'expense' => [
                 'type' => 'warning',

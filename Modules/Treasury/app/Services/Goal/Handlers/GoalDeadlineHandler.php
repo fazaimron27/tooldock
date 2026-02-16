@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Deadline Handler
+ *
+ * Signal handler that returns data when goals have approaching
+ * deadlines within the next 30 days (scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

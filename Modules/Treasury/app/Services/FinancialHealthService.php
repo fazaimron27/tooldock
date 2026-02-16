@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Financial Health Service
+ *
+ * Calculates financial health metrics and generates goal recommendations
+ * based on user transaction history for Emergency & Security categories.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use Modules\Core\Models\User;
@@ -36,6 +46,10 @@ class FinancialHealthService
      * Get average monthly expenses over the specified period.
      *
      * Converts all expenses to reference currency for accurate calculation.
+     *
+     * @param  User  $user
+     * @param  int  $months
+     * @return float
      */
     public function getAverageMonthlyExpenses(User $user, int $months = 6): float
     {
@@ -63,7 +77,6 @@ class FinancialHealthService
             );
         }
 
-        // Count actual months with data
         $monthsWithData = $transactions->groupBy(fn ($tx) => $tx->date->format('Y-m'))->count();
 
         return $monthsWithData > 0 ? $totalExpense / $monthsWithData : 0.0;
@@ -73,6 +86,10 @@ class FinancialHealthService
      * Get average monthly income over the specified period.
      *
      * Converts all income to reference currency for accurate calculation.
+     *
+     * @param  User  $user
+     * @param  int  $months
+     * @return float
      */
     public function getAverageMonthlyIncome(User $user, int $months = 6): float
     {
@@ -100,7 +117,6 @@ class FinancialHealthService
             );
         }
 
-        // Count actual months with data
         $monthsWithData = $transactions->groupBy(fn ($tx) => $tx->date->format('Y-m'))->count();
 
         return $monthsWithData > 0 ? $totalIncome / $monthsWithData : 0.0;
@@ -109,6 +125,7 @@ class FinancialHealthService
     /**
      * Check if user has enough transaction data for recommendations.
      *
+     * @param  User  $user
      * @return array{expenses: bool, income: bool, expense_months: int, income_months: int}
      */
     public function hasEnoughData(User $user): array
@@ -146,6 +163,9 @@ class FinancialHealthService
      * - Category is not an Emergency & Security category
      * - User doesn't have enough data for the recommendation type
      *
+     * @param  User  $user
+     * @param  string  $categorySlug
+     * @param  string|null  $walletCurrency
      * @return array{
      *   category_type: string,
      *   avg_expense: float,
@@ -159,7 +179,6 @@ class FinancialHealthService
      */
     public function getGoalRecommendation(User $user, string $categorySlug, ?string $walletCurrency = null): ?array
     {
-        // Check if this is an Emergency & Security category
         if (! isset(self::EMERGENCY_SECURITY_SLUGS[$categorySlug])) {
             return null;
         }
@@ -168,15 +187,11 @@ class FinancialHealthService
         $dataStatus = $this->hasEnoughData($user);
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Use wallet currency if provided, otherwise use reference currency
         $targetCurrency = $walletCurrency ?: $referenceCurrency;
 
-        // Emergency Fund and Job Loss Fund need expense data
-        // Insurance Fund needs income data
         $needsExpenseData = in_array($categoryType, ['emergency_fund', 'job_loss_fund']);
         $needsIncomeData = $categoryType === 'insurance_fund';
 
-        // If insufficient data, return guidance instead of null
         if ($needsExpenseData && ! $dataStatus['expenses']) {
             return $this->buildInsufficientDataResponse(
                 $categoryType,
@@ -205,7 +220,6 @@ class FinancialHealthService
             default => null,
         };
 
-        // Convert amounts to wallet currency if different from reference
         if ($recommendation && $targetCurrency !== $referenceCurrency) {
             $recommendation = $this->convertRecommendationCurrency($recommendation, $referenceCurrency, $targetCurrency);
         }
@@ -215,15 +229,17 @@ class FinancialHealthService
 
     /**
      * Convert recommendation amounts from reference currency to target currency.
+     *
+     * @param  array  $recommendation
+     * @param  string  $fromCurrency
+     * @param  string  $toCurrency
+     * @return array
      */
     private function convertRecommendationCurrency(array $recommendation, string $fromCurrency, string $toCurrency): array
     {
-        // Store original reference values for display
         $recommendation['reference_currency'] = $fromCurrency;
         $recommendation['reference_avg_expense'] = $recommendation['avg_expense'];
         $recommendation['reference_avg_income'] = $recommendation['avg_income'];
-
-        // Convert average values
         if ($recommendation['avg_expense'] > 0) {
             $recommendation['avg_expense'] = $this->currencyConverter->convert(
                 $recommendation['avg_expense'],
@@ -240,7 +256,6 @@ class FinancialHealthService
             );
         }
 
-        // Convert suggestion amounts
         foreach ($recommendation['suggestions'] as &$suggestion) {
             $suggestion['reference_amount'] = $suggestion['amount'];
             $suggestion['amount'] = round($this->currencyConverter->convert(
@@ -250,7 +265,6 @@ class FinancialHealthService
             ), 2);
         }
 
-        // Update currency to target
         $recommendation['currency'] = $toCurrency;
 
         return $recommendation;
@@ -258,6 +272,12 @@ class FinancialHealthService
 
     /**
      * Build response for when user doesn't have enough transaction data.
+     *
+     * @param  string  $categoryType
+     * @param  string  $dataType
+     * @param  int  $currentMonths
+     * @param  string  $currency
+     * @return array
      */
     private function buildInsufficientDataResponse(
         string $categoryType,
@@ -302,6 +322,11 @@ class FinancialHealthService
     /**
      * Build Emergency Fund recommendation.
      * Formula: 3-6 months × monthly expenses
+     *
+     * @param  float  $avgExpense
+     * @param  int  $monthsAnalyzed
+     * @param  string  $currency
+     * @return array
      */
     private function buildEmergencyFundRecommendation(float $avgExpense, int $monthsAnalyzed, string $currency): array
     {
@@ -334,6 +359,11 @@ class FinancialHealthService
     /**
      * Build Job Loss Fund recommendation.
      * Formula: 6-12 months × monthly expenses
+     *
+     * @param  float  $avgExpense
+     * @param  int  $monthsAnalyzed
+     * @param  string  $currency
+     * @return array
      */
     private function buildJobLossFundRecommendation(float $avgExpense, int $monthsAnalyzed, string $currency): array
     {
@@ -366,6 +396,11 @@ class FinancialHealthService
     /**
      * Build Insurance Fund recommendation.
      * Formula: ≤10% of monthly income (annual target)
+     *
+     * @param  float  $avgIncome
+     * @param  int  $monthsAnalyzed
+     * @param  string  $currency
+     * @return array
      */
     private function buildInsuranceFundRecommendation(float $avgIncome, int $monthsAnalyzed, string $currency): array
     {

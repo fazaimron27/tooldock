@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Currency Formatter Service
+ *
+ * Provides locale-aware currency formatting using Laravel's Number utility
+ * and PHP's NumberFormatter. Serves as the single source of truth for
+ * currency metadata used by both backend and frontend.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Support;
 
 use Illuminate\Support\Number;
@@ -38,7 +49,6 @@ class CurrencyFormatter
         $locale = $locale ?? $this->getLocaleForCurrency($currencyCode);
         $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
 
-        // Ensure the formatter is set to the specific currency code to get its correct symbol
         $formatter->setTextAttribute(NumberFormatter::CURRENCY_CODE, $currencyCode);
 
         return $formatter->getSymbol(NumberFormatter::CURRENCY_SYMBOL);
@@ -46,6 +56,9 @@ class CurrencyFormatter
 
     /**
      * Get the most appropriate locale for a currency code.
+     *
+     * @param  string  $currency
+     * @return string
      */
     public function getLocaleForCurrency(string $currency): string
     {

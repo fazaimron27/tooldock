@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Treasury Menu Registrar
+ *
+ * Registers sidebar navigation menu items for the Treasury module
+ * including wallets, goals, budgets, transactions, and reports.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services;
 
 use App\Services\Registry\MenuRegistry;
@@ -11,6 +21,10 @@ class TreasuryMenuRegistrar
 {
     /**
      * Register all menu items for the Treasury module.
+     *
+     * @param  MenuRegistry  $menuRegistry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

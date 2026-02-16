@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Reporting Service
+ *
+ * Handles data aggregation for budget reports, summaries, and status tracking.
+ * Utilizes BudgetRolloverService for accurate dynamic mathematical inputs.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Budget;
 
 use Illuminate\Support\Collection;
@@ -24,6 +34,12 @@ class BudgetReportingService
 
     /**
      * Get the monthly budget report comparing plan vs actual spending.
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return Collection
      */
     public function getMonthlyReport(User $user, int $month, int $year, array $filters = []): Collection
     {
@@ -41,7 +57,6 @@ class BudgetReportingService
             }])
             ->get();
 
-        // Preload rollover data in bulk BEFORE filtering to optimize all calculateRollover() calls
         $budgetsWithRollover = $allBudgets->filter(fn ($b) => $b->rollover_enabled);
         if ($budgetsWithRollover->isNotEmpty()) {
             $this->rolloverService->preloadForBudgets($budgetsWithRollover, $month, $year, $filters);
@@ -56,7 +71,6 @@ class BudgetReportingService
                     return true;
                 }
 
-                // Show if it has an active rollover/debt (accountability)
                 if ($budget->rollover_enabled) {
                     $rollover = $this->rolloverService->calculateRollover($budget, $month, $year, $filters);
                     if ($rollover != 0) {
@@ -75,8 +89,6 @@ class BudgetReportingService
             ->get()
             ->keyBy('budget_id');
 
-        // Get all transactions for the month with wallet currency info
-        // Include expenses and goal allocation transfers (transfers with goal_id) for accurate budget tracking
         $spendingQuery = Transaction::where('user_id', $user->id)
             ->with('wallet:id,currency')
             ->where(function ($q) {
@@ -93,10 +105,8 @@ class BudgetReportingService
 
         $transactions = $spendingQuery->get(['amount', 'wallet_id', 'category_id']);
 
-        // Get reference currency for fallback
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Group transactions by category first (raw amounts)
         $rawSpendingByCategory = [];
         foreach ($transactions as $tx) {
             $categoryId = $tx->category_id;
@@ -109,8 +119,6 @@ class BudgetReportingService
             ];
         }
 
-        // Calculate spending per budget, converting to each budget's specific currency
-        // Note: One budget per category per user, spending is directly tied to the budget
         $spendingByBudget = [];
         foreach ($budgets as $budget) {
             $categoryId = $budget->category_id;
@@ -148,7 +156,7 @@ class BudgetReportingService
                 'category' => $budget->category?->name ?? 'Uncategorized',
                 'category_id' => $categoryId,
                 'category_color' => $budget->category?->color,
-                'currency' => $budget->currency,  // Budget's specific currency
+                'currency' => $budget->currency,
                 'limit' => $amount,
                 'rollover' => $rollover,
                 'total_limit' => $totalLimit,
@@ -168,11 +176,16 @@ class BudgetReportingService
     /**
      * Get detailed budget information for a specific category in a given month.
      * All values are returned in the budget's native currency.
+     *
+     * @param  Budget  $budget
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array|null
      */
     public function getCategoryBudgetDetails(Budget $budget, int $month, int $year, array $filters = []): array
     {
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
-        // Use budget's specific currency for calculations, falling back to reference currency
         $budgetCurrency = $budget->currency ?? $referenceCurrency;
         $period = BudgetPeriod::formatPeriod($month, $year);
         $savedPeriod = BudgetPeriod::where('budget_id', $budget->id)->where('period', $period)->first();
@@ -180,7 +193,6 @@ class BudgetReportingService
         $limit = $savedPeriod ? (float) $savedPeriod->amount : (float) $budget->amount;
         $rollover = $budget->rollover_enabled ? $this->rolloverService->calculateRollover($budget, $month, $year, $filters) : 0;
 
-        // Include expenses and goal allocation transfers (transfers with goal_id)
         $spentQuery = Transaction::where('user_id', $budget->user_id)
             ->with('wallet:id,currency')
             ->where(function ($q) {
@@ -195,7 +207,6 @@ class BudgetReportingService
 
         $this->applyFilters($spentQuery, $filters);
 
-        // Sum with currency conversion to budget's currency (not reference currency)
         $spent = 0.0;
         foreach ($spentQuery->get(['amount', 'wallet_id']) as $tx) {
             $walletCurrency = $tx->wallet?->currency ?? $budgetCurrency;
@@ -222,13 +233,18 @@ class BudgetReportingService
     /**
      * Get summary statistics, including unbudgeted expenses.
      * All aggregate values are returned in the user's reference currency.
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array
      */
     public function getMonthlySummary(User $user, int $month, int $year, array $filters = []): array
     {
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
         $report = $this->getMonthlyReport($user, $month, $year, $filters);
 
-        // Include expenses and goal allocation transfers for accurate total spending calculation
         $totalExpenseQuery = Transaction::where('user_id', $user->id)
             ->with('wallet:id,currency')
             ->where(function ($q) {
@@ -242,7 +258,6 @@ class BudgetReportingService
 
         $this->applyFilters($totalExpenseQuery, $filters);
 
-        // Sum with currency conversion to reference currency
         $realTotalSpent = 0.0;
         foreach ($totalExpenseQuery->get(['amount', 'wallet_id']) as $tx) {
             $walletCurrency = $tx->wallet?->currency ?? $referenceCurrency;
@@ -253,8 +268,6 @@ class BudgetReportingService
             );
         }
 
-        // Convert each budget's values to reference currency before summing
-        // This handles cases where budgets have different currencies
         $totalBudgeted = 0.0;
         $totalBudgetedSpent = 0.0;
         $totalRemaining = 0.0;
@@ -293,14 +306,18 @@ class BudgetReportingService
             'total_remaining' => $totalRemaining,
             'total_rollover' => $totalRollover,
             'categories_count' => $report->count(),
-            'overbudget_count' => $report->where('status', 'overbudget')->count(),
-            'warning_count' => $report->where('status', 'warning')->count(),
-            'safe_count' => $report->where('status', 'safe')->count(),
+            'overbudget_count' => $report->filter(fn (array $b) => $b['status'] === 'overbudget')->count(),
+            'warning_count' => $report->filter(fn (array $b) => $b['status'] === 'warning')->count(),
+            'safe_count' => $report->filter(fn (array $b) => $b['status'] === 'safe')->count(),
         ];
     }
 
     /**
      * Determine health status.
+     *
+     * @param  float  $health
+     * @param  User|null  $user
+     * @return string
      */
     private function getStatus(float $health, ?User $user = null): string
     {
@@ -317,6 +334,13 @@ class BudgetReportingService
         return 'safe';
     }
 
+    /**
+     * Apply query filters for wallet and category.
+     *
+     * @param  mixed  $query
+     * @param  array  $filters
+     * @return mixed
+     */
     private function applyFilters($query, array $filters): void
     {
         if (! empty($filters['wallet_id'])) {

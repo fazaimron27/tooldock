@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Daily Transaction Handler
+ *
+ * Signal handler that returns a daily transaction summary including
+ * income and expense totals for yesterday (scheduled daily).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

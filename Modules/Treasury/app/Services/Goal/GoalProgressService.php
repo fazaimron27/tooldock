@@ -1,14 +1,31 @@
 <?php
 
+/**
+ * Goal Progress Service
+ *
+ * Retrieves and formats savings goal progress data for users,
+ * including category and wallet associations.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal;
 
 use Modules\Core\Models\User;
 use Modules\Treasury\Models\TreasuryGoal;
 
+/**
+ * Service for retrieving and formatting goal progress data.
+ */
 class GoalProgressService
 {
     /**
      * Get all goals with progress.
+     *
+     * @param  User  $user
+     * @param  array  $filters
+     * @return array
      */
     public function getGoals(User $user, array $filters = []): array
     {
@@ -48,6 +65,10 @@ class GoalProgressService
 
     /**
      * Apply filters to goal queries.
+     *
+     * @param  mixed  $query
+     * @param  array  $filters
+     * @return void
      */
     private function applyFilters($query, array $filters): void
     {

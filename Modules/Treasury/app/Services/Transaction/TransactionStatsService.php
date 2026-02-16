@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Transaction Stats Service
+ *
+ * Provides aggregated statistical data for transactions including
+ * current month, daily, monthly, and yearly summaries with currency conversion.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Transaction;
 
 use Carbon\Carbon;
@@ -7,6 +17,9 @@ use Modules\Core\Models\User;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 
+/**
+ * Service for computing transaction statistics and summaries.
+ */
 class TransactionStatsService
 {
     public function __construct(
@@ -16,6 +29,12 @@ class TransactionStatsService
 
     /**
      * Get current month's income and expense with proper currency conversion.
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array{income: float, expense: float}
      */
     public function getCurrentMonthStats(User $user, int $month, int $year, array $filters = []): array
     {
@@ -38,6 +57,11 @@ class TransactionStatsService
 
     /**
      * Get daily income vs expense summary.
+     *
+     * @param  User  $user
+     * @param  string|null  $date
+     * @param  array  $filters
+     * @return array{income: float, expense: float}
      */
     public function getDailyStats(User $user, ?string $date = null, array $filters = []): array
     {
@@ -64,6 +88,12 @@ class TransactionStatsService
 
     /**
      * Get monthly income vs expense summary (last 6 months).
+     *
+     * @param  User  $user
+     * @param  int  $month
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array
      */
     public function getMonthlySummary(User $user, int $month, int $year, array $filters = []): array
     {
@@ -81,7 +111,6 @@ class TransactionStatsService
 
         $transactions = $query->get(['amount', 'type', 'wallet_id', 'date']);
 
-        // Group by month and convert currencies
         $monthlyTotals = [];
         foreach ($transactions as $tx) {
             $monthKey = $tx->date->format('Y-m');
@@ -103,7 +132,6 @@ class TransactionStatsService
             }
         }
 
-        // Map results back to the 6-month sequence
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::create($year, $month)->subMonths($i);
             $monthKey = $date->format('Y-m');
@@ -121,6 +149,11 @@ class TransactionStatsService
 
     /**
      * Get yearly income vs expense summary.
+     *
+     * @param  User  $user
+     * @param  int  $year
+     * @param  array  $filters
+     * @return array{income: float, expense: float}
      */
     public function getYearlySummary(User $user, int $year, array $filters = []): array
     {
@@ -146,6 +179,10 @@ class TransactionStatsService
 
     /**
      * Sum transaction amounts with currency conversion by type.
+     *
+     * @param  mixed  $transactions
+     * @param  string  $referenceCurrency
+     * @return array{income: float, expense: float}
      */
     private function sumWithConversion($transactions, string $referenceCurrency): array
     {
@@ -176,6 +213,10 @@ class TransactionStatsService
      * For each month, we subtract that month's income and add expenses
      * to get what the net worth was at the END of the previous month.
      *
+     * @param  User  $user
+     * @param  float  $currentNetWorth
+     * @param  int  $months
+     * @param  array  $filters
      * @return array Array of [month => 'Mon', netWorth => float]
      */
     public function getNetWorthHistory(User $user, float $currentNetWorth, int $months = 6, array $filters = []): array
@@ -183,7 +224,6 @@ class TransactionStatsService
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
         $now = now();
 
-        // Get monthly income/expense for the last N months
         $startDate = $now->copy()->subMonths($months - 1)->startOfMonth();
         $endDate = $now->copy()->endOfMonth();
 
@@ -196,7 +236,6 @@ class TransactionStatsService
 
         $transactions = $query->get(['amount', 'type', 'wallet_id', 'date']);
 
-        // Group by month
         $monthlyTotals = [];
         foreach ($transactions as $tx) {
             $monthKey = $tx->date->format('Y-m');
@@ -218,30 +257,25 @@ class TransactionStatsService
             }
         }
 
-        // Build the history array, starting from current and working backwards
         $data = [];
         $runningNetWorth = $currentNetWorth;
 
-        // Generate months from most recent to oldest
         for ($i = 0; $i < $months; $i++) {
             $date = $now->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
             $monthLabel = $date->format('M');
 
-            // Store current month's net worth
             $data[] = [
                 'month' => $monthLabel,
                 'year' => $date->format('Y'),
                 'netWorth' => $runningNetWorth,
             ];
 
-            // Calculate previous month's net worth by reversing transactions
             $income = $monthlyTotals[$monthKey]['income'] ?? 0.0;
             $expense = $monthlyTotals[$monthKey]['expense'] ?? 0.0;
             $runningNetWorth = $runningNetWorth - $income + $expense;
         }
 
-        // Reverse so oldest is first
         return array_reverse($data);
     }
 }

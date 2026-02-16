@@ -1,7 +1,18 @@
 <?php
 
+/**
+ * Exchange Rate Service
+ *
+ * Handles fetching and storing exchange rates from ExchangeRate-API.
+ * Uses USD as the base currency for cross-rate conversions.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Exchange;
 
+use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -77,7 +88,7 @@ class ExchangeRateService
             }
 
             return $this->storeRates($data['conversion_rates']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exchange rate fetch exception', ['error' => $e->getMessage()]);
 
             return [

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Milestone Handler
+ *
+ * Signal handler that returns data when a user reaches savings
+ * milestones (25%, 50%, 75%) on a goal.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -62,18 +72,14 @@ class GoalMilestoneHandler implements SignalHandlerInterface
             return null;
         }
 
-        // Refresh the goal to get the latest saved_amount (includes current transaction)
         $goal->refresh();
 
         $percentage = ((float) $goal->saved_amount / (float) $goal->target_amount) * 100;
 
-        // If goal is 100% complete, skip milestones - GoalCompletedHandler will handle it
         if ($percentage >= 100) {
             return null;
         }
 
-        // Check milestones in REVERSE order (75, 50, 25) to find the highest reached
-        // This ensures we notify for the highest uncached milestone first
         $reversedMilestones = array_reverse(self::MILESTONES);
 
         foreach ($reversedMilestones as $milestone) {
@@ -83,8 +89,6 @@ class GoalMilestoneHandler implements SignalHandlerInterface
                     continue;
                 }
 
-                // Cache this milestone AND all lower milestones to prevent them from firing later
-                // Example: If we reached 50% directly, also cache 25% so it won't fire at 75% or 100%
                 foreach (self::MILESTONES as $m) {
                     if ($m <= $milestone) {
                         Cache::forever("goal_milestone_{$goal->id}_{$m}", true);

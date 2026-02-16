@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Goal Stagnation Handler
+ *
+ * Signal handler that returns data when goals have no contributions
+ * for an extended period (14+ days, scheduled weekly).
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Services\Goal\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
