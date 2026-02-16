@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Wallet Model
+ *
+ * Represents a financial wallet (cash, bank, e-wallet, savings) that holds
+ * a balance in a specific currency. Provides net worth calculations with
+ * cross-currency conversion, formatted balance accessors, and activity scoping.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -14,6 +25,11 @@ use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
 use Modules\Treasury\Database\Factories\WalletFactory;
 
+/**
+ * Class Wallet
+ *
+ * Financial wallet model with balance tracking and currency conversion.
+ */
 class Wallet extends Model
 {
     use HasFactory, HasUserOwnership, HasUuids, LogsActivity;
@@ -61,7 +77,6 @@ class Wallet extends Model
     protected function casts(): array
     {
         return [
-            // Use string to avoid float precision issues in JavaScript
             'balance' => 'string',
             'is_active' => 'boolean',
         ];
@@ -69,6 +84,8 @@ class Wallet extends Model
 
     /**
      * Get the user that owns the wallet.
+     *
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -77,6 +94,8 @@ class Wallet extends Model
 
     /**
      * Get the transactions for this wallet.
+     *
+     * @return HasMany
      */
     public function transactions(): HasMany
     {
@@ -85,6 +104,9 @@ class Wallet extends Model
 
     /**
      * Scope a query to only include active wallets.
+     *
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -115,7 +137,6 @@ class Wallet extends Model
         $userId = $userId ?? Auth::id();
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        // Get all active wallets for the user
         $wallets = static::where('user_id', $userId)->active()->get();
 
         $converter = app(\Modules\Treasury\Services\Exchange\CurrencyConverter::class);
@@ -138,10 +159,11 @@ class Wallet extends Model
 
     /**
      * Get the formatted balance attribute.
+     *
+     * @return string
      */
     public function getFormattedBalanceAttribute(): string
     {
-        // Use wallet's own currency for formatting
         $currency = $this->currency ?? settings('treasury_reference_currency', 'IDR');
 
         return app(\Modules\Treasury\Services\Support\CurrencyFormatter::class)
@@ -150,6 +172,8 @@ class Wallet extends Model
 
     /**
      * Get the balance converted to user's reference currency.
+     *
+     * @return float
      */
     public function getConvertedBalanceAttribute(): float
     {
@@ -167,6 +191,8 @@ class Wallet extends Model
 
     /**
      * Get the formatted balance in user's reference currency.
+     *
+     * @return string
      */
     public function getFormattedConvertedBalanceAttribute(): string
     {
@@ -188,6 +214,8 @@ class Wallet extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return WalletFactory
      */
     protected static function newFactory(): WalletFactory
     {

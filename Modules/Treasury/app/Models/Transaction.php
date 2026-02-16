@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Transaction Model
+ *
+ * Represents a financial transaction (income, expense, or transfer) within
+ * the Treasury module. Handles wallet balance updates atomically, supports
+ * cross-currency transfers with exchange rates, and provides database-agnostic
+ * date scoping for reports.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -14,6 +26,11 @@ use Modules\Core\Traits\HasUserOwnership;
 use Modules\Media\Models\MediaFile;
 use Modules\Treasury\Database\Factories\TransactionFactory;
 
+/**
+ * Class Transaction
+ *
+ * Financial transaction model with wallet balance management and reporting scopes.
+ */
 class Transaction extends Model
 {
     use HasFactory, HasUserOwnership, HasUuids, LogsActivity;
@@ -71,10 +88,8 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            // Use string to avoid float precision issues in JavaScript
             'amount' => 'string',
             'fee' => 'string',
-            // Use decimal:10 to preserve exchange rate precision
             'exchange_rate' => 'decimal:10',
             'date' => 'datetime',
         ];
@@ -82,13 +97,17 @@ class Transaction extends Model
 
     /**
      * Calculate the balance change for a given amount and type.
+     *
+     * @param  float  $amount  Transaction amount
+     * @param  string  $type  Transaction type (income, expense, transfer)
+     * @return float
      */
     public static function calculateBalanceChange(float $amount, string $type): float
     {
         return match ($type) {
             'income' => $amount,
             'expense' => -$amount,
-            'transfer' => -$amount, // Transfer out is negative for source wallet
+            'transfer' => -$amount,
             default => 0,
         };
     }
@@ -104,16 +123,13 @@ class Transaction extends Model
      */
     public function updateWalletBalance(): void
     {
-        // Handle source wallet using atomic increment/decrement
         if ($this->wallet_id) {
             $amount = (float) $this->amount;
             $fee = (float) ($this->fee ?? 0);
-
-            // Calculate total balance change including fee
             $totalChange = match ($this->type) {
-                'income' => $amount - $fee,      // Net income after fee deduction
-                'expense' => -($amount + $fee),  // Total expense including fee
-                'transfer' => -($amount + $fee), // Total deducted including fee
+                'income' => $amount - $fee,
+                'expense' => -($amount + $fee),
+                'transfer' => -($amount + $fee),
                 default => 0,
             };
 
@@ -124,13 +140,9 @@ class Transaction extends Model
             }
         }
 
-        // Handle destination wallet for transfers using atomic increment
-        // Destination receives the full amount (no fee applied to recipient)
-        // For cross-currency transfers, use the exchange rate to convert amount
         if ($this->type === 'transfer' && $this->destination_wallet_id) {
             $destinationAmount = (float) $this->amount;
 
-            // If exchange rate is set, this is a cross-currency transfer
             if ($this->exchange_rate && $this->exchange_rate != 1.0) {
                 $destinationAmount = (float) $this->amount * $this->exchange_rate;
             }
@@ -147,20 +159,15 @@ class Transaction extends Model
      */
     public function revertWalletBalance(): void
     {
-        // Revert source wallet using atomic increment/decrement
         if ($this->wallet_id) {
             $amount = (float) $this->amount;
             $fee = (float) ($this->fee ?? 0);
-
-            // Calculate original balance change to revert (inverse of updateWalletBalance)
             $originalChange = match ($this->type) {
-                'income' => $amount - $fee,      // Was credited, now deduct
-                'expense' => -($amount + $fee),  // Was deducted, now add back
-                'transfer' => -($amount + $fee), // Was deducted, now add back
+                'income' => $amount - $fee,
+                'expense' => -($amount + $fee),
+                'transfer' => -($amount + $fee),
                 default => 0,
             };
-
-            // Revert by applying inverse operation
             if ($originalChange >= 0) {
                 Wallet::where('id', $this->wallet_id)->decrement('balance', $originalChange);
             } else {
@@ -171,7 +178,6 @@ class Transaction extends Model
         if ($this->type === 'transfer' && $this->destination_wallet_id) {
             $destinationAmount = (float) $this->amount;
 
-            // If exchange rate is set, this is a cross-currency transfer
             if ($this->exchange_rate && $this->exchange_rate != 1.0) {
                 $destinationAmount = (float) $this->amount * $this->exchange_rate;
             }
@@ -182,6 +188,8 @@ class Transaction extends Model
 
     /**
      * Get the user that owns the transaction.
+     *
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -190,6 +198,8 @@ class Transaction extends Model
 
     /**
      * Get the wallet for this transaction (source wallet).
+     *
+     * @return BelongsTo
      */
     public function wallet(): BelongsTo
     {
@@ -198,6 +208,8 @@ class Transaction extends Model
 
     /**
      * Get the destination wallet for transfers.
+     *
+     * @return BelongsTo
      */
     public function destinationWallet(): BelongsTo
     {
@@ -206,6 +218,8 @@ class Transaction extends Model
 
     /**
      * Get the category for this transaction.
+     *
+     * @return BelongsTo
      */
     public function category(): BelongsTo
     {
@@ -214,6 +228,8 @@ class Transaction extends Model
 
     /**
      * Get the goal this transaction is allocated to.
+     *
+     * @return BelongsTo
      */
     public function goal(): BelongsTo
     {
@@ -222,6 +238,8 @@ class Transaction extends Model
 
     /**
      * Get the attachments for this transaction.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function attachments(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
@@ -230,6 +248,10 @@ class Transaction extends Model
 
     /**
      * Scope a query to filter by transaction type.
+     *
+     * @param  Builder  $query
+     * @param  string  $type  Transaction type
+     * @return Builder
      */
     public function scopeOfType(Builder $query, string $type): Builder
     {
@@ -238,6 +260,11 @@ class Transaction extends Model
 
     /**
      * Scope a query to filter by date range.
+     *
+     * @param  Builder  $query
+     * @param  mixed  $startDate  Start date
+     * @param  mixed  $endDate  End date
+     * @return Builder
      */
     public function scopeInDateRange(Builder $query, $startDate, $endDate): Builder
     {
@@ -246,6 +273,11 @@ class Transaction extends Model
 
     /**
      * Scope a query to filter by month and year.
+     *
+     * @param  Builder  $query
+     * @param  int  $month  Month number (1-12)
+     * @param  int  $year  Four-digit year
+     * @return Builder
      */
     public function scopeInMonth(Builder $query, int $month, int $year): Builder
     {
@@ -349,6 +381,8 @@ class Transaction extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return TransactionFactory
      */
     protected static function newFactory(): TransactionFactory
     {

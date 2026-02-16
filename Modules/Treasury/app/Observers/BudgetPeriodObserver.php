@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Budget Period Observer
+ *
+ * Observes BudgetPeriod model lifecycle events to flush Treasury caches
+ * and dispatch signal events when budget period amounts are changed or created.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Observers;
 
 use App\Services\Cache\CacheService;
@@ -7,6 +17,11 @@ use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Log;
 use Modules\Treasury\Models\BudgetPeriod;
 
+/**
+ * Class BudgetPeriodObserver
+ *
+ * Handles cache invalidation and signal dispatch for budget period changes.
+ */
 class BudgetPeriodObserver
 {
     public function __construct(
@@ -16,6 +31,9 @@ class BudgetPeriodObserver
 
     /**
      * Handle the BudgetPeriod "created" event.
+     *
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return void
      */
     public function created(BudgetPeriod $budgetPeriod): void
     {
@@ -25,10 +43,12 @@ class BudgetPeriodObserver
 
     /**
      * Handle the BudgetPeriod "updated" event.
+     *
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return void
      */
     public function updated(BudgetPeriod $budgetPeriod): void
     {
-        // Only dispatch if amount changed (budget limit adjustment)
         if ($budgetPeriod->isDirty('amount')) {
             $this->dispatchSignal('budgetperiod.updated', $budgetPeriod);
         }
@@ -37,6 +57,9 @@ class BudgetPeriodObserver
 
     /**
      * Handle the BudgetPeriod "deleted" event.
+     *
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return void
      */
     public function deleted(BudgetPeriod $budgetPeriod): void
     {
@@ -45,11 +68,14 @@ class BudgetPeriodObserver
 
     /**
      * Dispatch signal to registered handlers.
+     *
+     * @param  string  $event
+     * @param  BudgetPeriod  $budgetPeriod
+     * @return void
      */
     private function dispatchSignal(string $event, BudgetPeriod $budgetPeriod): void
     {
         try {
-            // Load the budget relationship to get user
             $budgetPeriod->loadMissing('budget.user');
             $user = $budgetPeriod->budget?->user;
 
@@ -57,7 +83,6 @@ class BudgetPeriodObserver
                 return;
             }
 
-            // Pass data as array with user explicitly for SignalHandlerRegistry
             $this->signalHandlerRegistry->dispatch($event, [
                 'budgetPeriod' => $budgetPeriod,
                 'user' => $user,
