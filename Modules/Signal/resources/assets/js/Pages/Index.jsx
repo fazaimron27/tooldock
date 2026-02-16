@@ -28,8 +28,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Com
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 import SignalItem from '../Components/SignalItem';
 
 export default function Index({ notifications, filter, counts }) {
@@ -161,7 +159,7 @@ export default function Index({ notifications, filter, counts }) {
   ).length;
 
   return (
-    <DashboardLayout>
+    <>
       <Head title="Notifications" />
 
       <div className="space-y-6">
@@ -374,6 +372,6 @@ export default function Index({ notifications, filter, counts }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 }

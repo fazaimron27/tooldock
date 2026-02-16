@@ -7,6 +7,12 @@
  * This event is dispatched when a notification is sent to a user and
  * enables instant updates in the frontend via Laravel Echo/Reverb.
  *
+ * Supports four delivery modes:
+ * - silent: Standard notification (update badge + dropdown, no toast)
+ * - flash: Toast-only notification (no inbox storage)
+ * - trigger: Triggers frontend action (with optional toast)
+ * - broadcast: Full broadcast (inbox + toast + action)
+ *
  * @author     Tool Dock Team
  * @license    MIT
  */
@@ -19,6 +25,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Modules\Core\Models\User;
+use Modules\Signal\Services\SignalService;
 
 /**
  * Class NotificationReceived
@@ -33,6 +40,9 @@ use Modules\Core\Models\User;
  * @property string $type Notification type (info, success, warning, error)
  * @property string|null $url Optional action URL for the notification
  * @property string|null $moduleSource Optional source module identifier
+ * @property string $delivery Delivery mode (silent, flash, trigger, broadcast)
+ * @property string|null $action Optional frontend action to trigger
+ * @property int|null $unreadCount Current unread notification count for the user
  *
  * @see \Modules\Signal\Services\SignalService::broadcastNotification()
  */
@@ -52,6 +62,9 @@ class NotificationReceived implements ShouldBroadcastNow
      * @param  string  $type  Notification severity type (info, success, warning, error)
      * @param  string|null  $url  Optional URL for notification action/redirect
      * @param  string|null  $moduleSource  Optional identifier of the originating module
+     * @param  string  $delivery  Delivery mode (silent, flash, trigger, broadcast)
+     * @param  string|null  $action  Optional frontend action to trigger
+     * @param  int|null  $unreadCount  Current unread notification count for the user
      * @return void
      */
     public function __construct(
@@ -61,7 +74,10 @@ class NotificationReceived implements ShouldBroadcastNow
         public string $message,
         public string $type,
         public ?string $url = null,
-        public ?string $moduleSource = null
+        public ?string $moduleSource = null,
+        public string $delivery = SignalService::DELIVERY_SILENT,
+        public ?string $action = null,
+        public ?int $unreadCount = null
     ) {}
 
     /**
@@ -98,6 +114,9 @@ class NotificationReceived implements ShouldBroadcastNow
             'url' => $this->url,
             'module_source' => $this->moduleSource,
             'created_at' => now()->toIso8601String(),
+            'delivery' => $this->delivery,
+            'action' => $this->action,
+            'unread_count' => $this->unreadCount,
         ];
     }
 
