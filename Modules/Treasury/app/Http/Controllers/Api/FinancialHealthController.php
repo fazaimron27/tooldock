@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Financial Health API Controller
+ *
+ * Provides REST API endpoints for financial health recommendations and data
+ * status. Returns goal recommendations based on transaction history and
+ * checks whether users have sufficient data for meaningful analysis.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -9,10 +20,17 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Treasury\Services\FinancialHealthService;
 
 /**
- * API controller for financial health recommendations.
+ * Class FinancialHealthController
+ *
+ * Provides API endpoints for financial health recommendations and data status.
  */
 class FinancialHealthController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @param  FinancialHealthService  $financialHealthService  The financial health service
+     */
     public function __construct(
         private readonly FinancialHealthService $financialHealthService
     ) {}
@@ -22,6 +40,9 @@ class FinancialHealthController extends Controller
      *
      * Returns financial guidance and suggested target amounts for
      * Emergency & Security goal categories based on user's transaction history.
+     *
+     * @param  Request  $request  The incoming request
+     * @return JsonResponse
      */
     public function getGoalRecommendation(Request $request): JsonResponse
     {
@@ -55,6 +76,9 @@ class FinancialHealthController extends Controller
      * Get user's financial data status.
      *
      * Returns whether the user has enough transaction data for recommendations.
+     *
+     * @param  Request  $request  The incoming request
+     * @return JsonResponse
      */
     public function getDataStatus(Request $request): JsonResponse
     {

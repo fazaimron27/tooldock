@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Treasury Report Controller
+ *
+ * Generates financial reports including transaction ledgers, budget vs actual
+ * comparisons, category breakdowns, per-wallet summaries, savings goal
+ * progress with projections, and period-based financial summaries. Supports
+ * CSV export of transaction data.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -15,10 +27,18 @@ use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Class TreasuryReportController
+ *
+ * Provides multi-type financial reporting with filtering, aggregation, and export.
+ */
 class TreasuryReportController extends Controller
 {
     /**
      * Display the reports page with all report types.
+     *
+     * @param  Request  $request  The incoming request with report type and filters
+     * @return Response
      */
     public function index(Request $request): Response
     {
@@ -26,11 +46,9 @@ class TreasuryReportController extends Controller
 
         $reportType = $request->input('report_type', 'transaction');
 
-        // Default date range: current month
         $startDate = $request->input('start_date') ?? now()->startOfMonth()->toDateString();
         $endDate = $request->input('end_date') ?? now()->endOfMonth()->toDateString();
 
-        // Common data for all reports
         $wallets = Wallet::forUser()->active()->get(['id', 'name', 'currency', 'balance']);
         $categories = Category::where('type', 'transaction_category')->orderBy('name')->get(['id', 'name', 'color', 'parent_id']);
 
@@ -50,7 +68,6 @@ class TreasuryReportController extends Controller
             'referenceCurrency' => settings('treasury_reference_currency', 'IDR'),
         ];
 
-        // Get report-specific data
         $reportData = match ($reportType) {
             'transaction' => $this->getTransactionReportData($request, $startDate, $endDate),
             'budget' => $this->getBudgetReportData($request, $startDate, $endDate),
@@ -65,7 +82,12 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Transaction Report - Transaction ledger with export
+     * Transaction Report - Transaction ledger with export.
+     *
+     * @param  Request  $request  The incoming request with optional wallet/type/category filters
+     * @param  string  $startDate  The start date of the report period
+     * @param  string  $endDate  The end date of the report period
+     * @return array<string, mixed>
      */
     private function getTransactionReportData(Request $request, string $startDate, string $endDate): array
     {
@@ -107,7 +129,12 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Budget Report - Budget vs actual spending comparison
+     * Budget Report - Budget vs actual spending comparison.
+     *
+     * @param  Request  $request  The incoming request
+     * @param  string  $startDate  The start date of the report period
+     * @param  string  $endDate  The end date of the report period
+     * @return array<string, mixed>
      */
     private function getBudgetReportData(Request $request, string $startDate, string $endDate): array
     {
@@ -120,8 +147,6 @@ class TreasuryReportController extends Controller
             ->active()
             ->get();
 
-        // Get actual spending per category for the period
-        // Include expenses and goal allocation transfers (transfers with goal_id) for accurate budget tracking
         $spending = Transaction::forUser()
             ->where(function ($q) {
                 $q->where('type', 'expense')
@@ -168,11 +193,15 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Category Report - Income/expense breakdown by category
+     * Category Report - Income/expense breakdown by category.
+     *
+     * @param  Request  $request  The incoming request
+     * @param  string  $startDate  The start date of the report period
+     * @param  string  $endDate  The end date of the report period
+     * @return array<string, mixed>
      */
     private function getCategoryReportData(Request $request, string $startDate, string $endDate): array
     {
-        // Include expenses and goal allocation transfers for comprehensive category reporting
         $transactions = Transaction::forUser()
             ->with('category')
             ->where(function ($q) {
@@ -184,12 +213,10 @@ class TreasuryReportController extends Controller
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
 
-        // Group by category and type
         $categoryBreakdown = $transactions->groupBy('category_id')->map(function ($txs, $categoryId) {
             $category = $txs->first()->category;
             $income = $txs->where('type', 'income')->sum('amount');
             $expense = $txs->where('type', 'expense')->sum('amount');
-            // Goal transfers are tracked separately as savings
             $savings = $txs->where('type', 'transfer')->whereNotNull('goal_id')->sum('amount');
 
             return [
@@ -217,7 +244,12 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Wallet Report - Per-wallet transaction history and balance changes
+     * Wallet Report - Per-wallet transaction history and balance changes.
+     *
+     * @param  Request  $request  The incoming request
+     * @param  string  $startDate  The start date of the report period
+     * @param  string  $endDate  The end date of the report period
+     * @return array<string, mixed>
      */
     private function getWalletReportData(Request $request, string $startDate, string $endDate): array
     {
@@ -231,12 +263,9 @@ class TreasuryReportController extends Controller
             $income = $periodTransactions->where('type', 'income')->sum('amount');
             $expense = $periodTransactions->where('type', 'expense')->sum('amount');
 
-            // Goal allocation transfers (savings)
             $savings = $periodTransactions->where('type', 'transfer')
                 ->whereNotNull('goal_id')
                 ->sum('amount');
-
-            // Regular transfers (non-goal) out
             $transfersOut = $periodTransactions->where('type', 'transfer')
                 ->whereNull('goal_id')
                 ->sum('amount');
@@ -276,7 +305,10 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Goal Report - Savings goal progress and projections
+     * Goal Report - Savings goal progress and projections.
+     *
+     * @param  Request  $request  The incoming request
+     * @return array<string, mixed>
      */
     private function getGoalReportData(Request $request): array
     {
@@ -291,7 +323,6 @@ class TreasuryReportController extends Controller
             $remaining = max(0, $targetAmount - $savedAmount);
             $percentage = $goal->progress_percentage;
 
-            // Calculate projection based on recent saving rate
             $recentTransactions = $goal->transactions()
                 ->where('date', '>=', now()->subMonths(3))
                 ->get();
@@ -339,13 +370,17 @@ class TreasuryReportController extends Controller
     }
 
     /**
-     * Summary Report - Period-based financial summaries (monthly/yearly)
+     * Summary Report - Period-based financial summaries (monthly/yearly).
+     *
+     * @param  Request  $request  The incoming request with optional group_by filter
+     * @param  string  $startDate  The start date of the report period
+     * @param  string  $endDate  The end date of the report period
+     * @return array<string, mixed>
      */
     private function getSummaryReportData(Request $request, string $startDate, string $endDate): array
     {
-        $groupBy = $request->input('group_by', 'month'); // month or year
+        $groupBy = $request->input('group_by', 'month');
 
-        // Include expenses and goal allocation transfers for comprehensive summary
         $transactions = Transaction::forUser()
             ->where(function ($q) {
                 $q->whereIn('type', ['income', 'expense'])
@@ -356,7 +391,6 @@ class TreasuryReportController extends Controller
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
 
-        // Group by period
         $grouped = $transactions->groupBy(function ($tx) use ($groupBy) {
             return $groupBy === 'year'
                 ? $tx->date->format('Y')
@@ -366,7 +400,6 @@ class TreasuryReportController extends Controller
         $summaryData = $grouped->map(function ($txs, $period) {
             $income = $txs->where('type', 'income')->sum('amount');
             $expense = $txs->where('type', 'expense')->sum('amount');
-            // Goal transfers are tracked separately as savings
             $savings = $txs->where('type', 'transfer')->whereNotNull('goal_id')->sum('amount');
             $net = $income - $expense;
 
@@ -376,7 +409,6 @@ class TreasuryReportController extends Controller
                 'expense' => $expense,
                 'savings' => $savings,
                 'net' => $net,
-                // Savings rate = savings / income (how much of income is saved)
                 'savings_rate' => $income > 0 ? round(($savings / $income) * 100, 1) : 0,
                 'transaction_count' => $txs->count(),
             ];
@@ -399,6 +431,11 @@ class TreasuryReportController extends Controller
 
     /**
      * Export transactions to CSV.
+     *
+     * Streams a CSV download of filtered transactions for the given date range.
+     *
+     * @param  Request  $request  The incoming request with date range and optional filters
+     * @return StreamedResponse
      */
     public function export(Request $request): StreamedResponse
     {

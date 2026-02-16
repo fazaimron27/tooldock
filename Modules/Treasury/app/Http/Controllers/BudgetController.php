@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Budget Controller
+ *
+ * Handles CRUD operations for budget templates and monthly budget periods.
+ * Includes period-based budget viewing, deactivation/reactivation workflows,
+ * and category-level spending tracking with rollover support.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -18,6 +29,11 @@ use Modules\Treasury\Models\BudgetPeriod;
 use Modules\Treasury\Services\Budget\BudgetPeriodService;
 use Modules\Treasury\Services\Budget\BudgetReportingService;
 
+/**
+ * Class BudgetController
+ *
+ * Handles CRUD operations and period management for budget templates.
+ */
 class BudgetController extends Controller
 {
     private const CACHE_TTL_HOURS = 24;
@@ -32,6 +48,9 @@ class BudgetController extends Controller
 
     /**
      * Display a listing of budgets for a specific month.
+     *
+     * @param  Request  $request  The incoming request
+     * @return Response
      */
     public function index(Request $request): Response
     {
@@ -39,26 +58,20 @@ class BudgetController extends Controller
 
         $user = Auth::user();
 
-        // Get month/year from request or default to current
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        // Validate month/year
         $month = max(1, min(12, (int) $month));
         $year = max(2020, min(2100, (int) $year));
 
         $currentDate = Carbon::create($year, $month, 1);
 
-        // Get budget templates
         $budgets = Budget::forUser()
             ->with('category')
             ->get();
-
-        // Get monthly report and summary
         $report = $this->reportingService->getMonthlyReport($user, $month, $year);
         $summary = $this->reportingService->getMonthlySummary($user, $month, $year);
 
-        // Get available periods for navigation
         $availablePeriods = $this->periodService->getAvailablePeriods($user);
 
         return Inertia::render('Modules::Treasury/Budgets/Index', [
@@ -88,15 +101,14 @@ class BudgetController extends Controller
 
     /**
      * Show the form for creating a new budget template.
+     *
+     * @return Response
      */
     public function create(): Response
     {
         $this->authorize('create', Budget::class);
-
-        // Get all transaction categories
         $categories = $this->getCategories();
 
-        // Get category IDs that already have budgets (one budget per category)
         $usedCategoryIds = Budget::forUser()
             ->pluck('category_id')
             ->toArray();
@@ -109,12 +121,14 @@ class BudgetController extends Controller
 
     /**
      * Store a newly created budget template.
+     *
+     * @param  StoreBudgetRequest  $request  The validated request
+     * @return RedirectResponse
      */
     public function store(StoreBudgetRequest $request): RedirectResponse
     {
         $user = $request->user();
 
-        // Default currency to user's reference currency if not provided
         $currency = $request->validated('currency')
             ?? settings('treasury_reference_currency', 'IDR');
 
@@ -135,6 +149,10 @@ class BudgetController extends Controller
 
     /**
      * Show the form for editing the specified budget template.
+     *
+     * @param  Request  $request  The incoming request
+     * @param  Budget  $budget  The budget to edit
+     * @return Response
      */
     public function edit(Request $request, Budget $budget): Response
     {
@@ -174,6 +192,10 @@ class BudgetController extends Controller
 
     /**
      * Update the specified budget template.
+     *
+     * @param  UpdateBudgetRequest  $request  The validated request
+     * @param  Budget  $budget  The budget to update
+     * @return RedirectResponse
      */
     public function update(UpdateBudgetRequest $request, Budget $budget): RedirectResponse
     {
@@ -213,6 +235,9 @@ class BudgetController extends Controller
 
     /**
      * Remove the specified budget template.
+     *
+     * @param  Budget  $budget  The budget to delete
+     * @return RedirectResponse
      */
     public function destroy(Budget $budget): RedirectResponse
     {
@@ -226,6 +251,9 @@ class BudgetController extends Controller
 
     /**
      * Deactivate a budget template.
+     *
+     * @param  Budget  $budget  The budget to deactivate
+     * @return RedirectResponse
      */
     public function deactivate(Budget $budget): RedirectResponse
     {
@@ -239,6 +267,9 @@ class BudgetController extends Controller
 
     /**
      * Reactivate a budget template.
+     *
+     * @param  Budget  $budget  The budget to reactivate
+     * @return RedirectResponse
      */
     public function reactivate(Budget $budget): RedirectResponse
     {
@@ -252,6 +283,8 @@ class BudgetController extends Controller
 
     /**
      * Get cached transaction categories.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getCategories()
     {

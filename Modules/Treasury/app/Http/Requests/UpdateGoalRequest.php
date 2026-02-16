@@ -1,15 +1,33 @@
 <?php
 
+/**
+ * Update Goal Request
+ *
+ * Validates requests to update an existing savings goal. Ensures the linked
+ * savings wallet remains active and user-owned, enforces wallet uniqueness
+ * across active goals (ignoring the current goal), and normalizes nullable fields.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * Class UpdateGoalRequest
+ *
+ * Handles validation for goal updates with wallet uniqueness enforcement.
+ */
 class UpdateGoalRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -18,6 +36,8 @@ class UpdateGoalRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -46,7 +66,6 @@ class UpdateGoalRequest extends FormRequest
                         ->where('type', 'savings')
                         ->where('is_active', true);
                 }),
-                // Ensure wallet is not already linked to another active goal (ignore current)
                 Rule::unique('treasury_goals', 'wallet_id')
                     ->where(fn ($query) => $query->where('is_completed', false))
                     ->ignore($goalId),
@@ -65,6 +84,8 @@ class UpdateGoalRequest extends FormRequest
 
     /**
      * Get custom validation messages.
+     *
+     * @return array<string, string>
      */
     public function messages(): array
     {

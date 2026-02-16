@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Update Transaction Request
+ *
+ * Validates requests to update an existing financial transaction. Supports
+ * partial updates with 'sometimes' rules, enforces wallet ownership,
+ * prevents expenses from savings wallets, and handles attachment management.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -7,10 +18,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Modules\Treasury\Models\Wallet;
 
+/**
+ * Class UpdateTransactionRequest
+ *
+ * Handles validation for transaction updates with partial field support.
+ */
 class UpdateTransactionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,6 +37,8 @@ class UpdateTransactionRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -45,7 +65,6 @@ class UpdateTransactionRequest extends FormRequest
                 Rule::exists('wallets', 'id')->where(function ($query) {
                     return $query->where('user_id', Auth::id());
                 }),
-                // Block expenses from savings-type wallets
                 function ($attribute, $value, $fail) {
                     if ($this->input('type') === 'expense') {
                         $wallet = Wallet::find($value);
@@ -75,8 +94,8 @@ class UpdateTransactionRequest extends FormRequest
             'fee' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string', 'max:255'],
             'date' => ['sometimes', 'required', 'date'],
-            'exchange_rate' => ['nullable', 'numeric', 'min:0.0000000001'],  // For cross-currency transfers
-            'original_currency' => ['nullable', 'string', 'max:3'],  // Source wallet currency for audit
+            'exchange_rate' => ['nullable', 'numeric', 'min:0.0000000001'],
+            'original_currency' => ['nullable', 'string', 'max:3'],
             'attachment_ids' => ['nullable', 'array'],
             'attachment_ids.*' => ['uuid', 'exists:media_files,id'],
             'remove_attachment_ids' => ['nullable', 'array'],

@@ -1,14 +1,32 @@
 <?php
 
+/**
+ * Update Wallet Request
+ *
+ * Validates requests to update an existing wallet. Supports partial updates
+ * with 'sometimes' rules for name, type, and currency fields. Validates
+ * wallet type against category slugs and enforces ISO 4217 currency codes.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Class UpdateWalletRequest
+ *
+ * Handles validation for wallet updates with partial field support.
+ */
 class UpdateWalletRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -17,6 +35,8 @@ class UpdateWalletRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     *
+     * @return void
      */
     protected function prepareForValidation(): void
     {

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Transaction Controller
+ *
+ * Handles CRUD operations for financial transactions including income,
+ * expenses, and transfers with cross-currency conversion. Manages wallet
+ * balance updates, goal allocations, and cached reference data.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -17,6 +28,11 @@ use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\Wallet;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
 
+/**
+ * Class TransactionController
+ *
+ * Handles CRUD operations for financial transactions.
+ */
 class TransactionController extends Controller
 {
     private const CACHE_TTL_HOURS = 24;
@@ -30,6 +46,9 @@ class TransactionController extends Controller
 
     /**
      * Display a listing of transactions.
+     *
+     * @param  Request  $request  The incoming request
+     * @return Response
      */
     public function index(Request $request): Response
     {
@@ -40,9 +59,7 @@ class TransactionController extends Controller
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
-        // Apply filters
         if ($request->filled('wallet_id')) {
-            // Include transactions where this wallet is source OR destination (for incoming transfers)
             $query->where(function ($q) use ($request) {
                 $q->where('wallet_id', $request->wallet_id)
                     ->orWhere('destination_wallet_id', $request->wallet_id);
@@ -63,13 +80,10 @@ class TransactionController extends Controller
 
         $transactions = $query->paginate(25)->withQueryString();
 
-        // When filtering by wallet, transform transactions to include is_incoming_transfer info
         if ($request->filled('wallet_id')) {
             $filteredWalletId = $request->wallet_id;
             $transactions->through(function ($tx) use ($filteredWalletId) {
                 $isIncomingTransfer = $tx->type === 'transfer' && $tx->destination_wallet_id === $filteredWalletId;
-
-                // Calculate converted amount for incoming cross-currency transfers
                 $convertedAmount = null;
                 if ($isIncomingTransfer && $tx->exchange_rate && $tx->exchange_rate != 1) {
                     $convertedAmount = bcmul((string) $tx->amount, (string) $tx->exchange_rate, 2);
@@ -85,7 +99,6 @@ class TransactionController extends Controller
         $wallets = $this->getWallets();
         $categories = $this->getCategories();
 
-        // Get exchange rates for multi-currency summary calculation
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
         $exchangeRates = $this->getExchangeRates();
 
@@ -102,6 +115,8 @@ class TransactionController extends Controller
 
     /**
      * Show the form for creating a new transaction.
+     *
+     * @return Response
      */
     public function create(): Response
     {
@@ -121,18 +136,19 @@ class TransactionController extends Controller
 
     /**
      * Store a newly created transaction.
+     *
+     * @param  StoreTransactionRequest  $request  The validated request
+     * @return RedirectResponse
      */
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
-        // For cross-currency transfers, calculate exchange rate if not provided
         if ($validated['type'] === 'transfer' && ! empty($validated['destination_wallet_id'])) {
             $sourceWallet = Wallet::find($validated['wallet_id']);
             $destWallet = Wallet::find($validated['destination_wallet_id']);
 
             if ($sourceWallet && $destWallet && $sourceWallet->currency !== $destWallet->currency) {
-                // Calculate exchange rate if not already set
                 if (empty($validated['exchange_rate'])) {
                     $rate = $this->currencyConverter->getRate(
                         $sourceWallet->currency,
@@ -140,7 +156,6 @@ class TransactionController extends Controller
                     );
                     $validated['exchange_rate'] = $rate;
                 }
-                // Store original currency for audit trail
                 $validated['original_currency'] = $sourceWallet->currency;
             }
         }
@@ -150,7 +165,6 @@ class TransactionController extends Controller
             ...$validated,
         ]);
 
-        // Attach uploaded files (convert from temporary to permanent)
         if ($request->has('attachment_ids')) {
             $attachmentIds = $request->input('attachment_ids', []);
             if (! empty($attachmentIds)) {
@@ -171,6 +185,9 @@ class TransactionController extends Controller
 
     /**
      * Display the specified transaction.
+     *
+     * @param  Transaction  $transaction  The transaction to show
+     * @return Response
      */
     public function show(Transaction $transaction): Response
     {
@@ -185,6 +202,9 @@ class TransactionController extends Controller
 
     /**
      * Show the form for editing the specified transaction.
+     *
+     * @param  Transaction  $transaction  The transaction to edit
+     * @return Response
      */
     public function edit(Transaction $transaction): Response
     {
@@ -207,12 +227,15 @@ class TransactionController extends Controller
 
     /**
      * Update the specified transaction.
+     *
+     * @param  UpdateTransactionRequest  $request  The validated request
+     * @param  Transaction  $transaction  The transaction to update
+     * @return RedirectResponse
      */
     public function update(UpdateTransactionRequest $request, Transaction $transaction): RedirectResponse
     {
         $validated = $request->validated();
 
-        // For cross-currency transfers, calculate exchange rate if not provided
         $type = $validated['type'] ?? $transaction->type;
         $walletId = $validated['wallet_id'] ?? $transaction->wallet_id;
         $destWalletId = $validated['destination_wallet_id'] ?? $transaction->destination_wallet_id;
@@ -222,7 +245,6 @@ class TransactionController extends Controller
             $destWallet = Wallet::find($destWalletId);
 
             if ($sourceWallet && $destWallet && $sourceWallet->currency !== $destWallet->currency) {
-                // Calculate exchange rate if not already set
                 if (empty($validated['exchange_rate'])) {
                     $rate = $this->currencyConverter->getRate(
                         $sourceWallet->currency,
@@ -230,14 +252,12 @@ class TransactionController extends Controller
                     );
                     $validated['exchange_rate'] = $rate;
                 }
-                // Store original currency for audit trail
                 $validated['original_currency'] = $sourceWallet->currency;
             }
         }
 
         $transaction->update($validated);
 
-        // Attach new uploaded files (convert from temporary to permanent)
         if ($request->has('attachment_ids')) {
             $attachmentIds = $request->input('attachment_ids', []);
             if (! empty($attachmentIds)) {
@@ -251,7 +271,6 @@ class TransactionController extends Controller
             }
         }
 
-        // Remove detached attachments
         if ($request->has('remove_attachment_ids')) {
             $removeIds = $request->input('remove_attachment_ids', []);
             if (! empty($removeIds)) {
@@ -268,6 +287,9 @@ class TransactionController extends Controller
 
     /**
      * Remove the specified transaction.
+     *
+     * @param  Transaction  $transaction  The transaction to delete
+     * @return RedirectResponse
      */
     public function destroy(Transaction $transaction): RedirectResponse
     {
@@ -282,6 +304,8 @@ class TransactionController extends Controller
 
     /**
      * Get cached wallets for the authenticated user.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getWallets()
     {
@@ -296,6 +320,8 @@ class TransactionController extends Controller
 
     /**
      * Get cached transaction categories.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     private function getCategories()
     {
@@ -312,6 +338,8 @@ class TransactionController extends Controller
      * Get cached exchange rates for cross-currency calculations.
      *
      * Exchange rates are cached for 1 hour since they're typically updated daily.
+     *
+     * @return array<string, float>
      */
     private function getExchangeRates()
     {
