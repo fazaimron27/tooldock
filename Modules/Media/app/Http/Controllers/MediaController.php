@@ -4,6 +4,7 @@ namespace Modules\Media\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Media\MediaUploader;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -11,27 +12,50 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Media\Http\Requests\UploadMediaRequest;
 use Modules\Media\Models\MediaFile;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 class MediaController extends Controller
 {
-    use SendsSignalNotifications;
-
     public function __construct(
-        private MediaUploader $uploader
+        private MediaUploader $uploader,
+        private readonly SignalHandlerRegistry $signalRegistry
     ) {}
 
     /**
      * Display a listing of media files.
+     *
+     * Filters by parent model ownership:
+     * - Super Admins see all files
+     * - Regular users only see files attached to their own models
      */
     public function index(): Response
     {
         $this->authorize('viewAny', MediaFile::class);
 
-        $mediaFiles = MediaFile::permanent()
-            ->with('model')
-            ->latest()
-            ->paginate(20);
+        $user = request()->user();
+        $query = MediaFile::permanent()->with('model')->latest();
+
+        // Super Admin sees all, others see only their owned files
+        if (! $user->hasRole(\Modules\Core\Constants\Roles::SUPER_ADMIN)) {
+            $userId = $user->id;
+            $userClass = \Modules\Core\Models\User::class;
+
+            $query->where(function ($q) use ($userId, $userClass) {
+                // Files attached directly to the user (e.g., avatar)
+                $q->where(function ($sub) use ($userId, $userClass) {
+                    $sub->where('model_type', $userClass)
+                        ->where('model_id', $userId);
+                });
+
+                // Files attached to models owned by the user
+                // We need to check each model type that has user_id
+                $q->orWhereHas('model', function ($modelQuery) use ($userId) {
+                    // This works for models that have user_id column
+                    $modelQuery->where('user_id', $userId);
+                });
+            });
+        }
+
+        $mediaFiles = $query->paginate(20);
 
         return Inertia::render('Modules::Media/Index', [
             'mediaFiles' => $mediaFiles,
@@ -78,13 +102,11 @@ class MediaController extends Controller
             ]);
 
             if ($user) {
-                $this->signalWarning(
-                    $user,
-                    'File Upload Failed',
-                    "Failed to upload \"{$filename}\". Error: {$e->getMessage()}. Please check file size limits and try again.",
-                    route('media.index'),
-                    'Media'
-                );
+                $this->signalRegistry->dispatch('media.upload.failed', [
+                    'user' => $user,
+                    'filename' => $filename,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             return response()->json([
@@ -173,13 +195,11 @@ class MediaController extends Controller
             ]);
 
             if ($user) {
-                $this->signalWarning(
-                    $user,
-                    'File Upload Failed',
-                    "Failed to upload \"{$filename}\". Error: {$e->getMessage()}. Please check file size limits and try again.",
-                    route('media.index'),
-                    'Media'
-                );
+                $this->signalRegistry->dispatch('media.upload.failed', [
+                    'user' => $user,
+                    'filename' => $filename,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             return response()->json([

@@ -16,6 +16,12 @@ class MediaDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'Media Library',
+            'Centralized media library for managing all file attachments and assets.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',

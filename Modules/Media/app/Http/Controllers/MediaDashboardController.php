@@ -18,9 +18,11 @@ class MediaDashboardController extends Controller
         Gate::authorize('media.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Media', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Media/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }

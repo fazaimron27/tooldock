@@ -3,11 +3,13 @@
 namespace Modules\Media\Providers;
 
 use App\Services\Media\MediaConfigService;
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -16,10 +18,12 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Media\Console\CleanupTemporaryMedia;
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Observers\MediaFileObserver;
+use Modules\Media\Services\MediaCommandRegistrar;
 use Modules\Media\Services\MediaDashboardService;
 use Modules\Media\Services\MediaMenuRegistrar;
 use Modules\Media\Services\MediaPermissionRegistrar;
 use Modules\Media\Services\MediaSettingsRegistrar;
+use Modules\Media\Services\MediaSignalRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -36,16 +40,20 @@ class MediaServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
+        CommandRegistry $commandRegistry,
         DashboardWidgetRegistry $widgetRegistry,
         InertiaSharedDataRegistry $sharedDataRegistry,
         MediaConfigService $mediaConfigService,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
+        MediaCommandRegistrar $commandRegistrar,
         MediaDashboardService $dashboardService,
         MediaMenuRegistrar $menuRegistrar,
         MediaPermissionRegistrar $permissionRegistrar,
-        MediaSettingsRegistrar $settingsRegistrar
+        MediaSettingsRegistrar $settingsRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        MediaSignalRegistrar $signalRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -54,12 +62,14 @@ class MediaServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $this->registerRateLimiter();
         $this->bootObservers();
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $signalRegistrar->register($signalRegistry);
 
         $sharedDataRegistry->register($this->name, function ($request) use ($mediaConfigService) {
             $fileSizeInfo = $mediaConfigService->getFileSizeInfo();
