@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Confirmable Password Controller.
+ *
+ * Handles password confirmation for sensitive actions,
+ * displaying the confirmation form and validating the password.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -14,6 +24,8 @@ class ConfirmablePasswordController extends Controller
 {
     /**
      * Show the confirm password view.
+     *
+     * @return Response Inertia confirm password page response
      */
     public function show(): Response
     {
@@ -22,6 +34,11 @@ class ConfirmablePasswordController extends Controller
 
     /**
      * Confirm the user's password.
+     *
+     * @param  Request  $request  The HTTP request containing the password
+     * @return RedirectResponse Redirect to intended destination
+     *
+     * @throws ValidationException If password validation fails
      */
     public function store(Request $request): RedirectResponse
     {

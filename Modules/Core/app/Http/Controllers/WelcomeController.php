@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Welcome Controller.
+ *
+ * Renders the public landing page or redirects
+ * guest-only users to the guest welcome page.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -19,17 +29,17 @@ class WelcomeController extends Controller
      *
      * Shows the landing page for unauthenticated users.
      * Redirects authenticated guest users to the guest welcome page.
+     *
+     * @return Response|RedirectResponse Inertia landing page or redirect
      */
     public function index(): Response|RedirectResponse
     {
         $user = request()->user();
 
-        // If user is authenticated and is a guest-only user, redirect to guest welcome page
         if ($user && $this->isGuestOnly($user)) {
             return redirect()->route('guest.welcome');
         }
 
-        // Show landing page for unauthenticated users or authenticated non-guest users
         return Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),

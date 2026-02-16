@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Module Manager Controller.
+ *
+ * Manages module lifecycle operations including listing,
+ * installing, uninstalling, enabling, and disabling modules.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -24,6 +34,8 @@ class ModuleManagerController extends Controller
 
     /**
      * Display a listing of all modules.
+     *
+     * @return Response Inertia modules index page
      */
     public function index(): Response
     {
@@ -81,6 +93,9 @@ class ModuleManagerController extends Controller
 
     /**
      * Install a module.
+     *
+     * @param  Request  $request  The HTTP request containing the module name
+     * @return RedirectResponse Redirect back with success or error message
      */
     public function install(Request $request): RedirectResponse
     {
@@ -104,6 +119,9 @@ class ModuleManagerController extends Controller
 
     /**
      * Uninstall a module.
+     *
+     * @param  Request  $request  The HTTP request containing the module name
+     * @return RedirectResponse Redirect back with success or error message
      */
     public function uninstall(Request $request): RedirectResponse
     {
@@ -124,6 +142,9 @@ class ModuleManagerController extends Controller
 
     /**
      * Toggle module enable/disable status.
+     *
+     * @param  Request  $request  The HTTP request containing module name and action
+     * @return RedirectResponse Redirect back with success or error message
      */
     public function toggle(Request $request): RedirectResponse
     {

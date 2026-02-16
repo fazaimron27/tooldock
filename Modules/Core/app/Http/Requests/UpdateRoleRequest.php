@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Update Role Request.
+ *
+ * Validates data for updating an existing role including
+ * name uniqueness ignoring the current role.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,6 +21,8 @@ class UpdateRoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Guest Controller.
+ *
+ * Renders the guest welcome page for users with
+ * guest-only permissions and no module access.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -13,6 +23,8 @@ class GuestController extends Controller
      *
      * This page is shown to users who are in the Guest group and have no permissions.
      * It provides information about their account status and next steps.
+     *
+     * @return Response Inertia guest welcome page response
      */
     public function index(): Response
     {

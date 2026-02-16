@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Store Role Request.
+ *
+ * Validates data for creating a new role including
+ * name uniqueness and permission array format.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -10,6 +20,8 @@ class StoreRoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
