@@ -68,10 +68,12 @@ class SignalServiceProvider extends ServiceProvider
      * settings via registry services and sets up Inertia shared data
      * for unread notification counts.
      *
+     * @param  CommandRegistry  $commandRegistry  Registry for module commands
      * @param  InertiaSharedDataRegistry  $sharedDataRegistry  Registry for Inertia shared data
      * @param  PermissionRegistry  $permissionRegistry  Registry for module permissions
      * @param  SettingsRegistry  $settingsRegistry  Registry for module settings
      * @param  \App\Services\Registry\SignalCategoryRegistry  $categoryRegistry  Notification category registry
+     * @param  SignalCommandRegistrar  $commandRegistrar  Command registration service
      * @param  SignalPermissionRegistrar  $permissionRegistrar  Permission registration service
      * @param  SignalSettingsRegistrar  $settingsRegistrar  Settings registration service
      * @param  SignalCacheService  $cacheService  Cache management service

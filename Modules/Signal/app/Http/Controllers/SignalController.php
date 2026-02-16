@@ -123,7 +123,6 @@ class SignalController extends Controller
         $prevId = $currentIndex > 0 ? $allNotificationIds[$currentIndex - 1] : null;
         $nextId = $currentIndex < count($allNotificationIds) - 1 ? $allNotificationIds[$currentIndex + 1] : null;
 
-        // Get related notifications from the same module source
         $moduleSource = $notification->data['module_source'] ?? null;
         $relatedNotifications = [];
         if ($moduleSource) {

@@ -23,11 +23,9 @@ import SignalItem from './SignalItem';
 export default function SignalDropdown({ notifications, onRefresh, error }) {
   const { userPreferences } = usePage().props;
 
-  // Local state for immediate UI feedback, synced with server preferences
   const [soundEnabled, setSoundEnabled] = useState(userPreferences?.notificationSound ?? true);
   const [soundVolume, setSoundVolume] = useState(userPreferences?.notificationVolume ?? 0.5);
 
-  // React Query mutations
   const markAllReadMutation = useMarkAllAsRead({
     onSuccess: () => {
       if (onRefresh) onRefresh();
@@ -52,7 +50,6 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
     const newValue = !soundEnabled;
     setSoundEnabled(newValue);
 
-    // Sync to backend
     router.post(
       route('preferences.update'),
       {
@@ -66,7 +63,6 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
       }
     );
 
-    // Play a preview sound when enabling
     if (newValue) {
       playNotificationSound('info', soundVolume);
     }
@@ -77,12 +73,9 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
     setSoundVolume(newVolume);
   };
 
-  // Play sound and save to backend when slider is released (onValueCommit)
   const handleVolumeCommit = (value) => {
     const newVolume = value[0];
     playNotificationSound('info', newVolume);
-
-    // Sync to backend (convert to percentage 0-100)
     router.post(
       route('preferences.update'),
       {

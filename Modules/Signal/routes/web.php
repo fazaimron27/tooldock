@@ -42,19 +42,14 @@ use Modules\Signal\Http\Controllers\SignalController;
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Notification index page (inbox view)
     Route::get('notifications', [SignalController::class, 'index'])->name('notifications.index');
 
-    // JSON endpoints for notification bell component
     Route::get('notifications/unread-count', [SignalController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::get('notifications/recent', [SignalController::class, 'recent'])->name('notifications.recent');
 
-    // Bulk actions
     Route::post('notifications/read-all', [SignalController::class, 'markAllRead'])->name('notifications.read-all');
     Route::post('notifications/bulk-read', [SignalController::class, 'bulkMarkAsRead'])->name('notifications.bulk-read');
     Route::delete('notifications/bulk-destroy', [SignalController::class, 'bulkDestroy'])->name('notifications.bulk-destroy');
-
-    // Single notification actions
     Route::get('notifications/{notification}', [SignalController::class, 'show'])->name('notifications.show');
     Route::post('notifications/{notification}/read', [SignalController::class, 'markAsRead'])->name('notifications.read');
     Route::delete('notifications/{notification}', [SignalController::class, 'destroy'])->name('notifications.destroy');

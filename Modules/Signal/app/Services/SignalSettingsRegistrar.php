@@ -15,12 +15,21 @@ use App\Services\Registry\SettingsRegistry;
 use Modules\Settings\Enums\SettingType;
 
 /**
+ * Class SignalSettingsRegistrar
+ *
  * Handles settings registration for the Signal module.
+ * Registers notification preference toggles that support per-user scoping.
+ *
+ * @see \App\Services\Registry\SettingsRegistry
  */
 class SignalSettingsRegistrar
 {
     /**
      * Register signal module settings.
+     *
+     * @param  SettingsRegistry  $registry
+     * @param  string  $moduleName
+     * @return void
      */
     public function register(SettingsRegistry $registry, string $moduleName): void
     {

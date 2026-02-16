@@ -258,7 +258,6 @@ class SignalService
         ?string $moduleSource = null,
         ?string $category = null
     ): void {
-        // Check preferences if category provided
         if ($category !== null && $this->preferenceService !== null && $user instanceof User) {
             if (! $this->preferenceService->isEnabled($user, $category)) {
                 return;
@@ -269,7 +268,6 @@ class SignalService
             return;
         }
 
-        // Store to database
         $notification = new SystemNotification($title, $message, $type, $url, $moduleSource);
         $user->notify($notification);
 
@@ -277,10 +275,8 @@ class SignalService
 
         $this->invalidateUserCache($user);
 
-        // Get actual unread count after cache invalidation
         $unreadCount = $this->cacheService?->getUnreadCount($user);
 
-        // Broadcast with action
         $this->broadcastNotification(
             user: $user,
             notificationId: $notificationId,
@@ -335,7 +331,6 @@ class SignalService
         $this->invalidateUserCache($user);
 
         if ($user instanceof User) {
-            // Get actual unread count after cache invalidation
             $unreadCount = $this->cacheService?->getUnreadCount($user);
 
             $this->broadcastNotification(

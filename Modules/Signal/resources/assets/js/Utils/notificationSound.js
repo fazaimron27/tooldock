@@ -65,7 +65,6 @@ export function preloadNotificationSounds() {
     audio.preload = 'auto';
     audio.volume = 0.5;
 
-    // Attempt to load the audio file
     audio.load();
     audioCache.set(url, audio);
   });
@@ -88,7 +87,6 @@ export function preloadNotificationSounds() {
 export function playNotificationSound(type, volume = 0.5) {
   const now = Date.now();
 
-  // Debounce: skip if sound was played too recently
   if (now - lastPlayedAt < DEBOUNCE_MS) {
     return;
   }
@@ -96,17 +94,13 @@ export function playNotificationSound(type, volume = 0.5) {
   const url = TYPE_TO_SOUND[type] || TYPE_TO_SOUND.info;
   let audio = audioCache.get(url);
 
-  // If not preloaded, create on demand (may fail due to autoplay policy)
   if (!audio) {
     audio = new window.Audio(url);
     audioCache.set(url, audio);
   }
-
-  // Set volume and reset to start
   audio.volume = Math.max(0, Math.min(1, volume));
   audio.currentTime = 0;
 
-  // Attempt to play, catching any autoplay policy errors
   audio.play().catch((error) => {
     if (import.meta.env.DEV) {
       console.warn('[NotificationSound] Playback failed:', error.message);
