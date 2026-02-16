@@ -14,6 +14,7 @@
 namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,6 @@ use Inertia\Response;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\Auth\LoginRequest;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class AuthenticatedSessionController
@@ -33,12 +33,15 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  *
  * @see \Modules\Core\Http\Requests\Auth\LoginRequest For login validation
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For login notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For login notifications
  */
 class AuthenticatedSessionController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
+
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry
+    ) {}
 
     /**
      * Display the login view.
@@ -87,14 +90,10 @@ class AuthenticatedSessionController extends Controller
                 userId: $user->id
             );
 
-            $this->signalInfo(
-                $user,
-                'New Login',
-                "You logged in from IP address: {$ip}. If this wasn't you, please change your password immediately.",
-                route('profile.edit'),
-                'System',
-                'login'
-            );
+            $this->signalRegistry->dispatch('auth.login', [
+                'user' => $user,
+                'ip' => $ip,
+            ]);
         }
 
         return redirect()->intended(route('dashboard', absolute: false));

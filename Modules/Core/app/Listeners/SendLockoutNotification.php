@@ -12,9 +12,9 @@
 
 namespace Modules\Core\Listeners;
 
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Auth\Events\Lockout;
 use Modules\Core\Models\User;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class SendLockoutNotification
@@ -24,11 +24,13 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * to notify them of potential unauthorized access attempts.
  *
  * @see \Illuminate\Auth\Events\Lockout For the lockout event
- * @see \Modules\Signal\Traits\SendsSignalNotifications For notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For notifications
  */
 class SendLockoutNotification
 {
-    use SendsSignalNotifications;
+    public function __construct(
+        private readonly SignalHandlerRegistry $signalRegistry
+    ) {}
 
     /**
      * Handle the lockout event.
@@ -55,13 +57,9 @@ class SendLockoutNotification
             return;
         }
 
-        $this->signalAlert(
-            $user,
-            'Account Temporarily Locked',
-            "Your account was temporarily locked after multiple failed login attempts from IP: {$ip}. If this wasn't you, please change your password immediately.",
-            route('password.request'),
-            'System',
-            'security'
-        );
+        $this->signalRegistry->dispatch('auth.lockout', [
+            'user' => $user,
+            'ip' => $ip,
+        ]);
     }
 }

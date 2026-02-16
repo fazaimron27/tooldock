@@ -17,8 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 export default function Index({ users, defaultPerPage = 20 }) {
   const { date_format } = usePage().props;
   const deleteDialog = useDisclosure();
@@ -169,7 +167,7 @@ export default function Index({ users, defaultPerPage = 20 }) {
   usePaginationSync(tableProps, users, defaultPerPage);
 
   return (
-    <DashboardLayout header="Users">
+    <>
       <PageShell
         title="Users"
         actions={
@@ -206,6 +204,6 @@ export default function Index({ users, defaultPerPage = 20 }) {
         cancelLabel="Cancel"
         variant="destructive"
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -13,6 +13,7 @@
 namespace Modules\Core\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,6 @@ use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
 use Modules\Core\Models\User;
 use Modules\Media\Models\MediaFile;
-use Modules\Signal\Traits\SendsSignalNotifications;
 
 /**
  * Class ProfileController
@@ -34,12 +34,11 @@ use Modules\Signal\Traits\SendsSignalNotifications;
  * and account deletion. Logs all changes and sends security alerts.
  *
  * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \Modules\Signal\Traits\SendsSignalNotifications For notifications
+ * @see \App\Services\Registry\SignalHandlerRegistry For notifications
  */
 class ProfileController extends Controller
 {
     use DispatchAuditLog;
-    use SendsSignalNotifications;
 
     /**
      * Display the user's profile form.
@@ -143,14 +142,10 @@ class ProfileController extends Controller
             userId: $user->id
         );
 
-        $this->signalAlert(
-            $user,
-            'Email Address Changed',
-            "Your email was changed from {$oldEmail} to {$user->email}. Email verification is required. If you did not make this change, please contact support immediately.",
-            route('profile.edit'),
-            'System',
-            'security'
-        );
+        app(SignalHandlerRegistry::class)->dispatch('user.email.changed', [
+            'user' => $user,
+            'old_email' => $oldEmail,
+        ]);
     }
 
     /**
