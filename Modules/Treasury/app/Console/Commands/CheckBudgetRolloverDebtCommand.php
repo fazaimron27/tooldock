@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Check Budget Rollover Debt Command
+ *
+ * Checks all active budgets with rollover enabled for accumulated debt
+ * and dispatches notifications via the signal handler registry.
+ * Supports filtering by user and dry-run mode for testing.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class CheckBudgetRolloverDebtCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class CheckBudgetRolloverDebtCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get all users who have at least one active budget with rollover enabled
             $users = User::whereHas('budgets', function ($query) {
                 $query->where('is_active', true)
                     ->where('rollover_enabled', true);

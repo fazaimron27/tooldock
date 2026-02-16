@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Send Net Worth Summary Command
+ *
+ * Generates and sends monthly net worth summaries including total assets
+ * across all wallets, period-over-period changes, and wallet-level
+ * breakdowns. Dispatches through the signal handler registry.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class SendNetWorthSummaryCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class SendNetWorthSummaryCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get all users who have at least one active wallet
             $users = User::whereHas('wallets', function ($query) {
                 $query->where('is_active', true);
             })->get();

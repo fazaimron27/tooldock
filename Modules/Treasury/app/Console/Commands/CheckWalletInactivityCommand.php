@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Check Wallet Inactivity Command
+ *
+ * Identifies wallets with no transaction activity beyond a configurable
+ * inactivity threshold and dispatches notifications via the signal
+ * handler registry. Supports filtering by user and dry-run mode.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class CheckWalletInactivityCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class CheckWalletInactivityCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get all users who have at least one active wallet
             $users = User::whereHas('wallets', function ($query) {
                 $query->where('is_active', true);
             })->get();

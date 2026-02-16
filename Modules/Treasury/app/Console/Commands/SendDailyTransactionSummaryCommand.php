@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Send Daily Transaction Summary Command
+ *
+ * Generates and sends a daily summary of transaction activity to users.
+ * Dispatches summary data through the signal handler registry for
+ * notification delivery. Supports per-user filtering and dry-run mode.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class SendDailyTransactionSummaryCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -44,7 +58,6 @@ class SendDailyTransactionSummaryCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get users who have transactions today
             $users = User::whereHas('transactions', function ($query) use ($date) {
                 $query->whereDate('date', $date);
             })->get();

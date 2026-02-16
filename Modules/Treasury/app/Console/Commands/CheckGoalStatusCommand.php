@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Check Goal Status Command
+ *
+ * Checks savings goals for approaching deadlines, overdue status, and
+ * stagnation (no contributions in a configurable period). Dispatches
+ * notifications via the signal handler registry.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Console\Commands;
 
 use App\Services\Registry\SignalHandlerRegistry;
@@ -32,6 +43,9 @@ class CheckGoalStatusCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @param  SignalHandlerRegistry  $registry  The signal handler registry
+     * @return int
      */
     public function handle(SignalHandlerRegistry $registry): int
     {
@@ -43,7 +57,6 @@ class CheckGoalStatusCommand extends Command
         if ($userId) {
             $users = collect([User::find($userId)])->filter();
         } else {
-            // Get all users who have at least one incomplete goal
             $users = User::whereHas('goals', function ($query) {
                 $query->where('is_completed', false);
             })->get();
