@@ -3,10 +3,12 @@
         "copilot",
         "cursor"
     ],
-    "editors": [
-        "cursor",
-        "phpstorm",
-        "vscode"
-    ],
-    "guidelines": []
+    "guidelines": true,
+    "herd_mcp": false,
+    "mcp": true,
+    "sail": false,
+    "skills": [
+        "inertia-react-development",
+        "tailwindcss-development"
+    ]
 }

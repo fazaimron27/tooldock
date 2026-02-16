@@ -13,8 +13,11 @@
     "inertiajs/inertia-laravel": "^2.0",
     "intervention/image": "^3.11",
     "laravel/framework": "^12.0",
+    "laravel/horizon": "^5.43",
+    "laravel/pulse": "^1.5",
     "laravel/reverb": "^1.0",
     "laravel/sanctum": "^4.0",
+    "laravel/telescope": "^5.16",
     "laravel/tinker": "^2.10.1",
     "nwidart/laravel-modules": "^12.0",
     "spatie/laravel-permission": "^6.23",
@@ -23,7 +26,7 @@
   },
   "require-dev": {
     "fakerphp/faker": "^1.23",
-    "laravel/boost": "^1.8",
+    "laravel/boost": "^2.0",
     "laravel/breeze": "^2.3",
     "laravel/pail": "^1.2.2",
     "laravel/pint": "^1.24",
@@ -61,7 +64,7 @@
     ],
     "dev": [
       "Composer\\Config::disableProcessTimeout",
-      "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74,#34d399\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" \"php artisan reverb:start\" --names=server,queue,logs,vite,reverb --kill-others"
+      "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74,#34d399\" \"php artisan serve\" \"php artisan horizon\" \"php artisan pail --timeout=0\" \"npm run dev\" \"php artisan reverb:start\" --names=server,horizon,logs,vite,reverb --kill-others"
     ],
     "test": [
       "@php artisan config:clear --ansi",
