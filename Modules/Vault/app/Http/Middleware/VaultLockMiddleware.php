@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Vault Lock Middleware
+ *
+ * Enforces vault lock timeout and redirects to the lock screen when
+ * the user's vault session has expired. Works in conjunction with
+ * VaultLockController for session-based vault access control.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Http\Middleware;
 
 use App\Services\Core\UserPreferenceService;
@@ -12,6 +23,15 @@ use Modules\Vault\Models\VaultLock;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class VaultLockMiddleware
+ *
+ * Checks vault lock state on every request. Auto-locks the vault when
+ * the configured timeout elapses and dispatches auto-lock notifications.
+ * Bypasses lock checks for auth routes and vault lock-related routes.
+ *
+ * @see \Modules\Vault\Http\Controllers\VaultLockController
+ */
 class VaultLockMiddleware
 {
     private const EXCLUDED_ROUTES = [
@@ -37,6 +57,10 @@ class VaultLockMiddleware
 
     /**
      * Enforce vault lock timeout and redirect to lock screen when expired.
+     *
+     * @param  Request  $request  The incoming HTTP request
+     * @param  Closure  $next  The next middleware closure
+     * @return Response The HTTP response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -118,6 +142,9 @@ class VaultLockMiddleware
 
     /**
      * Check if route requires vault lock protection.
+     *
+     * @param  string|null  $routeName  The route name to check
+     * @return bool True if the route is a vault route requiring lock protection
      */
     private function isVaultRoute(?string $routeName): bool
     {
@@ -134,6 +161,9 @@ class VaultLockMiddleware
 
     /**
      * Check if route should bypass vault lock.
+     *
+     * @param  string|null  $routeName  The route name to check
+     * @return bool True if the route is an authentication route
      */
     private function isAuthRoute(?string $routeName): bool
     {
@@ -146,6 +176,10 @@ class VaultLockMiddleware
 
     /**
      * Send notification when vault auto-locks due to timeout.
+     *
+     * @param  mixed  $user  The authenticated user
+     * @param  Request  $request  The incoming HTTP request
+     * @return void
      */
     private function sendAutoLockNotification($user, Request $request): void
     {

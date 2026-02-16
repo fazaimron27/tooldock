@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Vault PIN Changed Handler
+ *
+ * Signal handler that fires when a user sets or updates their vault PIN.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services\Lock\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

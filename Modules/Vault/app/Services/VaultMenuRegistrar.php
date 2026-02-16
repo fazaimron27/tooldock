@@ -1,16 +1,33 @@
 <?php
 
+/**
+ * Vault Menu Registrar
+ *
+ * Registers sidebar menu items for the Vault module.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services;
 
 use App\Services\Registry\MenuRegistry;
 
 /**
- * Handles menu registration for the Vault module.
+ * Class VaultMenuRegistrar
+ *
+ * Adds vault index and dashboard links to the application sidebar menu.
+ *
+ * @see \App\Services\Registry\MenuRegistry
  */
 class VaultMenuRegistrar
 {
     /**
      * Register all menu items for the Vault module.
+     *
+     * @param  MenuRegistry  $menuRegistry  The central menu registry
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

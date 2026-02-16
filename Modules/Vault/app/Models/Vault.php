@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Vault Model
+ *
+ * Eloquent model representing a secure vault item (password, card, note, or server).
+ * Supports encrypted storage, TOTP generation, and audit logging.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,6 +24,32 @@ use Modules\Core\Traits\HasUserOwnership;
 use OTPHP\TOTP;
 use Symfony\Component\Clock\Clock;
 
+/**
+ * Class Vault
+ *
+ * Stores encrypted credentials and secrets with support for TOTP code generation,
+ * category assignment, favorites, and audit logging. Sensitive fields (value,
+ * totp_secret, fields) are encrypted at rest via Laravel's encryption.
+ *
+ * @property string $id
+ * @property string $user_id
+ * @property string|null $category_id
+ * @property string $type
+ * @property string $name
+ * @property string|null $username
+ * @property string|null $email
+ * @property string|null $issuer
+ * @property string|null $value
+ * @property string|null $totp_secret
+ * @property string|null $totp_algorithm
+ * @property int|null $totp_digits
+ * @property int|null $totp_period
+ * @property array|null $fields
+ * @property string|null $url
+ * @property bool $is_favorite
+ *
+ * @see \Modules\Vault\Policies\VaultPolicy
+ */
 class Vault extends Model
 {
     use HasFactory, HasUserOwnership, HasUuids, LogsActivity;
@@ -65,6 +101,8 @@ class Vault extends Model
     /**
      * Fields to exclude from audit logging.
      * Sensitive encrypted fields should not be logged.
+     *
+     * @var array<string>
      */
     protected $auditExclude = ['value', 'totp_secret', 'fields'];
 
@@ -91,6 +129,8 @@ class Vault extends Model
 
     /**
      * Get the user that owns the vault.
+     *
+     * @return BelongsTo The user relationship
      */
     public function user(): BelongsTo
     {
@@ -99,6 +139,8 @@ class Vault extends Model
 
     /**
      * Get the category associated with the vault.
+     *
+     * @return BelongsTo The category relationship
      */
     public function category(): BelongsTo
     {
@@ -109,6 +151,8 @@ class Vault extends Model
      * Get the favicon URL attribute.
      *
      * Returns the DuckDuckGo favicon service URL for the vault's domain.
+     *
+     * @return string|null The favicon URL, or null if no URL is set
      */
     public function getFaviconUrlAttribute(): ?string
     {
@@ -145,8 +189,6 @@ class Vault extends Model
             $secret = $this->totp_secret;
             $clock = Clock::get();
 
-            // Use stored parameters, fallback to defaults if not set
-            // These should be stored when the TOTP secret is first added
             $algorithm = $this->totp_algorithm ?? 'sha1';
             $digits = $this->totp_digits ?? (int) settings('vault_totp_code_length', 6);
             $period = $this->totp_period ?? (int) settings('vault_totp_period', 30);
@@ -189,6 +231,8 @@ class Vault extends Model
 
     /**
      * Create a new factory instance for the model.
+     *
+     * @return Factory The Vault factory instance
      */
     protected static function newFactory(): Factory
     {

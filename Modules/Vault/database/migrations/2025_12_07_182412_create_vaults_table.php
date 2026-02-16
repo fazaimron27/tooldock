@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Create Vaults Table Migration
+ *
+ * Creates the vaults table with support for multiple credential types
+ * (login, card, note, server), encrypted fields, and TOTP parameters.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -20,12 +30,12 @@ return new class extends Migration
             $table->string('username')->nullable();
             $table->string('email')->nullable();
             $table->string('issuer')->nullable()->index();
-            $table->text('value')->nullable(); // Encrypted
-            $table->text('totp_secret')->nullable(); // Encrypted
-            $table->string('totp_algorithm', 10)->nullable(); // sha1, sha256, sha512
-            $table->unsignedTinyInteger('totp_digits')->nullable(); // 6 or 8
-            $table->unsignedSmallInteger('totp_period')->nullable(); // 30 or 60 seconds
-            $table->text('fields')->nullable(); // Encrypted
+            $table->text('value')->nullable();
+            $table->text('totp_secret')->nullable();
+            $table->string('totp_algorithm', 10)->nullable();
+            $table->unsignedTinyInteger('totp_digits')->nullable();
+            $table->unsignedSmallInteger('totp_period')->nullable();
+            $table->text('fields')->nullable();
             $table->string('url')->nullable();
             $table->boolean('is_favorite')->default(false)->index();
             $table->timestamps();

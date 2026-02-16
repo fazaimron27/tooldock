@@ -1,18 +1,34 @@
 <?php
 
+/**
+ * Vault Category Registrar
+ *
+ * Registers default categories for the Vault module dropdown.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Vault\Services;
 
 use App\Services\Registry\CategoryRegistry;
 
 /**
- * Handles default category registration for the Vault module.
+ * Class VaultCategoryRegistrar
  *
- * Registers default categories that will be available in the Vault dropdown.
+ * Provides default vault categories (Banking, Credit Cards, Email, etc.)
+ * for the category dropdown in the vault creation/edit forms.
+ *
+ * @see \App\Services\Registry\CategoryRegistry
  */
 class VaultCategoryRegistrar
 {
     /**
      * Register default categories for the Vault module.
+     *
+     * @param  CategoryRegistry  $registry  The central category registry
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(CategoryRegistry $registry, string $moduleName): void
     {
