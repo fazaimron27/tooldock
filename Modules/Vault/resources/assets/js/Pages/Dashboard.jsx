@@ -10,7 +10,6 @@ import ModuleDashboardPage from '@/Components/Dashboard/ModuleDashboardPage';
 export default function Dashboard({ widgets = [], moduleMetadata = {} }) {
   const { vault_lock_settings } = usePage().props;
 
-  // Guard vault page - auto-redirect to lock screen when vault times out
   useVaultLockGuard(vault_lock_settings?.enabled);
 
   return (

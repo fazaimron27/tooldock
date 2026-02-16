@@ -30,7 +30,6 @@ const ALL_CATEGORIES_VALUE = '__all__';
 export default function Index({ vaults, categories = [], types = [] }) {
   const { vault_lock_settings } = usePage().props;
 
-  // Guard vault page - auto-redirect to lock screen when vault times out
   useVaultLockGuard(vault_lock_settings?.enabled);
 
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Vault Module Web Routes
+ *
+ * Defines web routes for vault CRUD, lock/unlock, PIN management,
+ * password generation, favorite toggling, and TOTP code generation.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ *
+ * @see \Modules\Vault\Providers\RouteServiceProvider::mapWebRoutes()
+ */
+
 use Illuminate\Support\Facades\Route;
 use Modules\Vault\Http\Controllers\VaultController;
 use Modules\Vault\Http\Controllers\VaultDashboardController;

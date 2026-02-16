@@ -77,7 +77,6 @@ export default function VaultCard({ vault }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isCardDetailsVisible, setIsCardDetailsVisible] = useState(false);
   const [isTotpCodeVisible, setIsTotpCodeVisible] = useState(false);
-  // Use the vault's stored period or fall back to default
   const totpPeriod = vault.totp_period || DEFAULT_TOTP_PERIOD;
   const [timeRemaining, setTimeRemaining] = useState(totpPeriod);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -85,14 +84,11 @@ export default function VaultCard({ vault }) {
 
   const TypeIcon = getTypeIcon(vault.type);
 
-  // React Query handles TOTP code fetching with automatic polling
   const { data: totpData } = useTOTPCode(vault.id, {
     enabled: !!vault.totp_secret,
   });
   const totpCode = totpData?.code || null;
 
-  // Countdown timer (local state, updates every second)
-  // Uses the vault's stored TOTP period for correct timing
   useEffect(() => {
     if (!vault.totp_secret) {
       return;
@@ -180,7 +176,6 @@ export default function VaultCard({ vault }) {
     router.delete(route('vault.destroy', { vault: vault.id }), {
       onSuccess: () => {
         deleteDialog.onClose();
-        // Toast handled by Signal notification via WebSocket broadcast
       },
     });
   }, [vault.id, deleteDialog]);

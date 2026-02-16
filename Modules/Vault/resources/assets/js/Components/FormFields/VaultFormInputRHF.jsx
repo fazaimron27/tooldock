@@ -21,7 +21,7 @@ export default function VaultFormInputRHF({
   helperText,
   className,
   inputClassName,
-  children, // For suffix elements like password generator button
+  children,
 }) {
   return (
     <Controller

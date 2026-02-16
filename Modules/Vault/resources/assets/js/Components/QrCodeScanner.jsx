@@ -27,21 +27,16 @@ export default function QrCodeScanner({ onScan, onClose }) {
    */
   const parseOtpauthUrl = useCallback((url) => {
     try {
-      // Decode URL if it's encoded
       let decodedUrl = url;
       try {
         decodedUrl = decodeURIComponent(url);
       } catch {
-        // If decoding fails, use original URL
         decodedUrl = url;
       }
 
-      // Parse otpauth:// URL manually since URL constructor doesn't handle custom protocols well
       if (!decodedUrl.startsWith('otpauth://')) {
         throw new Error('Invalid QR code format - must start with otpauth://');
       }
-
-      // Extract path and query string
       const protocolEnd = decodedUrl.indexOf('://') + 3;
       const pathStart = decodedUrl.indexOf('/', protocolEnd);
       const queryIndex = decodedUrl.indexOf('?');
@@ -50,15 +45,12 @@ export default function QrCodeScanner({ onScan, onClose }) {
         throw new Error('No query parameters found in QR code');
       }
 
-      // Extract label from path (e.g., "totp/huhu:blabalba@gmail.com")
       let label = '';
       if (pathStart !== -1 && pathStart < queryIndex) {
         const pathPart = decodedUrl.substring(pathStart + 1, queryIndex);
-        // Remove "totp/" prefix if present
         label = pathPart.replace(/^totp\//, '');
       }
 
-      // Extract query parameters
       const queryString = decodedUrl.substring(queryIndex + 1);
       const params = new URLSearchParams(queryString);
       const secret = params.get('secret');
@@ -71,41 +63,30 @@ export default function QrCodeScanner({ onScan, onClose }) {
         throw new Error('No secret parameter found in QR code');
       }
 
-      // Trim whitespace and validate secret is not empty
       const trimmedSecret = secret.trim();
       if (!trimmedSecret) {
         throw new Error('Secret parameter is empty');
       }
-
-      // Parse label to extract username/email
-      // Label format can be: "username", "issuer:username", "username:email", etc.
       let username = '';
       let email = '';
       let name = '';
 
       if (label) {
-        // Try to parse label - common formats:
-        // 1. "username:email" (e.g., "huhu:blabalba@gmail.com")
-        // 2. "issuer:username" (e.g., "Google:user@gmail.com")
-        // 3. Just "username" or "email"
         const colonIndex = label.indexOf(':');
 
         if (colonIndex !== -1) {
           const part1 = label.substring(0, colonIndex).trim();
           const part2 = label.substring(colonIndex + 1).trim();
 
-          // Check if part2 looks like an email
           if (part2.includes('@')) {
             email = part2;
             username = part1;
             name = issuer || part1;
           } else {
-            // Could be issuer:username format
             username = part2;
             name = issuer || part1;
           }
         } else {
-          // No colon, check if it's an email or username
           if (label.includes('@')) {
             email = label;
             name = issuer || email.split('@')[0];
@@ -115,7 +96,6 @@ export default function QrCodeScanner({ onScan, onClose }) {
           }
         }
       } else {
-        // No label, use issuer as name
         name = issuer || 'TOTP Account';
       }
 
@@ -147,19 +127,15 @@ export default function QrCodeScanner({ onScan, onClose }) {
       setError(null);
 
       try {
-        // Use browser's native BarcodeDetector API for file scanning
         if (!('BarcodeDetector' in window)) {
           throw new Error(
             'BarcodeDetector API is not supported in this browser. Please use the camera option instead.'
           );
         }
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
           throw new Error('Please select a valid image file.');
         }
-
-        // Create image from file
         const imageUrl = window.URL.createObjectURL(file);
         const img = document.createElement('img');
         await new Promise((resolve, reject) => {
@@ -168,12 +144,8 @@ export default function QrCodeScanner({ onScan, onClose }) {
           img.src = imageUrl;
         });
 
-        // Use BarcodeDetector to scan the image
-        // BarcodeDetector is a browser API, available in modern browsers
         const barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
         const barcodes = await barcodeDetector.detect(img);
-
-        // Clean up object URL to prevent memory leaks
         window.URL.revokeObjectURL(imageUrl);
 
         if (!barcodes || barcodes.length === 0) {
@@ -184,12 +156,9 @@ export default function QrCodeScanner({ onScan, onClose }) {
 
         const result = barcodes[0].rawValue;
 
-        // Check if result is valid
         if (!result || typeof result !== 'string') {
           throw new Error('Invalid QR code format - no text found in QR code');
         }
-
-        // Check if it's a TOTP QR code
         if (!result.trim().startsWith('otpauth://')) {
           throw new Error(
             `QR code does not contain a TOTP secret. Found: ${result.substring(0, 50)}...`
@@ -237,7 +206,6 @@ export default function QrCodeScanner({ onScan, onClose }) {
       if (file) {
         handleFileScan(file);
       }
-      // Reset input to allow selecting the same file again
       e.target.value = '';
     },
     [handleFileScan]
@@ -252,7 +220,6 @@ export default function QrCodeScanner({ onScan, onClose }) {
         try {
           const parsedData = parseOtpauthUrl(decodedText);
 
-          // Pause scanning
           setPaused(true);
           setScanning(false);
 

@@ -14,10 +14,8 @@ import { useVaultLockStatus } from './useVaultQueries';
 export function useVaultLockGuard(enabled = true) {
   const hasRedirectedRef = useRef(false);
 
-  // React Query handles polling, pausing when tab is hidden, and cleanup
   const { data, refetch } = useVaultLockStatus({
     enabled,
-    // Handle lock detection
     onSuccess: (data) => {
       if (!data.unlocked && !hasRedirectedRef.current) {
         hasRedirectedRef.current = true;
@@ -28,14 +26,12 @@ export function useVaultLockGuard(enabled = true) {
     },
   });
 
-  // Reset redirect flag when data shows unlocked (user unlocked vault)
   useEffect(() => {
     if (data?.unlocked) {
       hasRedirectedRef.current = false;
     }
   }, [data?.unlocked]);
 
-  // Manual check function for imperative use
   const checkLockStatus = useCallback(() => {
     refetch();
   }, [refetch]);
