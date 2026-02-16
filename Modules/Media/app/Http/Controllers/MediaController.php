@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Media Controller.
+ *
+ * Handles media file listing, uploading (temporary and permanent),
+ * and deletion.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -26,6 +36,8 @@ class MediaController extends Controller
      * Filters by parent model ownership:
      * - Super Admins see all files
      * - Regular users only see files attached to their own models
+     *
+     * @return Response
      */
     public function index(): Response
     {
@@ -34,22 +46,17 @@ class MediaController extends Controller
         $user = request()->user();
         $query = MediaFile::permanent()->with('model')->latest();
 
-        // Super Admin sees all, others see only their owned files
         if (! $user->hasRole(\Modules\Core\Constants\Roles::SUPER_ADMIN)) {
             $userId = $user->id;
             $userClass = \Modules\Core\Models\User::class;
 
             $query->where(function ($q) use ($userId, $userClass) {
-                // Files attached directly to the user (e.g., avatar)
                 $q->where(function ($sub) use ($userId, $userClass) {
                     $sub->where('model_type', $userClass)
                         ->where('model_id', $userId);
                 });
 
-                // Files attached to models owned by the user
-                // We need to check each model type that has user_id
                 $q->orWhereHas('model', function ($modelQuery) use ($userId) {
-                    // This works for models that have user_id column
                     $modelQuery->where('user_id', $userId);
                 });
             });
@@ -64,6 +71,9 @@ class MediaController extends Controller
 
     /**
      * Upload a temporary file.
+     *
+     * @param  UploadMediaRequest  $request
+     * @return JsonResponse
      */
     public function uploadTemporary(UploadMediaRequest $request): JsonResponse
     {
@@ -120,6 +130,9 @@ class MediaController extends Controller
 
     /**
      * Upload a permanent file.
+     *
+     * @param  UploadMediaRequest  $request
+     * @return JsonResponse
      */
     public function upload(UploadMediaRequest $request): JsonResponse
     {
@@ -213,6 +226,9 @@ class MediaController extends Controller
 
     /**
      * Remove the specified media file.
+     *
+     * @param  MediaFile  $medium
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(MediaFile $medium): \Illuminate\Http\RedirectResponse
     {

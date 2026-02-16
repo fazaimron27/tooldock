@@ -107,7 +107,6 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
           const file = info.row.original;
           if (file.model) {
             const modelType = file.model_type?.split('\\').pop() || 'Unknown';
-            // If it's a User model, show the user's name
             if (modelType === 'User' && file.model.name) {
               return (
                 <span className="text-sm">
@@ -115,7 +114,6 @@ export default function Index({ mediaFiles, defaultPerPage = 20 }) {
                 </span>
               );
             }
-            // For other models, show type and ID
             return (
               <span className="text-sm">
                 {modelType} #{file.model_id}

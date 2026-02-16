@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Media Upload Failed Handler.
+ *
+ * Notifies users when a media upload fails.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Services\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

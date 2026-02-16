@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Media Permission Registrar.
+ *
+ * Registers permission definitions for the Media module.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Services;
 
 use App\Services\Registry\PermissionRegistry;
@@ -11,6 +20,9 @@ class MediaPermissionRegistrar
 {
     /**
      * Register default permissions for the Media module.
+     *
+     * @param  PermissionRegistry  $registry
+     * @return void
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {

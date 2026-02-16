@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Media File Policy.
+ *
+ * Authorizes media file operations with ownership checks
+ * via polymorphic parent model relationships.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Media\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -16,6 +26,9 @@ class MediaFilePolicy
      * Determine whether the user can view any models.
      *
      * Note: The actual list is filtered by ownership in the controller.
+     *
+     * @param  User  $user
+     * @return bool
      */
     public function viewAny(User $user): bool
     {
@@ -26,6 +39,10 @@ class MediaFilePolicy
      * Determine whether the user can view the model.
      *
      * Checks parent model ownership via polymorphic relation.
+     *
+     * @param  User  $user
+     * @param  MediaFile  $mediaFile
+     * @return bool
      */
     public function view(User $user, MediaFile $mediaFile): bool
     {
@@ -38,6 +55,9 @@ class MediaFilePolicy
 
     /**
      * Determine whether the user can create models.
+     *
+     * @param  User  $user
+     * @return bool
      */
     public function create(User $user): bool
     {
@@ -48,6 +68,10 @@ class MediaFilePolicy
      * Determine whether the user can update the model.
      *
      * Checks parent model ownership via polymorphic relation.
+     *
+     * @param  User  $user
+     * @param  MediaFile  $mediaFile
+     * @return bool
      */
     public function update(User $user, MediaFile $mediaFile): bool
     {
@@ -62,6 +86,10 @@ class MediaFilePolicy
      * Determine whether the user can delete the model.
      *
      * Checks parent model ownership via polymorphic relation.
+     *
+     * @param  User  $user
+     * @param  MediaFile  $mediaFile
+     * @return bool
      */
     public function delete(User $user, MediaFile $mediaFile): bool
     {
@@ -80,38 +108,33 @@ class MediaFilePolicy
      * 2. If parent model IS the user, they own their own attachments
      * 3. Super Admins can access all files
      * 4. Standalone files (no parent) are Super Admin only
+     *
+     * @param  User  $user
+     * @param  MediaFile  $mediaFile
+     * @return bool
      */
     private function checkOwnership(User $user, MediaFile $mediaFile): bool
     {
-        // Super Admin can access everything
         if ($user->hasRole(Roles::SUPER_ADMIN)) {
             return true;
         }
-
-        // No parent model means standalone file - Super Admin only
         if (! $mediaFile->model_type || ! $mediaFile->model_id) {
             return false;
         }
 
-        // Load the parent model
         $parentModel = $mediaFile->model;
 
         if (! $parentModel) {
-            // Parent model was deleted but file remains - Super Admin only
             return false;
         }
 
-        // If parent model IS the user (e.g., user avatar)
         if ($parentModel instanceof User) {
             return $parentModel->id === $user->id;
         }
-
-        // If parent model has user_id attribute, check ownership
         if (isset($parentModel->user_id)) {
             return $parentModel->user_id === $user->id;
         }
 
-        // Parent model doesn't have ownership concept - deny for safety
         return false;
     }
 }
