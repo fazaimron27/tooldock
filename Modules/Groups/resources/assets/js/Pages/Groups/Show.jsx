@@ -17,8 +17,6 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 import AddMembersDialog from './Components/AddMembersDialog';
 import GroupDetailsCard from './Components/GroupDetailsCard';
 import MembersCard from './Components/MembersCard';
@@ -195,19 +193,17 @@ export default function Show({
 
   if (!group || !group.id) {
     return (
-      <DashboardLayout header="Groups">
-        <PageShell title="Group Not Found">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Group not found or invalid.</p>
-            <Link href={route('groups.groups.index')}>
-              <Button variant="outline" className="mt-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Groups
-              </Button>
-            </Link>
-          </div>
-        </PageShell>
-      </DashboardLayout>
+      <PageShell title="Group Not Found">
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Group not found or invalid.</p>
+          <Link href={route('groups.groups.index')}>
+            <Button variant="outline" className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Groups
+            </Button>
+          </Link>
+        </div>
+      </PageShell>
     );
   }
 
@@ -224,7 +220,7 @@ export default function Show({
   };
 
   return (
-    <DashboardLayout header="Groups">
+    <>
       <PageShell
         title={group.name}
         breadcrumbs={[
@@ -332,6 +328,6 @@ export default function Show({
         cancelLabel="Cancel"
         variant="destructive"
       />
-    </DashboardLayout>
+    </>
   );
 }

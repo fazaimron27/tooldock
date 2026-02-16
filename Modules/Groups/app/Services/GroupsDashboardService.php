@@ -18,6 +18,12 @@ class GroupsDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'Group & Access Control',
+            'Manage user groups and access control settings.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',

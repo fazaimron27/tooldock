@@ -4,6 +4,7 @@ namespace Modules\Groups\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,7 +27,8 @@ class GroupsController extends Controller
     public function __construct(
         private PermissionService $permissionService,
         private GroupCacheService $cacheService,
-        private PermissionCacheService $permissionCacheService
+        private PermissionCacheService $permissionCacheService,
+        private SignalHandlerRegistry $signalRegistry
     ) {}
 
     /**
@@ -122,7 +124,7 @@ class GroupsController extends Controller
         $roles = Role::with('permissions')
             ->where('name', '!=', Roles::SUPER_ADMIN)
             ->get();
-        $permissions = Permission::all();
+        $permissions = cache()->remember('core:permissions:all', 3600, fn () => Permission::all());
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Groups/Groups/Create', [
@@ -171,7 +173,7 @@ class GroupsController extends Controller
         $roles = Role::with('permissions')
             ->where('name', '!=', Roles::SUPER_ADMIN)
             ->get();
-        $permissions = Permission::all();
+        $permissions = cache()->remember('core:permissions:all', 3600, fn () => Permission::all());
         $groupedPermissions = $this->permissionService->groupByModule($permissions);
 
         return Inertia::render('Modules::Groups/Groups/Edit', [
@@ -279,6 +281,20 @@ class GroupsController extends Controller
 
         if (! empty($userIds)) {
             $this->cacheService->clearForPermissionChange($userIds);
+
+            // Pre-fetch all affected users to avoid N+1 queries
+            $affectedUsers = User::whereIn('id', $userIds)->get()->keyBy('id');
+
+            // Dispatch signal event for each affected user
+            foreach ($userIds as $userId) {
+                $user = $affectedUsers->get($userId);
+                if ($user) {
+                    $this->signalRegistry->dispatch('group.permissions.synced', [
+                        'user' => $user,
+                        'group' => $group,
+                    ]);
+                }
+            }
         } else {
             $this->permissionCacheService->clear();
         }
@@ -321,6 +337,20 @@ class GroupsController extends Controller
 
         if (! empty($userIds)) {
             $this->cacheService->clearForRoleChange($userIds);
+
+            // Pre-fetch all affected users to avoid N+1 queries
+            $affectedUsers = User::whereIn('id', $userIds)->get()->keyBy('id');
+
+            // Dispatch signal event for each affected user
+            foreach ($userIds as $userId) {
+                $user = $affectedUsers->get($userId);
+                if ($user) {
+                    $this->signalRegistry->dispatch('group.roles.synced', [
+                        'user' => $user,
+                        'group' => $group,
+                    ]);
+                }
+            }
         } else {
             $this->permissionCacheService->clear();
         }

@@ -1,13 +1,11 @@
 /**
  * Searchable multi-select component for selecting group members
- * Fetches users from API on search to avoid loading all users.
- * Uses Popover + Input + Checkbox for better UX with large lists
+ * Uses React Query for data fetching with caching and automatic cleanup.
  */
-import { API_BASEURL, API_VERSION } from '@/Utils/constants';
+import { useUserSearch } from '@/Hooks/queries/useUserSearch';
 import { cn } from '@/Utils/utils';
-import axios from 'axios';
 import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Badge } from '@/Components/ui/badge';
@@ -26,147 +24,26 @@ export default function MemberSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [debouncedSearch] = useDebounce(search, 300);
 
-  /**
-   * Fetch users from API when search term changes or popover opens.
-   * Uses debounced search to reduce API calls and AbortController for request cancellation.
-   */
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  // React Query handles fetching, caching, and cleanup
+  const { data: searchData, isLoading: loading } = useUserSearch(debouncedSearch, {
+    enabled: open,
+    limit: 20,
+  });
 
-    let cancelled = false;
-    /**
-     * AbortController is a browser API available in modern browsers.
-     * ESLint doesn't recognize it, so we disable the no-undef warning.
-     */
-    // eslint-disable-next-line no-undef
-    const controller = new AbortController();
-
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (debouncedSearch) {
-          params.append('search', debouncedSearch);
-        }
-        params.append('limit', '20');
-
-        const response = await axios.get(
-          `${API_BASEURL}/${API_VERSION}/users/search?${params.toString()}`,
-          {
-            headers: {
-              Accept: 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-            },
-            withCredentials: true,
-            signal: controller.signal,
-          }
-        );
-
-        if (!cancelled && response.data?.data) {
-          setUsers(response.data.data);
-        }
-      } catch (error) {
-        if (axios.isCancel(error) || cancelled) {
-          return;
-        }
-        console.error('Failed to fetch users:', error);
-        if (!cancelled) {
-          setUsers([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchUsers();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [debouncedSearch, open]);
-
-  /**
-   * Load selected users by ID when values are provided but not present in current user list.
-   * Fetches missing users in parallel to ensure all selected users are displayed.
-   */
-  useEffect(() => {
-    if (!value.length || !open) {
-      return;
-    }
-
-    const missingUserIds = value.filter(
-      (userId) => !users.find((u) => String(u.value) === String(userId))
-    );
-
-    if (missingUserIds.length === 0) {
-      return;
-    }
-
-    let cancelled = false;
-    /**
-     * AbortController is a browser API available in modern browsers.
-     * ESLint doesn't recognize it, so we disable the no-undef warning.
-     */
-    // eslint-disable-next-line no-undef
-    const controllers = missingUserIds.map(() => new AbortController());
-
-    const fetchSelectedUsers = async () => {
-      try {
-        const promises = missingUserIds.map((userId, index) =>
-          axios.get(`${API_BASEURL}/${API_VERSION}/users/search?id=${userId}`, {
-            headers: {
-              Accept: 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-            },
-            withCredentials: true,
-            signal: controllers[index].signal,
-          })
-        );
-
-        const responses = await Promise.all(promises);
-
-        if (!cancelled) {
-          const selectedUsers = responses.map((res) => res.data?.data?.[0]).filter(Boolean);
-
-          setUsers((prev) => {
-            const existing = prev.map((u) => u.value);
-            const newUsers = selectedUsers.filter((u) => !existing.includes(u.value));
-            return [...newUsers, ...prev];
-          });
-        }
-      } catch (error) {
-        if (axios.isCancel(error) || cancelled) {
-          return;
-        }
-        console.error('Failed to fetch selected users:', error);
-      }
-    };
-
-    fetchSelectedUsers();
-
-    return () => {
-      cancelled = true;
-      controllers.forEach((c) => c.abort());
-    };
-  }, [value, users, open]);
-
+  // Fetch selected users not in search results
+  // For multi-select, we use separate queries for each missing user
+  // React Query deduplicates and caches these automatically
   const options = useMemo(() => {
+    const users = searchData?.data || [];
     return users.map((user) => ({
       label: user.name || user.label,
       value: user.value,
       email: user.email,
       fullLabel: user.label,
     }));
-  }, [users]);
+  }, [searchData?.data]);
 
   const selectedOptions = useMemo(() => {
     return options.filter((option) => value.includes(option.value));

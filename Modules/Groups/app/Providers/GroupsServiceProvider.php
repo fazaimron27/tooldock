@@ -2,11 +2,13 @@
 
 namespace Modules\Groups\Providers;
 
+use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -14,12 +16,14 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\Role;
 use Modules\Groups\Models\Group;
 use Modules\Groups\Observers\GroupObserver;
+use Modules\Groups\Services\GroupsCommandRegistrar;
 use Modules\Groups\Services\GroupsDashboardService;
 use Modules\Groups\Services\GroupsGroupRegistrar;
 use Modules\Groups\Services\GroupsMenuRegistrar;
 use Modules\Groups\Services\GroupsPermissionRegistrar;
 use Modules\Groups\Services\GroupsRoleService;
 use Modules\Groups\Services\GroupsSettingsRegistrar;
+use Modules\Groups\Services\GroupsSignalRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -36,16 +40,20 @@ class GroupsServiceProvider extends ServiceProvider
      * Boot the application events.
      */
     public function boot(
+        CommandRegistry $commandRegistry,
         MenuRegistry $menuRegistry,
         SettingsRegistry $settingsRegistry,
         DashboardWidgetRegistry $widgetRegistry,
         PermissionRegistry $permissionRegistry,
         GroupRegistry $groupRegistry,
+        GroupsCommandRegistrar $commandRegistrar,
         GroupsMenuRegistrar $menuRegistrar,
         GroupsSettingsRegistrar $settingsRegistrar,
         GroupsDashboardService $dashboardService,
         GroupsPermissionRegistrar $permissionRegistrar,
-        GroupsGroupRegistrar $groupRegistrar
+        GroupsGroupRegistrar $groupRegistrar,
+        SignalHandlerRegistry $signalRegistry,
+        GroupsSignalRegistrar $signalRegistrar
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -53,6 +61,7 @@ class GroupsServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
@@ -61,6 +70,7 @@ class GroupsServiceProvider extends ServiceProvider
         if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
             app(\App\Services\Registry\SignalCategoryRegistry::class)->register($this->name, 'groups', 'groups_notify_enabled');
         }
+        $signalRegistrar->register($signalRegistry);
 
         $this->registerAuthorization();
         $this->registerObservers();
@@ -249,10 +259,15 @@ class GroupsServiceProvider extends ServiceProvider
     /**
      * Attach roles to groups after all service providers have booted.
      *
+     * Only runs in console (CLI) context to avoid unnecessary queries on HTTP requests.
      * This ensures roles and groups are seeded before attaching relationships.
      */
     private function attachRolesToGroups(): void
     {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
         $this->app->booted(function () {
             $roleService = app(GroupsRoleService::class);
             $groupRegistrar = app(GroupsGroupRegistrar::class);

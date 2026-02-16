@@ -18,9 +18,11 @@ class GroupsDashboardController extends Controller
         Gate::authorize('groups.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Groups', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Groups/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }
