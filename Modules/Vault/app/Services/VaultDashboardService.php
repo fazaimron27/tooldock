@@ -16,6 +16,12 @@ class VaultDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'Secure Vault',
+            'Securely store and manage sensitive credentials and private data.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',

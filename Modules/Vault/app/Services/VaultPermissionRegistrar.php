@@ -21,14 +21,17 @@ class VaultPermissionRegistrar
             'vault.create',
             'vault.edit',
             'vault.delete',
+            'preferences.view',
         ], [
             RoleConstants::ADMINISTRATOR => [
                 'dashboard.view',
                 'vault.*',
+                'preferences.view',
             ],
             RoleConstants::MANAGER => [
                 'dashboard.view',
                 'vault.*',
+                'preferences.view',
             ],
         ]);
     }

@@ -39,6 +39,10 @@ const baseVaultSchema = z.object({
     ])
     .optional(),
   totp_secret: z.string().optional().or(z.literal('')),
+  // TOTP parameters - extracted from QR code, needed for correct code generation
+  totp_algorithm: z.enum(['sha1', 'sha256', 'sha512']).optional().or(z.literal('')),
+  totp_digits: z.number().int().min(6).max(8).optional().or(z.literal('')),
+  totp_period: z.number().int().min(30).max(60).optional().or(z.literal('')),
   fields: z
     .object({
       // Credit Card fields

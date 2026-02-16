@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('issuer')->nullable()->index();
             $table->text('value')->nullable(); // Encrypted
             $table->text('totp_secret')->nullable(); // Encrypted
+            $table->string('totp_algorithm', 10)->nullable(); // sha1, sha256, sha512
+            $table->unsignedTinyInteger('totp_digits')->nullable(); // 6 or 8
+            $table->unsignedSmallInteger('totp_period')->nullable(); // 30 or 60 seconds
             $table->text('fields')->nullable(); // Encrypted
             $table->string('url')->nullable();
             $table->boolean('is_favorite')->default(false)->index();

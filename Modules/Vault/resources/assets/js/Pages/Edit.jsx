@@ -4,8 +4,9 @@
  */
 import { useInertiaForm } from '@/Hooks/useInertiaForm';
 import VaultFormFields from '@Vault/Components/VaultFormFields';
+import { useVaultLockGuard } from '@Vault/Hooks/useVaultLockGuard';
 import { updateVaultResolver } from '@Vault/Schemas/vaultSchemas';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -14,9 +15,12 @@ import FormCard from '@/Components/Common/FormCard';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
-
 export default function Edit({ vault, categories = [], types = [] }) {
+  const { vault_lock_settings } = usePage().props;
+
+  // Guard vault page - auto-redirect to lock screen when vault times out
+  useVaultLockGuard(vault_lock_settings?.enabled);
+
   const form = useInertiaForm(
     {
       name: vault.name || '',
@@ -26,6 +30,9 @@ export default function Edit({ vault, categories = [], types = [] }) {
       issuer: vault.issuer || '',
       value: vault.value || '',
       totp_secret: vault.totp_secret || '',
+      totp_algorithm: vault.totp_algorithm || '',
+      totp_digits: vault.totp_digits || '',
+      totp_period: vault.totp_period || '',
       fields: vault.fields && Object.keys(vault.fields).length > 0 ? vault.fields : {},
       url: vault.url || '',
       category_id: vault.category_id || '',
@@ -62,40 +69,38 @@ export default function Edit({ vault, categories = [], types = [] }) {
   }, [form]);
 
   return (
-    <DashboardLayout header="Vault">
-      <PageShell title="Edit Vault Item">
-        <div className="space-y-6">
-          <FormCard
-            title="Edit Vault Item"
-            description="Update vault item information"
-            className="max-w-3xl"
-          >
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              <VaultFormFields
-                form={form}
-                categories={categories}
-                types={types}
-                isGeneratingPassword={isGeneratingPassword}
-                onGeneratePassword={handleGeneratePassword}
-                qrScannerOpen={qrScannerOpen}
-                onQrScannerOpenChange={setQrScannerOpen}
-                isEditMode={true}
-              />
+    <PageShell title="Edit Vault Item">
+      <div className="space-y-6">
+        <FormCard
+          title="Edit Vault Item"
+          description="Update vault item information"
+          className="max-w-3xl"
+        >
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <VaultFormFields
+              form={form}
+              categories={categories}
+              types={types}
+              isGeneratingPassword={isGeneratingPassword}
+              onGeneratePassword={handleGeneratePassword}
+              qrScannerOpen={qrScannerOpen}
+              onQrScannerOpenChange={setQrScannerOpen}
+              isEditMode={true}
+            />
 
-              <div className="flex items-center justify-end gap-4">
-                <Link href={route('vault.index')}>
-                  <Button type="button" variant="outline">
-                    Cancel
-                  </Button>
-                </Link>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Updating...' : 'Update Vault Item'}
+            <div className="flex items-center justify-end gap-4">
+              <Link href={route('vault.index')}>
+                <Button type="button" variant="outline">
+                  Cancel
                 </Button>
-              </div>
-            </form>
-          </FormCard>
-        </div>
-      </PageShell>
-    </DashboardLayout>
+              </Link>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Updating...' : 'Update Vault Item'}
+              </Button>
+            </div>
+          </form>
+        </FormCard>
+      </div>
+    </PageShell>
   );
 }

@@ -21,6 +21,9 @@ class StoreVaultRequest extends FormRequest
             'issuer' => $this->issuer === '' ? null : $this->issuer,
             'value' => $this->value === '' ? null : $this->value,
             'totp_secret' => $this->totp_secret === '' ? null : $this->totp_secret,
+            'totp_algorithm' => $this->totp_algorithm === '' ? null : $this->totp_algorithm,
+            'totp_digits' => $this->totp_digits === '' ? null : $this->totp_digits,
+            'totp_period' => $this->totp_period === '' ? null : $this->totp_period,
             'category_id' => $this->category_id === '' ? null : $this->category_id,
             // Convert empty fields object to null
             'fields' => (is_array($this->fields) && empty(array_filter($this->fields))) ? null : $this->fields,
@@ -42,6 +45,9 @@ class StoreVaultRequest extends FormRequest
             'issuer' => ['nullable', 'string', 'max:255'],
             'value' => ['nullable', 'string'],
             'totp_secret' => ['nullable', 'string'],
+            'totp_algorithm' => ['nullable', 'string', 'in:sha1,sha256,sha512'],
+            'totp_digits' => ['nullable', 'integer', 'in:6,8'],
+            'totp_period' => ['nullable', 'integer', 'in:30,60'],
             'fields' => ['nullable', 'array'],
             'url' => ['nullable', 'url', 'max:2048'],
             'category_id' => [
