@@ -18,9 +18,11 @@ class CategoriesDashboardController extends Controller
         Gate::authorize('categories.dashboard.view');
 
         $widgets = $widgetRegistry->getWidgetsForModule('Categories', 'detail');
+        $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
         return Inertia::render('Modules::Categories/Dashboard', [
             'widgets' => $widgets,
+            'moduleMetadata' => $moduleMetadata,
         ]);
     }
 }

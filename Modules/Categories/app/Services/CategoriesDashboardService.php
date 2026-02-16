@@ -16,6 +16,12 @@ class CategoriesDashboardService
      */
     public function registerWidgets(DashboardWidgetRegistry $widgetRegistry, string $moduleName): void
     {
+        $widgetRegistry->registerModuleMetadata(
+            $moduleName,
+            'Category Management',
+            'Manage transaction categories and classifications.'
+        );
+
         $widgetRegistry->register(
             new DashboardWidget(
                 type: 'stat',
