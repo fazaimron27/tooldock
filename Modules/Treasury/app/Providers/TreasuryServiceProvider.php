@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Treasury Service Provider
+ *
+ * Main service provider for the Treasury module. Bootstraps all module
+ * registrations including categories, commands, dashboard widgets,
+ * menus, permissions, settings, signal handlers, user relationships,
+ * views, translations, and scheduled commands.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Providers;
 
 use App\Services\Registry\CategoryRegistry;
@@ -29,6 +41,11 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class TreasuryServiceProvider
+ *
+ * Central service provider orchestrating all Treasury module bootstrapping.
+ */
 class TreasuryServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -73,13 +90,10 @@ class TreasuryServiceProvider extends ServiceProvider
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $signalRegistrar->register($signalHandlerRegistry);
 
-        // Register signal notification categories for user preferences
         $signalCategoryRegistry->register($this->name, 'treasury_budget', 'treasury_budget_notify_enabled');
         $signalCategoryRegistry->register($this->name, 'treasury_wallet', 'treasury_wallet_notify_enabled');
         $signalCategoryRegistry->register($this->name, 'treasury_goal', 'treasury_goal_notify_enabled');
         $signalCategoryRegistry->register($this->name, 'treasury_transaction', 'treasury_transaction_notify_enabled');
-
-        // Share treasury currency settings with frontend
         $sharedDataRegistry->register($this->name, function ($request) {
             return [
                 'currency_code' => settings('treasury_reference_currency', 'IDR'),
@@ -87,8 +101,6 @@ class TreasuryServiceProvider extends ServiceProvider
             ];
         });
 
-        // Register dynamic relationships on User model
-        // This keeps Core module decoupled from Treasury
         $this->registerUserRelationships();
     }
 
@@ -97,6 +109,8 @@ class TreasuryServiceProvider extends ServiceProvider
      *
      * This allows Treasury models to be accessed via User without
      * adding direct dependencies to the Core module.
+     *
+     * @return void
      */
     protected function registerUserRelationships(): void
     {
@@ -119,6 +133,8 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Register the service provider.
+     *
+     * @return void
      */
     public function register(): void
     {
@@ -127,7 +143,9 @@ class TreasuryServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
+     *
+     * @return void
      */
     protected function registerCommands(): void
     {
@@ -145,47 +163,41 @@ class TreasuryServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register command Schedules.
+     * Register command schedules.
+     *
+     * @return void
      */
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
             $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
 
-            // Refresh exchange rates daily at midnight
             $schedule->command('treasury:refresh-rates')->daily();
 
-            // Check for rollover debt on the 1st of each month at 8 AM
             $schedule->command('treasury:check-rollover-debt')
                 ->monthlyOn(1, '08:00')
                 ->withoutOverlapping();
 
-            // Check for inactive wallets weekly on Sundays at 9 AM
             $schedule->command('treasury:check-wallet-inactivity')
                 ->weeklyOn(0, '09:00')
                 ->withoutOverlapping();
 
-            // Send net worth summary on the last day of each month at 8 PM
             $schedule->command('treasury:send-networth-summary')
                 ->monthlyOn(28, '20:00')
                 ->withoutOverlapping();
 
-            // Check goal deadlines, overdue, and stagnation daily at 9 AM
             $schedule->command('treasury:check-goal-status')
                 ->dailyAt('09:00')
                 ->withoutOverlapping();
 
-            // Send goal summary on the last day of each month at 8:30 PM
             $schedule->command('treasury:send-goal-summary')
                 ->monthlyOn(28, '20:30')
                 ->withoutOverlapping();
 
-            // Send daily transaction summary at 8 PM
             $schedule->command('treasury:send-daily-summary')
                 ->dailyAt('20:00')
                 ->withoutOverlapping();
 
-            // Send weekly transaction summary on Sundays at 7 PM
             $schedule->command('treasury:send-weekly-summary')
                 ->weeklyOn(0, '19:00')
                 ->withoutOverlapping();
@@ -194,6 +206,8 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Register translations.
+     *
+     * @return void
      */
     public function registerTranslations(): void
     {
@@ -210,6 +224,8 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Register config.
+     *
+     * @return void
      */
     protected function registerConfig(): void
     {
@@ -224,7 +240,6 @@ class TreasuryServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -243,6 +258,10 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Merge config from the given path recursively.
+     *
+     * @param  string  $path  Absolute path to the config file
+     * @param  string  $key  Config key to merge under
+     * @return void
      */
     protected function merge_config_from(string $path, string $key): void
     {
@@ -254,6 +273,8 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Register views.
+     *
+     * @return void
      */
     public function registerViews(): void
     {
@@ -269,12 +290,19 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
+     *
+     * @return array<string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Refresh Exchange Rates Job
+ *
+ * Queued job that fetches the latest exchange rates from the ExchangeRate-API.
+ * Captures the API key at dispatch time to avoid queue worker environment
+ * caching issues. Retries up to 3 times with a 10-second backoff.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Jobs;
 
 use Illuminate\Bus\Queueable;
@@ -40,11 +51,13 @@ class RefreshExchangeRatesJob implements ShouldQueue
 
     /**
      * Execute the job.
+     *
+     * @param  ExchangeRateService  $service
+     * @return void
      */
     public function handle(ExchangeRateService $service): void
     {
         try {
-            // Temporarily set the API key in config for this job
             config(['treasury.exchange_rate_api_key' => $this->apiKey]);
 
             $result = $service->refreshRates($this->force);
@@ -63,7 +76,7 @@ class RefreshExchangeRatesJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e; // Rethrow to trigger retry
+            throw $e;
         }
     }
 }

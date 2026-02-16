@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Handle Treasury Installed Listener
+ *
+ * Listens for the module installation event and automatically dispatches
+ * a job to fetch exchange rates when the Treasury module is installed,
+ * ensuring multi-currency features work correctly from the start.
+ *
+ * @author     Tool Dock Team
+ * @license    MIT
+ */
+
 namespace Modules\Treasury\Listeners;
 
 use App\Events\Modules\ModuleInstalled;
@@ -16,10 +27,12 @@ class HandleTreasuryInstalled
 {
     /**
      * Handle the event.
+     *
+     * @param  ModuleInstalled  $event
+     * @return void
      */
     public function handle(ModuleInstalled $event): void
     {
-        // Only handle Treasury module installation
         if ($event->moduleName !== 'Treasury') {
             return;
         }
@@ -34,8 +47,6 @@ class HandleTreasuryInstalled
 
         Log::info('Treasury module installed: Scheduling exchange rates fetch...');
 
-        // Dispatch job with API key captured at dispatch time
-        // This avoids queue worker environment caching issues
         RefreshExchangeRatesJob::dispatch($apiKey, force: true)
             ->delay(now()->addSeconds(5));
     }
