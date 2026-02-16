@@ -34,11 +34,9 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
   const [showAllocate, setShowAllocate] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  // Get icon from category slug using goalIcons utility
   const IconComponent = getGoalIcon(goal.category?.slug);
   const categoryColor = goal.category?.color || '#6B7280';
 
-  // Allocation form using useInertiaForm
   const allocateForm = useInertiaForm(
     {
       wallet_id: '',
@@ -54,13 +52,11 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
     }
   );
 
-  // Filter out the goal's linked savings wallet from source options
   const sourceWallets = useMemo(
     () => wallets?.filter((w) => w.id !== goal.wallet_id) || [],
     [wallets, goal.wallet_id]
   );
 
-  // Set initial wallet to the one with highest balance
   useEffect(() => {
     if (sourceWallets.length > 0 && !allocateForm.watch('wallet_id')) {
       const walletWithHighestBalance = sourceWallets.reduce((max, w) =>
@@ -70,23 +66,18 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
     }
   }, [sourceWallets, allocateForm]);
 
-  // Get current form values for computed properties
   const walletId = allocateForm.watch('wallet_id');
   const amount = allocateForm.watch('amount');
 
-  // Find the selected wallet to get its currency
   const selectedWallet = useMemo(
     () => wallets?.find((w) => String(w.id) === String(walletId)),
     [wallets, walletId]
   );
 
-  // Check if this is a cross-currency allocation
   const isCrossCurrencyAllocation = useMemo(() => {
     if (!selectedWallet || !goal.currency) return false;
     return selectedWallet.currency !== goal.currency;
   }, [selectedWallet, goal.currency]);
-
-  // Calculate converted amount for cross-currency allocations
   const conversionInfo = useMemo(() => {
     if (!isCrossCurrencyAllocation || !exchangeRates) return null;
 
@@ -100,7 +91,6 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
       return { available: false };
     }
 
-    // Cross-rate: goal_rate / wallet_rate
     const rate = goalRate / walletRate;
     const amountNum = parseFloat(amount) || 0;
     const convertedAmount = amountNum * rate;
@@ -114,7 +104,6 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
     };
   }, [isCrossCurrencyAllocation, exchangeRates, selectedWallet, goal.currency, amount]);
 
-  // Check if allocation amount exceeds wallet balance
   const isOverBalance = useMemo(() => {
     if (!selectedWallet) return false;
     const amountNum = parseFloat(amount) || 0;
@@ -132,7 +121,6 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
     });
   };
 
-  // Context-aware delete message based on goal state
   const getDeleteMessage = () => {
     const savedAmount = parseFloat(goal.saved_amount) || 0;
     const formattedAmount = formatCurrency(savedAmount, goal.currency);

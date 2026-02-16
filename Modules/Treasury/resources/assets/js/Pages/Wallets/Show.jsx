@@ -28,9 +28,7 @@ export default function Show({
   const { formatCurrency, formatDate } = useAppearance();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const WalletIcon = getWalletIcon(wallet.type);
-  // Use wallet type color from Categories, fallback to utility function
   const walletColor = walletType?.color || getWalletColor(wallet.type);
-  // Get display name from Categories, fallback to raw type
   const walletTypeName = walletType?.name || wallet.type;
 
   const handleDelete = () => {

@@ -18,12 +18,10 @@ export default function Edit({
   currentPeriod = null,
   isEditingPeriod = false,
 }) {
-  // Determine if we're editing a specific period or the template
   const isPeriodEdit =
     isEditingPeriod ||
     (!!currentPeriod?.month && !!currentPeriod?.year && currentPeriod?.isExplicit);
 
-  // Category name serves as the budget identifier
   const categoryName = budget.category?.name || 'Budget';
 
   const form = useInertiaForm(
@@ -48,7 +46,6 @@ export default function Edit({
     form.put(route('treasury.budgets.update', budget.id));
   };
 
-  // Build title based on edit mode - use category name
   const pageTitle = isPeriodEdit
     ? `Edit "${categoryName}" for ${currentPeriod?.label || 'This Month'}`
     : `Edit Budget: ${categoryName}`;

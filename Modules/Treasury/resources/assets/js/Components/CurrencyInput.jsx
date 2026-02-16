@@ -17,25 +17,18 @@ function formatWithSeparator(value, thousandSep, decimalSep, decimals) {
 
   let strValue = String(value);
 
-  // Handle decimal values
   let integerPart = strValue;
   let decimalPart = '';
-
-  // Check for decimal point (always use . as input decimal)
   if (strValue.includes('.')) {
     const parts = strValue.split('.');
     integerPart = parts[0];
     decimalPart = parts[1] || '';
   }
 
-  // Remove all non-digit characters from integer part
   const cleanInt = integerPart.replace(/[^\d]/g, '');
   if (!cleanInt) return '';
 
-  // Add thousand separators
   const formatted = cleanInt.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep);
-
-  // Add decimal part if allowed
   if (decimals > 0 && decimalPart) {
     return `${formatted}${decimalSep}${decimalPart.slice(0, decimals)}`;
   }
@@ -48,11 +41,9 @@ function formatWithSeparator(value, thousandSep, decimalSep, decimals) {
  */
 function cleanNumber(value, thousandSep, decimalSep) {
   if (!value) return '';
-  // Create regex to match the thousand separator (escape special chars)
   const escapedSep = thousandSep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const sepRegex = new RegExp(escapedSep, 'g');
   let cleaned = value.replace(sepRegex, '');
-  // Replace local decimal separator with standard dot
   if (decimalSep !== '.') {
     cleaned = cleaned.replace(decimalSep, '.');
   }
@@ -65,17 +56,15 @@ const CurrencyInput = forwardRef(function CurrencyInput(
     onChange,
     showSymbol = true,
     className,
-    currencyCode: propCurrencyCode, // Allow override from parent
-    currencySymbol: propCurrencySymbol, // Allow symbol override from parent
+    currencyCode: propCurrencyCode,
+    currencySymbol: propCurrencySymbol,
     ...props
   },
   ref
 ) {
-  // Get currency code from props first, then fall back to app settings
   const { currency_code, currency_symbol } = usePage().props;
   const currencyCode = propCurrencyCode || currency_code || 'IDR';
 
-  // Get currency configuration dynamically using Intl.NumberFormat
   const { symbol, decimals, thousandSep, decimalSep } = useMemo(() => {
     const info = getCurrencyInfo(currencyCode);
     return {
@@ -86,7 +75,6 @@ const CurrencyInput = forwardRef(function CurrencyInput(
     };
   }, [currencyCode, propCurrencySymbol, currency_symbol]);
 
-  // Format the display value
   const displayValue = useMemo(() => {
     return formatWithSeparator(String(value || ''), thousandSep, decimalSep, decimals);
   }, [value, thousandSep, decimalSep, decimals]);
@@ -94,7 +82,6 @@ const CurrencyInput = forwardRef(function CurrencyInput(
   const handleChange = useCallback(
     (e) => {
       const inputValue = e.target.value;
-      // Clean the value (remove separators) before passing to parent
       const cleanedValue = cleanNumber(inputValue, thousandSep, decimalSep);
       onChange?.(cleanedValue);
     },

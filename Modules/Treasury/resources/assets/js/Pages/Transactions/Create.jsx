@@ -35,7 +35,6 @@ export default function Create({
     form.post(route('treasury.transactions.store'));
   };
 
-  // Show empty state if no wallets exist
   if (wallets.length === 0) {
     return (
       <PageShell title="Create Transaction">

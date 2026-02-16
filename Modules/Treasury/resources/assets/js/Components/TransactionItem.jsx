@@ -8,10 +8,8 @@ import { getCategoryIcon } from '@Treasury/Utils/categoryIcons';
 import { getGoalIcon } from '@Treasury/Utils/goalIcons';
 import { RefreshCw, Target, TrendingDown, TrendingUp } from 'lucide-react';
 
-// Re-export getCategoryIcon for backward compatibility
 export { getCategoryIcon };
 
-// Transaction type configuration
 export const typeConfig = {
   income: {
     icon: TrendingUp,
@@ -36,7 +34,6 @@ export const typeConfig = {
   },
 };
 
-// Format date for display with relative formats
 function formatTransactionDate(dateString) {
   if (!dateString) return '';
 
@@ -68,48 +65,37 @@ function formatTransactionDate(dateString) {
 export default function TransactionItem({ transaction, onClick, className, variant = 'default' }) {
   const { formatCurrency } = useAppearance();
 
-  // Handle incoming transfers specially
   const isTransfer = transaction.type === 'transfer';
   const isIncomingTransfer = transaction.is_incoming_transfer;
   const isGoalAllocation = !!transaction.goal;
-
-  // For incoming transfers, use income-like styling; for outgoing transfers use transfer styling
   const effectiveConfig = isIncomingTransfer
     ? { ...typeConfig.income, prefix: '+' }
     : typeConfig[transaction.type] || typeConfig.expense;
 
-  // Determine icon and color based on transaction type
   let CategoryIcon;
   let categoryColor;
 
   if (isGoalAllocation) {
-    // For goal allocations, use the goal's category icon
     CategoryIcon = getGoalIcon(transaction.goal?.category?.slug);
-    categoryColor = transaction.goal?.category?.color || '#8b5cf6'; // Purple fallback for goals
+    categoryColor = transaction.goal?.category?.color || '#8b5cf6';
   } else if (isTransfer) {
-    // For transfers, use the transfer icon
     CategoryIcon = typeConfig.transfer.icon;
     categoryColor = isIncomingTransfer ? '#22c55e' : '#3b82f6';
   } else {
-    // For regular transactions, use category icon
     CategoryIcon = getCategoryIcon(transaction.category?.slug);
     categoryColor = transaction.category?.color || '#6b7280';
   }
 
   const displayDate = formatTransactionDate(transaction.date);
 
-  // For transfers, show appropriate name based on direction
   const displayName = isTransfer
     ? transaction.name || (isIncomingTransfer ? 'Transfer In' : 'Transfer Out')
     : transaction.name || transaction.description || transaction.category?.name || 'Transaction';
-
-  // For transfers, show wallet flow
   const walletName =
     isTransfer && transaction.destination_wallet
       ? `${transaction.wallet?.name || 'Wallet'} → ${transaction.destination_wallet?.name || 'Wallet'}`
       : transaction.wallet?.name || transaction.wallet;
 
-  // Check if has attachments
   const hasAttachments = transaction.attachments && transaction.attachments.length > 0;
 
   if (variant === 'compact') {
@@ -152,7 +138,6 @@ export default function TransactionItem({ transaction, onClick, className, varia
     );
   }
 
-  // Default variant
   return (
     <div
       className={cn(

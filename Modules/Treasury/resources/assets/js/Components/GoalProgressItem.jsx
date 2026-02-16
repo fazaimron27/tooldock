@@ -11,7 +11,6 @@ export default function GoalProgressItem({ goal, showLink = true }) {
   const { formatCurrency } = useAppearance();
   const progress = goal.progress ?? goal.progress_percentage ?? 0;
 
-  // Get icon from category slug
   const IconComponent = getGoalIcon(goal.category?.slug);
   const categoryColor = goal.category?.color || '#6B7280';
 

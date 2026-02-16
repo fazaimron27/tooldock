@@ -37,7 +37,6 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent } from '@/Components/ui/card';
 import { Label } from '@/Components/ui/label';
 
-// Type configuration for visual styling
 const typeConfig = {
   expense: {
     icon: ArrowDownCircle,
@@ -105,7 +104,6 @@ export function getTransactionDefaults(transaction = null) {
   };
 }
 
-// Visual Type Selector Component with RHF Controller
 function TypeSelectorRHF({ control, types }) {
   const availableTypes = types.length > 0 ? types : Object.keys(typeConfig);
 
@@ -190,7 +188,6 @@ export default function TransactionForm({
 }) {
   const { formatCurrency } = useAppearance();
 
-  // Watch form values
   const formType = watch?.('type') || 'expense';
   const walletId = watch?.('wallet_id') || '';
   const destWalletId = watch?.('destination_wallet_id') || '';
@@ -199,14 +196,12 @@ export default function TransactionForm({
 
   const currentTypeConfig = typeConfig[formType] || typeConfig.expense;
 
-  // Get the selected source wallet's currency
   const sourceWallet = useMemo(() => {
     return wallets.find((w) => String(w.id) === String(walletId));
   }, [wallets, walletId]);
 
   const sourceWalletCurrency = sourceWallet?.currency || referenceCurrency;
 
-  // Filter wallets available as source
   const availableSourceWallets = useMemo(() => {
     if (formType === 'expense') {
       return wallets.filter((w) => w.type !== 'savings');
@@ -214,14 +209,12 @@ export default function TransactionForm({
     return wallets;
   }, [wallets, formType]);
 
-  // Get the selected destination wallet's currency
   const destinationWallet = useMemo(() => {
     return wallets.find((w) => String(w.id) === String(destWalletId));
   }, [wallets, destWalletId]);
 
   const destinationWalletCurrency = destinationWallet?.currency || referenceCurrency;
 
-  // Check if this is a cross-currency transfer
   const isCrossCurrencyTransfer = useMemo(() => {
     return (
       formType === 'transfer' &&
@@ -231,7 +224,6 @@ export default function TransactionForm({
     );
   }, [formType, sourceWallet, destinationWallet, sourceWalletCurrency, destinationWalletCurrency]);
 
-  // Calculate the exchange rate for cross-currency transfers
   const exchangeRateInfo = useMemo(() => {
     if (!isCrossCurrencyTransfer) return null;
 
@@ -261,7 +253,6 @@ export default function TransactionForm({
     amount,
   ]);
 
-  // Calculate balance info for expense/transfer transactions
   const balanceInfo = useMemo(() => {
     if (formType === 'income') return null;
     if (!sourceWallet?.balance) return null;
@@ -309,7 +300,6 @@ export default function TransactionForm({
     transaction,
   ]);
 
-  // Convert wallets and categories to options
   const sourceWalletOptions = useMemo(() => {
     return availableSourceWallets.map((wallet) => ({
       value: String(wallet.id),

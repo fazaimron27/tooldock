@@ -50,7 +50,6 @@ export default function Show({ transaction }) {
     });
   };
 
-  // Detail row component
   const DetailRow = ({ icon: Icon, label, value, linkTo, badge, color }) => (
     <div className="flex items-start gap-4 py-3.5 group">
       <div

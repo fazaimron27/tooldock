@@ -63,7 +63,6 @@ const transactionSchema = z
   })
   .refine(
     (data) => {
-      // Destination wallet is required for transfers
       if (data.type === 'transfer' && !data.destination_wallet_id) {
         return false;
       }
@@ -76,7 +75,6 @@ const transactionSchema = z
   )
   .refine(
     (data) => {
-      // Source and destination cannot be the same for transfers
       if (data.type === 'transfer' && data.wallet_id === data.destination_wallet_id) {
         return false;
       }

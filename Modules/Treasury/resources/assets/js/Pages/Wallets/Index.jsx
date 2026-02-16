@@ -27,7 +27,6 @@ export default function Index({ wallets, totals, walletTypes = [], netWorthHisto
   const { formatCurrency } = useAppearance();
   const [deleteWallet, setDeleteWallet] = useState(null);
 
-  // Create a map of wallet type slug to type info for quick lookup
   const walletTypeMap = useMemo(() => {
     return walletTypes.reduce((map, type) => {
       map[type.slug] = type;
@@ -35,12 +34,9 @@ export default function Index({ wallets, totals, walletTypes = [], netWorthHisto
     }, {});
   }, [walletTypes]);
 
-  // Helper to get wallet type display name
   const getWalletTypeName = (typeSlug) => {
     return walletTypeMap[typeSlug]?.name || typeSlug;
   };
-
-  // Helper to get wallet type color from Categories (fallback to utility function)
   const getWalletTypeColor = (typeSlug) => {
     return walletTypeMap[typeSlug]?.color || getWalletColor(typeSlug);
   };

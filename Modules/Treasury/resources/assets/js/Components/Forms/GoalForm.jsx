@@ -68,16 +68,12 @@ export default function GoalForm({
 }) {
   const { currency_code } = usePage().props;
 
-  // Financial tip modal state
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
   const [isLoadingTip, setIsLoadingTip] = useState(false);
-
-  // Watch form values
   const walletId = watch?.('wallet_id');
   const categoryId = watch?.('category_id');
 
-  // Determine goal currency dynamically
   const selectedWallet = useMemo(() => {
     return wallets.find((w) => String(w.id) === String(walletId));
   }, [wallets, walletId]);
@@ -89,7 +85,6 @@ export default function GoalForm({
     return currency || currency_code || 'IDR';
   }, [selectedWallet, currency, currency_code]);
 
-  // Detect currency mismatch warning for edit mode
   const currencyMismatchWarning = useMemo(() => {
     if (!isEdit || !currency || !selectedWallet?.currency) {
       return null;
@@ -100,7 +95,6 @@ export default function GoalForm({
     return null;
   }, [isEdit, currency, selectedWallet]);
 
-  // Convert wallets and categories to options
   const walletOptions = useMemo(() => {
     return wallets.map((wallet) => ({
       value: wallet.id,
@@ -120,18 +114,14 @@ export default function GoalForm({
     }));
   }, [categories]);
 
-  // Get the selected category
   const selectedCategory = useMemo(() => {
     return categories.find((c) => String(c.id) === String(categoryId));
   }, [categories, categoryId]);
-
-  // Check if selected category supports financial tips
   const supportsFinancialTip = useMemo(() => {
     if (!selectedCategory?.slug) return false;
     return FINANCIAL_TIP_SLUGS.includes(selectedCategory.slug);
   }, [selectedCategory]);
 
-  // Fetch financial tip recommendation
   const fetchRecommendation = useCallback(async (categorySlug, walletCurrency) => {
     if (!categorySlug) return;
 
@@ -158,14 +148,12 @@ export default function GoalForm({
     }
   }, []);
 
-  // Auto-fetch recommendation when an Emergency & Security category is selected
   useEffect(() => {
     if (supportsFinancialTip && selectedCategory?.slug && !isEdit) {
       fetchRecommendation(selectedCategory.slug, goalCurrency);
     }
   }, [selectedCategory?.slug, supportsFinancialTip, fetchRecommendation, isEdit, goalCurrency]);
 
-  // Handle applying a suggested amount and date from the modal
   const handleApplyRecommendation = useCallback(
     ({ amount, targetDate }) => {
       setValue?.('target_amount', String(amount), { shouldValidate: true });
@@ -176,7 +164,6 @@ export default function GoalForm({
     [setValue]
   );
 
-  // Handle manual tip button click
   const handleTipButtonClick = useCallback(() => {
     if (selectedCategory?.slug) {
       fetchRecommendation(selectedCategory.slug, goalCurrency);

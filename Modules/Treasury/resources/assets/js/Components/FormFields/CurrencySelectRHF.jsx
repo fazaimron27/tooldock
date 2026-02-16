@@ -28,13 +28,11 @@ export default function CurrencySelectRHF({
 
   const inputId = id || name;
 
-  // Convert currency map to array for select options
   const currencyOptions = Object.entries(currencyMap).map(([code, info]) => ({
     value: code,
     label: `${code} - ${info.label}`,
   }));
 
-  // Filter currencies based on search
   const filteredCurrencies = useMemo(() => {
     if (!search) return currencyOptions;
     const searchLower = search.toLowerCase();

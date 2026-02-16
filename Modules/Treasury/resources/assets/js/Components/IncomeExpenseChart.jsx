@@ -23,7 +23,6 @@ const chartConfig = {
 export default function IncomeExpenseChart({ data = [], className = '' }) {
   const { formatCurrency } = useAppearance();
 
-  // Ensure we have valid data
   const chartData = useMemo(() => {
     if (!data || data.length === 0) {
       return [];
