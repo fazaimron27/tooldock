@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Role Changed Handler.
+ *
+ * Signal handler that notifies users when their
+ * role assignment has been modified.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\User\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
@@ -49,7 +59,6 @@ class UserRoleChangedHandler implements SignalHandlerInterface
         /** @var array<string> $newRoles */
         $newRoles = $data['new_roles'];
 
-        // Only notify if roles actually changed
         if ($oldRoles === $newRoles) {
             return null;
         }

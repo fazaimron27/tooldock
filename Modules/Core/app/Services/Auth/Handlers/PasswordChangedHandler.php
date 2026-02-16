@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Password Changed Handler.
+ *
+ * Signal handler that sends security notifications
+ * when a user's password is changed.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\Auth\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Has User Ownership Trait.
+ *
+ * Provides a query scope to filter records by user ownership,
+ * with Super Admins bypassing the ownership restriction.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Traits;
 
 use Illuminate\Database\Eloquent\Builder;

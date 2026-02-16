@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Super Admin Service.
+ *
+ * Provides methods to check if a user has super admin
+ * privileges based on their assigned roles.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Services\Registry\RoleRegistry;

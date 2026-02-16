@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Menu Registrar.
+ *
+ * Registers navigation menu items for the Core module
+ * including dashboard, users, roles, and settings entries.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Services\Registry\MenuRegistry;
@@ -11,6 +21,10 @@ class CoreMenuRegistrar
 {
     /**
      * Register all menu items for the Core module.
+     *
+     * @param  MenuRegistry  $menuRegistry  The menu registry service
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(MenuRegistry $menuRegistry, string $moduleName): void
     {

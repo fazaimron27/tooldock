@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Command Registrar.
+ *
+ * Registers artisan commands provided by the Core module
+ * including user bulk creation commands.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Services\Registry\CommandRegistry;
@@ -14,10 +24,13 @@ class CoreCommandRegistrar
 {
     /**
      * Register all Command Palette commands for the Core module.
+     *
+     * @param  CommandRegistry  $registry  The command registry service
+     * @param  string  $moduleName  The module name identifier
+     * @return void
      */
     public function register(CommandRegistry $registry, string $moduleName): void
     {
-        // System commands (no parent - top level)
         $registry->registerMany($moduleName, 'System', [
             [
                 'label' => 'Profile',
@@ -35,7 +48,6 @@ class CoreCommandRegistrar
             ],
         ]);
 
-        // User Management group
         $registry->registerMany($moduleName, 'System', [
             [
                 'label' => 'Users',
@@ -57,7 +69,6 @@ class CoreCommandRegistrar
             ],
         ]);
 
-        // Platform commands
         $registry->registerMany($moduleName, 'Platform', [
             [
                 'label' => 'Modules',

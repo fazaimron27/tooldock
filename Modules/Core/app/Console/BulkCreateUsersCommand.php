@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Bulk Create Users Command.
+ *
+ * Artisan command to create multiple users with audit log entries
+ * bypassing the queue for direct database insertion.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Console;
 
 use Illuminate\Console\Command;
@@ -27,6 +37,8 @@ class BulkCreateUsersCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @return int Command exit code (SUCCESS or FAILURE)
      */
     public function handle(): int
     {
@@ -145,6 +157,8 @@ class BulkCreateUsersCommand extends Command
      * Uses bulk insert for better performance instead of queued jobs.
      *
      * @param  array<string>  $userIds  Array of user IDs
+     * @param  int  $chunkSize  Number of audit logs to insert per batch
+     * @return void
      */
     protected function triggerAuditLogs(array $userIds, int $chunkSize): void
     {
@@ -169,7 +183,7 @@ class BulkCreateUsersCommand extends Command
                     'model' => $user,
                     'oldValues' => null,
                     'newValues' => $attributes,
-                    'userId' => null, // Console context
+                    'userId' => null,
                     'url' => null,
                     'ipAddress' => null,
                     'userAgent' => null,
@@ -266,6 +280,10 @@ class BulkCreateUsersCommand extends Command
     /**
      * Filter and redact sensitive fields from attributes (aligned with LogsActivity trait).
      * Uses the same logic as the trait for consistency.
+     *
+     * @param  array<string, mixed>  $attributes  The model attributes to filter
+     * @param  User  $user  The user model instance for audit config
+     * @return array<string, mixed> Filtered attributes with sensitive data redacted
      */
     protected function filterSensitiveFields(array $attributes, User $user): array
     {
@@ -284,12 +302,10 @@ class BulkCreateUsersCommand extends Command
             'social_security_number',
         ];
 
-        // Check for model-specific exclusions
         if (property_exists($user, 'auditExclude') && is_array($user->auditExclude)) {
             $excludedFields = array_merge($excludedFields, $user->auditExclude);
         }
 
-        // Check for model-specific sensitive fields
         if (property_exists($user, 'auditSensitive') && is_array($user->auditSensitive)) {
             $sensitiveFields = array_merge($sensitiveFields, $user->auditSensitive);
         }
@@ -297,12 +313,9 @@ class BulkCreateUsersCommand extends Command
         $processed = [];
 
         foreach ($attributes as $key => $value) {
-            // Completely exclude fields
             if (in_array($key, $excludedFields, true)) {
                 continue;
             }
-
-            // Redact (mask) sensitive fields
             if (in_array($key, $sensitiveFields, true)) {
                 $processed[$key] = '***REDACTED***';
             } else {

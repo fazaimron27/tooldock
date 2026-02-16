@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Core Permission Registrar.
+ *
+ * Registers all permissions for the Core module including
+ * user, role, module, and dashboard management permissions.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services;
 
 use App\Services\Registry\PermissionRegistry;
@@ -13,6 +23,9 @@ class CorePermissionRegistrar
 {
     /**
      * Register default roles for the Core module.
+     *
+     * @param  RoleRegistry  $registry  The role registry service
+     * @return void
      */
     public function registerRoles(RoleRegistry $registry): void
     {
@@ -26,6 +39,9 @@ class CorePermissionRegistrar
 
     /**
      * Register default permissions for the Core module.
+     *
+     * @param  PermissionRegistry  $registry  The permission registry service
+     * @return void
      */
     public function registerPermissions(PermissionRegistry $registry): void
     {

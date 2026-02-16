@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Auth Service Provider.
+ *
+ * Registers authorization policies for Core module models
+ * and configures Gate super admin bypass.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -22,6 +32,8 @@ class AuthServiceProvider extends ServiceProvider
 
     /**
      * Register any authentication / authorization services.
+     *
+     * @return void
      */
     public function boot(): void
     {

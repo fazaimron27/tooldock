@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * User Lockout Handler.
+ *
+ * Signal handler that sends security alerts when
+ * a user account is locked due to failed attempts.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\Auth\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;

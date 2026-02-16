@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Email Changed Handler.
+ *
+ * Signal handler that notifies users when their
+ * email address has been changed.
+ *
+ * @author Tool Dock Team
+ * @license MIT
+ */
+
 namespace Modules\Core\Services\User\Handlers;
 
 use App\Services\Registry\SignalHandlerInterface;
