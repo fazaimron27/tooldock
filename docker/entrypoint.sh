@@ -2,7 +2,9 @@
 # =============================================================================
 # Docker Entrypoint Script
 # =============================================================================
-# Initialize database, modules, and caches before starting services.
+# Initialize database and caches before starting services.
+# Module discovery, installation, and registry seeding are handled
+# automatically by the AutoInstallProtectedModules listener.
 
 set -e
 
@@ -33,68 +35,32 @@ if [ ! -L /var/www/html/public/storage ]; then
     php artisan storage:link --force 2>/dev/null || true
 fi
 
-# Clear caches
-echo "Clearing caches..."
-php artisan config:clear 2>/dev/null || true
-php artisan route:clear 2>/dev/null || true
-php artisan view:clear 2>/dev/null || true
-php artisan event:clear 2>/dev/null || true
-
-# Run migrations
+# Run migrations (triggers AutoInstallProtectedModules listener on fresh databases,
+# which handles module discovery, protected module installation, and registry seeding)
 if [ "$AUTO_MIGRATE" = "true" ]; then
     echo "Running database migrations..."
-    php artisan migrate --force --no-interaction
+    php artisan migrate --no-interaction
     echo "Migrations completed!"
 fi
 
-# Discover modules
-echo "Discovering modules..."
-php artisan module:discover --no-interaction 2>/dev/null || true
-
-# Install protected modules
-echo "Checking protected modules installation..."
-php artisan tinker --execute="
-use App\Services\Modules\ModuleLifecycleService;
-use Illuminate\Support\Facades\DB;
-
-if (DB::table('modules_statuses')->where('is_installed', true)->doesntExist()) {
-    echo 'Installing protected modules...';
-    \$service = app(ModuleLifecycleService::class);
-    \$installed = \$service->installProtectedModules();
-    echo 'Installed: ' . implode(', ', \$installed);
-} else {
-    echo 'Protected modules already installed.';
-}
-" 2>/dev/null || true
-
-# Seed module registries
-echo "Seeding module registries..."
-php artisan tinker --execute="
-use App\Services\Registry\MenuRegistry;
-use App\Services\Registry\SettingsRegistry;
-use App\Services\Registry\PermissionRegistry;
-use App\Services\Registry\CategoryRegistry;
-use App\Services\Registry\GroupRegistry;
-use App\Services\Registry\RoleRegistry;
-
-app(MenuRegistry::class)->seed();
-app(SettingsRegistry::class)->seed();
-app(PermissionRegistry::class)->seed();
-app(CategoryRegistry::class)->seed();
-app(GroupRegistry::class)->seed();
-app(RoleRegistry::class)->seed();
-
-echo 'Registries seeded successfully.';
-" 2>/dev/null || true
-
-# Cache for production
+# Cache and warm for production
 if [ "$APP_ENV" = "production" ]; then
-    echo "Caching configuration for production..."
+    echo "Building production caches..."
+
+    # Laravel framework caches
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
     php artisan event:cache
-    echo "Configuration cached successfully!"
+
+    # Ziggy frontend route manifest (must run AFTER route:cache to capture final routes)
+    php artisan ziggy:generate 2>/dev/null || true
+
+    # Reset Spatie permission cache to clear stale data from previous containers
+    # Permissions auto-warm on first access via Spatie's lazy loading
+    php artisan permission:cache-reset 2>/dev/null || true
+
+    echo "Production caches ready!"
 fi
 
 echo "=========================================="
