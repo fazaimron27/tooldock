@@ -2,6 +2,7 @@
  * Stat Widget component for displaying statistics
  * Accepts widget props from DashboardWidgetRegistry
  */
+import { formatCurrency, formatNumber } from '@/Utils/format';
 import { getIcon } from '@/Utils/iconResolver';
 
 import StatCard from '@/Components/DataDisplay/StatCard';
@@ -23,12 +24,31 @@ export default function StatWidget({ widget }) {
   }
 
   const title = widget.title || 'Untitled';
-  const value = widget.value ?? 0;
   const icon = widget.icon || 'BarChart';
   const change = widget.change ?? null;
   const trend = widget.trend ?? null;
 
-  const Icon = getIcon(icon);
+  const isValueMissing = widget.value === null || widget.value === undefined;
+  let value = isValueMissing ? '--' : widget.value;
 
-  return <StatCard title={title} value={value} change={change} trend={trend} icon={Icon} />;
+  // Format currency if specified in config and value is a number
+  if (!isValueMissing && widget.config?.valueType === 'currency') {
+    value = formatCurrency(value, widget.config?.currency || 'IDR');
+  } else if (!isValueMissing && typeof value === 'number') {
+    value = formatNumber(value);
+  }
+
+  const Icon = getIcon(icon);
+  const description = widget.description;
+
+  return (
+    <StatCard
+      title={title}
+      description={description}
+      value={value}
+      change={change}
+      trend={trend}
+      icon={Icon}
+    />
+  );
 }

@@ -20,6 +20,7 @@ function renderWidgetGrid(widgets, widgetType) {
   }
 
   const getRowClass = (rowLength) => {
+    if (widgetType === 'chart') return 'grid gap-4 items-start grid-cols-1';
     if (rowLength === 1) return 'grid gap-4 items-start grid-cols-1';
     if (rowLength === 2) return 'grid gap-4 items-start md:grid-cols-2';
     return 'grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3';
@@ -94,16 +95,21 @@ function WidgetGroup({
  *
  * @param {string} moduleName - Name of the module
  * @param {array} groups - Array of group objects with widget arrays by type
+ * @param {object|null} metadata - Optional metadata (title, description)
  */
-export default function ModuleSection({ moduleName, groups = [] }) {
+export default function ModuleSection({ moduleName, groups = [], metadata = null }) {
   if (!groups || groups.length === 0) {
     return null;
   }
 
+  const title = metadata?.title || `${moduleName} Module`;
+  const description = metadata?.description;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{moduleName} Module</CardTitle>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="space-y-6">
         {groups.map((group) => (

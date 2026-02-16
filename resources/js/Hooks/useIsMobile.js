@@ -1,13 +1,26 @@
 /**
  * Hook for detecting mobile screen size
  * Returns true when viewport width is below the mobile breakpoint (768px)
+ *
+ * Uses SSR-safe initial value based on window width to prevent hydration flicker
  */
 import * as React from 'react';
 
 const MOBILE_BREAKPOINT = 768;
 
+/**
+ * Get initial mobile state synchronously to prevent flash
+ */
+function getInitialIsMobile() {
+  if (typeof window === 'undefined') {
+    return false; // Default to desktop on SSR
+  }
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(undefined);
+  // Initialize with actual value to prevent flash
+  const [isMobile, setIsMobile] = React.useState(getInitialIsMobile);
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -15,9 +28,10 @@ export function useIsMobile() {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
     mql.addEventListener('change', onChange);
+    // Set initial value in case it changed between render and effect
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  return !!isMobile;
+  return isMobile;
 }

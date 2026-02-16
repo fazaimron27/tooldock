@@ -94,6 +94,7 @@ const ChartTooltipContent = React.forwardRef(
       labelFormatter,
       labelClassName,
       formatter,
+      valueFormatter,
       color,
       nameKey,
       labelKey,
@@ -185,7 +186,7 @@ const ChartTooltipContent = React.forwardRef(
                       )}
                       <div
                         className={cn(
-                          'flex flex-1 justify-between leading-none',
+                          'flex flex-1 justify-between leading-none gap-4',
                           nestLabel ? 'items-end' : 'items-center'
                         )}
                       >
@@ -197,7 +198,9 @@ const ChartTooltipContent = React.forwardRef(
                         </div>
                         {item.value && (
                           <span className="font-mono font-medium tabular-nums text-foreground">
-                            {item.value.toLocaleString()}
+                            {valueFormatter
+                              ? valueFormatter(item.value)
+                              : item.value.toLocaleString()}
                           </span>
                         )}
                       </div>

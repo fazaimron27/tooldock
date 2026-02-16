@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Core\Http\Controllers\DashboardController;
 use Modules\Core\Http\Controllers\GuestController;
 use Modules\Core\Http\Controllers\ProfileController;
+use Modules\Core\Http\Controllers\UserPreferenceController;
 use Modules\Core\Http\Controllers\WelcomeController;
 
 Route::get('/', [WelcomeController::class, 'index']);
@@ -18,6 +19,13 @@ Route::prefix('tooldock')->middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User preferences
+    Route::get('/preferences', [UserPreferenceController::class, 'index'])->name('preferences.index');
+    Route::post('/preferences', [UserPreferenceController::class, 'update'])->name('preferences.update');
+    Route::post('/preferences/bulk', [UserPreferenceController::class, 'bulkUpdate'])->name('preferences.bulkUpdate');
+    Route::post('/preferences/reset', [UserPreferenceController::class, 'reset'])->name('preferences.reset');
+    Route::post('/preferences/reset-all', [UserPreferenceController::class, 'resetAll'])->name('preferences.resetAll');
 });
 
 require __DIR__.'/auth.php';

@@ -23,7 +23,7 @@ export default function ChartCard({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className={cn('overflow-hidden', contentClassName)}>
-        <ChartContainer config={config} className={cn('w-full', height)}>
+        <ChartContainer config={config} className={cn('w-full h-full', height)}>
           {children}
         </ChartContainer>
       </CardContent>

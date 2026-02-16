@@ -35,20 +35,25 @@ export default function ProgressBar({
     info: 'bg-blue-500',
   };
 
+  // Determine if color is a variant or dynamic hex
+  const isVariant = Object.keys(colorClasses).includes(color);
+
   return (
     <div className={cn('space-y-1', className)}>
       <div className="flex justify-between text-sm">
-        <span>{label}</span>
-        <span>{displayValue}</span>
+        <span className="font-medium">{label}</span>
+        <span className="text-muted-foreground">{displayValue}</span>
       </div>
       <div className="h-2 bg-secondary rounded-full overflow-hidden">
         <div
           className={cn(
             'h-full transition-all duration-300',
-            colorClasses[color] || colorClasses.primary,
-            barClassName
+            isVariant ? colorClasses[color] : barClassName
           )}
-          style={{ width: `${clampedPercentage}%` }}
+          style={{
+            width: `${clampedPercentage}%`,
+            backgroundColor: !isVariant ? color : undefined,
+          }}
         />
       </div>
     </div>

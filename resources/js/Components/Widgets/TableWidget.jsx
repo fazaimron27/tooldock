@@ -17,6 +17,7 @@
  * )
  */
 import { useDatatable } from '@/Hooks/useDatatable';
+import { formatCurrency, formatDate, formatNumber } from '@/Utils/format';
 import { useMemo } from 'react';
 
 import DataTable from '@/Components/DataDisplay/DataTable';
@@ -35,6 +36,24 @@ const DEFAULT_CELL_RENDERER = (info) => {
  * Supports string format, object with 'key' property, or full column definition.
  */
 function normalizeColumn(col, data = []) {
+  const getCellRenderer = (column) => {
+    if (column.cell) return column.cell;
+
+    switch (column.type) {
+      case 'currency':
+        return (info) => formatCurrency(info.getValue(), column.currency || 'IDR');
+      case 'date':
+        return (info) => formatDate(info.getValue(), column.format || 'short');
+      case 'number':
+        return (info) => {
+          const val = info.getValue();
+          return typeof val === 'number' ? formatNumber(val) : val;
+        };
+      default:
+        return DEFAULT_CELL_RENDERER;
+    }
+  };
+
   if (typeof col === 'string') {
     return {
       accessorKey: col,
@@ -47,15 +66,15 @@ function normalizeColumn(col, data = []) {
     return {
       ...col,
       accessorKey: col.key,
-      header: col.header || col.title || col.key,
-      cell: col.cell || DEFAULT_CELL_RENDERER,
+      header: col.header || col.title || col.label || col.key,
+      cell: getCellRenderer(col),
     };
   }
 
   if (col.accessorKey || col.accessorFn) {
     return {
       ...col,
-      cell: col.cell || DEFAULT_CELL_RENDERER,
+      cell: getCellRenderer(col),
     };
   }
 
@@ -64,7 +83,7 @@ function normalizeColumn(col, data = []) {
     if (firstKey) {
       return {
         accessorKey: firstKey,
-        header: col.header || col.title || firstKey,
+        header: col.header || col.title || col.label || firstKey,
         cell: DEFAULT_CELL_RENDERER,
       };
     }
@@ -76,7 +95,7 @@ function normalizeColumn(col, data = []) {
 
   return {
     id: `unnormalized-${Math.random().toString(36).substr(2, 9)}`,
-    header: col.header || col.title || 'Unknown',
+    header: col.header || col.title || col.label || 'Unknown',
     cell: DEFAULT_CELL_RENDERER,
   };
 }

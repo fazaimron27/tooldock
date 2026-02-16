@@ -4,13 +4,15 @@ This directory contains hooks for using TanStack Query (React Query) in the appl
 
 ## When to Use TanStack Query vs Inertia.js
 
-### Use Inertia.js for:
+### Use Inertia.js for
+
 - Server-driven state management
 - Form submissions that navigate to new pages
 - Data that comes from Laravel controllers
 - Full-page navigation and state synchronization
 
-### Use TanStack Query for:
+### Use TanStack Query for
+
 - External API calls (third-party services, weather APIs, etc.)
 - Real-time data that needs polling
 - Client-side caching of data
@@ -73,9 +75,89 @@ function MyComponent() {
 }
 ```
 
-## Example Hooks
+## Real Implementation: Notification Hooks
 
-See `useExternalData.js` and `useCachedData.js` for example implementations.
+The Signal module provides notification queries that demonstrate TanStack Query usage:
+
+```javascript
+import {
+  useUnreadCount,
+  useRecentNotifications,
+  useMarkAsRead,
+  useMarkAllAsRead,
+} from '@Signal/Hooks/useNotificationQueries';
+
+function NotificationBell() {
+  // Query: Auto-refetches every 30s, caches result
+  const { data, isLoading } = useUnreadCount();
+  
+  // Mutation: Invalidates cache on success
+  const markAllRead = useMarkAllAsRead();
+  
+  return (
+    <div>
+      <span>Unread: {data?.count ?? 0}</span>
+      <button 
+        onClick={() => markAllRead.mutate()}
+        disabled={markAllRead.isPending}
+      >
+        Mark All Read
+      </button>
+    </div>
+  );
+}
+```
+
+See `Modules/Signal/resources/assets/js/Hooks/useNotificationQueries.js` for full implementation.
+
+## Other Available Hooks
+
+### User Search Hooks
+
+Shared hooks for searching users across components. Cached results mean instant display for repeated searches.
+
+```javascript
+import { useUserSearch, useUserById } from '@/Hooks/queries/useUserSearch';
+
+function UserSelect() {
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 300);
+  
+  // Search users - cached results are shared across components
+  const { data, isLoading } = useUserSearch(debouncedSearch, {
+    enabled: open, // Only fetch when dropdown is open
+    limit: 20,
+  });
+  
+  // Fetch specific user by ID
+  const { data: userData } = useUserById(userId, {
+    enabled: !!userId,
+  });
+  
+  return <div>...</div>;
+}
+```
+
+Used by: `UserCombobox`, `MemberSelect`
+
+### Vault Hooks
+
+Polling hooks for vault lock status and TOTP codes.
+
+```javascript
+import { useVaultLockStatus, useTOTPCode } from '@Vault/Hooks/useVaultQueries';
+
+// Lock status polling (10s interval, auto-pauses when tab hidden)
+const { data } = useVaultLockStatus({
+  enabled: vaultLockEnabled,
+});
+
+// TOTP code polling (5s interval)
+const { data: totpData } = useTOTPCode(vault.id, {
+  enabled: !!vault.totp_secret,
+});
+const totpCode = totpData?.code;
+```
 
 ## Best Practices
 
@@ -84,4 +166,4 @@ See `useExternalData.js` and `useCachedData.js` for example implementations.
 3. **Error Handling**: Always handle loading and error states
 4. **Cache Invalidation**: Invalidate related queries after mutations
 5. **Optimistic Updates**: Use `onMutate` for optimistic UI updates when appropriate
-
+6. **Enabled Option**: Use `enabled: false` to defer fetching until needed (e.g., dropdown open)

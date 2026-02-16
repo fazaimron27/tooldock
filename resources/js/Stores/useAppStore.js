@@ -7,6 +7,9 @@ import { persist } from 'zustand/middleware';
 
 /**
  * Application store state and actions
+ *
+ * Uses skipHydration to prevent flash when hydrating from localStorage.
+ * The store will be hydrated after the initial render.
  */
 export const useAppStore = create(
   persist(
@@ -16,41 +19,6 @@ export const useAppStore = create(
        */
       sidebarOpen: true,
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-
-      /**
-       * User preferences for UI customization.
-       */
-      preferences: {},
-      setPreferences: (preferences) =>
-        set((state) => ({
-          preferences: { ...state.preferences, ...preferences },
-        })),
-
-      /**
-       * Navigation history state for complex navigation scenarios.
-       */
-      navigationHistory: [],
-      addToHistory: (path) =>
-        set((state) => ({
-          navigationHistory: [...state.navigationHistory.slice(-9), path],
-        })),
-      clearHistory: () => set({ navigationHistory: [] }),
-
-      /**
-       * Temporary UI state for modals, dialogs, and other global UI components.
-       */
-      uiState: {},
-      setUIState: (key, value) =>
-        set((state) => ({
-          uiState: { ...state.uiState, [key]: value },
-        })),
-      clearUIState: (key) =>
-        set((state) => {
-          const newState = { ...state.uiState };
-          delete newState[key];
-          return { uiState: newState };
-        }),
 
       /**
        * Sidebar menu state for tracking open groups and menu items.
@@ -79,19 +47,28 @@ export const useAppStore = create(
             },
           },
         })),
+
+      /**
+       * Hydration state - true after store has been hydrated from localStorage
+       */
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: 'app-storage',
       /**
        * Only persist certain parts of the state to localStorage.
-       * Excludes temporary UI state that shouldn't persist across sessions.
        */
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
-        preferences: state.preferences,
-        navigationHistory: state.navigationHistory,
         sidebarMenu: state.sidebarMenu,
       }),
+      /**
+       * Called when hydration is complete
+       */
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

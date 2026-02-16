@@ -7,11 +7,19 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 import MetricCard from './MetricCard';
 
-export default function StatCard({ title, value, change, trend, icon: Icon, className }) {
+export default function StatCard({
+  title,
+  description,
+  value,
+  change,
+  trend,
+  icon: Icon,
+  className,
+}) {
   const TrendIcon = trend === 'up' ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <MetricCard title={title} icon={Icon} className={className}>
+    <MetricCard title={title} description={description} icon={Icon} className={className}>
       <div className="text-2xl font-bold">{value}</div>
       {change && (
         <p

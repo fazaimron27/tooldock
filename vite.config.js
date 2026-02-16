@@ -73,6 +73,7 @@ export default defineConfig({
       '@Settings': path.resolve(__dirname, 'Modules/Settings/resources/assets/js'),
       '@Signal': path.resolve(__dirname, 'Modules/Signal/resources/assets/js'),
       '@Vault': path.resolve(__dirname, 'Modules/Vault/resources/assets/js'),
+      '@Treasury': path.resolve(__dirname, 'Modules/Treasury/resources/assets/js'),
     },
   },
   server: {
