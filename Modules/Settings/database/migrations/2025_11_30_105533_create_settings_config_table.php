@@ -17,9 +17,15 @@ return new class extends Migration
             $table->string('group')->index();
             $table->string('key')->unique()->index();
             $table->text('value')->nullable();
-            $table->enum('type', ['text', 'boolean', 'integer', 'textarea']);
+            $table->json('options')->nullable();
+            $table->string('type'); // Validated by PHP SettingType enum
             $table->string('label');
             $table->boolean('is_system')->default(false);
+            $table->string('scope', 10)->default('global')->index();
+            $table->boolean('searchable')->default(false);
+            $table->string('category')->nullable()->index();
+            $table->string('category_label')->nullable();
+            $table->string('category_description')->nullable();
             $table->timestamps();
         });
     }
