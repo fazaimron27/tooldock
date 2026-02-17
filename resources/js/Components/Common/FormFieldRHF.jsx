@@ -43,7 +43,7 @@ export default function FormFieldRHF({
             id={inputId}
             type={type}
             {...field}
-            required={required}
+            required={false}
             autoComplete={autoComplete}
             placeholder={placeholder}
             className={cn(error && 'border-destructive', inputClassName)}

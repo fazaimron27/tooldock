@@ -1,0 +1,19 @@
+{
+  "name": "Routine",
+  "alias": "routine",
+  "version": "1.0.0",
+  "description": "Daily habit tracking and consistency builder.",
+  "keywords": ["routine", "habit", "tracker", "streak", "heatmap"],
+  "priority": -985,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Routine\\Providers\\RoutineServiceProvider",
+    "Modules\\Routine\\Providers\\RouteServiceProvider",
+    "Modules\\Routine\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Categories", "Settings", "AuditLog", "Signal"],
+  "icon": "Repeat",
+  "author": "Tool Dock Team"
+}

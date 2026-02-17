@@ -1,0 +1,28 @@
+{
+  "name": "fazaimron27/routine",
+  "description": "",
+  "authors": [
+    {
+      "name": "Faza Iman Imron",
+      "email": "fazaimanimron@gmail.com"
+    }
+  ],
+  "extra": {
+    "laravel": {
+      "providers": [],
+      "aliases": {}
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\Routine\\": "app/",
+      "Modules\\Routine\\Database\\Factories\\": "database/factories/",
+      "Modules\\Routine\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Modules\\Routine\\Tests\\": "tests/"
+    }
+  }
+}

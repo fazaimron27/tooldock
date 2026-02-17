@@ -150,9 +150,10 @@ class CommandRegistry
             'User Management' => 1,
             'Treasury' => 2,
             'Utilities' => 3,
-            'Master Data' => 4,
-            'Platform' => 5,
-            'System' => 6,
+            'Life OS' => 4,
+            'Master Data' => 5,
+            'Platform' => 6,
+            'System' => 7,
         ];
 
         uksort($grouped, function ($groupA, $groupB) use ($groupOrder) {
