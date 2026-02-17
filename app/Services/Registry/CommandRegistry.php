@@ -148,9 +148,8 @@ class CommandRegistry
         $groupOrder = [
             'Quick Actions' => 0,
             'User Management' => 1,
-            'Treasury' => 2,
-            'Utilities' => 3,
-            'Life OS' => 4,
+            'Life OS' => 3,
+            'Utilities' => 4,
             'Master Data' => 5,
             'Platform' => 6,
             'System' => 7,
