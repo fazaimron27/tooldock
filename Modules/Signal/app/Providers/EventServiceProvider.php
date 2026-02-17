@@ -48,8 +48,8 @@ class EventServiceProvider extends ServiceProvider
     /**
      * Configure the proper event listeners for email verification.
      *
-     * Placeholder method for email verification event configuration.
-     * Currently not used by the Signal module.
+     * Overridden as a no-op to prevent this module from re-registering
+     * the email verification listener that the main app already handles.
      *
      * @return void
      */
