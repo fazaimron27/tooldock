@@ -6,8 +6,8 @@
  * Configures web and API route loading for the Core module
  * with appropriate middleware groups.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Core\Providers;
@@ -15,6 +15,11 @@ namespace Modules\Core\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Class RouteServiceProvider
+ *
+ * Handles route registration for the Core module.
+ */
 class RouteServiceProvider extends ServiceProvider
 {
     protected string $name = 'Core';

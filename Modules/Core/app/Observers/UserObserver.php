@@ -15,10 +15,12 @@ namespace Modules\Core\Observers;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\User;
 use Modules\Core\Services\PermissionCacheService;
+use Modules\Groups\Models\Group;
 
 /**
  * Observer for User model events.
@@ -52,7 +54,7 @@ class UserObserver
                 $defaultGroup = $this->groupRegistry->getGroup($defaultGroupName);
 
                 if (! $defaultGroup) {
-                    $defaultGroup = \Modules\Groups\Models\Group::where('name', $defaultGroupName)->first();
+                    $defaultGroup = Group::where('name', $defaultGroupName)->first();
                 }
 
                 if ($defaultGroup) {
@@ -63,7 +65,7 @@ class UserObserver
                 }
 
                 $this->dashboardWidgetRegistry->clearCache(null, 'Core');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::warning('Failed to assign default group to user: '.$e->getMessage(), [
                     'user_id' => $user->id,
                     'group' => $defaultGroupName ?? 'unknown',

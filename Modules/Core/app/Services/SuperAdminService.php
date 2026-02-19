@@ -13,10 +13,13 @@
 namespace Modules\Core\Services;
 
 use App\Services\Registry\RoleRegistry;
+use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Constants\Roles;
 use Modules\Core\Models\Role;
 use Modules\Core\Models\User;
+use RuntimeException;
 
 /**
  * Service for managing super admin user creation.
@@ -55,7 +58,7 @@ class SuperAdminService
             if (! $superAdminRole) {
                 Log::error('SuperAdminService: Failed to get or create Super Admin role');
                 if ($throwOnError) {
-                    throw new \RuntimeException('Failed to get or create Super Admin role');
+                    throw new RuntimeException('Failed to get or create Super Admin role');
                 }
 
                 return false;
@@ -85,7 +88,7 @@ class SuperAdminService
                         'email' => $superAdminEmail,
                     ]);
                 }
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if (str_contains($e->getMessage(), 'duplicate key') || str_contains($e->getMessage(), 'Unique violation')) {
                     $existingUser = User::where('email', $superAdminEmail)->first();
                     if ($existingUser) {
@@ -105,7 +108,7 @@ class SuperAdminService
             }
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('SuperAdminService: Failed to ensure super admin exists', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -144,7 +147,7 @@ class SuperAdminService
             ]);
 
             return $role;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('SuperAdminService: Failed to create Super Admin role', [
                 'error' => $e->getMessage(),
             ]);

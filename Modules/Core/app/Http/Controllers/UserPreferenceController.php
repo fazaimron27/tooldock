@@ -16,9 +16,11 @@ use App\Http\Controllers\Controller;
 use App\Services\Core\UserPreferenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 /**
  * Class UserPreferenceController
@@ -112,7 +114,7 @@ class UserPreferenceController extends Controller
             return true;
         }
 
-        return \Illuminate\Support\Facades\Gate::forUser($user)->allows($permission);
+        return Gate::forUser($user)->allows($permission);
     }
 
     /**
@@ -144,7 +146,7 @@ class UserPreferenceController extends Controller
             $this->preferenceService->set($user, $key, $value);
 
             return Redirect::back()->with('success', 'Preference updated successfully.');
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return Redirect::back()->withErrors(['key' => $e->getMessage()]);
         }
     }
@@ -198,7 +200,7 @@ class UserPreferenceController extends Controller
             $this->preferenceService->setMany($user, $preferences);
 
             return Redirect::back()->with('success', 'Preferences updated successfully.');
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return Redirect::back()->withErrors(['preferences' => $e->getMessage()]);
         }
     }

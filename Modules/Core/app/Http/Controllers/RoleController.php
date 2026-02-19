@@ -26,8 +26,10 @@ use Modules\Core\Http\Requests\StoreRoleRequest;
 use Modules\Core\Http\Requests\UpdateRoleRequest;
 use Modules\Core\Models\Permission;
 use Modules\Core\Models\Role;
+use Modules\Core\Models\User;
 use Modules\Core\Services\PermissionCacheService;
 use Modules\Core\Services\PermissionService;
+use Modules\Groups\Models\Group;
 use Modules\Groups\Services\GroupPermissionCacheService;
 
 class RoleController extends Controller
@@ -67,7 +69,7 @@ class RoleController extends Controller
 
         $roleIds = array_column($roles->items(), 'id');
         if (! empty($roleIds)) {
-            $groupsByRole = \Modules\Groups\Models\Group::query()
+            $groupsByRole = Group::query()
                 ->join('groups_roles', 'groups.id', '=', 'groups_roles.group_id')
                 ->whereIn('groups_roles.role_id', $roleIds)
                 ->select('groups.id', 'groups.name', 'groups_roles.role_id')
@@ -264,7 +266,7 @@ class RoleController extends Controller
 
         $signalRegistry = app(SignalHandlerRegistry::class);
 
-        $affectedUsers = \Modules\Core\Models\User::whereIn('id', $allAffectedUserIds)->get()->keyBy('id');
+        $affectedUsers = User::whereIn('id', $allAffectedUserIds)->get()->keyBy('id');
 
         foreach ($allAffectedUserIds as $userId) {
             $this->menuRegistry->clearCacheForUser($userId);

@@ -14,6 +14,7 @@ namespace Modules\Core\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\Registry\SignalHandlerRegistry;
+use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -125,7 +126,7 @@ class RegisteredUserController extends Controller
             $this->signalRegistry->dispatch('user.registered', [
                 'user' => $user,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Failed to send welcome notification', ['error' => $e->getMessage()]);
         }
     }
@@ -152,7 +153,7 @@ class RegisteredUserController extends Controller
                     'new_user' => $newUser,
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Failed to notify admins of new user', ['error' => $e->getMessage()]);
         }
     }

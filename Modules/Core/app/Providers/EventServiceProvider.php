@@ -6,8 +6,8 @@
  * Registers event listeners and model observers
  * for the Core module's domain events.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Core\Providers;
@@ -16,6 +16,11 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Modules\Core\Listeners\SendLockoutNotification;
 
+/**
+ * Class EventServiceProvider
+ *
+ * Manages event-to-listener bindings for the Core module.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**

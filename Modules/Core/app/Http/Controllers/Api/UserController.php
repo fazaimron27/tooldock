@@ -13,6 +13,8 @@
 namespace Modules\Core\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -72,7 +74,7 @@ class UserController extends Controller
             $users = Cache::tags(['users', 'user_search'])->remember($cacheKey, $cacheTTL, function () use ($search, $limit) {
                 return $this->buildUserSearchQuery($search, $limit)->get();
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             /**
              * Fallback for cache drivers that don't support tags (file, database, dynamodb).
              * Uses standard cache without tags, relying on TTL for expiration.
@@ -99,7 +101,7 @@ class UserController extends Controller
      * @param  int  $limit  Maximum number of results to return
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    private function buildUserSearchQuery(string $search, int $limit): \Illuminate\Database\Eloquent\Builder
+    private function buildUserSearchQuery(string $search, int $limit): Builder
     {
         $query = User::select('id', 'name', 'email')
             ->orderBy('name')

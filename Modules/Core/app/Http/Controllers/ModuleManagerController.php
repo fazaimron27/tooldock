@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Modules\ModuleLifecycleService;
 use App\Services\Modules\ModuleRegistryHelper;
 use App\Services\Modules\ModuleStatusService;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -112,7 +113,7 @@ class ModuleManagerController extends Controller
                 ->back()
                 ->with('success', "Module '{$request->module}' installed successfully.")
                 ->with('module_route_url', $this->getModuleRouteUrl($request->module));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'install'));
         }
     }
@@ -135,7 +136,7 @@ class ModuleManagerController extends Controller
             $this->lifecycleService->uninstall($request->module);
 
             return redirect()->back()->with('success', "Module '{$request->module}' uninstalled successfully.");
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'uninstall'));
         }
     }
@@ -170,7 +171,7 @@ class ModuleManagerController extends Controller
 
                 return redirect()->back()->with('success', $message);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()->back()->with('error', $this->formatErrorMessage($e->getMessage(), 'toggle'));
         }
     }
@@ -191,7 +192,7 @@ class ModuleManagerController extends Controller
             if (Route::has($routeName)) {
                 return route($routeName);
             }
-        } catch (\Exception) {
+        } catch (Exception) {
             // Route not found, use fallback URL construction
         }
 

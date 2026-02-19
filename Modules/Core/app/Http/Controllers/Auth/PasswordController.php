@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Traits\DispatchAuditLog;
+use Modules\Core\Models\User;
 
 /**
  * Class PasswordController
@@ -61,7 +62,7 @@ class PasswordController extends Controller
          * Disable automatic logging to prevent duplicate updated event.
          * We'll log a specific password_changed event instead.
          */
-        \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user, $validated) {
+        User::withoutLoggingActivity(function () use ($user, $validated) {
             $user->update([
                 'password' => Hash::make($validated['password']),
             ]);

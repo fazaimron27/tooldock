@@ -12,6 +12,7 @@
 
 namespace Modules\Core\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -65,7 +66,7 @@ class PermissionCacheService
                 'permissions_count' => $permissions->count(),
                 'cache_key' => $registrar->cacheKey,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('PermissionCacheService: Failed to warm cache', [
                 'error' => $e->getMessage(),
             ]);

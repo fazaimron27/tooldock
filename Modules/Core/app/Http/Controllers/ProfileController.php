@@ -17,11 +17,13 @@ use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
 use Modules\AuditLog\Enums\AuditLogEvent;
+use Modules\AuditLog\Models\AuditLog;
 use Modules\AuditLog\Traits\DispatchAuditLog;
 use Modules\Core\Http\Requests\ProfileUpdateRequest;
 use Modules\Core\Models\User;
@@ -48,7 +50,7 @@ class ProfileController extends Controller
      * @param  Request  $request  The HTTP request
      * @return Response Inertia profile edit page
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request): InertiaResponse
     {
         $user = $request->user();
         if (! $user->relationLoaded('avatar')) {
@@ -95,7 +97,7 @@ class ProfileController extends Controller
          * We'll log custom events (email_changed, updated) instead.
          */
         if ($emailChanged || $otherFieldsChanged) {
-            \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user) {
+            User::withoutLoggingActivity(function () use ($user) {
                 $user->save();
             });
         } else {
@@ -250,7 +252,7 @@ class ProfileController extends Controller
      * @param  Request  $request  The HTTP request with password confirmation
      * @return RedirectResponse|\Illuminate\Http\Response Redirect to home
      */
-    public function destroy(Request $request): RedirectResponse|\Illuminate\Http\Response
+    public function destroy(Request $request): RedirectResponse|Response
     {
         $request->validate([
             'password' => ['required', 'current_password'],
@@ -270,7 +272,7 @@ class ProfileController extends Controller
          * Log account deletion synchronously before user deletion.
          * This ensures user_id is preserved in the audit log.
          */
-        \Modules\AuditLog\Models\AuditLog::createDirect(
+        AuditLog::createDirect(
             event: AuditLogEvent::ACCOUNT_DELETED,
             model: $user,
             oldValues: [
@@ -292,7 +294,7 @@ class ProfileController extends Controller
          * Disable automatic logging to prevent duplicate deleted event.
          * Account deletion is already logged above.
          */
-        \Modules\Core\Models\User::withoutLoggingActivity(function () use ($user) {
+        User::withoutLoggingActivity(function () use ($user) {
             $user->delete();
         });
 

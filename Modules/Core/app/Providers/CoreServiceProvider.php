@@ -6,8 +6,8 @@
  * Main service provider for the Core module, handling
  * registration of config, views, migrations, and services.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Core\Providers;
@@ -46,6 +46,11 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Spatie\Permission\PermissionRegistrar;
 
+/**
+ * Class CoreServiceProvider
+ *
+ * Bootstraps the Core module services, registrations, and configurations.
+ */
 class CoreServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -135,6 +140,7 @@ class CoreServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**
@@ -215,8 +221,8 @@ class CoreServiceProvider extends ServiceProvider
     /**
      * Merge config from the given path recursively.
      *
-     * @param  string  $path  Absolute path to the config file
-     * @param  string  $key  The config key to merge under
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -255,7 +261,7 @@ class CoreServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get publishable view paths for the module.
+     * Get publishable view paths.
      *
      * @return array<int, string>
      */
