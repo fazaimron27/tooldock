@@ -5,8 +5,8 @@
  *
  * Registers web and API routes for the Settings module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Settings\Providers;
@@ -14,6 +14,11 @@ namespace Modules\Settings\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Class RouteServiceProvider
+ *
+ * Handles route registration for the Settings module.
+ */
 class RouteServiceProvider extends ServiceProvider
 {
     protected string $name = 'Settings';

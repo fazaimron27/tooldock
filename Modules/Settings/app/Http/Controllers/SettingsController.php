@@ -25,6 +25,7 @@ use Modules\Core\Models\User;
 use Modules\Settings\Http\Requests\UpdateSettingsRequest;
 use Modules\Settings\Models\Setting;
 use Nwidart\Modules\Facades\Module;
+use RuntimeException;
 
 class SettingsController extends Controller
 {
@@ -114,7 +115,7 @@ class SettingsController extends Controller
                 $this->settingsService->set($key, $value);
                 $successCount++;
                 $changedKeys[] = $key;
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
                 $errors[] = $key;
                 Log::warning("SettingsController: Failed to update setting '{$key}'", [
                     'error' => $e->getMessage(),

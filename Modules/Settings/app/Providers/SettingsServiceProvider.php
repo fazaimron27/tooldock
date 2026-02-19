@@ -6,8 +6,8 @@
  * Main service provider for the Settings module. Registers commands,
  * configuration, views, translations, and all module registries.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Settings\Providers;
@@ -31,6 +31,11 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class SettingsServiceProvider
+ *
+ * Bootstraps the Settings module services, registrations, and configurations.
+ */
 class SettingsServiceProvider extends ServiceProvider
 {
     use PathNamespace;

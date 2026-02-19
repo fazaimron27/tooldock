@@ -14,6 +14,7 @@ namespace Modules\Settings\Services;
 
 use App\Data\DashboardWidget;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Modules\Settings\Enums\SettingType;
 use Modules\Settings\Models\Setting;
 
 /**
@@ -108,9 +109,9 @@ class SettingsDashboardService
         }
 
         return match ($setting->type) {
-            \Modules\Settings\Enums\SettingType::Boolean => $value ? 'Yes' : 'No',
-            \Modules\Settings\Enums\SettingType::Integer => (string) $value,
-            \Modules\Settings\Enums\SettingType::Textarea => strlen($value) > 50 ? substr($value, 0, 50).'...' : $value,
+            SettingType::Boolean => $value ? 'Yes' : 'No',
+            SettingType::Integer => (string) $value,
+            SettingType::Textarea => strlen($value) > 50 ? substr($value, 0, 50).'...' : $value,
             default => (string) $value,
         };
     }
