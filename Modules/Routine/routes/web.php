@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Routine\Http\Controllers\RoutineController;
 use Modules\Routine\Http\Controllers\RoutineDashboardController;
 
-Route::middleware(['web', 'auth', 'verified'])->prefix('tooldock')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('routine', RoutineController::class)
         ->except(['show', 'create', 'edit'])
         ->names([

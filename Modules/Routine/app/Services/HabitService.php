@@ -53,7 +53,7 @@ class HabitService
             now()->addHours(self::CACHE_TTL_HOURS),
             fn () => Habit::forUser()
                 ->active()
-                ->with(['logs' => function ($query) {
+                ->with(['category:id,name,slug,color', 'logs' => function ($query) {
                     $query->where('completed_at', '>=', Carbon::now()->subDays(365))
                         ->orderByDesc('completed_at');
                 }])
@@ -80,8 +80,9 @@ class HabitService
             now()->addHours(self::CACHE_TTL_HOURS),
             fn () => Habit::forUser()
                 ->whereIn('status', ['paused', 'archived'])
+                ->with('category:id,name,slug,color')
                 ->orderBy('updated_at', 'desc')
-                ->get(['id', 'name', 'icon', 'color', 'type', 'unit', 'target_value', 'goal_per_week', 'status']),
+                ->get(['id', 'name', 'icon', 'color', 'type', 'unit', 'target_value', 'goal_per_week', 'status', 'category_id']),
             self::CACHE_TAG,
             'HabitService'
         );

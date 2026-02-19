@@ -15,6 +15,7 @@ namespace Modules\Routine\Observers;
 use App\Services\Cache\CacheService;
 use App\Services\Core\UserPreferenceService;
 use App\Services\Registry\SignalHandlerRegistry;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Modules\Routine\Models\HabitLog;
 
@@ -109,7 +110,7 @@ class HabitLogObserver
                 'streak' => $habit->current_streak,
                 'habit_name' => $habit->name,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if (config('app.debug')) {
                 Log::debug('Routine streak signal dispatch failed: '.$e->getMessage());
             }

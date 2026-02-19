@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Routine Service Provider
+ * Routine Service Provider.
  *
- * Bootstraps the Routine module: routes, views, config, migrations,
- * menus, permissions, and dashboard widgets.
+ * Main service provider for the Routine module. Registers commands,
+ * configuration, views, translations, and all module registries.
  *
  * @author     Tool Dock Team
  * @license    MIT
@@ -12,14 +12,17 @@
 
 namespace Modules\Routine\Providers;
 
+use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Routine\Services\RoutineCategoryRegistrar;
 use Modules\Routine\Services\RoutineCommandRegistrar;
 use Modules\Routine\Services\RoutineDashboardService;
 use Modules\Routine\Services\RoutineMenuRegistrar;
@@ -33,54 +36,53 @@ use RecursiveIteratorIterator;
 /**
  * Class RoutineServiceProvider
  *
- * Main service provider responsible for registering all Routine module
- * components including routes, menus, permissions, and dashboard widgets.
+ * Bootstraps the Routine module services, registrations, and configurations.
  */
 class RoutineServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
-    /**
-     * @var string
-     */
     protected string $name = 'Routine';
 
-    /**
-     * @var string
-     */
     protected string $nameLower = 'routine';
 
     /**
      * Boot the application events.
      *
-     * @param  CommandRegistry  $commandRegistry
-     * @param  DashboardWidgetRegistry  $widgetRegistry
-     * @param  MenuRegistry  $menuRegistry
-     * @param  PermissionRegistry  $permissionRegistry
-     * @param  SettingsRegistry  $settingsRegistry
-     * @param  SignalHandlerRegistry  $signalHandlerRegistry
      * @return void
      */
     public function boot(
+        CategoryRegistry $categoryRegistry,
         CommandRegistry $commandRegistry,
         DashboardWidgetRegistry $widgetRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
-        SignalHandlerRegistry $signalHandlerRegistry,
+        SignalHandlerRegistry $signalRegistry,
+        RoutineCategoryRegistrar $categoryRegistrar,
+        RoutineCommandRegistrar $commandRegistrar,
+        RoutineDashboardService $dashboardService,
+        RoutineMenuRegistrar $menuRegistrar,
+        RoutinePermissionRegistrar $permissionRegistrar,
+        RoutineSettingsRegistrar $settingsRegistrar,
+        RoutineSignalRegistrar $signalRegistrar,
+        SignalCategoryRegistry $signalCategoryRegistry
     ): void {
+        $this->registerCommands();
+        $this->registerCommandSchedules();
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
-        $this->bootCommands($commandRegistry);
-        $this->bootMenus($menuRegistry);
-        $this->bootPermissions($permissionRegistry);
-        $this->bootSettings($settingsRegistry);
-        $this->bootSignals($signalHandlerRegistry);
-        $this->bootSignalCategories();
-        $this->bootDashboardWidgets($widgetRegistry);
+        $categoryRegistrar->register($categoryRegistry, $this->name);
+        $commandRegistrar->register($commandRegistry, $this->name);
+        $menuRegistrar->register($menuRegistry, $this->name);
+        $permissionRegistrar->registerPermissions($permissionRegistry);
+        $settingsRegistrar->register($settingsRegistry, $this->name);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
+        $signalCategoryRegistry->register($this->name, 'routine', 'routine_notify_enabled');
+        $signalRegistrar->register($signalRegistry);
     }
 
     /**
@@ -90,92 +92,24 @@ class RoutineServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->register(AuthServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**
-     * Register command palette entries via the command registrar.
+     * Register commands in the format of Command::class.
      *
-     * @param  CommandRegistry  $commandRegistry
      * @return void
      */
-    protected function bootCommands(CommandRegistry $commandRegistry): void
-    {
-        (new RoutineCommandRegistrar)->register($commandRegistry, $this->name);
-    }
+    protected function registerCommands(): void {}
 
     /**
-     * Register menu items via the menu registrar.
-     *
-     * @param  MenuRegistry  $menuRegistry
-     * @return void
-     */
-    protected function bootMenus(MenuRegistry $menuRegistry): void
-    {
-        (new RoutineMenuRegistrar)->register($menuRegistry, $this->name);
-    }
-
-    /**
-     * Register permissions via the permission registrar.
-     *
-     * @param  PermissionRegistry  $permissionRegistry
-     * @return void
-     */
-    protected function bootPermissions(PermissionRegistry $permissionRegistry): void
-    {
-        (new RoutinePermissionRegistrar)->register($permissionRegistry);
-    }
-
-    /**
-     * Register settings via the settings registrar.
-     *
-     * @param  SettingsRegistry  $settingsRegistry
-     * @return void
-     */
-    protected function bootSettings(SettingsRegistry $settingsRegistry): void
-    {
-        (new RoutineSettingsRegistrar)->register($settingsRegistry, $this->name);
-    }
-
-    /**
-     * Register signal handlers via the signal registrar.
-     *
-     * @param  SignalHandlerRegistry  $signalHandlerRegistry
-     * @return void
-     */
-    protected function bootSignals(SignalHandlerRegistry $signalHandlerRegistry): void
-    {
-        (new RoutineSignalRegistrar)->register($signalHandlerRegistry);
-    }
-
-    /**
-     * Register signal categories for notification preference checking.
-     *
-     * Maps the 'routine' notification category to the 'routine_notify_enabled'
-     * user setting so the Signal pipeline respects user preferences.
+     * Register command Schedules.
      *
      * @return void
      */
-    protected function bootSignalCategories(): void
-    {
-        if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
-            app(\App\Services\Registry\SignalCategoryRegistry::class)
-                ->register($this->name, 'routine', 'routine_notify_enabled');
-        }
-    }
-
-    /**
-     * Register dashboard widgets via the dashboard service.
-     *
-     * @param  DashboardWidgetRegistry  $widgetRegistry
-     * @return void
-     */
-    protected function bootDashboardWidgets(DashboardWidgetRegistry $widgetRegistry): void
-    {
-        (new RoutineDashboardService)->registerWidgets($widgetRegistry, $this->name);
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.

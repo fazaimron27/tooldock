@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Routine Route Service Provider
+ * Routine Route Service Provider.
  *
- * Maps web and API routes for the Routine module.
+ * Registers web and API routes for the Routine module.
  *
  * @author     Tool Dock Team
  * @license    MIT
@@ -17,17 +17,16 @@ use Illuminate\Support\Facades\Route;
 /**
  * Class RouteServiceProvider
  *
- * Registers web and API route files with appropriate middleware.
+ * Handles route registration for the Routine module.
  */
 class RouteServiceProvider extends ServiceProvider
 {
-    /**
-     * @var string
-     */
     protected string $name = 'Routine';
 
     /**
      * Called before routes are registered.
+     *
+     * Register any model bindings or pattern based filters.
      *
      * @return void
      */
@@ -50,23 +49,26 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Define the "web" routes for the application.
      *
+     * These routes all receive session state, CSRF protection, etc.
+     *
      * @return void
      */
     protected function mapWebRoutes(): void
     {
-        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));
+        Route::middleware('web')
+            ->prefix('tooldock')
+            ->group(module_path($this->name, '/routes/web.php'));
     }
 
     /**
      * Define the "api" routes for the application.
      *
+     * These routes are typically stateless.
+     *
      * @return void
      */
     protected function mapApiRoutes(): void
     {
-        Route::middleware('api')
-            ->prefix('api')
-            ->name('api.')
-            ->group(module_path($this->name, '/routes/api.php'));
+        Route::middleware('api')->prefix('api')->name('api.')->group(module_path($this->name, '/routes/api.php'));
     }
 }

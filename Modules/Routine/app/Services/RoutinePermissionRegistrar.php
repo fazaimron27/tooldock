@@ -27,7 +27,7 @@ class RoutinePermissionRegistrar
      * @param  PermissionRegistry  $registry  The central permission registry
      * @return void
      */
-    public function register(PermissionRegistry $registry): void
+    public function registerPermissions(PermissionRegistry $registry): void
     {
         $registry->register('routines', [
             'dashboard.view',
