@@ -13,6 +13,7 @@
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;
+use Exception;
 
 /**
  * Formatter for user-related events.
@@ -65,7 +66,7 @@ class UserEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($verifiedAt);
                 $changes[] = "Verification time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -101,7 +102,7 @@ class UserEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($changedAt);
                 $changes[] = "Change time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -136,7 +137,7 @@ class UserEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($deletedAt);
                 $changes[] = "Deletion time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }

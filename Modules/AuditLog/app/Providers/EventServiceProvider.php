@@ -6,14 +6,19 @@
  * Registers event listeners and enables automatic event discovery
  * for the AuditLog module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\AuditLog\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
+/**
+ * Class EventServiceProvider
+ *
+ * Manages event-to-listener bindings for the AuditLog module.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**

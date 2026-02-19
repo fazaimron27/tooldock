@@ -7,8 +7,8 @@
  * translations, views, configurations, and module-specific registrars
  * for menus, permissions, settings, widgets, and signal handlers.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\AuditLog\Providers;
@@ -22,6 +22,7 @@ use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
+use Modules\AuditLog\Console\Commands\CleanupAuditLogsCommand;
 use Modules\AuditLog\Services\AuditLogCommandRegistrar;
 use Modules\AuditLog\Services\AuditLogDashboardService;
 use Modules\AuditLog\Services\AuditLogMenuRegistrar;
@@ -32,6 +33,11 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class AuditLogServiceProvider
+ *
+ * Bootstraps the AuditLog module services, registrations, and configurations.
+ */
 class AuditLogServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -94,7 +100,7 @@ class AuditLogServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\AuditLog\Console\Commands\CleanupAuditLogsCommand::class,
+            CleanupAuditLogsCommand::class,
         ]);
     }
 
@@ -180,8 +186,8 @@ class AuditLogServiceProvider extends ServiceProvider
     /**
      * Merge config from the given path recursively.
      *
-     * @param  string  $path  Absolute path to the configuration file
-     * @param  string  $key  Configuration key to merge under
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -212,13 +218,18 @@ class AuditLogServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * @return array<string> List of service class names
+     * @return array<int, string>
      */
     public function provides(): array
     {
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

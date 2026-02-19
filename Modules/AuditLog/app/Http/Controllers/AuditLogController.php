@@ -15,6 +15,7 @@ namespace Modules\AuditLog\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
 use App\Services\Data\DatatableQueryService;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ use Inertia\Response;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\Models\AuditLog;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Audit log resource controller.
@@ -197,7 +199,7 @@ class AuditLogController extends Controller
      * @param  Request  $request  The incoming HTTP request with filter parameters
      * @return \Symfony\Component\HttpFoundation\StreamedResponse Streamed CSV download
      */
-    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function export(Request $request): StreamedResponse
     {
         $this->authorize('viewAny', AuditLog::class);
 
@@ -253,7 +255,7 @@ class AuditLogController extends Controller
         ]);
 
         CreateAuditLogJob::dispatch(
-            event: \Modules\AuditLog\Enums\AuditLogEvent::EXPORT,
+            event: AuditLogEvent::EXPORT,
             model: null,
             oldValues: null,
             newValues: [
@@ -348,7 +350,7 @@ class AuditLogController extends Controller
                         $auditLog->setRelation('auditable', $model);
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 foreach ($auditLogsByType as $auditLogsForId) {
                     foreach ($auditLogsForId as $auditLog) {
                         $auditLog->setRelation('auditable', null);

@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
+use Modules\AuditLog\Models\AuditLog;
+use ReflectionClass;
 
 trait LogsActivity
 {
@@ -191,7 +193,7 @@ trait LogsActivity
      */
     protected static function analyzeGetAuditTagsMethod(Model $model): array
     {
-        $reflection = new \ReflectionClass($model);
+        $reflection = new ReflectionClass($model);
 
         if (! $reflection->hasMethod('getAuditTags')) {
             return ['hasMethod' => false, 'isStatic' => false, 'filePath' => null];
@@ -406,7 +408,7 @@ trait LogsActivity
             return null;
         }
 
-        return \Modules\AuditLog\Models\AuditLog::normalizeUserAgent(request()->userAgent());
+        return AuditLog::normalizeUserAgent(request()->userAgent());
     }
 
     /**

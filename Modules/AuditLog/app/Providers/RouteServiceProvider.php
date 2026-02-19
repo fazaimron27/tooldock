@@ -6,8 +6,8 @@
  * Defines web and API route groups for the AuditLog module,
  * applying appropriate middleware and URL prefixes.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\AuditLog\Providers;
@@ -15,6 +15,11 @@ namespace Modules\AuditLog\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * Class RouteServiceProvider
+ *
+ * Handles route registration for the AuditLog module.
+ */
 class RouteServiceProvider extends ServiceProvider
 {
     protected string $name = 'AuditLog';

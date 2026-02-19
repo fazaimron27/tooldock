@@ -13,6 +13,7 @@
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;
+use Exception;
 
 /**
  * Formatter for file-related events.
@@ -77,7 +78,7 @@ class FileEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($uploadedAt);
                 $changes[] = "Uploaded at: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -118,7 +119,7 @@ class FileEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($deletedAt);
                 $changes[] = "Deleted at: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }

@@ -13,6 +13,8 @@
 namespace Modules\AuditLog\Models;
 
 use Carbon\Carbon;
+use DateTimeInterface;
+use Exception;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +27,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Modules\AuditLog\Services\AuditLogFormatterFactory;
 use Modules\Core\Models\User;
+use ReflectionClass;
+use Throwable;
 
 /**
  * Audit log entry model.
@@ -199,7 +203,7 @@ class AuditLog extends Model
                     }
 
                     return "User ID: {$userId}";
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     return "User ID: {$userId}";
                 }
             }
@@ -297,7 +301,7 @@ class AuditLog extends Model
             self::$tableExistenceCache[$type] = $exists;
 
             return $exists;
-        } catch (\Exception) {
+        } catch (Exception) {
             self::$tableExistenceCache[$type] = false;
 
             return false;
@@ -326,7 +330,7 @@ class AuditLog extends Model
         }
 
         try {
-            $reflection = new \ReflectionClass($modelClass);
+            $reflection = new ReflectionClass($modelClass);
 
             if ($reflection->hasMethod('getTableName') && $reflection->getMethod('getTableName')->isStatic()) {
                 $tableName = $modelClass::getTableName();
@@ -347,7 +351,7 @@ class AuditLog extends Model
             self::$tableNameCache[$modelClass] = $tableName;
 
             return $tableName;
-        } catch (\Exception) {
+        } catch (Exception) {
             self::$tableNameCache[$modelClass] = null;
 
             return null;
@@ -363,7 +367,7 @@ class AuditLog extends Model
      * @param  \DateTimeInterface  $date  The date to serialize
      * @return string ISO 8601 formatted date string in application timezone
      */
-    protected function serializeDate(\DateTimeInterface $date): string
+    protected function serializeDate(DateTimeInterface $date): string
     {
         return Carbon::instance($date)
             ->setTimezone(config('app.timezone'))
@@ -387,7 +391,7 @@ class AuditLog extends Model
             Log::debug('AuditLog: Audit log cache cleared via Redis tags', [
                 'tag' => self::CACHE_TAG,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::warning('AuditLog: Failed to clear cache', [
                 'tag' => self::CACHE_TAG,
                 'error' => $e->getMessage(),

@@ -13,6 +13,8 @@
 namespace Modules\AuditLog\Services;
 
 use Carbon\Carbon;
+use DateTimeInterface;
+use Exception;
 
 /**
  * Trait providing helper methods for formatting audit log values.
@@ -69,7 +71,7 @@ trait AuditLogFormattingHelper
             return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         }
 
-        if ($value instanceof \DateTimeInterface) {
+        if ($value instanceof DateTimeInterface) {
             return Carbon::instance($value)->format('F j, Y \a\t g:i A');
         }
 
@@ -80,7 +82,7 @@ trait AuditLogFormattingHelper
                 $date = Carbon::parse($stringValue);
 
                 return $date->format('F j, Y \a\t g:i A');
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Date parsing failed, continue to default string formatting
             }
         }
@@ -117,7 +119,7 @@ trait AuditLogFormattingHelper
             $year = $date->year;
 
             return $year >= 1000 && $year <= 9999;
-        } catch (\Exception) {
+        } catch (Exception) {
             return false;
         }
     }

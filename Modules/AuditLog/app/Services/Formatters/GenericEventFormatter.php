@@ -12,6 +12,9 @@
 
 namespace Modules\AuditLog\Services\Formatters;
 
+use Carbon\Carbon;
+use Exception;
+
 /**
  * Formatter for generic CRUD events (created, updated, deleted, export).
  */
@@ -149,9 +152,9 @@ class GenericEventFormatter extends AuditLogFormatter
 
         if ($exportedAt) {
             try {
-                $date = \Carbon\Carbon::parse($exportedAt);
+                $date = Carbon::parse($exportedAt);
                 $changes[] = "Export time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }

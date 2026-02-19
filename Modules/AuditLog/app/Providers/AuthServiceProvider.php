@@ -6,8 +6,8 @@
  * Registers policy mappings for the AuditLog module,
  * binding the AuditLog model to its authorization policy.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\AuditLog\Providers;
@@ -16,6 +16,11 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Modules\AuditLog\Models\AuditLog;
 use Modules\AuditLog\Policies\AuditLogPolicy;
 
+/**
+ * Class AuthServiceProvider
+ *
+ * Maps the AuditLog model to AuditLogPolicy for authorization checks.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**

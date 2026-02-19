@@ -13,6 +13,7 @@
 namespace Modules\AuditLog\Services\Formatters;
 
 use Carbon\Carbon;
+use Exception;
 
 /**
  * Formatter for authentication-related events.
@@ -93,7 +94,7 @@ class AuthenticationEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($loggedInAt);
                 $changes[] = "Login time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -123,7 +124,7 @@ class AuthenticationEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($loggedOutAt);
                 $changes[] = "Logout time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -153,7 +154,7 @@ class AuthenticationEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($resetAt);
                 $changes[] = "Reset time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -183,7 +184,7 @@ class AuthenticationEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($changedAt);
                 $changes[] = "Change time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
@@ -213,7 +214,7 @@ class AuthenticationEventFormatter extends AuditLogFormatter
             try {
                 $date = Carbon::parse($requestedAt);
                 $changes[] = "Request time: {$date->format('F j, Y \a\t g:i A')}";
-            } catch (\Exception) {
+            } catch (Exception) {
                 // Ignore date parsing errors
             }
         }
