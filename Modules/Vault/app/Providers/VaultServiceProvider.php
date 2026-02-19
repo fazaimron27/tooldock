@@ -13,6 +13,7 @@
 
 namespace Modules\Vault\Providers;
 
+use App\Services\Core\UserPreferenceService;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
@@ -21,9 +22,11 @@ use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\MiddlewareRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Vault\Http\Middleware\VaultLockMiddleware;
 use Modules\Vault\Services\VaultCategoryRegistrar;
 use Modules\Vault\Services\VaultCommandRegistrar;
 use Modules\Vault\Services\VaultDashboardService;
@@ -38,11 +41,7 @@ use RecursiveIteratorIterator;
 /**
  * Class VaultServiceProvider
  *
- * Orchestrates the Vault module bootstrap process by delegating
- * to specialised registrar services for each integration point.
- *
- * @see \Modules\Vault\Services\VaultPermissionRegistrar
- * @see \Modules\Vault\Services\VaultMenuRegistrar
+ * Bootstraps the Vault module services, registrations, and configurations.
  */
 class VaultServiceProvider extends ServiceProvider
 {
@@ -55,22 +54,6 @@ class VaultServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      *
-     * @param  CategoryRegistry  $categoryRegistry  Central category registry
-     * @param  CommandRegistry  $commandRegistry  Central command palette registry
-     * @param  DashboardWidgetRegistry  $widgetRegistry  Central dashboard widget registry
-     * @param  InertiaSharedDataRegistry  $sharedDataRegistry  Inertia shared data registry
-     * @param  MenuRegistry  $menuRegistry  Central menu registry
-     * @param  MiddlewareRegistry  $middlewareRegistry  Central middleware registry
-     * @param  PermissionRegistry  $permissionRegistry  Central permission registry
-     * @param  SettingsRegistry  $settingsRegistry  Central settings registry
-     * @param  VaultCategoryRegistrar  $categoryRegistrar  Vault category registrar
-     * @param  VaultCommandRegistrar  $commandRegistrar  Vault command registrar
-     * @param  VaultDashboardService  $dashboardService  Vault dashboard service
-     * @param  VaultMenuRegistrar  $menuRegistrar  Vault menu registrar
-     * @param  VaultPermissionRegistrar  $permissionRegistrar  Vault permission registrar
-     * @param  VaultSettingsRegistrar  $settingsRegistrar  Vault settings registrar
-     * @param  SignalHandlerRegistry  $signalRegistry  Central signal handler registry
-     * @param  VaultSignalRegistrar  $signalRegistrar  Vault signal registrar
      * @return void
      */
     public function boot(
@@ -89,7 +72,8 @@ class VaultServiceProvider extends ServiceProvider
         VaultPermissionRegistrar $permissionRegistrar,
         VaultSettingsRegistrar $settingsRegistrar,
         SignalHandlerRegistry $signalRegistry,
-        VaultSignalRegistrar $signalRegistrar
+        VaultSignalRegistrar $signalRegistrar,
+        SignalCategoryRegistry $signalCategoryRegistry
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -104,20 +88,18 @@ class VaultServiceProvider extends ServiceProvider
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $settingsRegistrar->register($settingsRegistry, $this->name);
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
-        if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
-            app(\App\Services\Registry\SignalCategoryRegistry::class)->register($this->name, 'vault', 'vault_notify_enabled');
-        }
+        $signalCategoryRegistry->register($this->name, 'vault', 'vault_notify_enabled');
         $signalRegistrar->register($signalRegistry);
 
-        $middlewareRegistry->register($this->name, \Modules\Vault\Http\Middleware\VaultLockMiddleware::class);
+        $middlewareRegistry->register($this->name, VaultLockMiddleware::class);
 
         $sharedDataRegistry->register($this->name, function ($request) {
             $user = $request->user();
             $enabled = $user
-                ? app(\App\Services\Core\UserPreferenceService::class)->get($user, 'vault_lock_enabled', false)
+                ? app(UserPreferenceService::class)->get($user, 'vault_lock_enabled', false)
                 : settings('vault_lock_enabled', false);
             $timeout = $user
-                ? app(\App\Services\Core\UserPreferenceService::class)->get($user, 'vault_lock_timeout', 15)
+                ? app(UserPreferenceService::class)->get($user, 'vault_lock_timeout', 15)
                 : settings('vault_lock_timeout', 15);
 
             return [
@@ -144,27 +126,18 @@ class VaultServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
      *
      * @return void
      */
-    protected function registerCommands(): void
-    {
-        // $this->commands([]);
-    }
+    protected function registerCommands(): void {}
 
     /**
      * Register command Schedules.
      *
      * @return void
      */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
@@ -202,7 +175,6 @@ class VaultServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -222,8 +194,8 @@ class VaultServiceProvider extends ServiceProvider
     /**
      * Merge config from the given path recursively.
      *
-     * @param  string  $path  Absolute path to the config file
-     * @param  string  $key  The config key to merge into
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -262,7 +234,7 @@ class VaultServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get publishable view paths from the application's view directories.
+     * Get publishable view paths.
      *
      * @return array<int, string>
      */

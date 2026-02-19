@@ -59,6 +59,8 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        parent::boot();
+
         Transaction::observe(TransactionObserver::class);
         BudgetPeriod::observe(BudgetPeriodObserver::class);
         Wallet::observe(WalletObserver::class);

@@ -21,10 +21,20 @@ use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\User;
+use Modules\Treasury\Console\Commands\CheckBudgetRolloverDebtCommand;
+use Modules\Treasury\Console\Commands\CheckGoalStatusCommand;
+use Modules\Treasury\Console\Commands\CheckWalletInactivityCommand;
+use Modules\Treasury\Console\Commands\ReconcileTreasuryBalances;
+use Modules\Treasury\Console\Commands\RefreshExchangeRatesCommand;
+use Modules\Treasury\Console\Commands\SendDailyTransactionSummaryCommand;
+use Modules\Treasury\Console\Commands\SendGoalSummaryCommand;
+use Modules\Treasury\Console\Commands\SendNetWorthSummaryCommand;
+use Modules\Treasury\Console\Commands\SendWeeklyTransactionSummaryCommand;
 use Modules\Treasury\Models\Budget;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
@@ -44,7 +54,7 @@ use RecursiveIteratorIterator;
 /**
  * Class TreasuryServiceProvider
  *
- * Central service provider orchestrating all Treasury module bootstrapping.
+ * Bootstraps the Treasury module services, registrations, and configurations.
  */
 class TreasuryServiceProvider extends ServiceProvider
 {
@@ -56,6 +66,8 @@ class TreasuryServiceProvider extends ServiceProvider
 
     /**
      * Boot the application events.
+     *
+     * @return void
      */
     public function boot(
         CategoryRegistry $categoryRegistry,
@@ -73,7 +85,7 @@ class TreasuryServiceProvider extends ServiceProvider
         TreasuryPermissionRegistrar $permissionRegistrar,
         TreasurySettingsRegistrar $settingsRegistrar,
         TreasurySignalRegistrar $signalRegistrar,
-        \App\Services\Registry\SignalCategoryRegistry $signalCategoryRegistry
+        SignalCategoryRegistry $signalCategoryRegistry
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -140,6 +152,7 @@ class TreasuryServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**
@@ -150,15 +163,15 @@ class TreasuryServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         $this->commands([
-            \Modules\Treasury\Console\Commands\ReconcileTreasuryBalances::class,
-            \Modules\Treasury\Console\Commands\RefreshExchangeRatesCommand::class,
-            \Modules\Treasury\Console\Commands\CheckBudgetRolloverDebtCommand::class,
-            \Modules\Treasury\Console\Commands\CheckWalletInactivityCommand::class,
-            \Modules\Treasury\Console\Commands\SendNetWorthSummaryCommand::class,
-            \Modules\Treasury\Console\Commands\CheckGoalStatusCommand::class,
-            \Modules\Treasury\Console\Commands\SendGoalSummaryCommand::class,
-            \Modules\Treasury\Console\Commands\SendDailyTransactionSummaryCommand::class,
-            \Modules\Treasury\Console\Commands\SendWeeklyTransactionSummaryCommand::class,
+            ReconcileTreasuryBalances::class,
+            RefreshExchangeRatesCommand::class,
+            CheckBudgetRolloverDebtCommand::class,
+            CheckWalletInactivityCommand::class,
+            SendNetWorthSummaryCommand::class,
+            CheckGoalStatusCommand::class,
+            SendGoalSummaryCommand::class,
+            SendDailyTransactionSummaryCommand::class,
+            SendWeeklyTransactionSummaryCommand::class,
         ]);
     }
 
@@ -259,8 +272,8 @@ class TreasuryServiceProvider extends ServiceProvider
     /**
      * Merge config from the given path recursively.
      *
-     * @param  string  $path  Absolute path to the config file
-     * @param  string  $key  Config key to merge under
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -291,7 +304,7 @@ class TreasuryServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
     public function provides(): array
     {
@@ -301,7 +314,7 @@ class TreasuryServiceProvider extends ServiceProvider
     /**
      * Get publishable view paths.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
     private function getPublishableViewPaths(): array
     {
