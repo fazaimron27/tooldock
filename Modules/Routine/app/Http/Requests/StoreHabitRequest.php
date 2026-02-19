@@ -63,6 +63,7 @@ class StoreHabitRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'category_id' => ['nullable', 'uuid', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'in:boolean,measurable'],
             'icon' => ['nullable', 'string', 'max:50'],

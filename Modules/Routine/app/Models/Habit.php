@@ -19,14 +19,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\AuditLog\Traits\LogsActivity;
+use Modules\Categories\Models\Category;
 use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
+use Modules\Routine\Database\Factories\HabitFactory;
 
 /**
  * Class Habit
  *
  * @property string $id
  * @property string $user_id
+ * @property string|null $category_id
  * @property string $name
  * @property string $type
  * @property string $icon
@@ -45,6 +48,7 @@ use Modules\Core\Traits\HasUserOwnership;
  * @property-read bool $is_measurable
  * @property-read User $user
  * @property-read \Illuminate\Database\Eloquent\Collection<HabitLog> $logs
+ * @property-read Category|null $category
  */
 class Habit extends Model
 {
@@ -71,6 +75,7 @@ class Habit extends Model
      */
     protected $fillable = [
         'user_id',
+        'category_id',
         'name',
         'type',
         'icon',
@@ -129,6 +134,16 @@ class Habit extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the category for this habit.
+     *
+     * @return BelongsTo
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     /**
@@ -376,6 +391,6 @@ class Habit extends Model
      */
     protected static function newFactory()
     {
-        return \Modules\Routine\Database\Factories\HabitFactory::new();
+        return HabitFactory::new();
     }
 }

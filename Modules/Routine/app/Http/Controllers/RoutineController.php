@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Categories\Models\Category;
 use Modules\Routine\Http\Requests\StoreHabitRequest;
 use Modules\Routine\Http\Requests\UpdateHabitRequest;
 use Modules\Routine\Models\Habit;
@@ -53,6 +54,10 @@ class RoutineController extends Controller
             'habits' => $habits,
             'inactiveHabits' => $inactiveHabits,
             'stats' => $stats,
+            'categories' => Category::where('type', 'habit_category')
+                ->whereNull('parent_id')
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug', 'color']),
             'settings' => [
                 'week_start' => settings('routine_week_start', 'monday'),
                 'default_goal_per_week' => (int) settings('routine_default_goal_per_week', 7),

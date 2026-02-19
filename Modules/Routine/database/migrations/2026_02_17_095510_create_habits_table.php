@@ -27,6 +27,7 @@ return new class extends Migration
         Schema::create('habits', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id')->index();
+            $table->uuid('category_id')->nullable()->index();
             $table->string('name');
             $table->string('type', 20)->default('boolean');
             $table->string('icon')->default('target');
@@ -46,6 +47,11 @@ return new class extends Migration
                 ->references('id')
                 ->on('users')
                 ->onDelete('cascade');
+
+            $table->foreign('category_id')
+                ->references('id')
+                ->on('categories')
+                ->onDelete('set null');
         });
     }
 

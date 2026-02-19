@@ -37,6 +37,7 @@ import { Controller, useForm } from 'react-hook-form';
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import FormDialog from '@/Components/Common/FormDialog';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import SearchableSelectRHF from '@/Components/Common/SearchableSelectRHF';
 import MetricCard from '@/Components/DataDisplay/MetricCard';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
@@ -96,6 +97,7 @@ function getHabitDefaults(habit = null, settings = {}) {
       goal_per_week: String(habit.goal_per_week || 7),
       unit: habit.unit || '',
       target_value: habit.target_value ? String(parseFloat(habit.target_value)) : '',
+      category_id: habit.category_id || '',
     };
   }
   return {
@@ -106,12 +108,18 @@ function getHabitDefaults(habit = null, settings = {}) {
     goal_per_week: String(settings.default_goal_per_week || 7),
     unit: '',
     target_value: '',
+    category_id: '',
   };
 }
 
 export default function Index() {
-  const { habits, inactiveHabits = [], stats, settings = {} } = usePage().props;
+  const { habits, inactiveHabits = [], stats, categories = [], settings = {} } = usePage().props;
   const weekStartsOn = WEEK_START_MAP[settings.week_start?.toLowerCase()] ?? 1;
+
+  const categoryOptions = useMemo(
+    () => categories.map((c) => ({ value: c.id, label: c.name })),
+    [categories]
+  );
   const formDialog = useDisclosure();
   const [editingHabit, setEditingHabit] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -171,6 +179,7 @@ export default function Index() {
         target_value:
           data.type === 'measurable' && data.target_value ? parseFloat(data.target_value) : null,
         unit: data.type === 'measurable' ? data.unit : null,
+        category_id: data.category_id || null,
       };
 
       const options = {
@@ -205,6 +214,45 @@ export default function Index() {
 
   const displayedHabits =
     activeTab === 'active' ? habits : inactiveHabits.filter((h) => h.status === activeTab);
+
+  const groupedHabits = useMemo(() => {
+    const groups = [];
+    const byCategory = {};
+    const uncategorized = [];
+
+    displayedHabits.forEach((habit) => {
+      if (habit.category) {
+        const key = habit.category.id;
+        if (!byCategory[key]) {
+          byCategory[key] = {
+            id: key,
+            name: habit.category.name,
+            color: habit.category.color,
+            habits: [],
+          };
+          groups.push(byCategory[key]);
+        }
+        byCategory[key].habits.push(habit);
+      } else {
+        uncategorized.push(habit);
+      }
+    });
+
+    groups.sort((a, b) => a.name.localeCompare(b.name));
+
+    if (uncategorized.length > 0) {
+      groups.push({
+        id: '__uncategorized',
+        name: 'Uncategorized',
+        color: '#6b7280',
+        habits: uncategorized,
+      });
+    }
+
+    return groups;
+  }, [displayedHabits]);
+
+  const hasCategories = displayedHabits.some((h) => h.category);
 
   const pausedCount = inactiveHabits.filter((h) => h.status === 'paused').length;
   const archivedCount = inactiveHabits.filter((h) => h.status === 'archived').length;
@@ -348,17 +396,43 @@ export default function Index() {
                   </>
                 )}
 
-                {/* Habit Rows */}
-                {displayedHabits.map((habit) => (
-                  <HabitRow
-                    key={habit.id}
-                    habit={habit}
-                    days={activeTab === 'active' ? days : []}
-                    onEdit={openEdit}
-                    onDelete={setDeleteTarget}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
+                {/* Habit Rows — grouped by category if applicable */}
+                {hasCategories
+                  ? groupedHabits.map((group) => (
+                      <div key={group.id}>
+                        {/* Category Header */}
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-1">
+                          <span
+                            className="inline-block h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: group.color }}
+                          />
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            {group.name}
+                          </span>
+                        </div>
+                        {/* Habits under this category */}
+                        {group.habits.map((habit) => (
+                          <HabitRow
+                            key={habit.id}
+                            habit={habit}
+                            days={activeTab === 'active' ? days : []}
+                            onEdit={openEdit}
+                            onDelete={setDeleteTarget}
+                            onStatusChange={handleStatusChange}
+                          />
+                        ))}
+                      </div>
+                    ))
+                  : displayedHabits.map((habit) => (
+                      <HabitRow
+                        key={habit.id}
+                        habit={habit}
+                        days={activeTab === 'active' ? days : []}
+                        onEdit={openEdit}
+                        onDelete={setDeleteTarget}
+                        onStatusChange={handleStatusChange}
+                      />
+                    ))}
               </>
             )}
           </CardContent>
@@ -405,6 +479,18 @@ export default function Index() {
             placeholder="e.g. Morning Exercise"
             rules={{ required: 'Habit name is required' }}
           />
+
+          {/* Category */}
+          {categoryOptions.length > 0 && (
+            <SearchableSelectRHF
+              name="category_id"
+              control={control}
+              label="Category"
+              options={categoryOptions}
+              placeholder="Search categories..."
+              emptyPlaceholder="No category"
+            />
+          )}
 
           {/* Habit Type */}
           <div className="space-y-2">

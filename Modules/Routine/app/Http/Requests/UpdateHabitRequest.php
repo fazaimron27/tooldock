@@ -63,6 +63,7 @@ class UpdateHabitRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'category_id' => ['nullable', 'uuid', 'exists:categories,id'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'in:boolean,measurable'],
             'icon' => ['nullable', 'string', 'max:50'],
