@@ -15,10 +15,12 @@
 namespace Modules\Signal\Providers;
 
 use App\Services\Cache\CacheService;
+use App\Services\Core\UserPreferenceService;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Signal\Services\SignalCacheService;
@@ -34,49 +36,19 @@ use RecursiveIteratorIterator;
 /**
  * Class SignalServiceProvider
  *
- * Primary service provider that bootstraps the Signal module.
- * Registers services as singletons, loads configurations and translations,
- * registers views and Blade components, and integrates with application
- * registries for permissions, settings, and shared Inertia data.
- *
- * @see \Modules\Signal\Services\SignalService Main notification service
- * @see \Modules\Signal\Services\SignalCacheService Cache management service
+ * Bootstraps the Signal module services, registrations, and configurations.
  */
 class SignalServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
-    /**
-     * The module name used for configuration and path resolution.
-     *
-     * @var string
-     */
     protected string $name = 'Signal';
 
-    /**
-     * Lowercase module name for namespace operations.
-     *
-     * @var string
-     */
     protected string $nameLower = 'signal';
 
     /**
-     * Boot the application events and module components.
+     * Boot the application events.
      *
-     * Initializes all module components including commands, translations,
-     * configurations, views, and migrations. Registers permissions and
-     * settings via registry services and sets up Inertia shared data
-     * for unread notification counts.
-     *
-     * @param  CommandRegistry  $commandRegistry  Registry for module commands
-     * @param  InertiaSharedDataRegistry  $sharedDataRegistry  Registry for Inertia shared data
-     * @param  PermissionRegistry  $permissionRegistry  Registry for module permissions
-     * @param  SettingsRegistry  $settingsRegistry  Registry for module settings
-     * @param  \App\Services\Registry\SignalCategoryRegistry  $categoryRegistry  Notification category registry
-     * @param  SignalCommandRegistrar  $commandRegistrar  Command registration service
-     * @param  SignalPermissionRegistrar  $permissionRegistrar  Permission registration service
-     * @param  SignalSettingsRegistrar  $settingsRegistrar  Settings registration service
-     * @param  SignalCacheService  $cacheService  Cache management service
      * @return void
      */
     public function boot(
@@ -84,7 +56,7 @@ class SignalServiceProvider extends ServiceProvider
         InertiaSharedDataRegistry $sharedDataRegistry,
         PermissionRegistry $permissionRegistry,
         SettingsRegistry $settingsRegistry,
-        \App\Services\Registry\SignalCategoryRegistry $categoryRegistry,
+        SignalCategoryRegistry $categoryRegistry,
         SignalCommandRegistrar $commandRegistrar,
         SignalPermissionRegistrar $permissionRegistrar,
         SignalSettingsRegistrar $settingsRegistrar,
@@ -120,23 +92,20 @@ class SignalServiceProvider extends ServiceProvider
     /**
      * Register the service provider.
      *
-     * Binds module services to the container as singletons.
-     * Registers sub-providers for authentication, events, and routing.
-     *
      * @return void
      */
     public function register(): void
     {
-        $this->app->register(AuthServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
         $this->app->singleton(SignalCacheService::class, function ($app) {
             return new SignalCacheService($app->make(CacheService::class));
         });
         $this->app->singleton(SignalPreferenceService::class, function ($app) {
             return new SignalPreferenceService(
-                $app->make(\App\Services\Registry\SignalCategoryRegistry::class),
-                $app->make(\App\Services\Core\UserPreferenceService::class)
+                $app->make(SignalCategoryRegistry::class),
+                $app->make(UserPreferenceService::class)
             );
         });
         $this->app->singleton(SignalService::class, function ($app) {
@@ -148,40 +117,21 @@ class SignalServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register artisan commands for the module.
-     *
-     * Placeholder for module-specific console commands.
-     * Currently no commands are registered.
+     * Register commands in the format of Command::class.
      *
      * @return void
      */
-    protected function registerCommands(): void
-    {
-        // $this->commands([]);
-    }
+    protected function registerCommands(): void {}
 
     /**
-     * Register command scheduling for the module.
-     *
-     * Placeholder for scheduled tasks specific to the Signal module.
-     * Can be used for notification cleanup or digest generation.
+     * Register command Schedules.
      *
      * @return void
      */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
-     * Register module translations.
-     *
-     * Loads translation files from the module's lang directory.
-     * Supports both namespace-based translations (__('signal::message'))
-     * and JSON translations.
+     * Register translations.
      *
      * @return void
      */
@@ -199,11 +149,7 @@ class SignalServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register module configuration files.
-     *
-     * Recursively loads all PHP config files from the module's config
-     * directory and merges them with the application configuration.
-     * Handles publishing for vendor configuration customization.
+     * Register config.
      *
      * @return void
      */
@@ -220,7 +166,6 @@ class SignalServiceProvider extends ServiceProvider
                     $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
                     $segments = explode('.', $this->nameLower.'.'.$config_key);
 
-                    // Remove duplicated adjacent segments
                     $normalized = [];
                     foreach ($segments as $segment) {
                         if (end($normalized) !== $segment) {
@@ -238,13 +183,10 @@ class SignalServiceProvider extends ServiceProvider
     }
 
     /**
-     * Merge configuration from a file into the application config.
+     * Merge config from the given path recursively.
      *
-     * Recursively merges module configuration with existing application
-     * configuration, allowing partial overrides.
-     *
-     * @param  string  $path  The absolute path to the config file
-     * @param  string  $key  The configuration key to merge into
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -256,11 +198,7 @@ class SignalServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register module views and Blade components.
-     *
-     * Loads views from the module's resources/views directory and
-     * registers Blade component namespaces for the module.
-     * Supports view publishing for customization.
+     * Register views.
      *
      * @return void
      */
@@ -279,10 +217,7 @@ class SignalServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * Returns an array of service classes that this provider provides.
-     * Used for deferred loading optimization.
-     *
-     * @return array<int, string> Array of service class names
+     * @return array<int, string>
      */
     public function provides(): array
     {
@@ -293,12 +228,9 @@ class SignalServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get paths to publishable view directories.
+     * Get publishable view paths.
      *
-     * Scans application view paths for published module views
-     * that should be loaded alongside module source views.
-     *
-     * @return array<int, string> Array of view directory paths
+     * @return array<int, string>
      */
     private function getPublishableViewPaths(): array
     {
