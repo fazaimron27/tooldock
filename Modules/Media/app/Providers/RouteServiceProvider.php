@@ -5,8 +5,8 @@
  *
  * Registers web and API routes for the Media module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Media\Providers;
@@ -15,6 +15,11 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Route;
 use Modules\Media\Models\MediaFile;
 
+/**
+ * Class RouteServiceProvider
+ *
+ * Handles route registration for the Media module.
+ */
 class RouteServiceProvider extends ServiceProvider
 {
     protected string $name = 'Media';

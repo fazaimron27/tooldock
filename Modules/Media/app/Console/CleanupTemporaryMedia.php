@@ -11,6 +11,7 @@
 
 namespace Modules\Media\Console;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Modules\Media\Models\MediaFile;
@@ -57,7 +58,7 @@ class CleanupTemporaryMedia extends Command
                 }
                 $file->delete();
                 $deletedCount++;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("Failed to delete file {$file->id}: {$e->getMessage()}");
             }
         }

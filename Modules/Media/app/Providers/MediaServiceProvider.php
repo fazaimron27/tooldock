@@ -6,8 +6,8 @@
  * Main service provider for the Media module. Registers commands,
  * configuration, views, translations, and all module registries.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Media\Providers;
@@ -21,6 +21,7 @@ use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
@@ -38,6 +39,11 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class MediaServiceProvider
+ *
+ * Bootstraps the Media module services, registrations, and configurations.
+ */
 class MediaServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -107,6 +113,7 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**
@@ -120,7 +127,7 @@ class MediaServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register commands in the format of Command::class.
      *
      * @return void
      */
@@ -139,7 +146,7 @@ class MediaServiceProvider extends ServiceProvider
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
-            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            $schedule = $this->app->make(Schedule::class);
             $schedule->command('media:cleanup-temporary')->daily();
         });
     }

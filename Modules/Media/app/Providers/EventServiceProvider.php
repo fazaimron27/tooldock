@@ -5,14 +5,19 @@
  *
  * Registers event listeners and subscribers for the Media module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Media\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
+/**
+ * Class EventServiceProvider
+ *
+ * Manages event-to-listener bindings for the Media module.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**

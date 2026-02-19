@@ -15,11 +15,15 @@ namespace Modules\Media\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\Media\MediaUploader;
 use App\Services\Registry\SignalHandlerRegistry;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
 use Modules\Media\Http\Requests\UploadMediaRequest;
 use Modules\Media\Models\MediaFile;
 
@@ -46,9 +50,9 @@ class MediaController extends Controller
         $user = request()->user();
         $query = MediaFile::permanent()->with('model')->latest();
 
-        if (! $user->hasRole(\Modules\Core\Constants\Roles::SUPER_ADMIN)) {
+        if (! $user->hasRole(Roles::SUPER_ADMIN)) {
             $userId = $user->id;
-            $userClass = \Modules\Core\Models\User::class;
+            $userClass = User::class;
 
             $query->where(function ($q) use ($userId, $userClass) {
                 $q->where(function ($sub) use ($userId, $userClass) {
@@ -192,7 +196,7 @@ class MediaController extends Controller
                 'mime_type' => $mediaFile->mime_type,
                 'size' => $mediaFile->size,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $user = $request->user();
             $filename = $request->file('file')?->getClientOriginalName() ?? 'Unknown';
 
@@ -228,9 +232,9 @@ class MediaController extends Controller
      * Remove the specified media file.
      *
      * @param  MediaFile  $medium
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function destroy(MediaFile $medium): \Illuminate\Http\RedirectResponse
+    public function destroy(MediaFile $medium): RedirectResponse
     {
         $this->authorize('delete', $medium);
 

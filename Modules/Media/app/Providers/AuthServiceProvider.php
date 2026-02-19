@@ -5,8 +5,8 @@
  *
  * Registers model-policy mappings for the Media module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Media\Providers;
@@ -15,6 +15,11 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Modules\Media\Models\MediaFile;
 use Modules\Media\Policies\MediaFilePolicy;
 
+/**
+ * Class AuthServiceProvider
+ *
+ * Maps the MediaFile model to MediaFilePolicy for authorization checks.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**
