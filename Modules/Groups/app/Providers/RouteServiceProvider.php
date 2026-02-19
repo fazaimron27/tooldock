@@ -5,8 +5,8 @@
  *
  * Registers web and API routes for the Groups module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Groups\Providers;
@@ -15,7 +15,9 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Route;
 
 /**
- * Route service provider for the Groups module.
+ * Class RouteServiceProvider
+ *
+ * Handles route registration for the Groups module.
  */
 class RouteServiceProvider extends ServiceProvider
 {

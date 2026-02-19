@@ -6,8 +6,8 @@
  * Main service provider for the Groups module. Bootstraps module
  * configuration, routes, views, registries, and authorization.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Groups\Providers;
@@ -18,6 +18,7 @@ use App\Services\Registry\GroupRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
+use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
@@ -39,7 +40,9 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 /**
- * Service provider for the Groups module.
+ * Class GroupsServiceProvider
+ *
+ * Bootstraps the Groups module services, registrations, and configurations.
  */
 class GroupsServiceProvider extends ServiceProvider
 {
@@ -68,7 +71,8 @@ class GroupsServiceProvider extends ServiceProvider
         GroupsPermissionRegistrar $permissionRegistrar,
         GroupsGroupRegistrar $groupRegistrar,
         SignalHandlerRegistry $signalRegistry,
-        GroupsSignalRegistrar $signalRegistrar
+        GroupsSignalRegistrar $signalRegistrar,
+        SignalCategoryRegistry $signalCategoryRegistry
     ): void {
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -82,9 +86,7 @@ class GroupsServiceProvider extends ServiceProvider
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
         $groupRegistrar->register($groupRegistry, $this->name);
-        if (class_exists(\App\Services\Registry\SignalCategoryRegistry::class)) {
-            app(\App\Services\Registry\SignalCategoryRegistry::class)->register($this->name, 'groups', 'groups_notify_enabled');
-        }
+        $signalCategoryRegistry->register($this->name, 'groups', 'groups_notify_enabled');
         $signalRegistrar->register($signalRegistry);
 
         $this->registerAuthorization();
@@ -110,23 +112,14 @@ class GroupsServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function registerCommands(): void
-    {
-        // $this->commands([]);
-    }
+    protected function registerCommands(): void {}
 
     /**
      * Register command Schedules.
      *
      * @return void
      */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
-    }
+    protected function registerCommandSchedules(): void {}
 
     /**
      * Register translations.
@@ -215,7 +208,7 @@ class GroupsServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
     public function provides(): array
     {
@@ -225,7 +218,7 @@ class GroupsServiceProvider extends ServiceProvider
     /**
      * Get publishable view paths.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
     private function getPublishableViewPaths(): array
     {

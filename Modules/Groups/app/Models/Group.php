@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\Permission;
@@ -125,7 +126,7 @@ class Group extends Model
         if ($role) {
             try {
                 $this->roles()->syncWithoutDetaching([$role->id]);
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 // Ignore - role is already attached (race condition with concurrent processes)
             }
         }

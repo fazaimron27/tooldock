@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Modules\AuditLog\Enums\AuditLogEvent;
 use Modules\AuditLog\Jobs\CreateAuditLogJob;
 use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
@@ -108,7 +109,7 @@ class GroupsController extends Controller
 
         $group = Group::create([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
+            'slug' => $validated['slug'] ?? Str::slug($validated['name']),
             'description' => $validated['description'] ?? null,
         ]);
 
@@ -184,7 +185,7 @@ class GroupsController extends Controller
 
         $group->update([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?? \Illuminate\Support\Str::slug($validated['name']),
+            'slug' => $validated['slug'] ?? Str::slug($validated['name']),
             'description' => $validated['description'] ?? null,
         ]);
 

@@ -5,8 +5,8 @@
  *
  * Registers policy mappings for group model authorization.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Groups\Providers;
@@ -15,6 +15,11 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Modules\Groups\Models\Group;
 use Modules\Groups\Policies\GroupPolicy;
 
+/**
+ * Class AuthServiceProvider
+ *
+ * Maps the Group model to GroupPolicy for authorization checks.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**

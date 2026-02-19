@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Data\DatatableQueryService;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog;
@@ -169,7 +170,7 @@ class GroupsController extends Controller
 
         $group = Group::create([
             'name' => $request->name,
-            'slug' => $request->slug ?? \Illuminate\Support\Str::slug($request->name),
+            'slug' => $request->slug ?? Str::slug($request->name),
             'description' => $request->description,
         ]);
 
@@ -226,7 +227,7 @@ class GroupsController extends Controller
 
         $group->update([
             'name' => $request->name,
-            'slug' => $request->slug ?? \Illuminate\Support\Str::slug($request->name),
+            'slug' => $request->slug ?? Str::slug($request->name),
             'description' => $request->description,
         ]);
 
