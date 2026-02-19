@@ -53,7 +53,7 @@ class ModuleRegistryHelper
      */
     public function reloadStatuses(): void
     {
-        if ($this->activator instanceof \App\Services\Modules\DatabaseActivator) {
+        if ($this->activator instanceof DatabaseActivator) {
             $this->activator->reloadStatuses();
         }
 

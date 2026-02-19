@@ -18,6 +18,7 @@ use App\Services\Cache\Exceptions\CacheConnectionException;
 use App\Services\Cache\Exceptions\CacheException;
 use App\Services\Cache\Exceptions\CacheTagException;
 use App\Services\Cache\Exceptions\CacheTimeoutException;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
@@ -312,7 +313,7 @@ class CacheService
      * @param  string|array  $tags  Cache tag(s)
      * @return \Illuminate\Contracts\Cache\Repository Tagged cache repository
      */
-    public function tags(string|array $tags): \Illuminate\Contracts\Cache\Repository
+    public function tags(string|array $tags): Repository
     {
         $tags = is_array($tags) ? $tags : [$tags];
 

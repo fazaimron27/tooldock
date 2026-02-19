@@ -16,7 +16,10 @@ namespace App\Services\Core;
 use App\Services\Cache\CacheService;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Collection;
+use Modules\Settings\Enums\SettingType;
 use Modules\Settings\Models\Setting;
+use RuntimeException;
+use Throwable;
 
 /**
  * Service for managing application settings with aggressive caching.
@@ -72,7 +75,7 @@ class SettingsService
             }
 
             return $setting->value;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return $default;
         }
     }
@@ -95,7 +98,7 @@ class SettingsService
         $setting = $this->setting->where('key', $key)->first();
 
         if ($setting === null) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Setting key '{$key}' does not exist. Settings must be registered ".
                     'via SettingsRegistry before they can be updated.'
             );
@@ -124,16 +127,16 @@ class SettingsService
      * @param  \Modules\Settings\Enums\SettingType  $type  The setting type
      * @return mixed The normalized value
      */
-    private function normalizeValueForComparison(mixed $value, \Modules\Settings\Enums\SettingType $type): mixed
+    private function normalizeValueForComparison(mixed $value, SettingType $type): mixed
     {
         return match ($type) {
-            \Modules\Settings\Enums\SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            \Modules\Settings\Enums\SettingType::Integer => (int) $value,
-            \Modules\Settings\Enums\SettingType::Percentage => (float) $value,
-            \Modules\Settings\Enums\SettingType::Text,
-            \Modules\Settings\Enums\SettingType::Textarea,
-            \Modules\Settings\Enums\SettingType::Select,
-            \Modules\Settings\Enums\SettingType::Currency => (string) $value,
+            SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            SettingType::Integer => (int) $value,
+            SettingType::Percentage => (float) $value,
+            SettingType::Text,
+            SettingType::Textarea,
+            SettingType::Select,
+            SettingType::Currency => (string) $value,
         };
     }
 

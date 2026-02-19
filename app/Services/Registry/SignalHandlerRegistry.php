@@ -15,6 +15,8 @@ namespace App\Services\Registry;
 
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\User;
+use Modules\Signal\Jobs\SendNotificationJob;
+use Modules\Signal\Services\SignalService;
 use Modules\Treasury\Models\Transaction;
 
 /**
@@ -229,7 +231,7 @@ class SignalHandlerRegistry
      */
     private function sendSignal(User $user, array $signal, string $module): void
     {
-        \Modules\Signal\Jobs\SendNotificationJob::dispatch(
+        SendNotificationJob::dispatch(
             $user->id,
             $signal['type'] ?? 'info',
             $signal['title'] ?? '',
@@ -237,7 +239,7 @@ class SignalHandlerRegistry
             $signal['url'] ?? null,
             $module,
             $signal['category'] ?? null,
-            $signal['delivery'] ?? \Modules\Signal\Services\SignalService::DELIVERY_SILENT,
+            $signal['delivery'] ?? SignalService::DELIVERY_SILENT,
             $signal['action'] ?? null,
         );
     }

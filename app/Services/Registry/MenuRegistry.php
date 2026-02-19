@@ -14,9 +14,11 @@
 namespace App\Services\Registry;
 
 use App\Services\Cache\CacheService;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Core\Models\Menu;
 
 /**
@@ -208,7 +210,7 @@ class MenuRegistry
                         }
                     } else {
                         $parentsToInsert[] = [
-                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                            'id' => (string) Str::orderedUuid(),
                             'group' => $menu['group'],
                             'label' => $menu['label'],
                             'route' => $menu['route'],
@@ -265,7 +267,7 @@ class MenuRegistry
                         }
 
                         $childrenToInsert[] = [
-                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                            'id' => (string) Str::orderedUuid(),
                             'parent_id' => $parent->id,
                             'group' => $menu['group'],
                             'label' => $menu['label'],
@@ -391,7 +393,7 @@ class MenuRegistry
      * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
      * @return array<string, array<int, array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}>>
      */
-    public function getMenus(?\Illuminate\Contracts\Auth\Authenticatable $user = null): array
+    public function getMenus(?Authenticatable $user = null): array
     {
         $userId = $user?->id ?? '';
         $cacheKey = "menus:user:{$userId}";
@@ -413,7 +415,7 @@ class MenuRegistry
      * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
      * @return array<string, array<int, array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}>>
      */
-    private function loadMenusFromDatabase(?\Illuminate\Contracts\Auth\Authenticatable $user = null): array
+    private function loadMenusFromDatabase(?Authenticatable $user = null): array
     {
         $allMenus = Menu::active()
             ->orderBy('group')
@@ -485,7 +487,7 @@ class MenuRegistry
      * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
      * @return array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}|null
      */
-    private function buildMenuItem(Menu $menu, ?\Illuminate\Contracts\Auth\Authenticatable $user): ?array
+    private function buildMenuItem(Menu $menu, ?Authenticatable $user): ?array
     {
         $children = [];
         if ($menu->children->isNotEmpty()) {

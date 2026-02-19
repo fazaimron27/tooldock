@@ -14,8 +14,10 @@
 namespace App\Services\Registry;
 
 use App\Services\Cache\CacheService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Settings\Enums\SettingType;
 use Modules\Settings\Models\Setting;
 
@@ -243,7 +245,7 @@ class SettingsRegistry
                         ];
                     } else {
                         $toInsert[] = [
-                            'id' => (string) \Illuminate\Support\Str::orderedUuid(),
+                            'id' => (string) Str::orderedUuid(),
                             'module' => $setting['module'],
                             'group' => $setting['group'],
                             'key' => $setting['key'],
@@ -389,7 +391,7 @@ class SettingsRegistry
      *
      * @return \Illuminate\Support\Collection Collection of user-overridable settings
      */
-    public function getUserOverridableSettings(): \Illuminate\Support\Collection
+    public function getUserOverridableSettings(): Collection
     {
         return collect($this->settings)->filter(
             fn ($setting) => ($setting['scope'] ?? 'global') === 'user'

@@ -16,8 +16,10 @@ namespace App\Services\Core;
 use App\Services\Cache\CacheService;
 use App\Services\Registry\SettingsRegistry;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use Modules\Core\Models\User;
 use Modules\Core\Models\UserPreference;
+use Modules\Settings\Enums\SettingType;
 
 /**
  * Class UserPreferenceService
@@ -92,7 +94,7 @@ class UserPreferenceService
     public function set(User $user, string $key, mixed $value): void
     {
         if (! $this->settingsRegistry->isUserOverridable($key)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 "Setting '{$key}' is not user-overridable. Only settings with scope='user' can be set as preferences."
             );
         }
@@ -140,7 +142,7 @@ class UserPreferenceService
             $value = $pref['value'];
 
             if (! $this->settingsRegistry->isUserOverridable($key)) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     "Setting '{$key}' is not user-overridable."
                 );
             }
@@ -289,10 +291,10 @@ class UserPreferenceService
         }
 
         return match ($settingType) {
-            \Modules\Settings\Enums\SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            \Modules\Settings\Enums\SettingType::Integer,
-            \Modules\Settings\Enums\SettingType::Currency => (int) $value,
-            \Modules\Settings\Enums\SettingType::Percentage => (float) $value,
+            SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            SettingType::Integer,
+            SettingType::Currency => (int) $value,
+            SettingType::Percentage => (float) $value,
             default => (string) $value,
         };
     }
@@ -357,10 +359,10 @@ class UserPreferenceService
         }
 
         return match ($settingType) {
-            \Modules\Settings\Enums\SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            \Modules\Settings\Enums\SettingType::Integer,
-            \Modules\Settings\Enums\SettingType::Currency => (int) $value,
-            \Modules\Settings\Enums\SettingType::Percentage => (float) $value,
+            SettingType::Boolean => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            SettingType::Integer,
+            SettingType::Currency => (int) $value,
+            SettingType::Percentage => (float) $value,
             default => $value,
         };
     }
