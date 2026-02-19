@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\AuditLog\Traits\LogsActivity;
+use Modules\Categories\Database\Factories\CategoryFactory;
 
 class Category extends Model
 {
@@ -174,7 +175,7 @@ class Category extends Model
      */
     protected static function newFactory(): Factory
     {
-        return \Modules\Categories\Database\Factories\CategoryFactory::new();
+        return CategoryFactory::new();
     }
 
     /**

@@ -5,8 +5,8 @@
  *
  * Registers model observers and event listeners for the Categories module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Categories\Providers;
@@ -15,6 +15,11 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Modules\Categories\Models\Category;
 use Modules\Categories\Observers\CategoryObserver;
 
+/**
+ * Class EventServiceProvider
+ *
+ * Manages event-to-listener bindings and model observers for the Categories module.
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**

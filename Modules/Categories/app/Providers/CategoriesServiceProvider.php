@@ -7,8 +7,8 @@
  * commands, menus, settings, permissions, dashboard widgets,
  * views, translations, config, and migrations.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Categories\Providers;
@@ -30,6 +30,11 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * Class CategoriesServiceProvider
+ *
+ * Bootstraps the Categories module services, registrations, and configurations.
+ */
 class CategoriesServiceProvider extends ServiceProvider
 {
     use PathNamespace;
@@ -41,17 +46,6 @@ class CategoriesServiceProvider extends ServiceProvider
     /**
      * Boot the application events.
      *
-     * @param  CommandRegistry  $commandRegistry  The command palette registry
-     * @param  MenuRegistry  $menuRegistry  The menu items registry
-     * @param  SettingsRegistry  $settingsRegistry  The settings registry
-     * @param  CategoryRegistry  $categoryRegistry  The category seed registry
-     * @param  PermissionRegistry  $permissionRegistry  The permission registry
-     * @param  DashboardWidgetRegistry  $widgetRegistry  The dashboard widget registry
-     * @param  CategoriesCommandRegistrar  $commandRegistrar  The command registrar service
-     * @param  CategoriesMenuRegistrar  $menuRegistrar  The menu registrar service
-     * @param  CategoriesDashboardService  $dashboardService  The dashboard service
-     * @param  CategoriesPermissionRegistrar  $permissionRegistrar  The permission registrar service
-     * @param  CategoriesSettingsRegistrar  $settingsRegistrar  The settings registrar service
      * @return void
      */
     public function boot(
@@ -162,8 +156,8 @@ class CategoriesServiceProvider extends ServiceProvider
     /**
      * Merge config from the given path recursively.
      *
-     * @param  string  $path  The config file path
-     * @param  string  $key  The config key
+     * @param  string  $path
+     * @param  string  $key
      * @return void
      */
     protected function merge_config_from(string $path, string $key): void
@@ -201,6 +195,11 @@ class CategoriesServiceProvider extends ServiceProvider
         return [];
     }
 
+    /**
+     * Get publishable view paths.
+     *
+     * @return array<int, string>
+     */
     private function getPublishableViewPaths(): array
     {
         $paths = [];

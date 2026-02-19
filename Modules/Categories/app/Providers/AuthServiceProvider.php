@@ -5,8 +5,8 @@
  *
  * Registers the Category model policy mapping for the Categories module.
  *
- * @author Tool Dock Team
- * @license MIT
+ * @author     Tool Dock Team
+ * @license    MIT
  */
 
 namespace Modules\Categories\Providers;
@@ -15,6 +15,11 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Modules\Categories\Models\Category;
 use Modules\Categories\Policies\CategoryPolicy;
 
+/**
+ * Class AuthServiceProvider
+ *
+ * Maps the Category model to CategoryPolicy for authorization checks.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**
