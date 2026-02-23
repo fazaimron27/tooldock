@@ -1,0 +1,19 @@
+{
+  "name": "QuickDraw",
+  "alias": "quickdraw",
+  "version": "1.0.0",
+  "description": "Infinite whiteboard for brainstorming and sketching.",
+  "keywords": ["whiteboard", "draw", "sketch", "brainstorm", "tldraw"],
+  "priority": -984,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\QuickDraw\\Providers\\QuickDrawServiceProvider",
+    "Modules\\QuickDraw\\Providers\\RouteServiceProvider",
+    "Modules\\QuickDraw\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Settings", "AuditLog", "Signal"],
+  "icon": "PenTool",
+  "author": "Tool Dock Team"
+}
