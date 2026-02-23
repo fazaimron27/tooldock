@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/quickdraw",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\QuickDraw\\": "app/",
+            "Modules\\QuickDraw\\Database\\Factories\\": "database/factories/",
+            "Modules\\QuickDraw\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\QuickDraw\\Tests\\": "tests/"
+        }
+    }
+}
