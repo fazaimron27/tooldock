@@ -37,6 +37,12 @@ export default [
         FormData: 'readonly',
         fetch: 'readonly',
         URLSearchParams: 'readonly',
+        crypto: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        navigator: 'readonly',
+        Blob: 'readonly',
+        ResizeObserver: 'readonly',
       },
     },
     settings: {
