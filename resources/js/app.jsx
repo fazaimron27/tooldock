@@ -35,7 +35,7 @@ const modulePages = import.meta.glob('../../Modules/*/resources/assets/js/Pages/
  * 2. Authentication pages - Use AuthLayout
  */
 
-const pagesWithoutLayout = ['Welcome', 'Auth/**', 'Modules::*/Auth/**'];
+const pagesWithoutLayout = ['Welcome', 'Auth/**', 'Modules::*/Auth/**', 'Modules::Folio/Print'];
 
 /**
  * Convert a glob-like pattern to a regex.
