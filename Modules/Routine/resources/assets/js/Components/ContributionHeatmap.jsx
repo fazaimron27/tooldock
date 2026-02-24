@@ -1,4 +1,3 @@
-/* global ResizeObserver */
 /**
  * ContributionHeatmap Component
  *
