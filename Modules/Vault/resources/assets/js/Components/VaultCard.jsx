@@ -114,7 +114,6 @@ export default function VaultCard({ vault }) {
 
   const handleCopyPassword = useCallback(() => {
     if (vault.value) {
-      // eslint-disable-next-line no-undef
       navigator.clipboard.writeText(vault.value);
       toast.success('Password copied to clipboard');
     }
@@ -122,7 +121,6 @@ export default function VaultCard({ vault }) {
 
   const handleCopyUsername = useCallback(() => {
     if (vault.username) {
-      // eslint-disable-next-line no-undef
       navigator.clipboard.writeText(vault.username);
       toast.success('Username copied to clipboard');
     }
@@ -130,7 +128,6 @@ export default function VaultCard({ vault }) {
 
   const handleCopyTotp = useCallback(() => {
     if (totpCode) {
-      // eslint-disable-next-line no-undef
       navigator.clipboard.writeText(totpCode);
       toast.success('TOTP code copied to clipboard');
     }
@@ -138,7 +135,6 @@ export default function VaultCard({ vault }) {
 
   const handleCopyCardNumber = useCallback(() => {
     if (vault.fields?.card_number) {
-      // eslint-disable-next-line no-undef
       navigator.clipboard.writeText(vault.fields.card_number.replace(/\s/g, ''));
       toast.success('Card number copied to clipboard');
     }
@@ -146,7 +142,6 @@ export default function VaultCard({ vault }) {
 
   const handleCopyHost = useCallback(() => {
     if (vault.fields?.host) {
-      // eslint-disable-next-line no-undef
       navigator.clipboard.writeText(vault.fields.host);
       toast.success('Host copied to clipboard');
     }
