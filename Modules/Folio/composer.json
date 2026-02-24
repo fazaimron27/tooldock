@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/folio",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Folio\\": "app/",
+            "Modules\\Folio\\Database\\Factories\\": "database/factories/",
+            "Modules\\Folio\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Folio\\Tests\\": "tests/"
+        }
+    }
+}

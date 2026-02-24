@@ -1,0 +1,19 @@
+{
+  "name": "Folio",
+  "alias": "folio",
+  "version": "1.0.0",
+  "description": "Real-time resume and portfolio builder.",
+  "keywords": ["resume", "portfolio", "builder", "pdf"],
+  "priority": -983,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Folio\\Providers\\FolioServiceProvider",
+    "Modules\\Folio\\Providers\\RouteServiceProvider",
+    "Modules\\Folio\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Settings", "AuditLog", "Signal"],
+  "icon": "FileUser",
+  "author": "Tool Dock Team"
+}
