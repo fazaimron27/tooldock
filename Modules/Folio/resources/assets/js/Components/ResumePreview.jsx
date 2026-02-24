@@ -14,6 +14,7 @@ import { FONT_MAP } from '@Folio/constants/fonts';
 import { PAGE_SIZES } from '@Folio/constants/pageSizes';
 import { useMemo, useRef } from 'react';
 
+import '../../css/folio.css';
 import BoldTemplate from './Templates/BoldTemplate';
 import ElegantTemplate from './Templates/ElegantTemplate';
 import ModernTemplate from './Templates/ModernTemplate';

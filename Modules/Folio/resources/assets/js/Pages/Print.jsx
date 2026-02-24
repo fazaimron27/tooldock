@@ -20,6 +20,8 @@ import { useRef } from 'react';
 
 import { Button } from '@/Components/ui/button';
 
+import '../css/folio.css';
+
 const TEMPLATES = {
   professional: ProfessionalTemplate,
   modern: ModernTemplate,
