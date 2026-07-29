@@ -53,7 +53,7 @@ export default function NetWorthBanner({
             </div>
 
             {/* Main amount */}
-            <p className="text-4xl md:text-5xl font-bold tracking-tight">{formatCurrency(total)}</p>
+            <p className="text-2xl md:text-5xl font-bold tracking-tight">{formatCurrency(total)}</p>
 
             {/* Change indicator and wallet count */}
             <div className="flex items-center gap-4 mt-3">
