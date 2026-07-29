@@ -12,10 +12,14 @@
 
 namespace Modules\Folio\Providers;
 
+use App\Services\Registry\CommandRegistry;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Folio\Services\FolioCommandRegistrar;
+use Modules\Folio\Services\FolioDashboardService;
 use Modules\Folio\Services\FolioMenuRegistrar;
 use Modules\Folio\Services\FolioPermissionRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -41,8 +45,12 @@ class FolioServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot(
+        CommandRegistry $commandRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
+        FolioCommandRegistrar $commandRegistrar,
+        FolioDashboardService $dashboardService,
         FolioMenuRegistrar $menuRegistrar,
         FolioPermissionRegistrar $permissionRegistrar
     ): void {
@@ -53,8 +61,10 @@ class FolioServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**

@@ -17,7 +17,7 @@ use Modules\Core\Constants\Roles as RoleConstants;
 /**
  * Class FolioPermissionRegistrar
  *
- * @see \App\Services\Registry\PermissionRegistry
+ * @see PermissionRegistry
  */
 class FolioPermissionRegistrar
 {
@@ -30,18 +30,21 @@ class FolioPermissionRegistrar
     public function registerPermissions(PermissionRegistry $registry): void
     {
         $registry->register('folio', [
+            'dashboard.view',
             'folio.view',
             'folio.create',
             'folio.edit',
             'folio.delete',
         ], [
             RoleConstants::ADMINISTRATOR => [
+                'dashboard.view',
                 'folio.view',
                 'folio.create',
                 'folio.edit',
                 'folio.delete',
             ],
             RoleConstants::MANAGER => [
+                'dashboard.view',
                 'folio.view',
                 'folio.create',
                 'folio.edit',
