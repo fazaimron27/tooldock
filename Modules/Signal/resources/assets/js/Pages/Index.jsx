@@ -280,7 +280,7 @@ export default function Index({ notifications, filter, counts }) {
                           aria-label={`Select notification: ${notification.title}`}
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <SignalItem notification={notification} onMarkAsRead={handleMarkAsRead} />
                       </div>
                       <Button
