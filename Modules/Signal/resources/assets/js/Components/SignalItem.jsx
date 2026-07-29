@@ -65,7 +65,7 @@ export default function SignalItem({
       )}
     >
       {/* Icon */}
-      <div className={cn('flex-shrink-0 p-2 rounded-full', config.className)}>
+      <div className={cn('shrink-0 p-2 rounded-full', config.className)}>
         <Icon className="h-4 w-4" />
       </div>
 
@@ -77,16 +77,16 @@ export default function SignalItem({
               {notification.title}
             </p>
             {isUnread && (
-              <span className={cn('h-2 w-2 rounded-full flex-shrink-0', config.badgeClassName)} />
+              <span className={cn('h-2 w-2 rounded-full shrink-0', config.badgeClassName)} />
             )}
           </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
             {notification.created_at_human}
           </span>
         </div>
         <p
           className={cn(
-            'text-sm text-muted-foreground mt-0.5 break-words',
+            'text-sm text-muted-foreground mt-0.5 wrap-break-word',
             compact ? 'line-clamp-1' : 'line-clamp-2'
           )}
         >

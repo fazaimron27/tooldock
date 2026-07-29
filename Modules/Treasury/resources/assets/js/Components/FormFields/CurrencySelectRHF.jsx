@@ -100,7 +100,7 @@ export default function CurrencySelectRHF({
                           role="button"
                           tabIndex={0}
                           className={cn(
-                            'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none min-w-0',
+                            'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-hidden min-w-0',
                             field.value === option.value ? 'bg-accent' : ''
                           )}
                           onClick={(e) => {

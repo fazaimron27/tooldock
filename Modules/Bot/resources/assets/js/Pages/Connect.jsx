@@ -54,7 +54,7 @@ export default function Connect({ platform, platformUsername, connectUrl }) {
   return (
     <PageShell title={`Connect ${config.label}`}>
       <div className="flex justify-center">
-        <div className="w-full max-w-sm overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="w-full max-w-sm overflow-hidden rounded-xl border bg-card shadow-xs">
           {/* Platform accent stripe */}
           <div className="h-1 w-full" style={{ background: config.accent }} />
 

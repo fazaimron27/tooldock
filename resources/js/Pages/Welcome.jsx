@@ -227,20 +227,20 @@ export default function Welcome() {
       <div className="flex flex-col">
         <section className="relative overflow-hidden border-b py-24 md:py-32">
           <div className="absolute inset-0 bg-background">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-background to-slate-50/60 dark:from-slate-950/50 dark:via-background dark:to-slate-950/40" />
+            <div className="absolute inset-0 bg-linear-to-b from-slate-50/80 via-background to-slate-50/60 dark:from-slate-950/50 dark:via-background dark:to-slate-950/40" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(71,85,105,0.25),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(71,85,105,0.15),transparent_50%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(59,130,246,0.2),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_bottom_right,rgba(59,130,246,0.1),transparent_50%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(100,116,139,0.2),transparent_50%)] dark:bg-[radial-gradient(ellipse_at_bottom_left,rgba(100,116,139,0.1),transparent_50%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-[size:24px_24px]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808015_1px,transparent_1px),linear-gradient(to_bottom,#80808015_1px,transparent_1px)] bg-size-[24px_24px]" />
           </div>
           <div className="container relative z-10 flex flex-col items-center justify-center px-4">
             <div className="mx-auto max-w-4xl text-center">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-                <span className="bg-gradient-to-r from-slate-600 via-slate-500 to-slate-600 bg-clip-text text-transparent dark:from-slate-300 dark:via-slate-200 dark:to-slate-300">
+                <span className="bg-linear-to-r from-slate-600 via-slate-500 to-slate-600 bg-clip-text text-transparent dark:from-slate-300 dark:via-slate-200 dark:to-slate-300">
                   Tool Dock: The Open Source
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:via-slate-100 dark:to-slate-200">
+                <span className="bg-linear-to-r from-slate-500 via-slate-400 to-slate-500 bg-clip-text text-transparent dark:from-slate-200 dark:via-slate-100 dark:to-slate-200">
                   Digital Harbor.
                 </span>
               </h1>
@@ -287,7 +287,7 @@ export default function Welcome() {
                     className="group relative overflow-hidden border transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg"
                   >
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+                      className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
                     />
                     <CardHeader className="relative z-10">
                       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 transition-all duration-300 group-hover:scale-110">
@@ -323,12 +323,12 @@ export default function Welcome() {
                       className="group relative overflow-hidden border bg-card transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg dark:hover:border-blue-500/30"
                     >
                       <div
-                        className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-100 transition-opacity duration-300 group-hover:opacity-100`}
+                        className={`absolute inset-0 bg-linear-to-br ${category.gradient} opacity-100 transition-opacity duration-300 group-hover:opacity-100`}
                       />
                       <CardHeader className="relative z-10">
                         <div className="mb-4 flex items-center gap-3">
                           <div
-                            className={`flex h-12 w-12 items-center justify-center rounded-lg ${category.iconBg} ${category.iconColor} transition-transform duration-300 group-hover:scale-110 shadow-sm`}
+                            className={`flex h-12 w-12 items-center justify-center rounded-lg ${category.iconBg} ${category.iconColor} transition-transform duration-300 group-hover:scale-110 shadow-xs`}
                           >
                             <Icon className="h-6 w-6" />
                           </div>
@@ -341,7 +341,7 @@ export default function Welcome() {
                             <Badge
                               key={tool}
                               variant="outline"
-                              className={`${category.badgeColor} font-medium transition-all duration-200 hover:scale-105 hover:shadow-sm`}
+                              className={`${category.badgeColor} font-medium transition-all duration-200 hover:scale-105 hover:shadow-xs`}
                             >
                               {tool}
                             </Badge>
@@ -361,7 +361,7 @@ export default function Welcome() {
           </div>
         </section> */}
 
-        <section className="border-t bg-gradient-to-br from-slate-500/10 via-zinc-500/10 to-slate-500/10 py-16 md:py-24">
+        <section className="border-t bg-linear-to-br from-slate-500/10 via-zinc-500/10 to-slate-500/10 py-16 md:py-24">
           <div className="container px-4">
             <div className="mx-auto max-w-4xl text-center">
               <div className="mb-6 flex items-center justify-center gap-2">

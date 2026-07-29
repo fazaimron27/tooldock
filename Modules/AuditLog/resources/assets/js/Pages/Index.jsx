@@ -257,7 +257,7 @@ export default function Index({
             Export CSV
           </Button>
           <Button
-            variant={showFilters ? 'default' : 'outline'}
+            variant={showFilters ? 'default' : 'outline-solid'}
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="mr-2 h-4 w-4" />
@@ -300,7 +300,7 @@ export default function Index({
                   value={localFilters.system}
                   onChange={(e) => handleFilterChange('system', e.target.value)}
                   disabled={!!localFilters.user_id}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   title={
                     localFilters.user_id
                       ? 'System filter is disabled when a specific user is selected'
@@ -322,7 +322,7 @@ export default function Index({
                   id="event"
                   value={localFilters.event}
                   onChange={(e) => handleFilterChange('event', e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All Events</option>
                   {eventTypes.map((eventType) => (
@@ -339,7 +339,7 @@ export default function Index({
                   id="auditable_type"
                   value={localFilters.auditable_type}
                   onChange={(e) => handleFilterChange('auditable_type', e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All Models</option>
                   {modelTypes.map((type) => (
@@ -384,7 +384,7 @@ export default function Index({
                   value={localFilters.tags || ''}
                   onChange={(e) => handleFilterChange('tags', e.target.value)}
                   placeholder="Filter by tags (comma-separated)"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
             </div>

@@ -182,7 +182,7 @@ export default function VaultCard({ vault }) {
       <Card className="group flex h-full w-full flex-col transition-all duration-200 hover:shadow-lg">
         <CardHeader className="pb-4 border-b">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-primary/10 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
               {vault.favicon_url ? (
                 <img
                   src={vault.favicon_url}
@@ -271,7 +271,7 @@ export default function VaultCard({ vault }) {
                 </Button>
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="text-sm whitespace-pre-wrap break-words line-clamp-5">
+                <p className="text-sm whitespace-pre-wrap wrap-break-word line-clamp-5">
                   {vault.value}
                 </p>
               </div>
@@ -353,7 +353,7 @@ export default function VaultCard({ vault }) {
               {vault.fields.billing_address && (
                 <div className="space-y-1 pt-2 border-t">
                   <p className="text-xs text-muted-foreground">Billing Address</p>
-                  <p className="text-sm whitespace-pre-wrap break-words line-clamp-3">
+                  <p className="text-sm whitespace-pre-wrap wrap-break-word line-clamp-3">
                     {vault.fields.billing_address}
                   </p>
                 </div>
@@ -400,7 +400,7 @@ export default function VaultCard({ vault }) {
               {vault.fields.server_notes && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap break-words line-clamp-3">
+                  <p className="text-sm whitespace-pre-wrap wrap-break-word line-clamp-3">
                     {vault.fields.server_notes}
                   </p>
                 </div>

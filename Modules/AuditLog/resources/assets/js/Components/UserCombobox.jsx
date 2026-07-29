@@ -80,7 +80,7 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] min-w-[200px] max-w-[400px] p-0"
+          className="w-(--radix-popover-trigger-width) min-w-[200px] max-w-[400px] p-0"
           align="start"
           sideOffset={4}
         >
@@ -115,7 +115,7 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none min-w-0',
+                    'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-hidden min-w-0',
                     !value || value === '' ? 'bg-accent' : ''
                   )}
                   onClick={(e) => {
@@ -148,7 +148,7 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
                       role="button"
                       tabIndex={0}
                       className={cn(
-                        'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none min-w-0',
+                        'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-hidden min-w-0',
                         isSelected ? 'bg-accent' : ''
                       )}
                       onClick={(e) => {

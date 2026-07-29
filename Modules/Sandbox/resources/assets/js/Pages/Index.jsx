@@ -97,7 +97,7 @@ export default function Index() {
       return 'default';
     }
 
-    return 'outline';
+    return 'outline-solid';
   };
 
   const formatTimestamp = (entry) => {
@@ -255,7 +255,7 @@ export default function Index() {
                     <div key={inbound.id} className="rounded-md border p-3">
                       <div className="flex min-w-0 items-center justify-between gap-2">
                         <p className="min-w-0 truncate font-medium">{inbound.name}</p>
-                        <Badge variant="outline" className="max-w-[12rem] truncate">
+                        <Badge variant="outline" className="max-w-48 truncate">
                           {inbound.slug}
                         </Badge>
                       </div>
@@ -284,7 +284,7 @@ export default function Index() {
                 <select
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
-                  className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="all">All statuses</option>
                   <option value="queued">Queued</option>
@@ -359,7 +359,7 @@ export default function Index() {
                                 <td className="px-3 py-2 text-xs text-muted-foreground">
                                   {formatTimestamp(entry)}
                                 </td>
-                                <td className="px-3 py-2 text-xs text-muted-foreground max-w-[28rem]">
+                                <td className="px-3 py-2 text-xs text-muted-foreground max-w-md">
                                   <p className="line-clamp-2">
                                     {entry.processing?.summary ?? 'No processing summary.'}
                                   </p>

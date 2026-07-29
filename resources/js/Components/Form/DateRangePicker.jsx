@@ -111,7 +111,7 @@ export function DateRangePicker({
           <Button
             variant="outline"
             className={cn(
-              'w-full h-12 p-0 bg-card/50 border-border/40 hover:border-primary/40 hover:bg-card transition-all duration-300 shadow-sm overflow-hidden group',
+              'w-full h-12 p-0 bg-card/50 border-border/40 hover:border-primary/40 hover:bg-card transition-all duration-300 shadow-xs overflow-hidden group',
               isOpen && 'ring-2 ring-primary/20 border-primary/40 shadow-lg shadow-primary/5'
             )}
           >
@@ -200,7 +200,7 @@ export function DateRangePicker({
                   className={cn(
                     'px-3 py-1.5 text-[10px] font-black uppercase tracking-tight rounded-full transition-all',
                     date.from && date.to && isSameDay(date.from, p.from) && isSameDay(date.to, p.to)
-                      ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
+                      ? 'bg-primary text-primary-foreground shadow-xs shadow-primary/20'
                       : 'hover:bg-primary/10 text-muted-foreground hover:text-primary'
                   )}
                 >
@@ -240,7 +240,7 @@ export function DateRangePicker({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs font-bold bg-background shadow-sm"
+                className="text-xs font-bold bg-background shadow-xs"
                 onClick={() => setIsOpen(false)}
               >
                 Cancel

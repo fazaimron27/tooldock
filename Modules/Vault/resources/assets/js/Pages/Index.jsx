@@ -164,7 +164,7 @@ export default function Index({ vaults, categories = [], types = [] }) {
             </Select>
 
             <Button
-              variant={showFavorites ? 'default' : 'outline'}
+              variant={showFavorites ? 'default' : 'outline-solid'}
               size="sm"
               onClick={handleFavoriteToggle}
             >
@@ -253,7 +253,7 @@ export default function Index({ vaults, categories = [], types = [] }) {
                 {vaults.links.map((link, index) => (
                   <Button
                     key={index}
-                    variant={link.active ? 'default' : 'outline'}
+                    variant={link.active ? 'default' : 'outline-solid'}
                     size="sm"
                     disabled={!link.url}
                     onClick={() => {

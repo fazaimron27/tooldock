@@ -302,7 +302,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
                         min="0"
                         max="100"
                         className={cn(
-                          'h-8 w-16 rounded-md border border-input bg-background px-2 py-1 text-right text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                          'h-8 w-16 rounded-md border border-input bg-background px-2 py-1 text-right text-sm ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                           error && 'border-destructive'
                         )}
                         value={value}
@@ -418,7 +418,7 @@ export default function Index({ applicationSettings = {}, modulesSettings = {} }
                       type="text"
                       inputMode="numeric"
                       className={cn(
-                        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
                         'pl-12',
                         error && 'border-destructive'
                       )}

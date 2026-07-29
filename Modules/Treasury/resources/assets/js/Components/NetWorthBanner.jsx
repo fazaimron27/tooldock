@@ -19,7 +19,7 @@ export default function NetWorthBanner({
   const isPositive = changePercent === null ? null : changePercent >= 0;
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-white border-0 shadow-lg">
+    <Card className="relative overflow-hidden bg-linear-to-br from-amber-500 via-orange-500 to-rose-500 text-white border-0 shadow-lg">
       {/* Decorative background patterns */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Animated circles */}
@@ -46,7 +46,7 @@ export default function NetWorthBanner({
               <p className="text-sm font-medium text-white/80">Total Net Worth</p>
               <Badge
                 variant="secondary"
-                className="text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0 backdrop-blur-sm"
+                className="text-[10px] px-1.5 py-0 h-4 bg-white/20 text-white border-0 backdrop-blur-xs"
               >
                 {currencyCode}
               </Badge>
@@ -93,7 +93,7 @@ export default function NetWorthBanner({
           </div>
 
           {/* Icon with glassmorphism effect */}
-          <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-lg">
+          <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 shadow-lg">
             <Landmark className="w-10 h-10 text-white/80" />
           </div>
         </div>

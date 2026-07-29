@@ -373,7 +373,7 @@ export default function Index() {
     <div className="flex items-center gap-2">
       {!isEmptyJson && (
         <Badge
-          variant={isValidJson ? 'outline' : 'destructive'}
+          variant={isValidJson ? 'outline-solid' : 'destructive'}
           className={`h-5 text-[10px] font-semibold tracking-wide shrink-0 ${
             isValidJson
               ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/10'

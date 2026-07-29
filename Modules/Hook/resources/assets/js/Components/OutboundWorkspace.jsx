@@ -60,12 +60,12 @@ function tryParse(str) {
 function EditorPanel({ title, error, defaultValue, onChange }) {
   return (
     <div
-      className={`rounded-lg border overflow-hidden shadow-sm transition-colors ${
+      className={`rounded-lg border overflow-hidden shadow-xs transition-colors ${
         error ? 'border-destructive' : 'border-border'
       }`}
     >
       {/* ── Chrome bar ── */}
-      <div className="flex items-center justify-between gap-2 bg-[#1e1e1e] border-b border-white/[0.06] px-3 py-2">
+      <div className="flex items-center justify-between gap-2 bg-[#1e1e1e] border-b border-white/6 px-3 py-2">
         <div className="flex items-center gap-2.5">
           <span className="flex gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
@@ -76,7 +76,7 @@ function EditorPanel({ title, error, defaultValue, onChange }) {
         </div>
         <div className="flex items-center gap-2">
           {error && <span className="text-[10px] text-destructive font-medium">{error}</span>}
-          <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-white/30 font-mono uppercase tracking-widest">
+          <span className="rounded bg-white/6 px-1.5 py-0.5 text-[10px] text-white/30 font-mono uppercase tracking-widest">
             json
           </span>
         </div>
@@ -354,7 +354,7 @@ export default function OutboundWorkspace({ outbound, events, loading, triggerDe
                     placeholder={`Leave blank to keep existing ${field.label}`}
                     value={f.value ?? ''}
                     onChange={f.onChange}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 )}
               />

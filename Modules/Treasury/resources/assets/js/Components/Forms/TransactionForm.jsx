@@ -334,9 +334,9 @@ export default function TransactionForm({
       <div
         className={cn(
           'px-6 py-5 transition-colors duration-300',
-          formType === 'income' && 'bg-gradient-to-r from-emerald-500/10 to-transparent',
-          formType === 'expense' && 'bg-gradient-to-r from-rose-500/10 to-transparent',
-          formType === 'transfer' && 'bg-gradient-to-r from-blue-500/10 to-transparent'
+          formType === 'income' && 'bg-linear-to-r from-emerald-500/10 to-transparent',
+          formType === 'expense' && 'bg-linear-to-r from-rose-500/10 to-transparent',
+          formType === 'transfer' && 'bg-linear-to-r from-blue-500/10 to-transparent'
         )}
       >
         <div className="flex items-center gap-3">

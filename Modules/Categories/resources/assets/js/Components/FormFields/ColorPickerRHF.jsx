@@ -28,7 +28,7 @@ export default function ColorPickerRHF({ name, control, label = 'Color', classNa
               value={field.value || ''}
               onChange={(e) => field.onChange(e.target.value)}
               className={cn(
-                'flex-1 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+                'flex-1 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
                 error && 'border-destructive'
               )}
               placeholder="#000000"

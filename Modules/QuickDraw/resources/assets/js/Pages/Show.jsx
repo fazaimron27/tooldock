@@ -63,7 +63,7 @@ export default function Show({ quickdraw, documentState }) {
           </Badge>
         )
       }
-      className="!gap-4"
+      className="gap-4!"
     >
       <div
         className="relative rounded-lg overflow-hidden border"

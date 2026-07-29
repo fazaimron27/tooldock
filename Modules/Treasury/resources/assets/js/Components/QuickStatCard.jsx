@@ -78,7 +78,7 @@ export default function QuickStatCard({
       <div
         className={cn(
           'flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50',
-          'transition-all duration-200 hover:border-border hover:shadow-sm',
+          'transition-all duration-200 hover:border-border hover:shadow-xs',
           className
         )}
       >
@@ -113,7 +113,7 @@ export default function QuickStatCard({
   }
 
   return (
-    <Card className={cn('transition-all duration-200 hover:shadow-sm', className)}>
+    <Card className={cn('transition-all duration-200 hover:shadow-xs', className)}>
       <CardContent className="pt-4">
         <div className="flex items-center gap-3">
           {Icon && (

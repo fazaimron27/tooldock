@@ -58,7 +58,7 @@ export default function Lock({ hasLock = false }) {
     return (
       <PageShell title="Set Vault PIN">
         <div className="mx-auto max-w-md">
-          <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
+          <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-xs">
             <div className="mb-6 flex justify-center">
               <div className="rounded-full bg-muted p-4">
                 <LockIcon className="h-8 w-8 text-muted-foreground" />
@@ -112,7 +112,7 @@ export default function Lock({ hasLock = false }) {
   return (
     <PageShell title="Vault Locked">
       <div className="mx-auto max-w-md">
-        <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
+        <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-xs">
           <div className="mb-6 flex justify-center">
             <div className="rounded-full bg-muted p-4">
               <LockIcon className="h-8 w-8 text-muted-foreground" />

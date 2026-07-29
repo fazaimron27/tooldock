@@ -179,7 +179,7 @@ export default function ModuleCard({ module, onKeywordClick }) {
         <Card className="group flex h-full w-full flex-col transition-all duration-200 hover:shadow-lg">
           <CardHeader className="pb-4">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-primary/10 ring-1 ring-primary/20 transition-transform group-hover:scale-105">
                 <Icon className="h-7 w-7 text-primary" />
               </div>
               <div className="flex-1 min-w-0 space-y-2">
@@ -200,7 +200,7 @@ export default function ModuleCard({ module, onKeywordClick }) {
                     )}
                   </div>
                 </div>
-                <CardDescription className="line-clamp-2 min-h-[2.75rem] text-sm leading-relaxed">
+                <CardDescription className="line-clamp-2 min-h-11 text-sm leading-relaxed">
                   {module.description || 'No description available'}
                 </CardDescription>
               </div>
@@ -214,7 +214,7 @@ export default function ModuleCard({ module, onKeywordClick }) {
                   <Badge
                     key={keyword}
                     variant="outline"
-                    className="cursor-pointer text-xs transition-all hover:bg-primary/10 hover:text-primary hover:shadow-sm"
+                    className="cursor-pointer text-xs transition-all hover:bg-primary/10 hover:text-primary hover:shadow-xs"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onKeywordClick) {
@@ -305,7 +305,7 @@ export default function ModuleCard({ module, onKeywordClick }) {
         </Card>
 
         {isProcessing && !isNavigating && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-xs">
             <div className="flex flex-col items-center gap-2">
               <Spinner className="size-8" />
               <p className="text-xs text-muted-foreground">

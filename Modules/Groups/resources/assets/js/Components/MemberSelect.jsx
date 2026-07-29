@@ -76,7 +76,7 @@ export default function MemberSelect({
                     <span
                       role="button"
                       tabIndex={0}
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                      className="ml-1 ring-offset-background rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
@@ -99,7 +99,7 @@ export default function MemberSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] min-w-[200px] max-w-[400px] p-0"
+          className="w-(--radix-popover-trigger-width) min-w-[200px] max-w-[400px] p-0"
           align="start"
           sideOffset={4}
         >

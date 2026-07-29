@@ -534,7 +534,7 @@ export default function Index({
       actions={
         <div className="flex gap-2">
           <Button
-            variant={showFilters ? 'secondary' : 'outline'}
+            variant={showFilters ? 'secondary' : 'outline-solid'}
             onClick={() => setShowFilters(!showFilters)}
             className="relative"
           >
@@ -614,7 +614,7 @@ export default function Index({
       {/* Filters Panel */}
       {showFilters && (
         <Card className="mb-6 overflow-hidden">
-          <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
+          <CardHeader className="pb-4 bg-linear-to-r from-primary/5 to-transparent">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Filter className="w-4 h-4" />
@@ -737,12 +737,12 @@ export default function Index({
           {groupedTransactions.map((group) => (
             <Card
               key={group.date}
-              className="overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow"
+              className="overflow-hidden border-border/50 shadow-xs hover:shadow-md transition-shadow"
             >
               {/* Date Header - Fixed overlapping for mobile */}
               <div className="px-3 md:px-4 py-3 bg-muted/30 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-y-3 gap-x-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-background border border-border/50 flex items-center justify-center shrink-0 shadow-xs">
                     <Calendar className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0">

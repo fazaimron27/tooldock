@@ -266,7 +266,7 @@ export default function QrCodeScanner({ onScan, onClose }) {
       <div className="flex gap-2">
         <Button
           type="button"
-          variant={mode === 'file' ? 'default' : 'outline'}
+          variant={mode === 'file' ? 'default' : 'outline-solid'}
           size="sm"
           onClick={() => {
             setMode('file');
@@ -281,7 +281,7 @@ export default function QrCodeScanner({ onScan, onClose }) {
         </Button>
         <Button
           type="button"
-          variant={mode === 'camera' ? 'default' : 'outline'}
+          variant={mode === 'camera' ? 'default' : 'outline-solid'}
           size="sm"
           onClick={() => {
             setMode('camera');

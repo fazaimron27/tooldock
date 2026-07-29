@@ -14,8 +14,8 @@ export default function ApplicationLogo({ className = '', ...props }) {
 
   return (
     <div className={cn('flex items-center gap-2.5', className)} {...props}>
-      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-lg ring-1 ring-primary/30 backdrop-blur-sm">
-        <LogoIcon className="h-6 w-6 text-primary-foreground drop-shadow-sm" strokeWidth={2.5} />
+      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary/80 shadow-lg ring-1 ring-primary/30 backdrop-blur-xs">
+        <LogoIcon className="h-6 w-6 text-primary-foreground drop-shadow-xs" strokeWidth={2.5} />
       </div>
 
       <span className="text-xl font-bold tracking-tight text-foreground">{appName}</span>

@@ -18,7 +18,7 @@ const STATUS_VARIANT = {
 };
 
 const DIRECTION_VARIANT = {
-  outbound: 'outline',
+  outbound: 'outline-solid',
   inbound: 'secondary',
 };
 
@@ -43,7 +43,7 @@ export default function Messages() {
         accessorKey: 'direction',
         header: 'Direction',
         cell: ({ getValue }) => (
-          <Badge variant={DIRECTION_VARIANT[getValue()] ?? 'outline'}>{getValue()}</Badge>
+          <Badge variant={DIRECTION_VARIANT[getValue()] ?? 'outline-solid'}>{getValue()}</Badge>
         ),
       },
       {

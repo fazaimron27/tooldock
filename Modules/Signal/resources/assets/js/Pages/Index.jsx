@@ -309,7 +309,7 @@ export default function Index({ notifications, filter, counts }) {
                   {notifications.links?.map((link, index) => (
                     <Button
                       key={index}
-                      variant={link.active ? 'default' : 'outline'}
+                      variant={link.active ? 'default' : 'outline-solid'}
                       size="sm"
                       disabled={!link.url}
                       asChild={!!link.url}
