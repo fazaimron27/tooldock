@@ -17,12 +17,14 @@ namespace Modules\Treasury\Providers;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\HookEventRegistryInterface;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
 use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Models\User;
@@ -43,6 +45,7 @@ use Modules\Treasury\Services\Support\CurrencyFormatter;
 use Modules\Treasury\Services\TreasuryCategoryRegistrar;
 use Modules\Treasury\Services\TreasuryCommandRegistrar;
 use Modules\Treasury\Services\TreasuryDashboardService;
+use Modules\Treasury\Services\TreasuryHookRegistrar;
 use Modules\Treasury\Services\TreasuryMenuRegistrar;
 use Modules\Treasury\Services\TreasuryPermissionRegistrar;
 use Modules\Treasury\Services\TreasurySettingsRegistrar;
@@ -112,6 +115,10 @@ class TreasuryServiceProvider extends ServiceProvider
                 'currency_map' => CurrencyFormatter::getCurrencyDefinitions(),
             ];
         });
+
+        if (app()->bound(HookEventRegistryInterface::class)) {
+            (new TreasuryHookRegistrar)->register(app(HookEventRegistryInterface::class));
+        }
 
         $this->registerUserRelationships();
     }
@@ -183,7 +190,7 @@ class TreasuryServiceProvider extends ServiceProvider
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
-            $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+            $schedule = $this->app->make(Schedule::class);
 
             $schedule->command('treasury:refresh-rates')->daily();
 
