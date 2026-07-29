@@ -7,9 +7,10 @@
 import { useAppStore } from '@/Stores/useAppStore';
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, usePage } from '@inertiajs/react';
-import { AlertTriangle, ChevronRight, Github } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { GithubIcon as Github } from '@/Components/icons/GithubIcon';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
 import {
   Sidebar,

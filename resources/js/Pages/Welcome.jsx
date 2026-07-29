@@ -3,19 +3,10 @@
  * Developer-focused design showcasing technical stack and community
  */
 import { Head, Link } from '@inertiajs/react';
-import {
-  Anchor,
-  ArrowRight,
-  Box,
-  Briefcase,
-  Github,
-  Heart,
-  ShieldCheck,
-  Star,
-  Wrench,
-} from 'lucide-react';
+import { Anchor, ArrowRight, Box, Briefcase, Heart, ShieldCheck, Star, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { GithubIcon as Github } from '@/Components/icons/GithubIcon';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import {

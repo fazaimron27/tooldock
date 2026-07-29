@@ -77,7 +77,6 @@ import {
   Footprints,
   GitBranch,
   GitCompare,
-  Github,
   GlassWater,
   GraduationCap,
   Guitar,
@@ -169,6 +168,8 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { GithubIcon } from '@/Components/icons/GithubIcon';
+
 /**
  * Icon lookup map for O(1) access by name.
  * Includes aliases for common naming variations (e.g., CheckIcon -> Check).
@@ -241,7 +242,7 @@ const iconMap = {
   Flame,
   FlaskConical,
   Footprints,
-  Github,
+  Github: GithubIcon,
   GitBranch,
   GitCompare,
   GlassWater,
