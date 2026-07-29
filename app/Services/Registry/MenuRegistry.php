@@ -48,9 +48,11 @@ class MenuRegistry
         'Dashboard' => 1,
         'Life OS' => 2,
         'Utilities' => 3,
-        'Master Data' => 4,
-        'Platform' => 5,
-        'System' => 6,
+        'Developer' => 4,
+        'Automation' => 5,
+        'Master Data' => 6,
+        'Platform' => 7,
+        'System' => 8,
     ];
 
     public function __construct(
@@ -390,7 +392,7 @@ class MenuRegistry
      * Cache TTL is set to 24 hours, but cache is automatically invalidated
      * when menus are modified via seed() or cleanup() methods.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
+     * @param  Authenticatable|null  $user  User to check permissions against
      * @return array<string, array<int, array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}>>
      */
     public function getMenus(?Authenticatable $user = null): array
@@ -412,7 +414,7 @@ class MenuRegistry
      * Optimized for Redis: Loads all menus (including nested children) in minimal queries
      * to reduce database load and improve cache efficiency.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
+     * @param  Authenticatable|null  $user  User to check permissions against
      * @return array<string, array<int, array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}>>
      */
     private function loadMenusFromDatabase(?Authenticatable $user = null): array
@@ -484,7 +486,7 @@ class MenuRegistry
      * This allows partial access to menu hierarchies.
      *
      * @param  Menu  $menu  The menu model
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  User to check permissions against
+     * @param  Authenticatable|null  $user  User to check permissions against
      * @return array{label: string, route: string, icon: string, order: int, permission?: string, children?: array}|null
      */
     private function buildMenuItem(Menu $menu, ?Authenticatable $user): ?array

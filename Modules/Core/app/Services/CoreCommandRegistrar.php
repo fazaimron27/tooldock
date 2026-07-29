@@ -44,7 +44,7 @@ class CoreCommandRegistrar
                 'action' => 'logout',
                 'icon' => 'log-out',
                 'keywords' => ['sign out', 'exit', 'leave'],
-                'order' => 100,
+                'order' => 999,
             ],
         ]);
 
@@ -65,7 +65,7 @@ class CoreCommandRegistrar
                 'parent' => 'User Management',
                 'permission' => 'core.roles.manage',
                 'keywords' => ['role', 'permissions', 'access'],
-                'order' => 21,
+                'order' => 30,
             ],
         ]);
 
