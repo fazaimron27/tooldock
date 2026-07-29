@@ -45,10 +45,6 @@ export default function Show({ goal, transactions, wallets, exchangeRates }) {
     },
     {
       resolver: allocateResolver,
-      toast: {
-        success: 'Funds allocated successfully!',
-        error: 'Failed to allocate funds. Please check the form for errors.',
-      },
     }
   );
 

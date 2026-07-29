@@ -15,10 +15,6 @@ export default function Create({ walletTypes = [] }) {
 
   const form = useInertiaForm(getWalletDefaults(null, walletTypes, referenceCurrency), {
     resolver: createWalletResolver,
-    toast: {
-      success: 'Wallet created successfully!',
-      error: 'Failed to create wallet. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

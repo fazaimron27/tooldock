@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 
 export function useInertiaForm(defaultValues = {}, options = {}) {
   const toastConfig = useMemo(() => options.toast || {}, [options.toast]);
-  const toastEnabled = toastConfig.enabled !== false;
+  const toastEnabled = !!options.toast && toastConfig.enabled !== false;
   const componentLevel = options.componentLevel === true;
 
   const form = useForm({

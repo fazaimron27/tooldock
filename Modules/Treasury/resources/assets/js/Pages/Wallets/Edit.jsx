@@ -15,10 +15,6 @@ export default function Edit({ wallet, walletTypes = [] }) {
 
   const form = useInertiaForm(getWalletDefaults(wallet, walletTypes, referenceCurrency), {
     resolver: updateWalletResolver,
-    toast: {
-      success: 'Wallet updated successfully!',
-      error: 'Failed to update wallet. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

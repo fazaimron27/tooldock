@@ -32,12 +32,6 @@ export default function Edit({
     },
     {
       resolver: getBudgetResolver(isPeriodEdit),
-      toast: {
-        success: isPeriodEdit
-          ? `Budget for ${currentPeriod?.label || 'this month'} updated!`
-          : 'Budget updated successfully!',
-        error: 'Failed to update budget. Please check the form for errors.',
-      },
     }
   );
 
