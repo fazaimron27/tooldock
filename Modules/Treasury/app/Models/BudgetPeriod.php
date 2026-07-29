@@ -13,6 +13,7 @@
 
 namespace Modules\Treasury\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Categories\Models\Category;
-use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
 use Modules\Treasury\Database\Factories\BudgetPeriodFactory;
 
 /**
@@ -124,9 +125,9 @@ class BudgetPeriod extends Model
      * Get the user via budget relationship.
      * Used by SignalHandlerRegistry to extract user for notifications.
      *
-     * @return \Modules\Core\Models\User|null
+     * @return User|null
      */
-    public function getUserAttribute(): ?\Modules\Core\Models\User
+    public function getUserAttribute(): ?User
     {
         return $this->budget?->user;
     }
@@ -134,7 +135,7 @@ class BudgetPeriod extends Model
     /**
      * Scope a query to only include periods for the authenticated user.
      *
-     * Super Admins can see all budget periods.
+     * All users only see their own budget periods.
      *
      * @param  Builder  $query
      * @return Builder
@@ -142,10 +143,6 @@ class BudgetPeriod extends Model
     public function scopeForUser(Builder $query): Builder
     {
         $user = request()->user();
-
-        if ($user?->hasRole(Roles::SUPER_ADMIN)) {
-            return $query;
-        }
 
         return $query->whereHas('budget', function ($q) use ($user) {
             $q->where('user_id', $user?->id);
@@ -190,11 +187,11 @@ class BudgetPeriod extends Model
     /**
      * Convert period string to Carbon date.
      *
-     * @return \Carbon\Carbon
+     * @return Carbon
      */
-    public function getPeriodDate(): \Carbon\Carbon
+    public function getPeriodDate(): Carbon
     {
-        return \Carbon\Carbon::createFromFormat('Y-m', $this->period)->startOfMonth();
+        return Carbon::createFromFormat('Y-m', $this->period)->startOfMonth();
     }
 
     /**
