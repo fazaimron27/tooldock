@@ -26,8 +26,8 @@ use Modules\AuditLog\Traits\DispatchAuditLog;
  * Processes email verification links and marks users as verified.
  * Logs verification events and sends success notifications via Signal.
  *
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For notifications
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For notifications
  */
 class VerifyEmailController extends Controller
 {

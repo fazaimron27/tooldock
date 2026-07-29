@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use Modules\Categories\Models\Category;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Modules\Categories\Models\Category>
+ * @extends Factory<Category>
  */
 class CategoryFactory extends Factory
 {

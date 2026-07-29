@@ -32,11 +32,11 @@ use Modules\Signal\Jobs\SendNotificationJob;
  * Uses cache-based deduplication to prevent duplicate notifications.
  * Skips notifications for protected modules (auto-installed during migrations).
  *
- * @see \App\Events\Modules\ModuleInstalled
- * @see \App\Events\Modules\ModuleUninstalled
- * @see \App\Events\Modules\ModuleEnabled
- * @see \App\Events\Modules\ModuleDisabled
- * @see \Modules\Signal\Jobs\SendNotificationJob For sending queued notifications
+ * @see ModuleInstalled
+ * @see ModuleUninstalled
+ * @see ModuleEnabled
+ * @see ModuleDisabled
+ * @see SendNotificationJob For sending queued notifications
  */
 class NotifyAdminsOnModuleChange
 {

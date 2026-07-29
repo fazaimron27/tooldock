@@ -13,6 +13,7 @@
 namespace Modules\Treasury\Services\Exchange;
 
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +61,7 @@ class ExchangeRateService
         }
 
         try {
-            /** @var \Illuminate\Http\Client\Response $response */
+            /** @var Response $response */
             $response = Http::timeout(30)
                 ->get(self::API_BASE_URL."/{$apiKey}/latest/USD");
 

@@ -20,7 +20,7 @@ use Modules\QuickDraw\Policies\QuickDrawPolicy;
  *
  * Maps the QuickDraw model to QuickDrawPolicy for authorization checks.
  *
- * @see \Modules\QuickDraw\Policies\QuickDrawPolicy
+ * @see QuickDrawPolicy
  */
 class AuthServiceProvider extends ServiceProvider
 {

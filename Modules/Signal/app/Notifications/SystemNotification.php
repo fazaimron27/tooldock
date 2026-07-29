@@ -15,6 +15,8 @@ namespace Modules\Signal\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Modules\Signal\Events\NotificationReceived;
+use Modules\Signal\Services\SignalService;
 
 /**
  * Class SystemNotification
@@ -29,8 +31,8 @@ use Illuminate\Notifications\Notification;
  * @property string|null $actionUrl Optional URL for notification action
  * @property string|null $moduleSource Optional source module identifier
  *
- * @see \Modules\Signal\Events\NotificationReceived For real-time broadcasting
- * @see \Modules\Signal\Services\SignalService For sending notifications
+ * @see NotificationReceived For real-time broadcasting
+ * @see SignalService For sending notifications
  */
 class SystemNotification extends Notification
 {

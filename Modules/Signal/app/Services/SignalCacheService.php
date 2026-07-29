@@ -14,6 +14,7 @@ namespace Modules\Signal\Services;
 
 use App\Services\Cache\CacheService;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Core\Models\User;
 
 /**
@@ -147,7 +148,7 @@ class SignalCacheService
     /**
      * Format a notification for caching/API response.
      *
-     * @param  \Illuminate\Notifications\DatabaseNotification  $notification
+     * @param  DatabaseNotification  $notification
      * @return array<string, mixed> Formatted notification data
      */
     private function formatNotification($notification): array

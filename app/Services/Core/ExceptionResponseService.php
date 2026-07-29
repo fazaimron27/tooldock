@@ -40,9 +40,9 @@ class ExceptionResponseService
     /**
      * Handle exception response for API requests.
      *
-     * @param  \Symfony\Component\HttpFoundation\Response  $response  The original response
-     * @param  \Illuminate\Http\Request  $request  The incoming request
-     * @return \Symfony\Component\HttpFoundation\Response|null JSON error response, or null if not an API request
+     * @param  Response  $response  The original response
+     * @param  Request  $request  The incoming request
+     * @return Response|null JSON error response, or null if not an API request
      */
     public function handleApiResponse(Response $response, Request $request): ?Response
     {
@@ -62,9 +62,9 @@ class ExceptionResponseService
     /**
      * Handle Inertia 403 responses.
      *
-     * @param  \Symfony\Component\HttpFoundation\Response  $response  The original response
-     * @param  \Illuminate\Http\Request  $request  The incoming request
-     * @return \Symfony\Component\HttpFoundation\Response|null Redirect response, or null if not an Inertia 403
+     * @param  Response  $response  The original response
+     * @param  Request  $request  The incoming request
+     * @return Response|null Redirect response, or null if not an Inertia 403
      */
     public function handleInertiaForbidden(Response $response, Request $request): ?Response
     {

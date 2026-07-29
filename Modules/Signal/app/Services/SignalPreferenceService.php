@@ -26,8 +26,8 @@ use Modules\Core\Models\User;
  * Now uses per-user preferences instead of global settings,
  * allowing each user to control their own notification preferences.
  *
- * @see \App\Services\Registry\SignalCategoryRegistry For category registration
- * @see \App\Services\Core\UserPreferenceService For per-user preference management
+ * @see SignalCategoryRegistry For category registration
+ * @see UserPreferenceService For per-user preference management
  */
 class SignalPreferenceService
 {

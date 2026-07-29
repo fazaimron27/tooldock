@@ -33,8 +33,8 @@ use Modules\Core\Models\User;
  * listing, creating, editing, and deleting users. Sends notifications
  * when user roles are changed.
  *
- * @see \Modules\AuditLog\Traits\SyncsRelationshipsWithAuditLog For role sync logging
- * @see \App\Services\Registry\SignalHandlerRegistry For role change notifications
+ * @see SyncsRelationshipsWithAuditLog For role sync logging
+ * @see SignalHandlerRegistry For role change notifications
  */
 class UserController extends Controller
 {

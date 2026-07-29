@@ -11,6 +11,7 @@
 
 namespace Modules\Groups\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -37,7 +38,7 @@ class TransferMembersRequest extends FormRequest
      * - All user IDs exist and are members of the current group
      * - Target group exists and is different from the current group
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

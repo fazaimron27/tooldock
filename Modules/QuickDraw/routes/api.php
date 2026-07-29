@@ -1,5 +1,7 @@
 <?php
 
+use Modules\QuickDraw\Providers\RouteServiceProvider;
+
 /**
  * QuickDraw Module API Routes
  *
@@ -11,7 +13,7 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\QuickDraw\Providers\RouteServiceProvider::mapApiRoutes()
+ * @see RouteServiceProvider::mapApiRoutes()
  */
 
 /*

@@ -28,17 +28,17 @@ use Nwidart\Modules\Facades\Module as ModuleFacade;
  * or disable operations to ensure all caches and registries are
  * synchronized with the current module state.
  *
- * @see \App\Services\Modules\ModuleLifecycleService For the primary consumer
- * @see \App\Services\Modules\DatabaseActivator For status synchronization
- * @see \Modules\Core\Services\PermissionCacheService For permission cache warming
+ * @see ModuleLifecycleService For the primary consumer
+ * @see DatabaseActivator For status synchronization
+ * @see PermissionCacheService For permission cache warming
  */
 class ModuleRegistryHelper
 {
     /**
      * Create a new ModuleRegistryHelper instance.
      *
-     * @param  \Nwidart\Modules\Contracts\ActivatorInterface  $activator  Module activator for status management
-     * @param  \App\Services\Modules\ModuleStatusService  $statusService  Service for module status cache
+     * @param  ActivatorInterface  $activator  Module activator for status management
+     * @param  ModuleStatusService  $statusService  Service for module status cache
      */
     public function __construct(
         private ActivatorInterface $activator,

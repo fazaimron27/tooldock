@@ -364,7 +364,7 @@ class AuditLog extends Model
      * Converts timestamps to the application timezone when serializing
      * to ensure frontend receives dates in local timezone.
      *
-     * @param  \DateTimeInterface  $date  The date to serialize
+     * @param  DateTimeInterface  $date  The date to serialize
      * @return string ISO 8601 formatted date string in application timezone
      */
     protected function serializeDate(DateTimeInterface $date): string

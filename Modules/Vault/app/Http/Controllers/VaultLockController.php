@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Vault\Http\Middleware\VaultLockMiddleware;
 use Modules\Vault\Models\VaultLock;
 
 /**
@@ -33,8 +34,8 @@ use Modules\Vault\Models\VaultLock;
  * PIN creation/update, and lock status polling. Dispatches signal events
  * on lock state changes for notification delivery.
  *
- * @see \Modules\Vault\Http\Middleware\VaultLockMiddleware
- * @see \Modules\Vault\Models\VaultLock
+ * @see VaultLockMiddleware
+ * @see VaultLock
  */
 class VaultLockController extends Controller
 {

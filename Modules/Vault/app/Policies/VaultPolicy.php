@@ -24,7 +24,7 @@ use Modules\Vault\Models\Vault;
  * the corresponding permission and, for item-level actions, ownership
  * verification (user_id match).
  *
- * @see \Modules\Vault\Models\Vault
+ * @see Vault
  */
 class VaultPolicy
 {

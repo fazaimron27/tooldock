@@ -20,7 +20,7 @@ use Modules\Settings\Enums\SettingType;
  * Registers display, TOTP, security (lock), and notification
  * settings for administrative and per-user configuration.
  *
- * @see \App\Services\Registry\SettingsRegistry
+ * @see SettingsRegistry
  */
 class VaultSettingsRegistrar
 {

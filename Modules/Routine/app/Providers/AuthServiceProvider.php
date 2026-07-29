@@ -20,7 +20,7 @@ use Modules\Routine\Policies\HabitPolicy;
  *
  * Maps the Habit model to HabitPolicy for authorization checks.
  *
- * @see \Modules\Routine\Policies\HabitPolicy
+ * @see HabitPolicy
  */
 class AuthServiceProvider extends ServiceProvider
 {

@@ -14,6 +14,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,7 +27,7 @@ use Symfony\Component\HttpFoundation\Response;
  * relationship, maintaining compatibility when the Groups module
  * is not installed.
  *
- * @see \Illuminate\Auth\Access\Gate For authorization checks that benefit from preloading
+ * @see Gate For authorization checks that benefit from preloading
  */
 class PreloadUserRelations
 {
@@ -38,9 +39,9 @@ class PreloadUserRelations
      * the User model). Uses `loadMissing()` to avoid redundant
      * queries if relations are already loaded.
      *
-     * @param  \Illuminate\Http\Request  $request  The incoming HTTP request
-     * @param  \Closure  $next  The next middleware in the pipeline
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param  Request  $request  The incoming HTTP request
+     * @param  Closure  $next  The next middleware in the pipeline
+     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {

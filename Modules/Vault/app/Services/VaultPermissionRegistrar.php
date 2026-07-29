@@ -20,7 +20,7 @@ use Modules\Core\Constants\Roles as RoleConstants;
  * Defines vault permissions (dashboard, CRUD, preferences) and maps
  * them to the Administrator and Manager roles.
  *
- * @see \App\Services\Registry\PermissionRegistry
+ * @see PermissionRegistry
  */
 class VaultPermissionRegistrar
 {

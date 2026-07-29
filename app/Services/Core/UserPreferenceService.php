@@ -29,9 +29,9 @@ use Modules\Settings\Enums\SettingType;
  * user with tag-based invalidation. When a preference matches the
  * global default, it is automatically deleted to keep storage clean.
  *
- * @see \App\Services\Core\SettingsService For global settings fallback
- * @see \App\Services\Registry\SettingsRegistry For scope definitions
- * @see \Modules\Core\Models\UserPreference For the persistence model
+ * @see SettingsService For global settings fallback
+ * @see SettingsRegistry For scope definitions
+ * @see UserPreference For the persistence model
  */
 class UserPreferenceService
 {
@@ -42,9 +42,9 @@ class UserPreferenceService
     /**
      * Create a new UserPreferenceService instance.
      *
-     * @param  \App\Services\Core\SettingsService  $settingsService  Global settings provider for fallback values
-     * @param  \App\Services\Registry\SettingsRegistry  $settingsRegistry  Registry for scope and type metadata
-     * @param  \App\Services\Cache\CacheService  $cacheService  Cache service for tag-based caching
+     * @param  SettingsService  $settingsService  Global settings provider for fallback values
+     * @param  SettingsRegistry  $settingsRegistry  Registry for scope and type metadata
+     * @param  CacheService  $cacheService  Cache service for tag-based caching
      */
     public function __construct(
         private SettingsService $settingsService,
@@ -59,7 +59,7 @@ class UserPreferenceService
      * back to the global setting value. Values are automatically
      * cast to the appropriate type based on the setting definition.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to retrieve the preference for
+     * @param  User  $user  The user to retrieve the preference for
      * @param  string  $key  The setting key (e.g., 'app_timezone', 'notifications_enabled')
      * @param  mixed  $default  Default value if neither preference nor global setting exists
      * @return mixed The preference value, cast to the appropriate type
@@ -84,12 +84,12 @@ class UserPreferenceService
      * instead (keeping storage clean). Clears the user's preference
      * cache after modification.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to set the preference for
+     * @param  User  $user  The user to set the preference for
      * @param  string  $key  The setting key to override
      * @param  mixed  $value  The preference value to store
      * @return void
      *
-     * @throws \InvalidArgumentException When the setting is not user-overridable
+     * @throws InvalidArgumentException When the setting is not user-overridable
      */
     public function set(User $user, string $key, mixed $value): void
     {
@@ -129,11 +129,11 @@ class UserPreferenceService
      * Each preference must be for a user-overridable setting.
      * Clears the user's preference cache once after all updates.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to set preferences for
+     * @param  User  $user  The user to set preferences for
      * @param  array<int, array{key: string, value: mixed}>  $preferences  Array of key-value pairs to set
      * @return void
      *
-     * @throws \InvalidArgumentException When any setting is not user-overridable
+     * @throws InvalidArgumentException When any setting is not user-overridable
      */
     public function setMany(User $user, array $preferences): void
     {
@@ -166,7 +166,7 @@ class UserPreferenceService
      * Deletes the user's override for the given key, causing
      * future reads to fall back to the global setting value.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to reset the preference for
+     * @param  User  $user  The user to reset the preference for
      * @param  string  $key  The setting key to reset
      * @return void
      */
@@ -185,7 +185,7 @@ class UserPreferenceService
      * Deletes all user preference overrides. Clears the user's
      * preference cache after deletion.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to reset all preferences for
+     * @param  User  $user  The user to reset all preferences for
      * @return int The number of preferences deleted
      */
     public function resetAll(User $user): int
@@ -203,7 +203,7 @@ class UserPreferenceService
      * Returns the collection of settings registered with scope='user'
      * from the SettingsRegistry.
      *
-     * @return \Illuminate\Support\Collection Collection of user-overridable setting definitions
+     * @return Collection Collection of user-overridable setting definitions
      */
     public function getOverridableSettings(): Collection
     {
@@ -217,8 +217,8 @@ class UserPreferenceService
      * actual preference values, indicating which have been customized
      * and what the global default is.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to retrieve settings for
-     * @return \Illuminate\Support\Collection Collection with keys: key, label, type, group, module, value, is_custom, default_value
+     * @param  User  $user  The user to retrieve settings for
+     * @return Collection Collection with keys: key, label, type, group, module, value, is_custom, default_value
      */
     public function getOverridableSettingsForUser(User $user): Collection
     {
@@ -248,7 +248,7 @@ class UserPreferenceService
      * value differs from the current global default. If the values
      * match, the override is effectively a no-op.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to check
+     * @param  User  $user  The user to check
      * @param  string  $key  The setting key to check
      * @return bool True if the user has a meaningful override
      */
@@ -307,8 +307,8 @@ class UserPreferenceService
      * global preference tag and a user-specific tag for targeted
      * invalidation.
      *
-     * @param  \Modules\Core\Models\User  $user  The user to load preferences for
-     * @return \Illuminate\Support\Collection Collection of UserPreference models
+     * @param  User  $user  The user to load preferences for
+     * @return Collection Collection of UserPreference models
      */
     private function loadUserPreferences(User $user): Collection
     {
@@ -327,7 +327,7 @@ class UserPreferenceService
      * Uses the user-specific cache tag to invalidate only the
      * target user's preferences without affecting other users.
      *
-     * @param  \Modules\Core\Models\User  $user  The user whose cache to clear
+     * @param  User  $user  The user whose cache to clear
      * @return void
      */
     private function clearUserCache(User $user): void

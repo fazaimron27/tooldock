@@ -28,8 +28,8 @@ use Modules\Treasury\Models\Transaction;
  * domain events occur. Extracts the target user from event data
  * and sends notifications via the Signal module.
  *
- * @see \App\Services\Registry\SignalHandlerInterface For handler contract
- * @see \Modules\Signal\Jobs\SendNotificationJob For notification delivery
+ * @see SignalHandlerInterface For handler contract
+ * @see SendNotificationJob For notification delivery
  */
 class SignalHandlerRegistry
 {
@@ -49,7 +49,7 @@ class SignalHandlerRegistry
     private array $eventIndex = [];
 
     /**
-     * @var array<string, \App\Services\Registry\SignalHandlerInterface> Resolved handler instances
+     * @var array<string, SignalHandlerInterface> Resolved handler instances
      */
     private array $instances = [];
 
@@ -191,7 +191,7 @@ class SignalHandlerRegistry
      * with 'user' key, or object with user() method or user property.
      *
      * @param  mixed  $data  The event payload data
-     * @return \Modules\Core\Models\User|null The resolved user, or null if not found
+     * @return User|null The resolved user, or null if not found
      */
     private function extractUser(mixed $data): ?User
     {
@@ -224,7 +224,7 @@ class SignalHandlerRegistry
      * Dispatches a queued notification job via the Signal module
      * with the handler's signal data and module association.
      *
-     * @param  \Modules\Core\Models\User  $user  The target user
+     * @param  User  $user  The target user
      * @param  array  $signal  The notification payload from the handler
      * @param  string  $module  The originating module name
      * @return void
@@ -251,7 +251,7 @@ class SignalHandlerRegistry
      * during the same request lifecycle.
      *
      * @param  string  $handlerClass  Fully-qualified handler class name
-     * @return \App\Services\Registry\SignalHandlerInterface The resolved handler instance
+     * @return SignalHandlerInterface The resolved handler instance
      */
     private function resolve(string $handlerClass): SignalHandlerInterface
     {

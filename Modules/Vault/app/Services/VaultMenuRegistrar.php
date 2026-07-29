@@ -18,7 +18,7 @@ use App\Services\Registry\MenuRegistry;
  *
  * Adds vault index and dashboard links to the application sidebar menu.
  *
- * @see \App\Services\Registry\MenuRegistry
+ * @see MenuRegistry
  */
 class VaultMenuRegistrar
 {

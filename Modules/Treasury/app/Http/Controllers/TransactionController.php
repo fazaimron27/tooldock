@@ -15,6 +15,7 @@ namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,7 @@ use Modules\Categories\Models\Category;
 use Modules\Media\Models\MediaFile;
 use Modules\Treasury\Http\Requests\StoreTransactionRequest;
 use Modules\Treasury\Http\Requests\UpdateTransactionRequest;
+use Modules\Treasury\Models\ExchangeRate;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\Wallet;
 use Modules\Treasury\Services\Exchange\CurrencyConverter;
@@ -305,7 +307,7 @@ class TransactionController extends Controller
     /**
      * Get cached wallets for the authenticated user.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getWallets()
     {
@@ -321,7 +323,7 @@ class TransactionController extends Controller
     /**
      * Get cached transaction categories.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getCategories()
     {
@@ -346,7 +348,7 @@ class TransactionController extends Controller
         return $this->cacheService->remember(
             'treasury:exchange_rates',
             now()->addHours(1),
-            fn () => \Modules\Treasury\Models\ExchangeRate::pluck('rate_to_usd', 'currency_code')->toArray(),
+            fn () => ExchangeRate::pluck('rate_to_usd', 'currency_code')->toArray(),
             self::CACHE_TAG,
             'TransactionController'
         );

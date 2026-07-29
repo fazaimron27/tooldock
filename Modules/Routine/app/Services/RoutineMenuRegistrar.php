@@ -16,7 +16,7 @@ use App\Services\Registry\MenuRegistry;
 /**
  * Class RoutineMenuRegistrar
  *
- * @see \App\Services\Registry\MenuRegistry
+ * @see MenuRegistry
  */
 class RoutineMenuRegistrar
 {

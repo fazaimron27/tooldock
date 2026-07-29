@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 use Modules\Groups\Models\Group;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Modules\Groups\Models\Group>
+ * @extends Factory<Group>
  */
 class GroupFactory extends Factory
 {

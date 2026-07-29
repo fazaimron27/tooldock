@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Categories\Models\Category;
 use Modules\Core\Models\User;
@@ -239,9 +240,9 @@ class Transaction extends Model
     /**
      * Get the attachments for this transaction.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
-    public function attachments(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function attachments(): MorphMany
     {
         return $this->morphMany(MediaFile::class, 'model');
     }

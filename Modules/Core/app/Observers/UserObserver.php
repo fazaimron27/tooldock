@@ -125,7 +125,7 @@ class UserObserver
              * Only supported by Redis and Memcached drivers for efficient bulk operations.
              */
             Cache::tags(['users', 'user_search'])->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             /**
              * Cache tags not available for file/database/dynamodb drivers.
              * Fallback to TTL-based expiration for cache invalidation.

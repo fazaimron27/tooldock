@@ -18,7 +18,6 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 300);
 
-  // React Query handles fetching, caching, and cleanup
   const {
     data: searchData,
     isLoading: searchLoading,
@@ -28,7 +27,6 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
     limit: 20,
   });
 
-  // Fetch selected user if not in search results
   const usersIncludeSelected = useMemo(() => {
     if (!value || !searchData?.data) return true;
     return searchData.data.some((u) => String(u.value) === String(value));
@@ -38,7 +36,6 @@ export default function UserCombobox({ value, onChange, label = 'User', id = 'us
     enabled: !!value && open && !usersIncludeSelected,
   });
 
-  // Combine search results with selected user
   const users = useMemo(() => {
     const searchUsers = searchData?.data || [];
     if (selectedUserData?.data?.[0] && !usersIncludeSelected) {

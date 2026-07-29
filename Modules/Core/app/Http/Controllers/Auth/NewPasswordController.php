@@ -33,8 +33,8 @@ use Modules\AuditLog\Traits\DispatchAuditLog;
  * Manages the password reset flow after token verification.
  * Logs password resets and sends security alerts via Signal.
  *
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For security alerts
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For security alerts
  */
 class NewPasswordController extends Controller
 {

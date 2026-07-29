@@ -15,6 +15,7 @@ namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,6 +25,7 @@ use Modules\Treasury\Http\Requests\UpdateWalletRequest;
 use Modules\Treasury\Models\Transaction;
 use Modules\Treasury\Models\TreasuryGoal;
 use Modules\Treasury\Models\Wallet;
+use Modules\Treasury\Services\Transaction\TransactionStatsService;
 
 /**
  * Class WalletController
@@ -58,8 +60,8 @@ class WalletController extends Controller
 
         $walletTypes = $this->getWalletTypes();
 
-        /** @var \Modules\Treasury\Services\Transaction\TransactionStatsService $transactionStats */
-        $transactionStats = app(\Modules\Treasury\Services\Transaction\TransactionStatsService::class);
+        /** @var TransactionStatsService $transactionStats */
+        $transactionStats = app(TransactionStatsService::class);
         $netWorthHistory = $transactionStats->getNetWorthHistory(
             request()->user(),
             $totalBalance,
@@ -299,7 +301,7 @@ class WalletController extends Controller
     {
         $this->authorize('delete', $wallet);
 
-        $activeGoal = \Modules\Treasury\Models\TreasuryGoal::where('wallet_id', $wallet->id)
+        $activeGoal = TreasuryGoal::where('wallet_id', $wallet->id)
             ->where('is_completed', false)
             ->first();
 
@@ -320,7 +322,7 @@ class WalletController extends Controller
     /**
      * Get cached wallet types.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getWalletTypes()
     {

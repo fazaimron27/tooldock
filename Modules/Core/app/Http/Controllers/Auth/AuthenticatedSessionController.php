@@ -31,9 +31,9 @@ use Modules\Core\Http\Requests\Auth\LoginRequest;
  * Manages user session lifecycle including authentication and logout.
  * Logs all authentication events and sends security notifications.
  *
- * @see \Modules\Core\Http\Requests\Auth\LoginRequest For login validation
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For login notifications
+ * @see LoginRequest For login validation
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For login notifications
  */
 class AuthenticatedSessionController extends Controller
 {

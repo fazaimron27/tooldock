@@ -20,7 +20,7 @@ use Modules\Settings\Enums\SettingType;
  * Handles settings registration for the Signal module.
  * Registers notification preference toggles that support per-user scoping.
  *
- * @see \App\Services\Registry\SettingsRegistry
+ * @see SettingsRegistry
  */
 class SignalSettingsRegistrar
 {

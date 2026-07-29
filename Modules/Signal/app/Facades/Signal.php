@@ -28,7 +28,7 @@ use Modules\Signal\Services\SignalService;
  * @method static void alert(\Illuminate\Contracts\Auth\Authenticatable $user, string $title, string $message, ?string $url = null, ?string $moduleSource = null, ?string $category = null) Send an alert/error notification
  * @method static void send(\Illuminate\Contracts\Auth\Authenticatable $user, string $title, string $message, string $type = 'info', ?string $url = null, ?string $moduleSource = null, ?string $category = null) Send a notification with custom type
  *
- * @see \Modules\Signal\Services\SignalService
+ * @see SignalService
  */
 class Signal extends Facade
 {

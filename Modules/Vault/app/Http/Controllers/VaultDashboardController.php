@@ -17,13 +17,14 @@ use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Vault\Services\VaultDashboardService;
 
 /**
  * Class VaultDashboardController
  *
  * Renders the Vault module dashboard with registered widgets and metadata.
  *
- * @see \Modules\Vault\Services\VaultDashboardService
+ * @see VaultDashboardService
  */
 class VaultDashboardController extends Controller
 {

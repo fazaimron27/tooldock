@@ -13,6 +13,7 @@ namespace Modules\Vault\Database\Seeders;
 
 use App\Services\Registry\PermissionRegistry;
 use Illuminate\Database\Seeder;
+use Modules\Vault\Providers\VaultServiceProvider;
 
 /**
  * Class VaultPermissionSeeder
@@ -20,7 +21,7 @@ use Illuminate\Database\Seeder;
  * Ensures vault permissions are seeded into the database when run manually.
  * Permissions are normally registered in VaultServiceProvider.
  *
- * @see \Modules\Vault\Providers\VaultServiceProvider
+ * @see VaultServiceProvider
  */
 class VaultPermissionSeeder extends Seeder
 {

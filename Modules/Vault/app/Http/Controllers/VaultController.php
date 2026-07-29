@@ -14,6 +14,7 @@ namespace Modules\Vault\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ use Modules\Categories\Models\Category;
 use Modules\Vault\Http\Requests\StoreVaultRequest;
 use Modules\Vault\Http\Requests\UpdateVaultRequest;
 use Modules\Vault\Models\Vault;
+use Modules\Vault\Policies\VaultPolicy;
 
 /**
  * Class VaultController
@@ -32,8 +34,8 @@ use Modules\Vault\Models\Vault;
  * Integrates with CacheService for category caching and supports search/filter
  * functionality, favorite toggling, and server-side TOTP code generation.
  *
- * @see \Modules\Vault\Models\Vault
- * @see \Modules\Vault\Policies\VaultPolicy
+ * @see Vault
+ * @see VaultPolicy
  */
 class VaultController extends Controller
 {
@@ -58,7 +60,7 @@ class VaultController extends Controller
      * Cache is automatically invalidated when categories are modified.
      * Only returns categories with type 'vault'.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getCategories()
     {
@@ -229,7 +231,7 @@ class VaultController extends Controller
      * @param  Vault  $vault  The vault model to toggle
      * @return JsonResponse|RedirectResponse JSON or redirect depending on request type
      */
-    public function toggleFavorite(Request $request, Vault $vault): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function toggleFavorite(Request $request, Vault $vault): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $vault);
 

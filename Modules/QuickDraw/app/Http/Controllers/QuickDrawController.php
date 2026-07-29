@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\QuickDraw\Models\QuickDraw;
+use Modules\QuickDraw\Policies\QuickDrawPolicy;
 
 /**
  * Class QuickDrawController
@@ -29,8 +30,8 @@ use Modules\QuickDraw\Models\QuickDraw;
  * creating/deleting canvases, and syncing tldraw document state.
  * Uses CacheService for caching canvas listings and document state.
  *
- * @see \Modules\QuickDraw\Models\QuickDraw
- * @see \Modules\QuickDraw\Policies\QuickDrawPolicy
+ * @see QuickDraw
+ * @see QuickDrawPolicy
  */
 class QuickDrawController extends Controller
 {

@@ -20,7 +20,7 @@ use Modules\Settings\Enums\SettingType;
  * Registers display, habit defaults, and notification settings
  * for the Routine module's administrative and per-user configuration.
  *
- * @see \App\Services\Registry\SettingsRegistry
+ * @see SettingsRegistry
  */
 class RoutineSettingsRegistrar
 {

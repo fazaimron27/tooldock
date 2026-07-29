@@ -20,7 +20,7 @@ use Modules\Folio\Policies\FolioPolicy;
  *
  * Maps the Folio model to FolioPolicy for authorization checks.
  *
- * @see \Modules\Folio\Policies\FolioPolicy
+ * @see FolioPolicy
  */
 class AuthServiceProvider extends ServiceProvider
 {

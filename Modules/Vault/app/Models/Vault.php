@@ -21,6 +21,8 @@ use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Categories\Models\Category;
 use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
+use Modules\Vault\Database\Factories\VaultFactory;
+use Modules\Vault\Policies\VaultPolicy;
 use OTPHP\TOTP;
 use Symfony\Component\Clock\Clock;
 
@@ -48,7 +50,7 @@ use Symfony\Component\Clock\Clock;
  * @property string|null $url
  * @property bool $is_favorite
  *
- * @see \Modules\Vault\Policies\VaultPolicy
+ * @see VaultPolicy
  */
 class Vault extends Model
 {
@@ -236,6 +238,6 @@ class Vault extends Model
      */
     protected static function newFactory(): Factory
     {
-        return \Modules\Vault\Database\Factories\VaultFactory::new();
+        return VaultFactory::new();
     }
 }

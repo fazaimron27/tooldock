@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Core\Models\User;
+use Modules\Vault\Http\Controllers\VaultLockController;
+use Modules\Vault\Http\Middleware\VaultLockMiddleware;
 
 /**
  * Class VaultLock
@@ -29,8 +31,8 @@ use Modules\Core\Models\User;
  * @property string $user_id
  * @property string $pin_hash
  *
- * @see \Modules\Vault\Http\Middleware\VaultLockMiddleware
- * @see \Modules\Vault\Http\Controllers\VaultLockController
+ * @see VaultLockMiddleware
+ * @see VaultLockController
  */
 class VaultLock extends Model
 {

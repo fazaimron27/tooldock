@@ -13,6 +13,7 @@
 namespace Modules\Treasury\Services\Budget;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Modules\Treasury\Models\Budget;
 use Modules\Treasury\Models\BudgetPeriod;
 use Modules\Treasury\Models\Transaction;
@@ -158,7 +159,7 @@ class BudgetRolloverService
      * Preload spending and period data for multiple budgets to avoid N+1 queries.
      * Call this before processing a batch of budgets with rollover enabled.
      *
-     * @param  \Illuminate\Support\Collection  $budgets  Collection of Budget models
+     * @param  Collection  $budgets  Collection of Budget models
      * @param  int  $month  Target month
      * @param  int  $year  Target year
      * @param  array  $filters  Optional filters
@@ -177,7 +178,7 @@ class BudgetRolloverService
 
         $periods = [];
         for ($i = 0; $i < $monthsBack; $i++) {
-            $date = \Carbon\Carbon::create($year, $month)->subMonths($i);
+            $date = Carbon::create($year, $month)->subMonths($i);
             $periods[] = BudgetPeriod::formatPeriod($date->month, $date->year);
         }
 
@@ -190,8 +191,8 @@ class BudgetRolloverService
             $this->periodCache[$cacheKey] = $period;
         }
 
-        $startDate = \Carbon\Carbon::create($year, $month)->subMonths($monthsBack - 1)->startOfMonth();
-        $endDate = \Carbon\Carbon::create($year, $month)->endOfMonth();
+        $startDate = Carbon::create($year, $month)->subMonths($monthsBack - 1)->startOfMonth();
+        $endDate = Carbon::create($year, $month)->endOfMonth();
 
         $spendingQuery = Transaction::whereIn('user_id', $userIds)
             ->where(function ($q) {

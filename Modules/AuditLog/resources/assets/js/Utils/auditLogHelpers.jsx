@@ -131,7 +131,6 @@ export function getModelDisplayName(auditableType, auditableId) {
     return 'N/A';
   }
 
-  // Handle system events
   if (auditableType === 'system') {
     return 'System';
   }

@@ -24,6 +24,8 @@ use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
 use Modules\Treasury\Database\Factories\WalletFactory;
+use Modules\Treasury\Services\Exchange\CurrencyConverter;
+use Modules\Treasury\Services\Support\CurrencyFormatter;
 
 /**
  * Class Wallet
@@ -139,7 +141,7 @@ class Wallet extends Model
 
         $wallets = static::where('user_id', $userId)->active()->get();
 
-        $converter = app(\Modules\Treasury\Services\Exchange\CurrencyConverter::class);
+        $converter = app(CurrencyConverter::class);
         $total = 0.0;
 
         foreach ($wallets as $wallet) {
@@ -166,7 +168,7 @@ class Wallet extends Model
     {
         $currency = $this->currency ?? settings('treasury_reference_currency', 'IDR');
 
-        return app(\Modules\Treasury\Services\Support\CurrencyFormatter::class)
+        return app(CurrencyFormatter::class)
             ->format($this->balance, $currency);
     }
 
@@ -183,7 +185,7 @@ class Wallet extends Model
             return (float) $this->balance;
         }
 
-        $converter = app(\Modules\Treasury\Services\Exchange\CurrencyConverter::class);
+        $converter = app(CurrencyConverter::class);
         $converted = $converter->convert($this->balance, $this->currency, $referenceCurrency);
 
         return $converted ?? (float) $this->balance;
@@ -198,7 +200,7 @@ class Wallet extends Model
     {
         $referenceCurrency = settings('treasury_reference_currency', 'IDR');
 
-        return app(\Modules\Treasury\Services\Support\CurrencyFormatter::class)
+        return app(CurrencyFormatter::class)
             ->format($this->converted_balance, $referenceCurrency);
     }
 

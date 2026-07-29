@@ -12,8 +12,10 @@
 
 namespace Modules\Vault\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Vault\Http\Controllers\VaultController;
 use Modules\Vault\Models\Vault;
 
 /**
@@ -22,7 +24,7 @@ use Modules\Vault\Models\Vault;
  * Validates vault update data and ensures the authenticated user
  * owns the vault being modified.
  *
- * @see \Modules\Vault\Http\Controllers\VaultController::update()
+ * @see VaultController::update()
  */
 class UpdateVaultRequest extends FormRequest
 {
@@ -54,7 +56,7 @@ class UpdateVaultRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

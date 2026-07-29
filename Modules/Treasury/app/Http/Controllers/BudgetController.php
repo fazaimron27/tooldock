@@ -16,6 +16,7 @@ namespace Modules\Treasury\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -284,7 +285,7 @@ class BudgetController extends Controller
     /**
      * Get cached transaction categories.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getCategories()
     {

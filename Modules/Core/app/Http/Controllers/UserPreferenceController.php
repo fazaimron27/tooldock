@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
+use Modules\Core\Models\User;
 
 /**
  * Class UserPreferenceController
@@ -29,7 +30,7 @@ use InvalidArgumentException;
  * user-overridable settings. Uses the hybrid preferences system that
  * falls back to global settings when no user override exists.
  *
- * @see \App\Services\Core\UserPreferenceService For preference management
+ * @see UserPreferenceService For preference management
  */
 class UserPreferenceController extends Controller
 {
@@ -102,7 +103,7 @@ class UserPreferenceController extends Controller
      * Reads the permission from the setting's metadata.
      * Uses Gate::allows() to respect Gate::before() superadmin bypass.
      *
-     * @param  \Modules\Core\Models\User  $user
+     * @param  User  $user
      * @param  array  $setting  The setting array containing permission key
      * @return bool
      */

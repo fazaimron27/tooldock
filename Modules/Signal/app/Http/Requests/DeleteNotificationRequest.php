@@ -12,7 +12,9 @@
 
 namespace Modules\Signal\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Signal\Policies\NotificationPolicy;
 
 /**
  * Class DeleteNotificationRequest
@@ -20,7 +22,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * Handles authorization for notification deletion via the policy system.
  * Validates that the notification exists and belongs to the requesting user.
  *
- * @see \Modules\Signal\Policies\NotificationPolicy::delete()
+ * @see NotificationPolicy::delete()
  */
 class DeleteNotificationRequest extends FormRequest
 {
@@ -49,7 +51,7 @@ class DeleteNotificationRequest extends FormRequest
      * No additional validation required as the notification
      * is resolved via route model binding.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

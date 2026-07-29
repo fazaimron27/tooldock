@@ -19,6 +19,8 @@ use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Modules\Vault\Http\Controllers\VaultLockController;
 use Modules\Vault\Models\VaultLock;
 use Nwidart\Modules\Facades\Module as ModuleFacade;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,7 +32,7 @@ use Symfony\Component\HttpFoundation\Response;
  * the configured timeout elapses and dispatches auto-lock notifications.
  * Bypasses lock checks for auth routes and vault lock-related routes.
  *
- * @see \Modules\Vault\Http\Controllers\VaultLockController
+ * @see VaultLockController
  */
 class VaultLockMiddleware
 {
@@ -195,7 +197,7 @@ class VaultLockMiddleware
                 'user' => $user,
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('VaultLockMiddleware: Failed to send auto-lock notification', [
+            Log::error('VaultLockMiddleware: Failed to send auto-lock notification', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
