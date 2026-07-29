@@ -12,6 +12,7 @@
 
 namespace Modules\Routine\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -58,17 +59,17 @@ class UpdateHabitRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'category_id' => ['nullable', 'uuid', 'exists:categories,id'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'in:boolean,measurable'],
-            'icon' => ['nullable', 'string', 'max:50'],
-            'color' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'goal_per_week' => ['nullable', 'integer', 'min:1', 'max:7'],
+            'type' => ['sometimes', 'required', 'string', 'in:boolean,measurable'],
+            'icon' => ['sometimes', 'required', 'string', 'max:50'],
+            'color' => ['sometimes', 'required', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'goal_per_week' => ['sometimes', 'required', 'integer', 'min:1', 'max:7'],
             'unit' => ['nullable', 'required_if:type,measurable', 'string', 'max:50'],
             'target_value' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', 'string', 'in:active,paused,archived'],

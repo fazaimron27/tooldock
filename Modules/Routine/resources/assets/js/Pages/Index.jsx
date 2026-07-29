@@ -8,6 +8,7 @@
 import { useDisclosure } from '@/Hooks/useDisclosure';
 import ContributionHeatmap from '@Routine/Components/ContributionHeatmap';
 import HabitRow from '@Routine/Components/HabitRow';
+import { createHabitResolver } from '@Routine/Schemas/routineSchemas';
 import { getHabitIcon, habitIconSlugs } from '@Routine/Utils/habitIcons';
 import { router, usePage } from '@inertiajs/react';
 import {
@@ -129,6 +130,7 @@ export default function Index() {
 
   const { control, handleSubmit, reset, watch, setValue } = useForm({
     defaultValues: getHabitDefaults(null, settings),
+    resolver: createHabitResolver,
   });
 
   const watchedIcon = watch('icon');
@@ -477,7 +479,6 @@ export default function Index() {
             label="Name"
             required
             placeholder="e.g. Morning Exercise"
-            rules={{ required: 'Habit name is required' }}
           />
 
           {/* Category */}
@@ -537,7 +538,6 @@ export default function Index() {
                 control={control}
                 label="Unit"
                 placeholder="e.g. menit, jam, pages"
-                rules={{ required: watchedType === 'measurable' ? 'Unit is required' : false }}
               />
               <div className="space-y-2">
                 <Label>Daily Target</Label>
