@@ -1,0 +1,15 @@
+{
+  "name": "Bot",
+  "alias": "bot",
+  "version": "1.0.0",
+  "description": "Agnostic communication wrapper for multi-platform bot integrations.",
+  "keywords": ["bot", "telegram", "discord", "automation", "chat", "notification"],
+  "priority": -980,
+  "protected": false,
+  "active": 1,
+  "providers": ["Modules\\Bot\\Providers\\BotServiceProvider"],
+  "files": [],
+  "requires": ["Core", "Settings", "AuditLog", "Hook"],
+  "icon": "Bot",
+  "author": "Tool Dock Team"
+}
