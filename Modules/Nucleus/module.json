@@ -1,0 +1,19 @@
+{
+  "name": "Nucleus",
+  "alias": "nucleus",
+  "version": "1.0.0",
+  "description": "Advanced JSON core editor, viewer, and data parser.",
+  "keywords": ["json", "editor", "viewer", "formatter", "developer"],
+  "priority": -983,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Nucleus\\Providers\\NucleusServiceProvider",
+    "Modules\\Nucleus\\Providers\\RouteServiceProvider",
+    "Modules\\Nucleus\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "AuditLog"],
+  "icon": "Braces",
+  "author": "Tool Dock Team"
+}

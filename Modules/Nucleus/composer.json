@@ -1,0 +1,30 @@
+{
+    "name": "fazaimron27/nucleus",
+    "description": "",
+    "authors": [
+        {
+            "name": "Faza Iman Imron",
+            "email": "fazaimanimron@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Nucleus\\": "app/",
+            "Modules\\Nucleus\\Database\\Factories\\": "database/factories/",
+            "Modules\\Nucleus\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Nucleus\\Tests\\": "tests/"
+        }
+    }
+}
