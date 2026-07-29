@@ -8,13 +8,18 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\QuickDraw\Providers\RouteServiceProvider::mapWebRoutes()
+ * @see RouteServiceProvider::mapWebRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
 use Modules\QuickDraw\Http\Controllers\QuickDrawController;
+use Modules\QuickDraw\Http\Controllers\QuickDrawDashboardController;
+use Modules\QuickDraw\Providers\RouteServiceProvider;
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('quickdraw/dashboard', [QuickDrawDashboardController::class, 'index'])
+        ->name('quickdraw.dashboard');
+
     Route::resource('quickdraw', QuickDrawController::class)
         ->only(['index', 'show', 'store', 'destroy'])
         ->names([

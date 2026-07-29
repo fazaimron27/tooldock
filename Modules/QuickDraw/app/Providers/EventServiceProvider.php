@@ -12,6 +12,10 @@
 namespace Modules\QuickDraw\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\QuickDraw\Models\QuickDraw;
+use Modules\QuickDraw\Models\QuickDrawState;
+use Modules\QuickDraw\Observers\QuickDrawObserver;
+use Modules\QuickDraw\Observers\QuickDrawStateObserver;
 
 /**
  * Class EventServiceProvider
@@ -34,6 +38,17 @@ class EventServiceProvider extends ServiceProvider
      * @var bool
      */
     protected static $shouldDiscoverEvents = true;
+
+    /**
+     * Register model observers and configure events.
+     */
+    public function boot(): void
+    {
+        parent::boot();
+
+        QuickDraw::observe(QuickDrawObserver::class);
+        QuickDrawState::observe(QuickDrawStateObserver::class);
+    }
 
     /**
      * Configure the proper event listeners for email verification.

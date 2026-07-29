@@ -17,7 +17,7 @@ use Modules\Core\Constants\Roles as RoleConstants;
 /**
  * Class QuickDrawPermissionRegistrar
  *
- * @see \App\Services\Registry\PermissionRegistry
+ * @see PermissionRegistry
  */
 class QuickDrawPermissionRegistrar
 {
@@ -30,18 +30,21 @@ class QuickDrawPermissionRegistrar
     public function registerPermissions(PermissionRegistry $registry): void
     {
         $registry->register('quickdraw', [
+            'dashboard.view',
             'draw.view',
             'draw.create',
             'draw.edit',
             'draw.delete',
         ], [
             RoleConstants::ADMINISTRATOR => [
+                'dashboard.view',
                 'draw.view',
                 'draw.create',
                 'draw.edit',
                 'draw.delete',
             ],
             RoleConstants::MANAGER => [
+                'dashboard.view',
                 'draw.view',
                 'draw.create',
                 'draw.edit',

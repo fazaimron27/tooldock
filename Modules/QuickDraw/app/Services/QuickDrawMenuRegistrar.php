@@ -18,7 +18,7 @@ use App\Services\Registry\MenuRegistry;
  *
  * Adds QuickDraw link to the application sidebar menu.
  *
- * @see \App\Services\Registry\MenuRegistry
+ * @see MenuRegistry
  */
 class QuickDrawMenuRegistrar
 {
@@ -39,6 +39,17 @@ class QuickDrawMenuRegistrar
             order: 10,
             permission: 'quickdraw.draw.view',
             parentKey: null,
+            module: $moduleName
+        );
+
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'QuickDraw Dashboard',
+            route: 'quickdraw.dashboard',
+            icon: 'LayoutDashboard',
+            order: 110,
+            permission: 'quickdraw.dashboard.view',
+            parentKey: 'dashboard',
             module: $moduleName
         );
     }
