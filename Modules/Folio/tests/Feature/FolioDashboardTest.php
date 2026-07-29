@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Modules\Folio\Tests\Feature;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Auth\Access\AuthorizationException;

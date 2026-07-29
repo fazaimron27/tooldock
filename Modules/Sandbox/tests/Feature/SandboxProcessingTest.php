@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Sandbox;
+namespace Modules\Sandbox\Tests\Feature;
 
 use App\Services\Registry\HookInboundProcessorRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;

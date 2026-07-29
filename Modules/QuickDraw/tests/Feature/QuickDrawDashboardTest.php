@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Modules\QuickDraw\Tests\Feature;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Auth\Access\AuthorizationException;

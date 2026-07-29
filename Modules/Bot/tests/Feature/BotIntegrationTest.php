@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Bot;
+namespace Modules\Bot\Tests\Feature;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;

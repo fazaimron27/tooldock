@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Nucleus;
+namespace Modules\Nucleus\Tests\Feature;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;

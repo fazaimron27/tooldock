@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Hook;
+namespace Modules\Hook\Tests\Unit;
 
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Http\Client\PendingRequest;

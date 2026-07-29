@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests\Feature\Hook;
+namespace Modules\Hook\Tests\Feature;
 
 use App\Services\Registry\DashboardWidgetRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Modules\Core\Models\User;
 use Modules\Hook\Http\Requests\StoreOutboundRequest;
@@ -24,13 +25,16 @@ class HookSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function migrateDatabases(): void
+    protected function setUp(): void
     {
-        $this->artisan('migrate:fresh', $this->migrateFreshUsing());
-        $this->artisan('migrate', [
-            '--path' => 'Modules/Hook/database/migrations',
-            '--no-interaction' => true,
-        ]);
+        parent::setUp();
+
+        if (! Schema::hasTable('hook_inbounds')) {
+            $this->artisan('migrate', [
+                '--path' => 'Modules/Hook/database/migrations',
+                '--no-interaction' => true,
+            ])->assertSuccessful();
+        }
     }
 
     public function test_observer_only_dispatches_outbounds_owned_by_the_source_models_user(): void
