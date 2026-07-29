@@ -66,6 +66,12 @@ export default defineConfig(({ mode }) => {
       },
     ],
     resolve: {
+      /**
+       * Force a single copy of React across the dependency graph. Prevents
+       * "Invalid hook call / dispatcher is null" when a transitive dependency
+       * (e.g. alasql -> react-native-fs -> react-native) nests its own React.
+       */
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, './resources/js'),
         '@Modules': path.resolve(__dirname, 'Modules'),
