@@ -1,0 +1,19 @@
+{
+  "name": "Hook",
+  "alias": "hook",
+  "version": "1.0.0",
+  "description": "Manage inbound and outbound webhooks to automate event-driven integrations.",
+  "keywords": ["webhook", "inbound", "outbound", "automation", "integration", "developer-tools"],
+  "priority": -982,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Hook\\Providers\\HookServiceProvider",
+    "Modules\\Hook\\Providers\\RouteServiceProvider",
+    "Modules\\Hook\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Settings", "AuditLog", "Signal"],
+  "icon": "Webhook",
+  "author": "Tool Dock Team"
+}
