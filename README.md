@@ -1,4 +1,4 @@
-# 🛠️ ToolDock
+# ToolDock
 
 **The Definitive Modular Productivity Workspace.**
 
@@ -8,60 +8,57 @@ Built as a **Modular Monolith** using **Laravel**, **React**, and **Inertia.js**
 
 ---
 
-## 📦 Modules
+## Modules
 
 ToolDock is powered by a sophisticated modular architecture. Manage your feature set dynamically through the built-in Module Manager.
 
-### 🏗️ Foundation (Protected)
+### Foundation (Protected)
 
-- 🛡️ **Core** - The platform's backbone. Handles identity management, Role-Based Access Control (RBAC), session security, and the runtime Module Manager.
+- **Core** - The platform's backbone. Handles identity management, Role-Based Access Control (RBAC), session security, and the runtime Module Manager.
+- **Signal** - Real-time notification engine. Supports multi-channel delivery via WebSockets with granular user preferences and module-scoped categories.
+- **Settings** - A multi-layer configuration system allowing modules to define defaults, admins to set global values, and users to apply personal overrides.
+- **Audit Log** - High-integrity activity tracking. Records system-wide changes with structured diffs via asynchronous processing to ensure zero data loss.
+- **Groups** - Team-centric access control. Adds an organizational layer alongside RBAC for managing users, roles, and permissions at a group level.
+- **Media** - Advanced file management. Features a polymorphic ownership model, automated lifecycle management, and a dedicated storage dashboard.
+- **Categories** - A shared taxonomy service. Provides hierarchical categorization that modules can hook into via a global registrar.
 
-- 🔔 **Signal** - Real-time notification engine. Supports multi-channel delivery via WebSockets with granular user preferences and module-scoped categories.
+### Productivity Suite
 
-- ⚙️ **Settings** - A multi-layer configuration system allowing modules to define defaults, admins to set global values, and users to apply personal overrides.
-
-- 📋 **Audit Log** - High-integrity activity tracking. Records system-wide changes with structured diffs via asynchronous processing to ensure zero data loss.
-
-- 👥 **Groups** - Team-centric access control. Adds an organizational layer alongside RBAC for managing users, roles, and permissions at a group level.
-
-- 📁 **Media** - Advanced file management. Features a polymorphic ownership model, automated lifecycle management, and a dedicated storage dashboard.
-
-- 🏷️ **Categories** - A shared taxonomy service. Provides hierarchical categorization that modules can hook into via a global registrar.
-
-### 🚀 Productivity Suite
-
-- 🔐 **Vault** - Zero-compromise credential manager. Securely stores passwords, payment cards, and server keys with encryption-at-rest and TOTP support.
-
-- 🏦 **Treasury** - Personal finance suite. Tracks income/expenses across multiple currencies and wallets. Features rollover budgets, savings goals, and financial health analytics.
-
-- 📅 **Routine** - Habit tracking engine. Supports daily/weekly goals with boolean or measurable metrics. Includes streak tracking and visual consistency heatmaps.
-
-- 🎨 **QuickDraw** - Infinite whiteboard. A freeform canvas for diagramming and brainstorming with persistent auto-saving and multi-canvas support.
-
-- 📄 **Folio** - Resume & portfolio builder. Features a split-pane editor with live preview, drag-and-drop customization, and professional print-ready templates.
+- **Vault** - Zero-compromise credential manager. Securely stores passwords, payment cards, and server keys with encryption-at-rest and TOTP support.
+- **Treasury** - Personal finance suite. Tracks income/expenses across multiple currencies and wallets. Features rollover budgets, savings goals, and financial health analytics.
+- **Routine** - Habit tracking engine. Supports daily/weekly goals with boolean or measurable metrics. Includes streak tracking and visual consistency heatmaps.
+- **QuickDraw** - Infinite whiteboard. A freeform canvas for diagramming and brainstorming with persistent auto-saving and multi-canvas support.
+- **Folio** - Resume & portfolio builder. Features a split-pane editor with live preview, drag-and-drop customization, and professional print-ready templates.
+- **Hook** - Webhook automation. Manages inbound and outbound webhooks to drive event-driven integrations across external services.
+- **Bot** - Multi-platform bot integration. An agnostic communication wrapper connecting chat platforms (e.g. Telegram) into the module ecosystem.
+- **Nucleus** - Advanced JSON workbench. An editor, viewer, and data parser for inspecting and transforming structured data.
+- **Sandbox** - Internal inbound webhook sandbox for module-level testing and integration validation.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Backend** | PHP, Laravel, PostgreSQL, Redis |
-| **Frontend** | React, Inertia.js, Vite, Radix UI + shadcn/ui |
-| **Real-time** | Laravel Reverb (WebSockets), Laravel Horizon (Queues) |
-| **Monitoring** | Laravel Pulse, Laravel Telescope |
-| **Infrastructure** | Docker Compose, Nginx, PHP-FPM |
-| **Code Quality** | ESLint, Prettier, Laravel Pint, Lefthook (pre-commit) |
+| **Backend** | PHP 8.4+, Laravel 12, PostgreSQL / SQLite, Redis |
+| **Frontend** | React 18, Inertia.js v2, Vite 7, Tailwind CSS v3, Radix UI + shadcn/ui |
+| **State & Data** | TanStack Query, TanStack Table, Zustand, React Hook Form + Zod |
+| **Real-time** | Laravel Reverb (WebSockets), Laravel Horizon (Queues), Laravel Echo |
+| **Auth & RBAC** | Laravel Sanctum, spatie/laravel-permission |
+| **Monitoring** | Laravel Pulse, Laravel Telescope, Laravel Pail |
+| **Integrations** | irazasyed/telegram-bot-sdk, Intervention Image, spomky-labs/otphp (TOTP), tldraw |
+| **Infrastructure** | Docker Compose, Nginx, PHP-FPM, PostgreSQL 16, Redis 7 |
+| **Code Quality** | ESLint 9, Prettier 3, Laravel Pint, Lefthook (pre-commit) |
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- PHP & Composer
+- PHP 8.4+ & Composer
 - Node.js & NPM
-- PostgreSQL & Redis
+- PostgreSQL & Redis (or use SQLite/defaults for local development)
 
 ### Quick Start
 
@@ -85,7 +82,7 @@ php artisan migrate
 composer dev
 ```
 
-The `composer dev` command launches all services concurrently: Laravel server, Vite dev server, Horizon worker, log tail, and Reverb WebSocket server.
+The `composer dev` command launches all services concurrently: Laravel server, Vite dev server, Horizon worker, log tail (Pail), and Reverb WebSocket server.
 
 ### Docker Support
 
@@ -96,22 +93,28 @@ docker compose up -d
 This initializes three containers:
 
 - **tooldock-app** - Laravel + PHP-FPM + Nginx (Port 8080)
-- **tooldock-postgres** - PostgreSQL
-- **tooldock-redis** - Redis
+- **tooldock-postgres** - PostgreSQL 16
+- **tooldock-redis** - Redis 7
+
+The app container auto-migrates on startup (`AUTO_MIGRATE=true`) and warms production caches (config, routes, views, events, Ziggy manifest) when `APP_ENV=production`.
 
 ### Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `composer dev` | Start all dev services (server, vite, horizon, reverb) |
+| `composer dev` | Start all dev services (server, vite, horizon, pail, reverb) |
+| `composer test` | Clear config and execute the full test suite |
+| `composer setup` | One-command install (deps, env, migrate, storage:link, build) |
+| `npm run dev` | Start the Vite dev server |
 | `npm run build` | Generate production assets |
 | `npm run lint` | Run ESLint with auto-fix |
+| `npm run format` | Format frontend assets with Prettier |
 | `./vendor/bin/pint` | Standardize PHP code style |
 | `php artisan test` | Execute the full test suite |
 
 ---
 
-## 🏗️ Architecture & Internals
+## Architecture & Internals
 
 <details>
 <summary><strong>Modular Monolith</strong></summary>
@@ -132,7 +135,11 @@ Modules/
 ├── Treasury/               ← Personal finance
 ├── Routine/                ← Habit tracking
 ├── QuickDraw/              ← Infinite whiteboard
-└── Folio/                  ← Resume & portfolio builder
+├── Folio/                  ← Resume & portfolio builder
+├── Hook/                   ← Webhook automation
+├── Bot/                    ← Multi-platform bot integration
+├── Nucleus/                ← JSON workbench
+└── Sandbox/                ← Internal webhook sandbox
 ```
 
 **(Protected)** modules provide essential services and cannot be disabled.
@@ -158,6 +165,9 @@ To prevent tight coupling, modules communicate via **Registries**. Contributions
 | `InertiaSharedDataRegistry` | Shared frontend data |
 | `MiddlewareRegistry` | HTTP middleware |
 | `GroupRegistry` | Access control groups |
+| `HookEventRegistry` | Outbound webhook event definitions |
+| `HookInboundProcessorRegistry` | Inbound webhook processors |
+| `BotCommandRegistryInterface` | Bot command contracts |
 
 </details>
 
@@ -226,6 +236,6 @@ tooldock/
 
 ---
 
-## 📄 License
+## License
 
 This project is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
