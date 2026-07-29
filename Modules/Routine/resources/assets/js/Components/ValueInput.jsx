@@ -46,7 +46,7 @@ export default function ValueInput({ habit, dateKey, currentValue, onOptimistic 
           type="button"
           className={`flex h-8 flex-1 items-center justify-center rounded-md text-xs font-semibold transition-all ${
             displayValue
-              ? 'text-white shadow-sm hover:opacity-90'
+              ? 'text-white shadow-xs hover:opacity-90'
               : 'bg-muted/50 text-muted-foreground hover:bg-muted'
           }`}
           style={displayValue ? { backgroundColor: habit.color } : undefined}

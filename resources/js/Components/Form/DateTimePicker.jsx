@@ -273,7 +273,7 @@ export default function DateTimePicker({
                       }
                     }}
                     className={cn(
-                      'w-8 text-center text-lg font-semibold tabular-nums transition-colors rounded px-1 bg-transparent border-0 outline-none',
+                      'w-8 text-center text-lg font-semibold tabular-nums transition-colors rounded px-1 bg-transparent border-0 outline-hidden',
                       clockMode === 'hours'
                         ? 'text-primary bg-primary/10'
                         : 'text-muted-foreground hover:text-foreground'
@@ -300,7 +300,7 @@ export default function DateTimePicker({
                       }
                     }}
                     className={cn(
-                      'w-8 text-center text-lg font-semibold tabular-nums transition-colors rounded px-1 bg-transparent border-0 outline-none',
+                      'w-8 text-center text-lg font-semibold tabular-nums transition-colors rounded px-1 bg-transparent border-0 outline-hidden',
                       clockMode === 'minutes'
                         ? 'text-primary bg-primary/10'
                         : 'text-muted-foreground hover:text-foreground'

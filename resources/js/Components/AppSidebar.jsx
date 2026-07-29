@@ -7,9 +7,10 @@
 import { useAppStore } from '@/Stores/useAppStore';
 import { getIcon } from '@/Utils/iconResolver';
 import { Link, usePage } from '@inertiajs/react';
-import { AlertTriangle, ChevronRight, Github } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { GithubIcon as Github } from '@/Components/icons/GithubIcon';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/Components/ui/collapsible';
 import {
   Sidebar,
@@ -86,7 +87,7 @@ export default function AppSidebar() {
                 <SidebarMenuButton
                   tooltip={item.label}
                   isActive={isActive || hasActiveChild}
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
                 >
                   <Link href={route(item.route)} className="flex items-center gap-2 flex-1">
                     <Icon className="h-4 w-4 shrink-0" />
@@ -100,7 +101,7 @@ export default function AppSidebar() {
                 <SidebarMenuButton
                   tooltip={item.label}
                   isActive={hasActiveChild}
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span>{item.label}</span>
@@ -130,7 +131,7 @@ export default function AppSidebar() {
                               <SidebarMenuSubButton
                                 asChild
                                 isActive={childIsActive}
-                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
                               >
                                 <Link
                                   href={route(child.route)}
@@ -173,7 +174,7 @@ export default function AppSidebar() {
                                       <SidebarMenuSubButton
                                         asChild
                                         isActive={grandchildIsActive}
-                                        className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+                                        className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
                                       >
                                         <Link href={route(grandchild.route)}>
                                           <GrandchildIcon className="h-4 w-4" />
@@ -195,7 +196,7 @@ export default function AppSidebar() {
                       <SidebarMenuSubButton
                         asChild
                         isActive={childIsActive}
-                        className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+                        className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
                       >
                         <Link href={route(child.route)}>
                           <ChildIcon className="h-4 w-4" />
@@ -219,7 +220,7 @@ export default function AppSidebar() {
             asChild
             isActive={isActive}
             tooltip={item.label}
-            className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-sm"
+            className="data-[active=true]:bg-sidebar-accent/80 data-[active=true]:shadow-xs"
           >
             <Link href={route(item.route)}>
               <Icon className="h-4 w-4" />
@@ -235,7 +236,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 py-3 flex-row items-center !gap-0">
+      <SidebarHeader className="px-4 py-3 flex-row items-center gap-0!">
         <Link href={route('dashboard')} className="flex items-center justify-center w-full">
           <ApplicationLogo className="py-2" />
         </Link>

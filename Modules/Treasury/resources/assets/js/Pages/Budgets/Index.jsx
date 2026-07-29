@@ -194,7 +194,7 @@ export default function Index({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-3 h-3 rounded-full ring-2 ring-offset-2 ring-offset-background flex-shrink-0"
+                          className="w-3 h-3 rounded-full ring-2 ring-offset-2 ring-offset-background shrink-0"
                           style={{
                             backgroundColor: budget.category_color || '#6b7280',
                             boxShadow: `0 0 0 2px ${budget.category_color || '#6b7280'}20`,
@@ -202,7 +202,7 @@ export default function Index({
                         />
                         <span className="font-semibold text-lg truncate">{budget.category}</span>
                         {budget.rollover_enabled && (
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">
                             <ArrowRightLeft className="w-3 h-3 mr-1" />
                             Rollover
                           </Badge>
@@ -253,7 +253,7 @@ export default function Index({
                   {/* Progress Circle & Amount */}
                   <div className="flex items-center gap-4">
                     {/* Circular Progress */}
-                    <div className="relative w-16 h-16 flex-shrink-0">
+                    <div className="relative w-16 h-16 shrink-0">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                         <circle
                           className="text-muted/30"

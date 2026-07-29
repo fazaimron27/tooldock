@@ -68,7 +68,7 @@ export default function SearchableSelectRHF({
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <div className="flex items-center border-b px-3">
                   <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                   <Input
@@ -91,7 +91,7 @@ export default function SearchableSelectRHF({
                           role="button"
                           tabIndex={0}
                           className={cn(
-                            'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none min-w-0',
+                            'flex items-center rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent focus:bg-accent focus:outline-hidden min-w-0',
                             field.value === option.value ? 'bg-accent' : ''
                           )}
                           onClick={(e) => {

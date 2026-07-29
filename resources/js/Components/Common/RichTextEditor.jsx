@@ -79,7 +79,10 @@ export default function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: cn('max-w-none focus:outline-none min-h-[80px] px-3 py-2 text-sm', editorClassName),
+        class: cn(
+          'max-w-none focus:outline-hidden min-h-[80px] px-3 py-2 text-sm',
+          editorClassName
+        ),
       },
     },
   });

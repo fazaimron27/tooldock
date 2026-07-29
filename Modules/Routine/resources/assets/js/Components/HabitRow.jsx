@@ -196,7 +196,7 @@ export default function HabitRow({ habit, days, onEdit, onDelete, onStatusChange
                     onClick={() => handleBooleanToggle(day)}
                     className={`flex h-8 flex-1 items-center justify-center rounded-md text-sm font-semibold transition-all ${
                       state.completed
-                        ? 'text-white shadow-sm hover:opacity-90'
+                        ? 'text-white shadow-xs hover:opacity-90'
                         : 'bg-muted/50 text-muted-foreground/40 hover:bg-muted hover:text-muted-foreground'
                     }`}
                     style={state.completed ? { backgroundColor: habit.color } : undefined}

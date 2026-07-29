@@ -154,7 +154,7 @@ export function GlobalSpinner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 z-[9999] flex h-full w-full items-center justify-center bg-background/85 backdrop-blur-md backdrop-saturate-[180%]">
+    <div className="fixed top-0 left-0 z-9999 flex h-full w-full items-center justify-center bg-background/85 backdrop-blur-md backdrop-saturate-180">
       <div className="flex flex-col items-center gap-3">
         <Spinner className="size-12" />
         <p className="text-muted-foreground text-sm m-0 font-medium">Loading Tool Dock...</p>
@@ -258,7 +258,7 @@ export function ContentSpinner({ visible, containerRef }) {
 
   return (
     <div
-      className="fixed z-40 flex items-center justify-center bg-background/70 backdrop-blur backdrop-saturate-[150%] pointer-events-none"
+      className="fixed z-40 flex items-center justify-center bg-background/70 backdrop-blur-sm backdrop-saturate-150 pointer-events-none"
       style={{
         top: `${bounds.top}px`,
         left: `${bounds.left}px`,

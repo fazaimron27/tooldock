@@ -37,8 +37,8 @@ export default function Welcome() {
     <PageShell title="Welcome">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Welcome Banner */}
-        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-lg">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <Card className="relative overflow-hidden border-0 bg-linear-to-br from-primary/10 via-primary/5 to-background shadow-lg">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[24px_24px]" />
           <div className="relative p-6 md:p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
@@ -67,7 +67,7 @@ export default function Welcome() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium">Account Created</p>
                 <p className="text-sm text-muted-foreground">
@@ -77,7 +77,7 @@ export default function Welcome() {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
-              <HelpCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+              <HelpCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium">Access Pending</p>
                 <p className="text-sm text-muted-foreground">
@@ -98,7 +98,7 @@ export default function Welcome() {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-4 rounded-lg border">
-                <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="font-medium mb-1">Contact Administrator</p>
                   <p className="text-sm text-muted-foreground mb-3">

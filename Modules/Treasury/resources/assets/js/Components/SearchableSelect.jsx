@@ -160,7 +160,7 @@ export default function SearchableSelect({
           'flex items-center rounded-sm px-2 py-1.5 text-sm',
           isDisabled
             ? 'opacity-50 cursor-not-allowed'
-            : 'cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none',
+            : 'cursor-pointer hover:bg-accent focus:bg-accent focus:outline-hidden',
           isSelected && !isDisabled && 'bg-accent',
           isChild && 'pl-6'
         )}

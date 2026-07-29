@@ -3,10 +3,10 @@
  * Features a sticky navbar with developer-focused navigation and GitHub integration
  */
 import { Link, usePage } from '@inertiajs/react';
-import { Github } from 'lucide-react';
 
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { ModeToggle } from '@/Components/ModeToggle';
+import { GithubIcon as Github } from '@/Components/icons/GithubIcon';
 import { Button } from '@/Components/ui/button';
 
 export default function LandingLayout({ children }) {
@@ -15,7 +15,7 @@ export default function LandingLayout({ children }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center">
             <ApplicationLogo />

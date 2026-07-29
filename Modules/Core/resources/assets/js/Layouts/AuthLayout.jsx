@@ -19,11 +19,11 @@ export default function AuthLayout({ children }) {
             alt=""
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/70 via-zinc-900/60 to-zinc-900/70" />
+          <div className="absolute inset-0 bg-linear-to-br from-zinc-900/70 via-zinc-900/60 to-zinc-900/70" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          <div className="w-fit rounded-lg bg-white/10 backdrop-blur-sm p-4 ring-1 ring-white/20">
+          <div className="w-fit rounded-lg bg-white/10 backdrop-blur-xs p-4 ring-1 ring-white/20">
             <Link href="/" className="inline-block">
               <ApplicationLogo className="[&_span]:text-white [&_div]:ring-white/30 [&_div]:shadow-lg" />
             </Link>

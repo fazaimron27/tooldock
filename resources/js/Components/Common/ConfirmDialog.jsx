@@ -56,7 +56,7 @@ export default function ConfirmDialog({
             disabled={disabled}
             className={cn(
               isDestructive &&
-                'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90'
+                'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90'
             )}
           >
             {confirmLabel}

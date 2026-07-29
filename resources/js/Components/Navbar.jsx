@@ -50,7 +50,7 @@ export default function Navbar({ scrollContainerRef }) {
 
   const blurClasses = isScrolled
     ? 'bg-background/40 backdrop-blur-xl'
-    : 'bg-background/95 backdrop-blur-sm';
+    : 'bg-background/95 backdrop-blur-xs';
 
   return (
     <header
@@ -86,7 +86,7 @@ export default function Navbar({ scrollContainerRef }) {
               >
                 <Avatar className="h-10 w-10 ring-2 ring-background">
                   <AvatarImage src={user?.avatar_url} alt={user?.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                  <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-semibold">
                     {getInitials(user?.name || 'U')}
                   </AvatarFallback>
                 </Avatar>

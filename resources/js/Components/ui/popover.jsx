@@ -21,7 +21,7 @@ const PopoverContent = React.forwardRef(
           <motion.div
             ref={ref}
             className={cn(
-              'z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none origin-[--radix-popover-content-transform-origin]',
+              'z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden origin-(--radix-popover-content-transform-origin)',
               className
             )}
             initial={shouldReduceMotion ? false : dialogVariants.content.initial}

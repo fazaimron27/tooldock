@@ -58,7 +58,7 @@ const typeConfig = {
     icon: AlertTriangle,
     label: 'Warning',
     className: 'text-yellow-500 bg-yellow-500/10',
-    badgeVariant: 'outline',
+    badgeVariant: 'outline-solid',
   },
   error: {
     icon: ShieldAlert,
@@ -166,7 +166,7 @@ export default function Show({ notification, navigation, relatedNotifications = 
           <CardHeader>
             <div className="flex items-start gap-4">
               {/* Icon */}
-              <div className={`flex-shrink-0 p-3 rounded-full ${config.className}`}>
+              <div className={`shrink-0 p-3 rounded-full ${config.className}`}>
                 <Icon className="h-6 w-6" />
               </div>
 
@@ -255,14 +255,14 @@ export default function Show({ notification, navigation, relatedNotifications = 
                       href={route('notifications.show', { notification: related.id })}
                       className="flex items-center gap-4 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
                     >
-                      <div className={`flex-shrink-0 p-2 rounded-full ${relatedConfig.className}`}>
+                      <div className={`shrink-0 p-2 rounded-full ${relatedConfig.className}`}>
                         <RelatedIcon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{related.title}</p>
                         <p className="text-sm text-muted-foreground truncate">{related.message}</p>
                       </div>
-                      <div className="flex-shrink-0 text-right">
+                      <div className="shrink-0 text-right">
                         <p className="text-xs text-muted-foreground">{related.created_at_human}</p>
                         {!related.read_at && (
                           <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mt-1" />

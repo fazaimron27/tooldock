@@ -75,7 +75,7 @@ function TreeNode({ nodeKey, value, depth = 0 }) {
       <button
         onClick={() => setIsOpen((o) => !o)}
         style={baseStyle}
-        className="flex w-full items-center text-left hover:bg-white/[0.04] transition-colors"
+        className="flex w-full items-center text-left hover:bg-white/4 transition-colors"
       >
         <span
           className="mr-[2px] inline-flex shrink-0 items-center"

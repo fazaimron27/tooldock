@@ -56,7 +56,7 @@ export default function DashboardFilterBar({ filters = {}, availableWallets = []
     localFilters.wallet_id !== 'all' || localFilters.date_from || localFilters.date_to;
 
   return (
-    <Card className={cn('mb-6 border-none shadow-sm bg-muted/30', className)}>
+    <Card className={cn('mb-6 border-none shadow-xs bg-muted/30', className)}>
       <CardContent className="p-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mr-2">

@@ -101,7 +101,7 @@ function TemplateGalleryDialog({ open, onOpenChange, value, onChange }) {
                   className="group relative flex flex-col items-center gap-3 transition-opacity hover:opacity-80"
                 >
                   <div
-                    className="w-full aspect-[1/1.4] rounded-lg border-2 bg-white overflow-hidden shadow-sm relative"
+                    className="w-full aspect-[1/1.4] rounded-lg border-2 bg-white overflow-hidden shadow-xs relative"
                     style={{ borderColor: isActive ? accent : 'var(--border)' }}
                   >
                     <div className="absolute inset-0 p-4">
@@ -141,7 +141,7 @@ function TemplateGalleryDialog({ open, onOpenChange, value, onChange }) {
 
 function MiniThumbnail({ id, accent }) {
   return (
-    <div className="w-14 h-[72px] border rounded bg-white shrink-0 overflow-hidden shadow-sm">
+    <div className="w-14 h-[72px] border rounded bg-white shrink-0 overflow-hidden shadow-xs">
       <div className="w-full h-full p-1.5">
         <GalleryThumbnail id={id} accent={accent} />
       </div>

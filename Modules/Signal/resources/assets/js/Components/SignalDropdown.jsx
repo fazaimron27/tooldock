@@ -122,13 +122,13 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
           <div className="flex items-center gap-2">
             {/* Dynamic volume icon based on level */}
             {soundVolume === 0 ? (
-              <VolumeX className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <VolumeX className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : soundVolume < 0.4 ? (
-              <Volume className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Volume className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : soundVolume < 0.7 ? (
-              <Volume1 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Volume1 className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : (
-              <Volume2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Volume2 className="h-4 w-4 text-muted-foreground shrink-0" />
             )}
             <Slider
               value={[soundVolume]}

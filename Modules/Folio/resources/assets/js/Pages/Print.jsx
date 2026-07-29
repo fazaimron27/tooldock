@@ -152,7 +152,7 @@ export default function Print() {
 
       <div
         id="print-toolbar"
-        className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur-sm"
+        className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur-xs"
       >
         <div className="flex items-center justify-between px-6 py-3">
           <span className="text-sm font-semibold text-foreground">

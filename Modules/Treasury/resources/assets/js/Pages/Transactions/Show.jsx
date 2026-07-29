@@ -140,9 +140,9 @@ export default function Show({ transaction }) {
           <div
             className={cn(
               'relative p-6 md:p-8 overflow-hidden',
-              transaction.type === 'income' && 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-              transaction.type === 'expense' && 'bg-gradient-to-br from-rose-500 to-rose-600',
-              transaction.type === 'transfer' && 'bg-gradient-to-br from-blue-500 to-blue-600'
+              transaction.type === 'income' && 'bg-linear-to-br from-emerald-500 to-emerald-600',
+              transaction.type === 'expense' && 'bg-linear-to-br from-rose-500 to-rose-600',
+              transaction.type === 'transfer' && 'bg-linear-to-br from-blue-500 to-blue-600'
             )}
           >
             {/* Background pattern */}
@@ -163,7 +163,7 @@ export default function Show({ transaction }) {
 
             <div className="relative flex items-center gap-4 md:gap-5">
               {/* Type icon */}
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
                 <TypeIcon className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
 
@@ -200,7 +200,7 @@ export default function Show({ transaction }) {
         </Card>
 
         {/* Details Card */}
-        <Card className="shadow-sm">
+        <Card className="shadow-xs">
           <CardContent className="p-6 divide-y divide-border/50">
             {/* Description */}
             {transaction.description && (
@@ -276,7 +276,7 @@ export default function Show({ transaction }) {
 
         {/* Attachments Section */}
         {transaction.attachments && transaction.attachments.length > 0 && (
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardContent className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Paperclip className="w-4 h-4 text-muted-foreground" />

@@ -56,7 +56,7 @@ export default function NucleusSnippetPanel({ snippets, onLoad, onDelete }) {
             {filtered.map((snippet) => (
               <div
                 key={snippet.id}
-                className="group flex items-start justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-white/[0.06] cursor-pointer"
+                className="group flex items-start justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-white/6 cursor-pointer"
                 onClick={() => onLoad(snippet.id)}
               >
                 <div className="min-w-0 flex-1 pr-2">

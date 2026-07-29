@@ -129,8 +129,8 @@ export default function Index({ modules = [] }) {
                     return (
                       <Badge
                         key={keyword}
-                        variant={isSelected ? 'default' : 'outline'}
-                        className="cursor-pointer px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-sm active:scale-95"
+                        variant={isSelected ? 'default' : 'outline-solid'}
+                        className="cursor-pointer px-3 py-1.5 text-sm font-medium transition-all hover:scale-105 hover:shadow-xs active:scale-95"
                         onClick={() => toggleKeyword(keyword)}
                       >
                         <Tag
