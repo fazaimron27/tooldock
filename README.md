@@ -41,7 +41,7 @@ ToolDock is powered by a sophisticated modular architecture. Manage your feature
 | Layer | Technologies |
 |-------|-------------|
 | **Backend** | PHP 8.4+, Laravel 12, PostgreSQL / SQLite, Redis |
-| **Frontend** | React 18, Inertia.js v2, Vite 7, Tailwind CSS v3, Radix UI + shadcn/ui |
+| **Frontend** | React 19, Inertia.js v2, Vite 8, Tailwind CSS v4, Radix UI + shadcn/ui |
 | **State & Data** | TanStack Query, TanStack Table, Zustand, React Hook Form + Zod |
 | **Real-time** | Laravel Reverb (WebSockets), Laravel Horizon (Queues), Laravel Echo |
 | **Auth & RBAC** | Laravel Sanctum, spatie/laravel-permission |
