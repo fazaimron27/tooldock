@@ -18,7 +18,7 @@ use App\Services\Registry\CommandRegistry;
  *
  * Provides quick-access commands for navigating to and creating vault items.
  *
- * @see \App\Services\Registry\CommandRegistry
+ * @see CommandRegistry
  */
 class VaultCommandRegistrar
 {

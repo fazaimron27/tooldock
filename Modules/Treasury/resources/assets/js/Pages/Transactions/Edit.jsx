@@ -21,10 +21,6 @@ export default function Edit({
 }) {
   const form = useInertiaForm(getTransactionDefaults(transaction), {
     resolver: updateTransactionResolver,
-    toast: {
-      success: 'Transaction updated successfully!',
-      error: 'Failed to update transaction. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

@@ -18,7 +18,7 @@ use App\Services\Registry\MenuRegistry;
  *
  * Adds Folio link to the application sidebar menu.
  *
- * @see \App\Services\Registry\MenuRegistry
+ * @see MenuRegistry
  */
 class FolioMenuRegistrar
 {
@@ -39,6 +39,17 @@ class FolioMenuRegistrar
             order: 15,
             permission: 'folio.folio.view',
             parentKey: null,
+            module: $moduleName
+        );
+
+        $menuRegistry->registerItem(
+            group: 'Dashboard',
+            label: 'Folio Dashboard',
+            route: 'folio.dashboard',
+            icon: 'LayoutDashboard',
+            order: 100,
+            permission: 'folio.dashboard.view',
+            parentKey: 'dashboard',
             module: $moduleName
         );
     }

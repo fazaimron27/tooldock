@@ -21,11 +21,12 @@ use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Database\Factories\UserFactory;
 use Modules\Groups\Traits\HasGroups;
 use Modules\Media\Models\MediaFile;
+use Spatie\Permission\Contracts\Permission;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Modules\Core\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasGroups, HasRoles, HasUuids, LogsActivity, Notifiable;
 
     /**
@@ -56,7 +57,7 @@ class User extends Authenticatable
      * This ensures that policies calling hasPermissionTo() will also check
      * group-based permissions, not just role-based permissions.
      *
-     * @param  string|\Spatie\Permission\Contracts\Permission  $permission
+     * @param  string|Permission  $permission
      * @param  string|null  $guardName
      * @return bool
      */
@@ -81,7 +82,7 @@ class User extends Authenticatable
      * This calls the original hasPermissionTo from HasPermissions trait
      * without causing infinite recursion.
      *
-     * @param  string|\Spatie\Permission\Contracts\Permission  $permission
+     * @param  string|Permission  $permission
      * @param  string|null  $guardName
      * @return bool
      */

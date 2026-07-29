@@ -21,7 +21,7 @@ use Modules\Routine\Services\Handlers\StreakMilestoneHandler;
  *
  * Manages registration of habit-related signal handlers for notifications.
  *
- * @see \App\Services\Registry\SignalHandlerRegistry
+ * @see SignalHandlerRegistry
  */
 class RoutineSignalRegistrar
 {

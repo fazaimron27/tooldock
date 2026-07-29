@@ -12,10 +12,14 @@
 
 namespace Modules\QuickDraw\Providers;
 
+use App\Services\Registry\CommandRegistry;
+use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\QuickDraw\Services\QuickDrawCommandRegistrar;
+use Modules\QuickDraw\Services\QuickDrawDashboardService;
 use Modules\QuickDraw\Services\QuickDrawMenuRegistrar;
 use Modules\QuickDraw\Services\QuickDrawPermissionRegistrar;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -41,8 +45,12 @@ class QuickDrawServiceProvider extends ServiceProvider
      * @return void
      */
     public function boot(
+        CommandRegistry $commandRegistry,
+        DashboardWidgetRegistry $widgetRegistry,
         MenuRegistry $menuRegistry,
         PermissionRegistry $permissionRegistry,
+        QuickDrawCommandRegistrar $commandRegistrar,
+        QuickDrawDashboardService $dashboardService,
         QuickDrawMenuRegistrar $menuRegistrar,
         QuickDrawPermissionRegistrar $permissionRegistrar
     ): void {
@@ -53,8 +61,10 @@ class QuickDrawServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
+        $commandRegistrar->register($commandRegistry, $this->name);
         $menuRegistrar->register($menuRegistry, $this->name);
         $permissionRegistrar->registerPermissions($permissionRegistry);
+        $dashboardService->registerWidgets($widgetRegistry, $this->name);
     }
 
     /**

@@ -15,11 +15,13 @@ namespace Modules\Folio\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Folio\Http\Requests\StoreFolioRequest;
+use Modules\Folio\Http\Requests\UpdateFolioRequest;
 use Modules\Folio\Models\Folio;
+use Modules\Folio\Policies\FolioPolicy;
 
 /**
  * Class FolioController
@@ -27,8 +29,8 @@ use Modules\Folio\Models\Folio;
  * Provides endpoints for listing resumes, editing the builder,
  * auto-saving content, and downloading PDF exports.
  *
- * @see \Modules\Folio\Models\Folio
- * @see \Modules\Folio\Policies\FolioPolicy
+ * @see Folio
+ * @see FolioPolicy
  */
 class FolioController extends Controller
 {
@@ -53,18 +55,13 @@ class FolioController extends Controller
     /**
      * Store a newly created resume.
      *
-     * @param  Request  $request  The incoming HTTP request
+     * @param  StoreFolioRequest  $request  The validated HTTP request
      * @return RedirectResponse Redirect to the builder page
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreFolioRequest $request): RedirectResponse
     {
-        $this->authorize('create', Folio::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $baseSlug = Str::slug($validated['name']);
+        $name = $request->validated('name');
+        $baseSlug = Str::slug($name);
 
         $existingSlugs = Folio::where('user_id', $request->user()->id)
             ->where(function ($query) use ($baseSlug) {
@@ -85,7 +82,7 @@ class FolioController extends Controller
 
         $folio = Folio::create([
             'user_id' => $request->user()->id,
-            'name' => $validated['name'],
+            'name' => $name,
             'slug' => $slug,
         ]);
 
@@ -118,21 +115,15 @@ class FolioController extends Controller
     /**
      * Auto-save the resume JSON content.
      *
-     * @param  Request  $request  The incoming HTTP request with content
+     * @param  UpdateFolioRequest  $request  The validated HTTP request with content
      * @param  Folio  $folio  The resume to update
      * @return JsonResponse JSON response confirming the save
      */
-    public function update(Request $request, Folio $folio): JsonResponse
+    public function update(UpdateFolioRequest $request, Folio $folio): JsonResponse
     {
-        $this->authorize('update', $folio);
-
-        $request->validate([
-            'content' => 'required|array',
-        ]);
-
         $folio->data()->updateOrCreate(
             ['folio_id' => $folio->id],
-            ['content' => $request->input('content')]
+            ['content' => $request->validated('content')]
         );
 
         return response()->json(['status' => 'saved']);

@@ -15,6 +15,7 @@ namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Cache\CacheService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -223,7 +224,7 @@ class TreasuryGoalController extends Controller
      */
     public function allocate(AllocateGoalRequest $request, TreasuryGoal $goal): RedirectResponse
     {
-        $goalAllocationCategory = \Modules\Categories\Models\Category::where('slug', 'goal-allocation')
+        $goalAllocationCategory = Category::where('slug', 'goal-allocation')
             ->where('type', 'transaction_category')
             ->first();
 
@@ -273,7 +274,7 @@ class TreasuryGoalController extends Controller
     /**
      * Get cached wallets for the authenticated user.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getWallets()
     {
@@ -289,7 +290,7 @@ class TreasuryGoalController extends Controller
     /**
      * Get cached goal categories.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getCategories()
     {
@@ -305,7 +306,7 @@ class TreasuryGoalController extends Controller
     /**
      * Get savings wallets for the authenticated user (for goal linking).
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     private function getSavingsWallets()
     {

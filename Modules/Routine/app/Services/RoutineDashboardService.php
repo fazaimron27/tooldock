@@ -20,7 +20,7 @@ use Modules\Routine\Models\Habit;
  *
  * Provides statistical dashboard widgets for habit tracking metrics.
  *
- * @see \App\Services\Registry\DashboardWidgetRegistry
+ * @see DashboardWidgetRegistry
  */
 class RoutineDashboardService
 {

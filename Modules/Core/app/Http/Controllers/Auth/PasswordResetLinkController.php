@@ -45,7 +45,7 @@ class PasswordResetLinkController extends Controller
      * @param  Request  $request  The HTTP request containing the email
      * @return RedirectResponse Redirect back with status
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {

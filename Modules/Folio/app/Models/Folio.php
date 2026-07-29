@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
+use Modules\Folio\Policies\FolioPolicy;
 
 /**
  * Class Folio
@@ -32,7 +33,7 @@ use Modules\Core\Traits\HasUserOwnership;
  * @property string $name
  * @property string $slug
  *
- * @see \Modules\Folio\Policies\FolioPolicy
+ * @see FolioPolicy
  */
 class Folio extends Model
 {

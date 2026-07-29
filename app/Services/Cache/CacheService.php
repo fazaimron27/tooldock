@@ -311,7 +311,7 @@ class CacheService
      * Get a tagged cache instance.
      *
      * @param  string|array  $tags  Cache tag(s)
-     * @return \Illuminate\Contracts\Cache\Repository Tagged cache repository
+     * @return Repository Tagged cache repository
      */
     public function tags(string|array $tags): Repository
     {

@@ -11,10 +11,6 @@ import PageShell from '@/Components/Layouts/PageShell';
 export default function Edit({ goal, wallets = [], categories = [] }) {
   const form = useInertiaForm(getGoalDefaults(goal), {
     resolver: updateGoalResolver,
-    toast: {
-      success: 'Goal updated successfully!',
-      error: 'Failed to update goal. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

@@ -8,13 +8,18 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Folio\Providers\RouteServiceProvider::mapWebRoutes()
+ * @see RouteServiceProvider::mapWebRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
 use Modules\Folio\Http\Controllers\FolioController;
+use Modules\Folio\Http\Controllers\FolioDashboardController;
+use Modules\Folio\Providers\RouteServiceProvider;
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('folio/dashboard', [FolioDashboardController::class, 'index'])
+        ->name('folio.dashboard');
+
     Route::resource('folio', FolioController::class)
         ->only(['index', 'store', 'edit', 'update', 'destroy'])
         ->names([

@@ -13,6 +13,8 @@
 
 namespace App\Services\Registry;
 
+use Modules\Signal\Services\SignalPreferenceService;
+
 /**
  * Class SignalCategoryRegistry
  *
@@ -23,7 +25,7 @@ namespace App\Services\Registry;
  * Built-in categories (login, security, system) are registered by Signal.
  * Other modules can register their own (e.g., 'vault' => 'vault_notify_enabled').
  *
- * @see \Modules\Signal\Services\SignalPreferenceService For preference checking
+ * @see SignalPreferenceService For preference checking
  */
 class SignalCategoryRegistry
 {

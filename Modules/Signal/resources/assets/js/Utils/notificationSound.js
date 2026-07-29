@@ -92,14 +92,15 @@ export function playNotificationSound(type, volume = 0.5) {
   }
 
   const url = TYPE_TO_SOUND[type] || TYPE_TO_SOUND.info;
-  let audio = audioCache.get(url);
+  let template = audioCache.get(url);
 
-  if (!audio) {
-    audio = new window.Audio(url);
-    audioCache.set(url, audio);
+  if (!template) {
+    template = new window.Audio(url);
+    audioCache.set(url, template);
   }
+
+  const audio = /** @type {HTMLAudioElement} */ (template.cloneNode());
   audio.volume = Math.max(0, Math.min(1, volume));
-  audio.currentTime = 0;
 
   audio.play().catch((error) => {
     if (import.meta.env.DEV) {

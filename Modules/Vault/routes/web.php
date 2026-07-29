@@ -9,13 +9,14 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Vault\Providers\RouteServiceProvider::mapWebRoutes()
+ * @see RouteServiceProvider::mapWebRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
 use Modules\Vault\Http\Controllers\VaultController;
 use Modules\Vault\Http\Controllers\VaultDashboardController;
 use Modules\Vault\Http\Controllers\VaultLockController;
+use Modules\Vault\Providers\RouteServiceProvider;
 
 Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::get('vault/lock', [VaultLockController::class, 'show'])->name('vault.lock');

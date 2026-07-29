@@ -62,6 +62,13 @@ class QuickDrawState extends Model
     ];
 
     /**
+     * The relationships that should have their timestamps touched on save.
+     *
+     * @var list<string>
+     */
+    protected $touches = ['quickdraw'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

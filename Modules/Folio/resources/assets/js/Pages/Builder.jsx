@@ -15,7 +15,7 @@ import useFolioUpdate from '@Folio/Hooks/useFolioUpdate';
 import { DEFAULT_CONTENT, STATUS_MAP, mergeDefaults } from '@Folio/constants/defaultContent';
 import { usePage } from '@inertiajs/react';
 import { Download } from 'lucide-react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import PageShell from '@/Components/Layouts/PageShell';
 import { Badge } from '@/Components/ui/badge';
@@ -36,7 +36,7 @@ export default function Builder() {
 
   const { saveStatus } = useAutoSave(folio.id, watch, isDirty);
   const folioUpdate = useFolioUpdate(folio.id);
-  const liveContent = watch();
+  const liveContent = useWatch({ control });
   const themeId = liveContent.template || 'professional';
 
   const {

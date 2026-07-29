@@ -1,14 +1,21 @@
 {
     "agents": [
         "copilot",
-        "cursor"
+        "cursor",
+        "claude_code"
     ],
+    "cloud": false,
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
+    "nightwatch_mcp": false,
     "sail": false,
     "skills": [
+        "laravel-best-practices",
+        "configuring-horizon",
+        "pulse-development",
         "inertia-react-development",
+        "echo-react-development",
+        "echo-development",
         "tailwindcss-development"
     ]
 }

@@ -41,10 +41,10 @@ class SettingsService
     /**
      * Create a new settings service instance.
      *
-     * @param  \Modules\Settings\Models\Setting  $setting  Setting model for database queries
-     * @param  \App\Services\Registry\SettingsRegistry  $settingsRegistry  Registry for setting definitions and seeding
-     * @param  \App\Services\Cache\CacheService  $cacheService  Cache service for tag-based caching
-     * @param  \App\Services\Core\AppConfigService  $appConfigService  Service for syncing settings to Laravel config
+     * @param  Setting  $setting  Setting model for database queries
+     * @param  SettingsRegistry  $settingsRegistry  Registry for setting definitions and seeding
+     * @param  CacheService  $cacheService  Cache service for tag-based caching
+     * @param  AppConfigService  $appConfigService  Service for syncing settings to Laravel config
      */
     public function __construct(
         private Setting $setting,
@@ -91,7 +91,7 @@ class SettingsService
      * @param  string  $key  The setting key
      * @param  mixed  $value  The value to set
      *
-     * @throws \RuntimeException When the setting key doesn't exist in the database
+     * @throws RuntimeException When the setting key doesn't exist in the database
      */
     public function set(string $key, mixed $value): void
     {
@@ -124,7 +124,7 @@ class SettingsService
      * the same logical value might be represented differently (e.g., true vs "1").
      *
      * @param  mixed  $value  The value to normalize
-     * @param  \Modules\Settings\Enums\SettingType  $type  The setting type
+     * @param  SettingType  $type  The setting type
      * @return mixed The normalized value
      */
     private function normalizeValueForComparison(mixed $value, SettingType $type): mixed
@@ -148,7 +148,7 @@ class SettingsService
      * are sorted by label alphabetically.
      * Format: ['general' => [...], 'finance' => [...]]
      *
-     * @return \Illuminate\Support\Collection<string, \Illuminate\Support\Collection>
+     * @return Collection<string, Collection>
      */
     public function all(): Collection
     {
@@ -207,7 +207,7 @@ class SettingsService
      * - ModuleLifecycleService during module installation
      * - Database seeders
      *
-     * @return \Illuminate\Support\Collection<\Modules\Settings\Models\Setting>
+     * @return Collection<Setting>
      */
     private function loadAllSettings(): Collection
     {

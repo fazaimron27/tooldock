@@ -12,6 +12,7 @@
 
 namespace Modules\Categories\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Modules\Categories\Models\Category;
@@ -21,7 +22,7 @@ class UpdateCategoryRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -90,8 +91,6 @@ class UpdateCategoryRequest extends FormRequest
             return true;
         }
 
-        // Check if the current category is an ancestor of the new parent.
-        // This would create: newParent -> ... -> current -> newParent (a cycle).
         $newParentAncestors = $this->getAllAncestors($newParentId);
         if (in_array($categoryId, $newParentAncestors, true)) {
             return true;
@@ -112,8 +111,6 @@ class UpdateCategoryRequest extends FormRequest
         $visited = [];
         $currentId = $categoryId;
 
-        // Traverse up the parent chain until we hit null or a cycle.
-        // Prevents infinite loops in case of data corruption.
         while ($currentId) {
             if (isset($visited[$currentId])) {
                 break;

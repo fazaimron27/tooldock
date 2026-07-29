@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\AuditLog\Enums\AuditLogEvent;
@@ -35,8 +36,8 @@ use Modules\Core\Models\User;
  * Manages user registration including account creation, welcome
  * notifications, and admin notifications for new users.
  *
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For notifications
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For notifications
  */
 class RegisteredUserController extends Controller
 {
@@ -65,7 +66,7 @@ class RegisteredUserController extends Controller
      * @param  Request  $request  The HTTP request with registration data
      * @return RedirectResponse Redirect to welcome page
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {

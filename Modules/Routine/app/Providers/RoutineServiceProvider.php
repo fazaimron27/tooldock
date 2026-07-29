@@ -12,9 +12,11 @@
 
 namespace Modules\Routine\Providers;
 
+use App\Services\Registry\BotCommandRegistryInterface;
 use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
+use App\Services\Registry\HookEventRegistryInterface;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\PermissionRegistry;
 use App\Services\Registry\SettingsRegistry;
@@ -22,9 +24,11 @@ use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Routine\Services\RoutineBotRegistrar;
 use Modules\Routine\Services\RoutineCategoryRegistrar;
 use Modules\Routine\Services\RoutineCommandRegistrar;
 use Modules\Routine\Services\RoutineDashboardService;
+use Modules\Routine\Services\RoutineHookRegistrar;
 use Modules\Routine\Services\RoutineMenuRegistrar;
 use Modules\Routine\Services\RoutinePermissionRegistrar;
 use Modules\Routine\Services\RoutineSettingsRegistrar;
@@ -83,6 +87,14 @@ class RoutineServiceProvider extends ServiceProvider
         $dashboardService->registerWidgets($widgetRegistry, $this->name);
         $signalCategoryRegistry->register($this->name, 'routine', 'routine_notify_enabled');
         $signalRegistrar->register($signalRegistry);
+
+        if (app()->bound(HookEventRegistryInterface::class)) {
+            (new RoutineHookRegistrar)->register(app(HookEventRegistryInterface::class));
+        }
+
+        if (app()->bound(BotCommandRegistryInterface::class)) {
+            (new RoutineBotRegistrar)->register(app(BotCommandRegistryInterface::class));
+        }
     }
 
     /**

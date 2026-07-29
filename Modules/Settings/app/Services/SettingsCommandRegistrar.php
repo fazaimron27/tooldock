@@ -34,7 +34,7 @@ class SettingsCommandRegistrar
                 'icon' => 'settings',
                 'permission' => 'settings.config.view',
                 'keywords' => ['settings', 'preferences', 'configuration', 'options'],
-                'order' => 70,
+                'order' => 80,
             ],
         ]);
     }

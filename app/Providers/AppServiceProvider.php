@@ -34,6 +34,7 @@ use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
+use App\Services\Registry\HookInboundProcessorRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\MiddlewareRegistry;
@@ -43,6 +44,7 @@ use App\Services\Registry\SettingsRegistry;
 use App\Services\Registry\SignalCategoryRegistry;
 use App\Services\Registry\SignalHandlerRegistry;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -82,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(MiddlewareRegistry::class);
         $this->app->singleton(SignalCategoryRegistry::class);
         $this->app->singleton(SignalHandlerRegistry::class);
+        $this->app->singleton(HookInboundProcessorRegistry::class);
         $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
@@ -104,6 +107,8 @@ class AppServiceProvider extends ServiceProvider
         StorageLinkService $storageLinkService,
         AppConfigService $appConfigService
     ): void {
+        TrustProxies::at(config('app.trusted_proxies', []));
+
         Vite::prefetch(concurrency: 3);
 
         $migrationPaths = $migrationService->getMigrationPaths();

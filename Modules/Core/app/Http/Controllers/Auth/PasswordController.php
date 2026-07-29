@@ -29,8 +29,8 @@ use Modules\Core\Models\User;
  * Manages password changes for authenticated users from their profile.
  * Logs password changes and sends security alerts via Signal.
  *
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For security alerts
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For security alerts
  */
 class PasswordController extends Controller
 {

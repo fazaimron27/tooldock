@@ -20,7 +20,7 @@ use Modules\Vault\Policies\VaultPolicy;
  *
  * Maps the Vault model to VaultPolicy for authorization checks.
  *
- * @see \Modules\Vault\Policies\VaultPolicy
+ * @see VaultPolicy
  */
 class AuthServiceProvider extends ServiceProvider
 {

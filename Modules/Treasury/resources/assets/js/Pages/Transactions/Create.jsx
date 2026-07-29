@@ -24,10 +24,6 @@ export default function Create({
 }) {
   const form = useInertiaForm(getTransactionDefaults(), {
     resolver: createTransactionResolver,
-    toast: {
-      success: 'Transaction created successfully!',
-      error: 'Failed to create transaction. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

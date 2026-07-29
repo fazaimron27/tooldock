@@ -21,7 +21,7 @@ use Modules\Vault\Models\Vault;
  *
  * Generates realistic vault test data for logins, cards, notes, and servers.
  *
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Modules\Vault\Models\Vault>
+ * @extends Factory<Vault>
  */
 class VaultFactory extends Factory
 {

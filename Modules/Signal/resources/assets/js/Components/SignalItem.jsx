@@ -84,7 +84,12 @@ export default function SignalItem({
             {notification.created_at_human}
           </span>
         </div>
-        <p className={cn('text-sm text-muted-foreground mt-0.5', compact && 'line-clamp-1')}>
+        <p
+          className={cn(
+            'text-sm text-muted-foreground mt-0.5 break-words',
+            compact ? 'line-clamp-1' : 'line-clamp-2'
+          )}
+        >
           {notification.message}
         </p>
         {notification.module_source && !compact && (

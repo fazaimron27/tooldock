@@ -11,6 +11,7 @@
 
 namespace Modules\Groups\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Modules\Core\Constants\Roles;
@@ -35,7 +36,7 @@ class StoreGroupRequest extends FormRequest
      * Validates group creation data and prevents assignment of the Super Admin role.
      * Uses static caching to avoid repeated database queries during validation.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

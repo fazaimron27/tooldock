@@ -15,10 +15,12 @@ namespace Modules\Treasury\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\Registry\DashboardWidgetRegistry;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Treasury\Models\Wallet;
 
 /**
  * Class TreasuryDashboardController
@@ -30,11 +32,11 @@ class TreasuryDashboardController extends Controller
     /**
      * Display the Treasury module dashboard.
      *
-     * @param  \Illuminate\Http\Request  $request  The incoming request
+     * @param  Request  $request  The incoming request
      * @param  DashboardWidgetRegistry  $widgetRegistry  The widget registry
      * @return Response
      */
-    public function index(\Illuminate\Http\Request $request, DashboardWidgetRegistry $widgetRegistry): Response
+    public function index(Request $request, DashboardWidgetRegistry $widgetRegistry): Response
     {
         Gate::authorize('treasuries.dashboard.view');
 
@@ -42,7 +44,7 @@ class TreasuryDashboardController extends Controller
         $widgets = $widgetRegistry->getWidgetsForModule('Treasury', 'detail', $filters);
         $moduleMetadata = $widgetRegistry->getAllModuleMetadata();
 
-        $wallets = \Modules\Treasury\Models\Wallet::where('user_id', Auth::id())
+        $wallets = Wallet::where('user_id', Auth::id())
             ->active()
             ->orderBy('name')
             ->get(['id', 'name'])

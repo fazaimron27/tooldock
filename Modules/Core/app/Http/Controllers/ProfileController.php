@@ -35,8 +35,8 @@ use Modules\Media\Models\MediaFile;
  * Manages user profile operations including updates, avatar changes,
  * and account deletion. Logs all changes and sends security alerts.
  *
- * @see \Modules\AuditLog\Traits\DispatchAuditLog For audit logging
- * @see \App\Services\Registry\SignalHandlerRegistry For notifications
+ * @see DispatchAuditLog For audit logging
+ * @see SignalHandlerRegistry For notifications
  */
 class ProfileController extends Controller
 {
@@ -250,7 +250,7 @@ class ProfileController extends Controller
      * Logs the deletion to audit log before removing the user.
      *
      * @param  Request  $request  The HTTP request with password confirmation
-     * @return RedirectResponse|\Illuminate\Http\Response Redirect to home
+     * @return RedirectResponse|Response Redirect to home
      */
     public function destroy(Request $request): RedirectResponse|Response
     {

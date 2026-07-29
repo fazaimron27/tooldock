@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Gate;
  * filtered by user permissions, and sorted by a predefined group
  * order. Supports parent grouping for nested command organization.
  *
- * @see \Illuminate\Support\Facades\Gate For permission-based filtering
+ * @see Gate For permission-based filtering
  */
 class CommandRegistry
 {
@@ -94,7 +94,7 @@ class CommandRegistry
      * priority order. Commands requiring permissions are excluded
      * for unauthenticated users.
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user  The authenticated user, or null for guest
+     * @param  Authenticatable|null  $user  The authenticated user, or null for guest
      * @return array<string, array<int, array{label: string, route: ?string, url: ?string, action: ?string, icon: string, keywords: array, newTab: bool, description: ?string}>> Commands grouped by display group
      */
     public function getCommands(?Authenticatable $user = null): array
@@ -150,9 +150,11 @@ class CommandRegistry
             'User Management' => 1,
             'Life OS' => 3,
             'Utilities' => 4,
-            'Master Data' => 5,
-            'Platform' => 6,
-            'System' => 7,
+            'Developer' => 5,
+            'Automation' => 6,
+            'Master Data' => 7,
+            'Platform' => 8,
+            'System' => 9,
         ];
 
         uksort($grouped, function ($groupA, $groupB) use ($groupOrder) {

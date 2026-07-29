@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Core\Models\User;
 use Modules\Core\Traits\HasUserOwnership;
+use Modules\QuickDraw\Policies\QuickDrawPolicy;
 
 /**
  * Class QuickDraw
@@ -32,7 +33,7 @@ use Modules\Core\Traits\HasUserOwnership;
  * @property string $name
  * @property string|null $description
  *
- * @see \Modules\QuickDraw\Policies\QuickDrawPolicy
+ * @see QuickDrawPolicy
  */
 class QuickDraw extends Model
 {

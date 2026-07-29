@@ -15,10 +15,6 @@ import { Button } from '@/Components/ui/button';
 export default function Create({ wallets = [], categories = [], hasSavingsWallet = true }) {
   const form = useInertiaForm(getGoalDefaults(), {
     resolver: createGoalResolver,
-    toast: {
-      success: 'Goal created successfully!',
-      error: 'Failed to create goal. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

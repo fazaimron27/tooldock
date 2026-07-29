@@ -26,8 +26,8 @@ use Modules\Core\Constants\Roles;
  * filtering (records everything locally, only exceptions and failures
  * in production) and authorization for accessing the dashboard.
  *
- * @see \Laravel\Telescope\TelescopeApplicationServiceProvider
- * @see \Modules\Core\Constants\Roles For role constant definitions
+ * @see TelescopeApplicationServiceProvider
+ * @see Roles For role constant definitions
  */
 class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 {

@@ -19,6 +19,7 @@
 
 namespace Modules\Signal\Events;
 
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -44,7 +45,7 @@ use Modules\Signal\Services\SignalService;
  * @property string|null $action Optional frontend action to trigger
  * @property int|null $unreadCount Current unread notification count for the user
  *
- * @see \Modules\Signal\Services\SignalService::broadcastNotification()
+ * @see SignalService::broadcastNotification()
  */
 class NotificationReceived implements ShouldBroadcastNow
 {
@@ -87,7 +88,7 @@ class NotificationReceived implements ShouldBroadcastNow
      * notifications are only delivered to the intended recipient.
      * Channel naming follows Laravel conventions for user notifications.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel> Array of broadcast channels
+     * @return array<int, Channel> Array of broadcast channels
      */
     public function broadcastOn(): array
     {

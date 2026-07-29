@@ -24,8 +24,8 @@ use Modules\Core\Constants\Roles;
  * rules for accessing the Horizon dashboard. Only users with the
  * Super Admin role are allowed to view the dashboard.
  *
- * @see \Laravel\Horizon\HorizonApplicationServiceProvider
- * @see \Modules\Core\Constants\Roles For role constant definitions
+ * @see HorizonApplicationServiceProvider
+ * @see Roles For role constant definitions
  */
 class HorizonServiceProvider extends HorizonApplicationServiceProvider
 {

@@ -24,7 +24,7 @@ use Modules\Vault\Services\Lock\Handlers\VaultUnlockedHandler;
  *
  * Manages registration of lock/unlock and PIN change signal handlers.
  *
- * @see \App\Services\Registry\SignalHandlerRegistry
+ * @see SignalHandlerRegistry
  */
 class VaultSignalRegistrar
 {

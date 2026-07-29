@@ -20,7 +20,10 @@
 namespace Modules\Signal\Services;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Log;
 use Modules\Core\Models\User;
+use Modules\Signal\Events\NotificationReceived;
+use Modules\Signal\Facades\Signal;
 use Modules\Signal\Notifications\SystemNotification;
 
 /**
@@ -29,7 +32,7 @@ use Modules\Signal\Notifications\SystemNotification;
  * Facade backend for sending notifications. Handles preference checking,
  * cache invalidation, and real-time broadcasting automatically.
  *
- * @see \Modules\Signal\Facades\Signal For static access
+ * @see Signal For static access
  */
 class SignalService
 {
@@ -375,7 +378,7 @@ class SignalService
         ?int $unreadCount = null
     ): void {
         try {
-            event(new \Modules\Signal\Events\NotificationReceived(
+            event(new NotificationReceived(
                 user: $user,
                 notificationId: $notificationId,
                 title: $title,
@@ -389,7 +392,7 @@ class SignalService
             ));
         } catch (\Exception $e) {
             if (config('app.debug')) {
-                \Illuminate\Support\Facades\Log::debug('Signal broadcast failed: '.$e->getMessage());
+                Log::debug('Signal broadcast failed: '.$e->getMessage());
             }
         }
     }

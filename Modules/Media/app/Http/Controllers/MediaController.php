@@ -22,7 +22,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
 use Modules\Media\Http\Requests\UploadMediaRequest;
 use Modules\Media\Models\MediaFile;
@@ -38,8 +37,7 @@ class MediaController extends Controller
      * Display a listing of media files.
      *
      * Filters by parent model ownership:
-     * - Super Admins see all files
-     * - Regular users only see files attached to their own models
+     * - All users only see files attached to their own models
      *
      * @return Response
      */
@@ -48,23 +46,24 @@ class MediaController extends Controller
         $this->authorize('viewAny', MediaFile::class);
 
         $user = request()->user();
-        $query = MediaFile::permanent()->with('model')->latest();
+        $userId = $user->id;
+        $userClass = User::class;
 
-        if (! $user->hasRole(Roles::SUPER_ADMIN)) {
-            $userId = $user->id;
-            $userClass = User::class;
-
-            $query->where(function ($q) use ($userId, $userClass) {
+        $query = MediaFile::permanent()->with('model')->latest()
+            ->where(function ($q) use ($userId, $userClass) {
                 $q->where(function ($sub) use ($userId, $userClass) {
                     $sub->where('model_type', $userClass)
                         ->where('model_id', $userId);
                 });
 
-                $q->orWhereHas('model', function ($modelQuery) use ($userId) {
-                    $modelQuery->where('user_id', $userId);
+                $q->orWhereHasMorph('model', '*', function ($modelQuery, $type) use ($userId, $userClass) {
+                    if ($type === $userClass) {
+                        $modelQuery->whereRaw('1 = 0');
+                    } else {
+                        $modelQuery->where('user_id', $userId);
+                    }
                 });
             });
-        }
 
         $mediaFiles = $query->paginate(20);
 
@@ -102,7 +101,7 @@ class MediaController extends Controller
                 'mime_type' => $mediaFile->mime_type,
                 'size' => $mediaFile->size,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $user = $request->user();
             $filename = $request->file('file')?->getClientOriginalName() ?? 'Unknown';
 

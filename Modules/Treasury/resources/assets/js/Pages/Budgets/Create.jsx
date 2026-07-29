@@ -11,10 +11,6 @@ import PageShell from '@/Components/Layouts/PageShell';
 export default function Create({ categories = [], usedCategoryIds = [] }) {
   const form = useInertiaForm(getBudgetDefaults(), {
     resolver: createBudgetResolver,
-    toast: {
-      success: 'Budget created successfully!',
-      error: 'Failed to create budget. Please check the form for errors.',
-    },
   });
 
   const handleSubmit = (e) => {

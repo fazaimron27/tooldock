@@ -12,12 +12,13 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Signal\Providers\RouteServiceProvider::mapWebRoutes()
- * @see \Modules\Signal\Http\Controllers\SignalController
+ * @see RouteServiceProvider::mapWebRoutes()
+ * @see SignalController
  */
 
 use Illuminate\Support\Facades\Route;
 use Modules\Signal\Http\Controllers\SignalController;
+use Modules\Signal\Providers\RouteServiceProvider;
 
 /*
 |--------------------------------------------------------------------------

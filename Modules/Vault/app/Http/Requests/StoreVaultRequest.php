@@ -12,8 +12,10 @@
 
 namespace Modules\Vault\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Vault\Http\Controllers\VaultController;
 use Modules\Vault\Models\Vault;
 
 /**
@@ -22,7 +24,7 @@ use Modules\Vault\Models\Vault;
  * Validates vault creation data including name, type, credentials,
  * TOTP parameters, and category assignment.
  *
- * @see \Modules\Vault\Http\Controllers\VaultController::store()
+ * @see VaultController::store()
  */
 class StoreVaultRequest extends FormRequest
 {
@@ -54,7 +56,7 @@ class StoreVaultRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

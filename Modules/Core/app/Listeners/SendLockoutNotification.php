@@ -23,8 +23,8 @@ use Modules\Core\Models\User;
  * multiple failed login attempts. Sends security alerts to users
  * to notify them of potential unauthorized access attempts.
  *
- * @see \Illuminate\Auth\Events\Lockout For the lockout event
- * @see \App\Services\Registry\SignalHandlerRegistry For notifications
+ * @see Lockout For the lockout event
+ * @see SignalHandlerRegistry For notifications
  */
 class SendLockoutNotification
 {

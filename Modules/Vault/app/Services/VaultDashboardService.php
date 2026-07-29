@@ -21,7 +21,7 @@ use Modules\Vault\Models\Vault;
  * Provides statistical dashboard widgets for vault item counts
  * broken down by type (login, card, note, server) and favorites.
  *
- * @see \App\Services\Registry\DashboardWidgetRegistry
+ * @see DashboardWidgetRegistry
  */
 class VaultDashboardService
 {

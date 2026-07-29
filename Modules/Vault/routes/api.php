@@ -11,10 +11,11 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Vault\Providers\RouteServiceProvider::mapApiRoutes()
+ * @see RouteServiceProvider::mapApiRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
+use Modules\Vault\Providers\RouteServiceProvider;
 
 /*
 |--------------------------------------------------------------------------

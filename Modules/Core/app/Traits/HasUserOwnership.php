@@ -13,15 +13,14 @@
 namespace Modules\Core\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
-use Modules\Core\Constants\Roles;
 use Modules\Core\Models\User;
 
 /**
  * Trait for models that have user ownership.
  *
  * Provides a reusable `scopeForUser()` method that filters queries
- * by user ownership. Super Admins can see all records, regular users
- * only see their own.
+ * by user ownership. All users (including Super Admins) only see
+ * their own records.
  *
  * Requirements:
  * - Model must have a `user_id` column
@@ -31,7 +30,7 @@ trait HasUserOwnership
     /**
      * Scope a query to filter by user ownership.
      *
-     * Super Admins can see all records, regular users only see their own.
+     * All users only see their own records.
      *
      * @param  Builder  $query
      * @param  User|null  $user
@@ -40,10 +39,6 @@ trait HasUserOwnership
     public function scopeForUser(Builder $query, ?User $user = null): Builder
     {
         $user = $user ?? request()->user();
-
-        if ($user?->hasRole(Roles::SUPER_ADMIN)) {
-            return $query;
-        }
 
         return $query->where('user_id', $user?->id);
     }

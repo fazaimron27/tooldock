@@ -19,7 +19,7 @@ use App\Services\Registry\CommandRegistry;
  * Registers Command Palette commands for the Signal module.
  * Provides quick access to the notifications inbox.
  *
- * @see \App\Services\Registry\CommandRegistry
+ * @see CommandRegistry
  */
 class SignalCommandRegistrar
 {
@@ -38,7 +38,7 @@ class SignalCommandRegistrar
                 'route' => 'notifications.index',
                 'icon' => 'bell',
                 'keywords' => ['notification', 'alerts', 'messages', 'inbox'],
-                'order' => 50,
+                'order' => 60,
             ],
         ]);
     }

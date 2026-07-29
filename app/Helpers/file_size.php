@@ -17,21 +17,21 @@ if (! function_exists('convert_size_to_kb')) {
      * @param  string  $size  The size string from PHP ini (e.g., "2M", "128K")
      * @return int Size in KB
      *
-     * @throws \InvalidArgumentException If the size string is invalid
+     * @throws InvalidArgumentException If the size string is invalid
      */
     function convert_size_to_kb(string $size): int
     {
         $size = trim($size);
 
         if ($size === '') {
-            throw new \InvalidArgumentException('Size string cannot be empty.');
+            throw new InvalidArgumentException('Size string cannot be empty.');
         }
 
         $unit = strtolower(substr($size, -1));
         $value = (int) $size;
 
         if ($value <= 0 && $unit !== 'k' && $unit !== 'm' && $unit !== 'g') {
-            throw new \InvalidArgumentException("Invalid size format: '{$size}'. Expected format: number followed by K, M, or G (e.g., '2M', '128K').");
+            throw new InvalidArgumentException("Invalid size format: '{$size}'. Expected format: number followed by K, M, or G (e.g., '2M', '128K').");
         }
 
         return match ($unit) {
@@ -69,14 +69,14 @@ if (! function_exists('get_effective_max_file_size')) {
      * @param  int|null  $configuredMax  The configured max file size in KB (from settings)
      * @return array{effective_kb: int, effective_mb: float, is_php_limited: bool, php_limit_mb: float}
      *
-     * @throws \InvalidArgumentException If the configured max is negative
+     * @throws InvalidArgumentException If the configured max is negative
      */
     function get_effective_max_file_size(?int $configuredMax = null): array
     {
         $configuredMax = $configuredMax ?? (int) settings('max_file_size', 10240);
 
         if ($configuredMax < 0) {
-            throw new \InvalidArgumentException("Configured max file size cannot be negative. Got: {$configuredMax} KB.");
+            throw new InvalidArgumentException("Configured max file size cannot be negative. Got: {$configuredMax} KB.");
         }
 
         $phpLimits = get_php_upload_limits();

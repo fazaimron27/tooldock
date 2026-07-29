@@ -17,7 +17,7 @@ use Modules\Core\Constants\Roles as RoleConstants;
 /**
  * Class RoutinePermissionRegistrar
  *
- * @see \App\Services\Registry\PermissionRegistry
+ * @see PermissionRegistry
  */
 class RoutinePermissionRegistrar
 {

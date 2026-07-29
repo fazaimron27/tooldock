@@ -99,7 +99,7 @@ class UserController extends Controller
      *
      * @param  string  $search  Search term to filter by name or email
      * @param  int  $limit  Maximum number of results to return
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     private function buildUserSearchQuery(string $search, int $limit): Builder
     {

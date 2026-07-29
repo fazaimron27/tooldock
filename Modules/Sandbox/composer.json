@@ -1,0 +1,28 @@
+{
+  "name": "fazaimron27/sandbox",
+  "description": "",
+  "authors": [
+    {
+      "name": "Faza Iman Imron",
+      "email": "fazaimanimron@gmail.com"
+    }
+  ],
+  "extra": {
+    "laravel": {
+      "providers": [],
+      "aliases": {}
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Modules\\Sandbox\\": "app/",
+      "Modules\\Sandbox\\Database\\Factories\\": "database/factories/",
+      "Modules\\Sandbox\\Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Modules\\Sandbox\\Tests\\": "tests/"
+    }
+  }
+}

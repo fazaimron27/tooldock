@@ -389,7 +389,7 @@ class SettingsRegistry
     /**
      * Get all settings that can be overridden by users.
      *
-     * @return \Illuminate\Support\Collection Collection of user-overridable settings
+     * @return Collection Collection of user-overridable settings
      */
     public function getUserOverridableSettings(): Collection
     {

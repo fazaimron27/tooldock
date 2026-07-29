@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import ConfirmDialog from '@/Components/Common/ConfirmDialog';
 import FormDialog from '@/Components/Common/FormDialog';
 import FormFieldRHF from '@/Components/Common/FormFieldRHF';
+import FormTextareaRHF from '@/Components/Common/FormTextareaRHF';
 import PageShell from '@/Components/Layouts/PageShell';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -148,12 +149,12 @@ export default function Index() {
             placeholder="e.g. Architecture Diagram"
             rules={{ required: 'Canvas name is required' }}
           />
-          <FormFieldRHF
+          <FormTextareaRHF
             name="description"
             control={control}
             label="Description"
             placeholder="Optional description..."
-            multiline
+            rows={3}
           />
         </form>
       </FormDialog>

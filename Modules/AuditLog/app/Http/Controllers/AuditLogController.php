@@ -197,7 +197,7 @@ class AuditLogController extends Controller
      * results in chunks for memory efficiency.
      *
      * @param  Request  $request  The incoming HTTP request with filter parameters
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse Streamed CSV download
+     * @return StreamedResponse Streamed CSV download
      */
     public function export(Request $request): StreamedResponse
     {

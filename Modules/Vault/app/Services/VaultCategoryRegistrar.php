@@ -19,7 +19,7 @@ use App\Services\Registry\CategoryRegistry;
  * Provides default vault categories (Banking, Credit Cards, Email, etc.)
  * for the category dropdown in the vault creation/edit forms.
  *
- * @see \App\Services\Registry\CategoryRegistry
+ * @see CategoryRegistry
  */
 class VaultCategoryRegistrar
 {

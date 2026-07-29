@@ -15,6 +15,7 @@ namespace App\Services\Registry;
 
 use App\Data\DashboardWidget;
 use App\Services\Cache\CacheService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 
@@ -450,6 +451,7 @@ class DashboardWidgetRegistry
      * - Module name
      * - Widget type
      * - Title hash (for uniqueness)
+     * - Authenticated user ID (prevents user-scoped widget data leaking between users)
      * - Optional version (for cache invalidation when widget definition changes)
      * - Optional filters hash (for filter-specific cache entries)
      *
@@ -470,6 +472,7 @@ class DashboardWidgetRegistry
         $parts[] = $widget->module ?? 'unknown';
         $parts[] = $widget->type;
         $parts[] = md5($widget->title);
+        $parts[] = 'user:'.(Auth::id() ?? 'guest');
 
         if ($widget->version !== null) {
             $parts[] = $widget->version;

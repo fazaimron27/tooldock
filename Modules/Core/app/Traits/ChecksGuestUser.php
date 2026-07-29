@@ -13,6 +13,7 @@
 namespace Modules\Core\Traits;
 
 use Modules\Core\Constants\Roles;
+use Modules\Core\Models\User;
 
 trait ChecksGuestUser
 {
@@ -30,7 +31,7 @@ trait ChecksGuestUser
      * the Guest group may have basic permissions (like file upload) that
      * don't grant real system access.
      *
-     * @param  \Modules\Core\Models\User  $user
+     * @param  User  $user
      * @return bool
      */
     protected function isGuestOnly($user): bool

@@ -19,6 +19,7 @@ namespace Modules\Signal\Policies;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Core\Models\User;
+use Modules\Signal\Services\SignalPermissionRegistrar;
 
 /**
  * Class NotificationPolicy
@@ -31,7 +32,7 @@ use Modules\Core\Models\User;
  * - signals.notification.view: Required for viewing notifications
  * - signals.notification.manage: Required for updating/deleting notifications
  *
- * @see \Modules\Signal\Services\SignalPermissionRegistrar For permission registration
+ * @see SignalPermissionRegistrar For permission registration
  */
 class NotificationPolicy
 {

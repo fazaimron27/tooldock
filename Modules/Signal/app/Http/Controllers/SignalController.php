@@ -14,6 +14,7 @@
 namespace Modules\Signal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Signal\Http\Requests\DeleteNotificationRequest;
 use Modules\Signal\Http\Requests\MarkNotificationAsReadRequest;
+use Modules\Signal\Policies\NotificationPolicy;
 use Modules\Signal\Services\SignalCacheService;
 
 /**
@@ -31,8 +33,8 @@ use Modules\Signal\Services\SignalCacheService;
  * All methods enforce ownership - users can only access their own notifications.
  * Supports both JSON API responses and Inertia page rendering.
  *
- * @see \Modules\Signal\Services\SignalCacheService
- * @see \Modules\Signal\Policies\NotificationPolicy
+ * @see SignalCacheService
+ * @see NotificationPolicy
  */
 class SignalController extends Controller
 {
@@ -57,7 +59,7 @@ class SignalController extends Controller
      * @param  Request  $request  The incoming HTTP request
      * @return Response Inertia response with notification data
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException If user lacks viewAny permission
+     * @throws AuthorizationException If user lacks viewAny permission
      */
     public function index(Request $request): Response
     {
@@ -101,7 +103,7 @@ class SignalController extends Controller
      * @param  DatabaseNotification  $notification  The notification to display
      * @return Response Inertia response with notification detail
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException If user cannot view notification
+     * @throws AuthorizationException If user cannot view notification
      */
     public function show(Request $request, DatabaseNotification $notification): Response
     {

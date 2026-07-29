@@ -34,7 +34,7 @@ class MediaCommandRegistrar
                 'icon' => 'image',
                 'permission' => 'media.files.view',
                 'keywords' => ['media', 'files', 'images', 'upload', 'library'],
-                'order' => 40,
+                'order' => 50,
             ],
         ]);
     }

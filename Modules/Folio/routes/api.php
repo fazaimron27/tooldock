@@ -8,9 +8,10 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Folio\Providers\RouteServiceProvider::mapApiRoutes()
+ * @see RouteServiceProvider::mapApiRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
+use Modules\Folio\Providers\RouteServiceProvider;
 
 Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {});

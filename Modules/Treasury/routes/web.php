@@ -12,10 +12,11 @@
  * @author     Tool Dock Team
  * @license    MIT
  *
- * @see \Modules\Treasury\Providers\RouteServiceProvider::mapWebRoutes()
+ * @see RouteServiceProvider::mapWebRoutes()
  */
 
 use Illuminate\Support\Facades\Route;
+use Modules\Treasury\Http\Controllers\Api\FinancialHealthController;
 use Modules\Treasury\Http\Controllers\BudgetController;
 use Modules\Treasury\Http\Controllers\TransactionController;
 use Modules\Treasury\Http\Controllers\TreasuryDashboardController;
@@ -23,6 +24,7 @@ use Modules\Treasury\Http\Controllers\TreasuryGoalController;
 use Modules\Treasury\Http\Controllers\TreasuryOverviewController;
 use Modules\Treasury\Http\Controllers\TreasuryReportController;
 use Modules\Treasury\Http\Controllers\WalletController;
+use Modules\Treasury\Providers\RouteServiceProvider;
 
 Route::middleware(['auth', 'verified'])->prefix('treasury')->name('treasury.')->group(function () {
     Route::get('/', [TreasuryOverviewController::class, 'index'])->name('index');
@@ -41,9 +43,9 @@ Route::middleware(['auth', 'verified'])->prefix('treasury')->name('treasury.')->
     Route::resource('transactions', TransactionController::class);
 
     Route::prefix('financial-health')->name('financial-health.')->group(function () {
-        Route::get('goal-recommendation', [\Modules\Treasury\Http\Controllers\Api\FinancialHealthController::class, 'getGoalRecommendation'])
+        Route::get('goal-recommendation', [FinancialHealthController::class, 'getGoalRecommendation'])
             ->name('goal-recommendation');
-        Route::get('data-status', [\Modules\Treasury\Http\Controllers\Api\FinancialHealthController::class, 'getDataStatus'])
+        Route::get('data-status', [FinancialHealthController::class, 'getDataStatus'])
             ->name('data-status');
     });
 });

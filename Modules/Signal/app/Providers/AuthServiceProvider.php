@@ -24,7 +24,7 @@ use Modules\Signal\Policies\NotificationPolicy;
  * specific to the Signal module. The NotificationPolicy is bound
  * to Laravel's DatabaseNotification model for authorization.
  *
- * @see \Modules\Signal\Policies\NotificationPolicy
+ * @see NotificationPolicy
  */
 class AuthServiceProvider extends ServiceProvider
 {

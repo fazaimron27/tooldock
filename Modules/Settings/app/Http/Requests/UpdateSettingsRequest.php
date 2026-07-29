@@ -13,7 +13,9 @@
 namespace Modules\Settings\Http\Requests;
 
 use App\Services\Core\SettingsService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Settings\Models\Setting;
 
 class UpdateSettingsRequest extends FormRequest
 {
@@ -25,7 +27,7 @@ class UpdateSettingsRequest extends FormRequest
      *
      * Uses SettingsService to get keys from cache for better performance.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -50,6 +52,6 @@ class UpdateSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('updateAny', Setting::class);
     }
 }

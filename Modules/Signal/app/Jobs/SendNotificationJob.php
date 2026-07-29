@@ -28,7 +28,7 @@ use Throwable;
  * Queueable job that delegates notification sending to SignalService.
  * Supports silent, flash, trigger, and broadcast delivery modes.
  *
- * @see \Modules\Signal\Services\SignalService
+ * @see SignalService
  */
 class SendNotificationJob implements ShouldQueue
 {

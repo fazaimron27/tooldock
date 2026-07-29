@@ -19,7 +19,7 @@ use App\Services\Registry\CommandRegistry;
  * Provides quick-access commands for navigating to the habit tracker
  * and creating new habits via the Command Palette.
  *
- * @see \App\Services\Registry\CommandRegistry
+ * @see CommandRegistry
  */
 class RoutineCommandRegistrar
 {

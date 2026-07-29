@@ -13,11 +13,14 @@
 namespace Modules\Routine\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Modules\AuditLog\Traits\LogsActivity;
 use Modules\Categories\Models\Category;
 use Modules\Core\Models\User;
@@ -159,8 +162,8 @@ class Habit extends Model
     /**
      * Scope a query to only include active habits.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -170,8 +173,8 @@ class Habit extends Model
     /**
      * Scope a query to only include paused habits.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePaused($query)
     {
@@ -181,8 +184,8 @@ class Habit extends Model
     /**
      * Scope a query to only include archived habits.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeArchived($query)
     {
@@ -281,7 +284,7 @@ class Habit extends Model
      * If the chain breaks at a date that falls within a pause period,
      * the frozen streak is added to bridge the gap.
      *
-     * @param  \Illuminate\Support\Collection  $completedDates
+     * @param  Collection  $completedDates
      * @return int
      */
     protected function calculateDailyStreak($completedDates): int
@@ -312,7 +315,7 @@ class Habit extends Model
      * If the chain breaks at a week that overlaps a pause period,
      * the frozen streak is added to bridge the gap.
      *
-     * @param  \Illuminate\Support\Collection  $completedDates
+     * @param  Collection  $completedDates
      * @return int
      */
     protected function calculateWeeklyStreak($completedDates): int
@@ -387,7 +390,7 @@ class Habit extends Model
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     protected static function newFactory()
     {

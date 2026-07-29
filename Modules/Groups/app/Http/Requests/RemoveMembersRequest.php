@@ -11,6 +11,7 @@
 
 namespace Modules\Groups\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
@@ -34,7 +35,7 @@ class RemoveMembersRequest extends FormRequest
      * Validates that at least one user ID is provided and that all user IDs
      * exist in the users table.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

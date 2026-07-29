@@ -24,7 +24,7 @@ if (! function_exists('settings')) {
      *
      * @param  string|null  $key  The setting key
      * @param  mixed  $default  Default value if key not found
-     * @return mixed|\App\Services\Core\SettingsService
+     * @return mixed|SettingsService
      */
     function settings(?string $key = null, mixed $default = null): mixed
     {

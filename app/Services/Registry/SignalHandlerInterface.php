@@ -13,6 +13,8 @@
 
 namespace App\Services\Registry;
 
+use Modules\Signal\Jobs\SendNotificationJob;
+
 /**
  * Interface SignalHandlerInterface
  *
@@ -21,8 +23,8 @@ namespace App\Services\Registry;
  * evaluate conditions against event data, and produce notification
  * payloads when conditions are met.
  *
- * @see \App\Services\Registry\SignalHandlerRegistry For handler registration and dispatch
- * @see \Modules\Signal\Jobs\SendNotificationJob For the notification delivery mechanism
+ * @see SignalHandlerRegistry For handler registration and dispatch
+ * @see SendNotificationJob For the notification delivery mechanism
  */
 interface SignalHandlerInterface
 {

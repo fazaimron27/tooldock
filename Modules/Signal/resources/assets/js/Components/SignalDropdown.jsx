@@ -11,6 +11,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle, Inbox, RefreshCw, Volume, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/Components/ui/button';
 import { DropdownMenuLabel, DropdownMenuSeparator } from '@/Components/ui/dropdown-menu';
@@ -29,12 +30,14 @@ export default function SignalDropdown({ notifications, onRefresh, error }) {
   const markAllReadMutation = useMarkAllAsRead({
     onSuccess: () => {
       if (onRefresh) onRefresh();
+      toast.success('All notifications marked as read');
     },
   });
 
   const markAsReadMutation = useMarkAsRead({
     onSuccess: () => {
       if (onRefresh) onRefresh();
+      toast.success('Notification marked as read');
     },
   });
 

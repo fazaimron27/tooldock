@@ -43,7 +43,7 @@ class InertiaSharedDataService
     /**
      * Build shared props array including flash messages, CSRF, and module data.
      *
-     * @param  \Illuminate\Http\Request  $request  The incoming request
+     * @param  Request  $request  The incoming request
      * @return array<string, mixed> Shared props for Inertia responses
      */
     public function getSharedData(Request $request): array

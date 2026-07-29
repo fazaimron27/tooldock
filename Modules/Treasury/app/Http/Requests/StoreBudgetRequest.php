@@ -13,9 +13,11 @@
 
 namespace Modules\Treasury\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use Modules\Treasury\Models\Budget;
 
 /**
@@ -51,7 +53,7 @@ class StoreBudgetRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -71,13 +73,13 @@ class StoreBudgetRequest extends FormRequest
     /**
      * Configure the validator instance.
      *
-     * @param  \Illuminate\Validation\Validator  $validator  The validator instance
+     * @param  Validator  $validator  The validator instance
      * @return void
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $exists = \Modules\Treasury\Models\Budget::where('user_id', Auth::id())
+            $exists = Budget::where('user_id', Auth::id())
                 ->where('category_id', $this->category_id)
                 ->exists();
 

@@ -35,7 +35,7 @@ class AuditLogCommandRegistrar
                 'icon' => 'file-text',
                 'permission' => 'auditlog.view',
                 'keywords' => ['audit', 'log', 'history', 'activity', 'trail'],
-                'order' => 60,
+                'order' => 70,
             ],
         ]);
     }
