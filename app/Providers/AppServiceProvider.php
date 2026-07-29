@@ -34,6 +34,7 @@ use App\Services\Registry\CategoryRegistry;
 use App\Services\Registry\CommandRegistry;
 use App\Services\Registry\DashboardWidgetRegistry;
 use App\Services\Registry\GroupRegistry;
+use App\Services\Registry\HookInboundProcessorRegistry;
 use App\Services\Registry\InertiaSharedDataRegistry;
 use App\Services\Registry\MenuRegistry;
 use App\Services\Registry\MiddlewareRegistry;
@@ -82,6 +83,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(MiddlewareRegistry::class);
         $this->app->singleton(SignalCategoryRegistry::class);
         $this->app->singleton(SignalHandlerRegistry::class);
+        $this->app->singleton(HookInboundProcessorRegistry::class);
         $this->app->singleton(SuperAdminService::class);
         $this->app->singleton(MediaConfigService::class);
         $this->app->singleton(AppConfigService::class);
