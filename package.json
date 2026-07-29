@@ -68,6 +68,7 @@
     "@tiptap/extension-underline": "^3.20.0",
     "@tiptap/react": "^3.20.0",
     "@tiptap/starter-kit": "^3.20.0",
+    "@tldraw/assets": "4.5.7",
     "@yudiel/react-qr-scanner": "^2.4.1",
     "alasql": "^4.17.2",
     "class-variance-authority": "^0.7.1",

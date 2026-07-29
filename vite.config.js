@@ -86,6 +86,9 @@ export default defineConfig(({ mode }) => {
         '@Nucleus': path.resolve(__dirname, 'Modules/Nucleus/resources/assets/js'),
       },
     },
+    optimizeDeps: {
+      exclude: ['@tldraw/assets'],
+    },
     server: {
       ...(devServerUrl
         ? {

@@ -6,12 +6,15 @@
  * Displays a sync status badge (Saving / Saved / Error).
  */
 import { useAutoSave } from '@QuickDraw/Hooks/useAutoSave';
+import { getAssetUrlsByImport } from '@tldraw/assets/imports.vite';
 import { useCallback, useState } from 'react';
 import { Tldraw, createTLStore, loadSnapshot } from 'tldraw';
 import 'tldraw/tldraw.css';
 
 import PageShell from '@/Components/Layouts/PageShell';
 import { Badge } from '@/Components/ui/badge';
+
+const TLDRAW_ASSET_URLS = getAssetUrlsByImport();
 
 const STATUS_CONFIG = {
   idle: null,
@@ -66,7 +69,7 @@ export default function Show({ quickdraw, documentState }) {
         className="relative rounded-lg overflow-hidden border"
         style={{ height: 'calc(100svh - 16rem)' }}
       >
-        <Tldraw store={store} onMount={handleMount} />
+        <Tldraw assetUrls={TLDRAW_ASSET_URLS} store={store} onMount={handleMount} />
       </div>
     </PageShell>
   );
