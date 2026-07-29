@@ -1,0 +1,19 @@
+{
+  "name": "Sandbox",
+  "alias": "sandbox",
+  "version": "1.0.0",
+  "description": "Internal inbound webhook sandbox for module-level testing.",
+  "keywords": ["webhook", "inbound", "sandbox", "internal", "testing"],
+  "priority": -970,
+  "protected": false,
+  "active": 1,
+  "providers": [
+    "Modules\\Sandbox\\Providers\\SandboxServiceProvider",
+    "Modules\\Sandbox\\Providers\\RouteServiceProvider",
+    "Modules\\Sandbox\\Providers\\AuthServiceProvider"
+  ],
+  "files": [],
+  "requires": ["Core", "Hook"],
+  "icon": "FlaskConical",
+  "author": "Tool Dock Team"
+}

@@ -98,6 +98,8 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:'.env('SANDBOX_APPLY_QUEUE', 'sandbox-apply') => 60,
+        'redis:'.env('SANDBOX_REVIEW_QUEUE', 'sandbox-review') => 60,
     ],
 
     /*
@@ -210,6 +212,23 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        'supervisor-sandbox' => [
+            'connection' => 'redis',
+            'queue' => [
+                env('SANDBOX_APPLY_QUEUE', 'sandbox-apply'),
+                env('SANDBOX_REVIEW_QUEUE', 'sandbox-review'),
+            ],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 2,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 3,
+            'timeout' => 75,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -219,11 +238,21 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-sandbox' => [
+                'maxProcesses' => 4,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-sandbox' => [
+                'maxProcesses' => 2,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
             ],
         ],
     ],
